@@ -40,7 +40,8 @@ export function MenuBar({ groups }: { groups: MenuGroup[] }) {
           const it = g.items[0]!;
           return <NavLink key={it.to} to={it.to} end={it.to === "/"}>{g.label}</NavLink>;
         }
-        const here = g.items.some((it) => (it.to === "/" ? pathname === "/" : pathname === it.to || pathname.startsWith(`${it.to}/`)));
+        const current = g.items.find((it) => (it.to === "/" ? pathname === "/" : pathname === it.to || pathname.startsWith(`${it.to}/`)));
+        const here = current !== undefined;
         const isOpen = open === g.label;
         return (
           <div className="menu" key={g.label}>
@@ -58,7 +59,7 @@ export function MenuBar({ groups }: { groups: MenuGroup[] }) {
                 }
               }}
             >
-              {g.label} <span aria-hidden="true">▾</span>
+              {current ? `${g.label}: ${current.label}` : g.label} <span aria-hidden="true">▾</span>
             </button>
             {isOpen && (
               <div className="menu-list" role="menu">

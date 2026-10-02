@@ -271,3 +271,4 @@ td button.link + button.link { margin-left: 6px; }
 .take-row { align-items: center; }
 
 .subject-row { gap: 6px 18px; margin: 0 0 4px; }
+.rule-heading.first { margin-top: 4px; }

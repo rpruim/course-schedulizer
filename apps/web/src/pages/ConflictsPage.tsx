@@ -57,6 +57,7 @@ function ConflictsTable({ entry }: { entry: Entry }) {
   if (schedule.sessions.length === 0) return <p className="muted">No sections in this schedule.</p>;
   return (
     <>
+      <h3 className="rule-heading first">Conflicts</h3>
       {conflicts.length === 0 ? <p className="note ok">No conflicts found.</p> : pairTable()}
       {violations.length > 0 && <RuleTable entry={entry} violations={violations} label={label} />}
     </>
