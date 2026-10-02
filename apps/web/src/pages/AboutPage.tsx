@@ -25,7 +25,6 @@ const REPORTS: { label: string; href: string }[] = [
 
 const ext = { target: "_blank", rel: "noreferrer" } as const;
 
-/** What this is, which version is running, the vision behind it and the versions that came before. */
 export function AboutPage() {
   return (
     <div className="help about">
@@ -33,52 +32,31 @@ export function AboutPage() {
       <dl className="facts">
         <dt>Version</dt><dd>{APP_VERSION}</dd>
         {BUILD_DATE && (<><dt>Built</dt><dd>{BUILD_DATE}</dd></>)}
+        <dt>Author</dt><dd>Randall Pruim</dd>
       </dl>
       <p>
-        Course Schedulizer helps a department build and check its course schedule: sections, meeting times, rooms, instructors, load (including non-teaching load), conflicts and constraint rules,
-        and comparisons between drafts. It is a rewrite of the earlier Course Schedulizer, and it opens files from that version.
+        
+        Course Schedulizer helps a department build and check its course schedule. 
+        Meeting times, rooms, instructors, load, etc. can be entered and edited for each 
+        course section.  Checks for conflicts, violations of custom constraints, and faculty load,
+        and comparisons of multiple schedules help reduce the number of errors made while creating
+        schedules. This version is a de novo rewrite but shares many features with an earlier 
+        version, and it and it opens files from that version to make migration easy.
       </p>
       <p>
-        Your schedules are kept in this browser while you work and are never sent anywhere; use <Link to="/export">Export</Link> to save them as Excel files. See the <Link to="/help">User guide</Link> for how to do things.
+        Schedules are kept in this browser while you work and are never sent anywhere; 
+        use <Link to="/export">Export</Link> to save them as Excel files. One of the sheets in
+        the Excel file is customized for use by the registrar's office in preparing schedules.
+        
+        See the <Link to="/help">User guide</Link> for how to do things.
       </p>
 
-      <section className="help-section">
-        <h2>Vision</h2>
-        <p>
-          Every year, each department chair at Calvin must build a schedule for the department’s classes, starting from a spreadsheet provided by the Registrar. The schedule gives the times,
-          instructors and rooms of every section, and it has to satisfy a long list of constraints:
-        </p>
-        <ul>
-          <li>only one section can be in a room at a time;</li>
-          <li>an instructor can only teach one section at a time;</li>
-          <li>sections that are taken together cannot be offered at the same time (CS 212 is often taken together with MATH 251 and ENGR 220);</li>
-          <li>instructors can only teach when they are available, and only courses they are qualified to teach;</li>
-          <li>instructors must (or cannot) teach consecutive classes, depending on their preferences;</li>
-          <li>a room’s capacity cannot be exceeded by the expected enrollment;</li>
-          <li>faculty teaching loads cannot be “too high” or “too low”.</li>
-        </ul>
-        <p>
-          Without a tool to help, that is extremely hard to do. Course Schedulizer is meant to let department chairs see and change their department’s schedule easily, with:
-        </p>
-        <ul>
-          <li>upload and export of department schedules, working with the spreadsheets the Registrar provides and requires;</li>
-          <li>views of the schedule by department, instructor and room, colored by subject, course level or instructor;</li>
-          <li>creating, editing and deleting class sections;</li>
-          <li>a load summary for each instructor;</li>
-          <li>detection of schedule conflicts and constraint violations;</li>
-          <li>an efficient use of screen space;</li>
-          <li>an interface that can be connected to future systems.</li>
-        </ul>
-        <p className="muted small">
-          This version checks room and instructor clashes, and cohort and time-of-day <Link to="/constraints">constraint rules</Link> (which can also express instructor availability). Instructor qualifications,
-          consecutive-class preferences, room capacity and load limits are goals that are not checked yet.
-        </p>
-      </section>
 
       <section className="help-section">
         <h2>Previous versions</h2>
         <p>
-          Course Schedulizer began as a tool written by Professors Randall Pruim and Keith VanderLinden. Since 2020 it has been built up and maintained by teams of Calvin University computer science
+          Course Schedulizer began as a tool written by Professors Randall Pruim and Keith VanderLinden. From 2020 until 2026, 
+          it was built up and maintained by teams of Calvin University computer science
           students, working as “Senior Knights” and advised by the two of them. That version is still online as the{" "}
           <a href="https://senior-knights.github.io/course-schedulizer/#/" {...ext}>original Course Schedulizer</a>, and its code is in the{" "}
           <a href="https://github.com/senior-knights/course-schedulizer" {...ext}>GitHub repository</a>. This version is a rewrite that keeps what that one did and adds to it.
