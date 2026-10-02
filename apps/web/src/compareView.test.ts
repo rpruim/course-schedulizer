@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { COMPARE_COLUMNS, compareTables, comparisonRows, importRecords, rowTones, type Comparison } from "@schedulizer/core";
-import { PRESETS, aggregateDiffers, comparisonSheets, diffMembers, hueFor, memberOf, meetsText, pairMembers, readSettings, tableColumns, toneColor, toneHex } from "./compareView";
+import { PRESETS, aggregateDiffers, comparisonSheets, diffMembers, hueFor, memberOf, meetsText, readSettings, tableColumns, toneColor, toneHex } from "./compareView";
 
 const sec = (prefix: string, n: string, o: Record<string, string> = {}) => ({ AcademicYear: "Y", Term: "FA", Prefix: prefix, CourseNumber: n, Section: "A", ...o });
 const sched = (rows: Record<string, string>[]) => importRecords({ sessions: rows }).schedule;

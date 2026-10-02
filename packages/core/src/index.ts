@@ -20,3 +20,4 @@ export * from "./exportName.js";
 export * from "./overlap.js";
 export * from "./rules.js";
 export * from "./upgrade.js";
+export * from "./pairing.js";

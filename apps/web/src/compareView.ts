@@ -4,8 +4,13 @@ import {
   difference,
   formatCell,
   formatTime,
+  pairClusters,
+  pairRef,
   parseTime,
   rowSource,
+  type PairHow,
+  type PairOptions,
+  type PairRef,
   type Cell,
   type CompareRow,
   type RowSource,
@@ -342,64 +347,45 @@ export interface MemberView {
   others: string[];
   /** The section has no counterpart in another schedule that has rows in this group. */
   solo: boolean;
+  /** How this line was matched with its counterparts (absent when it has none). */
+  how?: PairHow;
+  /** For a similarity match: what the sections have in common. */
+  why: string[];
+  /** The counterparts in other schedules: `[schedule, index in that schedule's lines]`. */
+  partners: [number, number][];
+  /** What the user's pairing choices call this line (sections only). */
+  ref?: PairRef;
 }
 
 const text = (r: CompareRow, k: string) => String(r[k] ?? "");
 
-/** What makes two rows "the same section" across schedules (an instructor row is also that instructor). */
-function pairKey(r: CompareRow, rowKind: RowKind): string {
-  const teaching = text(r, "Prefix") !== "" || text(r, "CourseNumber") !== "";
-  if (!teaching) return JSON.stringify(["nt", text(r, "AcademicYear"), text(r, "Term"), text(r, "Faculty"), text(r, "InstructionalMethod")]);
-  const base = [text(r, "AcademicYear"), text(r, "Term"), text(r, "TermPart"), text(r, "Prefix"), text(r, "CourseNumber"), text(r, "Section")];
-  return JSON.stringify(rowKind === "instructor" ? [...base, text(r, "Faculty")] : base);
-}
-
-/**
- * Pair up the rows of a group across schedules: rows with the same section identity are the
- * same section (the n-th occurrence pairing with the n-th); whatever is left over in each
- * schedule is paired in order, so a section whose letter changed still shows as one section
- * that changed. Returns clusters of `[schedule, index]`; a cluster of one has no counterpart.
- */
-export function pairMembers(members: CompareRow[][], rowKind: RowKind): [number, number][][] {
-  const exact = new Map<string, [number, number][]>();
-  members.forEach((rows, s) => {
-    const seen = new Map<string, number>();
-    rows.forEach((r, i) => {
-      const k = pairKey(r, rowKind);
-      const n = seen.get(k) ?? 0;
-      seen.set(k, n + 1);
-      const id = `${k}#${n}`;
-      exact.set(id, [...(exact.get(id) ?? []), [s, i]]);
-    });
-  });
-  const clusters: [number, number][][] = [];
-  const leftover: number[][] = members.map(() => []);
-  for (const c of exact.values()) {
-    if (c.length > 1) clusters.push(c);
-    else leftover[c[0]![0]]!.push(c[0]![1]);
-  }
-  for (let k = 0; k < Math.max(0, ...leftover.map((l) => l.length)); k++) {
-    const c = leftover.flatMap((l, s) => (l[k] === undefined ? [] : [[s, l[k]!] as [number, number]]));
-    clusters.push(c);
-  }
-  return clusters;
-}
-
 /**
  * For each schedule's rows in a group, the line to show with its differences from the
- * counterparts in the other schedules marked (see `pairMembers`). With one schedule having
+ * counterparts in the other schedules marked (see `pairClusters`). With one schedule having
  * rows, or none of the others, nothing is marked.
  */
-export function diffMembers(row: ComparisonRow, rowKind: RowKind): MemberView[][] {
-  const views: MemberView[][] = row.members.map((rows) => rows.map((r) => ({ member: memberOf(r), differs: new Set<MemberField>(), others: [] as string[], solo: false })));
+export function diffMembers(row: ComparisonRow, rowKind: RowKind, pairing: PairOptions = {}): MemberView[][] {
+  const views: MemberView[][] = row.members.map((rows, s) =>
+    rows.map((r) => {
+      const ref = pairing.scheduleIds?.[s] === undefined ? undefined : pairRef(pairing.scheduleIds[s]!, r, rowKind);
+      return { member: memberOf(r), differs: new Set<MemberField>(), others: [] as string[], solo: false, why: [] as string[], partners: [] as [number, number][], ...(ref ? { ref } : {}) };
+    }),
+  );
   const schedulesWithRows = row.members.filter((m) => m.length > 0).length;
   if (schedulesWithRows < 2) return views;
 
-  for (const cluster of pairMembers(row.members, rowKind)) {
+  for (const found of pairClusters(row.members, rowKind, pairing)) {
+    const cluster = found.items;
     if (cluster.length === 1) {
       const [s, i] = cluster[0]!;
       views[s]![i]!.solo = true;
       continue;
+    }
+    for (const [s, i] of cluster) {
+      const view = views[s]![i]!;
+      if (found.how) view.how = found.how;
+      view.why = found.why;
+      view.partners = cluster.filter(([t]) => t !== s);
     }
     const rows = cluster.map(([s, i]) => row.members[s]![i]!);
     for (const col of COMPARE_COLUMNS) {

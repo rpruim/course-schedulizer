@@ -17,6 +17,8 @@ import { aggregateDiffers, comparisonSheets, diffMembers, hueFor, loadSettings, 
 import { useEditor } from "../editor/context";
 import { downloadBytes, XLSX_TYPE } from "../download";
 import { SortTh, useSort } from "../sort";
+import { yearsOf } from "../model";
+import { usePairings } from "../pairings";
 import { useWorkspace } from "../state";
 import { Empty } from "./SchedulePage";
 
@@ -45,6 +47,12 @@ export function ComparePage() {
 
   const inputs = useMemo(() => entries.map((e) => ({ id: e.id, name: e.name, rows: comparisonRows(e.schedule, rowKind, { nonTeaching }) })), [entries, rowKind, nonTeaching]);
   const comparison = useMemo(() => compareTables(inputs, { roles }), [inputs, roles]);
+  // which section of one schedule is which section of another: automatic, plus the user's choices (kept while the schedules are unchanged)
+  const pairing = usePairings(entries);
+  const pairOpts = useMemo(
+    () => ({ scheduleIds: entries.map((e) => e.id), years: entries.map((e) => yearsOf(e.schedule)), overrides: pairing.overrides }),
+    [entries, pairing.overrides],
+  );
   const only = onlyDiff ?? defaultOnlyDifferences(comparison);
   const rows = useMemo(() => visibleRows(comparison, only), [comparison, only]);
   const columns = useMemo(() => tableColumns(comparison), [comparison]);
@@ -85,6 +93,12 @@ export function ComparePage() {
 
   return (
     <>
+      {pairing.overrides.length > 0 && (
+        <p className="muted small pairing-note">
+          {pairing.overrides.length} manual pairing {pairing.overrides.length === 1 ? "choice" : "choices"} for these schedules (kept until one of them changes).{" "}
+          <button className="link" onClick={pairing.clear}>Reset to automatic pairing</button>
+        </p>
+      )}
       <details className="partition" open={showPartition} onToggle={(e) => setShowPartition((e.target as HTMLDetailsElement).open)}>
         <summary>Choose what to compare <span className="muted">— {summary}</span></summary>
         <div className="presets">
@@ -205,10 +219,10 @@ export function ComparePage() {
                     <tr className="detail">
                       <td colSpan={columns.length + 1}>
                         {(() => {
-                          const views = diffMembers(r, rowKind);
+                          const views = diffMembers(r, rowKind, pairOpts);
                           const marked = views.some((v) => v.some((l) => l.differs.size > 0 || l.others.length > 0 || l.solo));
                           return [
-                            marked && <p key="key" className="muted small">Highlighted cells differ from the same section in the other schedule(s); <span className="tag solo">only here</span> means no matching section there.</p>,
+                            marked && <p key="key" className="muted small">Highlighted cells differ from the same section in the other schedule(s); <span className="tag solo">only here</span> means no matching section there. Sections are matched by id, then letter, then what they have in common; use <strong>✕</strong> or <strong>Same as…</strong> on a line to correct a match.</p>,
                             ...comparison.schedules.map((s, si) => {
                           const members = r.members[si] ?? [];
                           const lines = views[si] ?? [];
@@ -219,7 +233,7 @@ export function ComparePage() {
                                 <p className="muted small">Nothing in this schedule for this row.</p>
                               ) : (
                                 <table className="mini">
-                                  <thead><tr><th>Course</th><th>Sec</th><th>Term</th><th>Title</th><th>Instructor</th><th className="num">Load</th><th>Meets</th><th>Room</th><th>Also differs</th></tr></thead>
+                                  <thead><tr><th>Course</th><th>Sec</th><th>Term</th><th>Title</th><th>Instructor</th><th className="num">Load</th><th>Meets</th><th>Room</th><th>Also differs</th><th className="pairctl-head" title="Which section is which">Same as</th></tr></thead>
                                   <tbody>
                                     {lines.map((line, mi) => {
                                       const v = line.member;
@@ -228,7 +242,7 @@ export function ComparePage() {
                                       const cell = (f: MemberField, extra = "") => `${extra}${line.differs.has(f) ? " d" : ""}`.trim() || undefined;
                                       return (
                                         <tr key={mi} className={`${v.source ? "clickable" : ""}${line.solo ? " solo" : ""}`.trim() || undefined} tabIndex={v.source ? 0 : undefined} onClick={go} onKeyDown={(e) => e.key === "Enter" && go()} title={v.source ? "Click to edit" : undefined}>
-                                          <td className={cell("course", "nowrap")}>{v.course}{line.solo && <span className="tag solo" title="No matching section in the other schedule(s)">only here</span>}</td>
+                                          <td className={cell("course", "nowrap")}>{v.course}{line.solo && <span className="tag solo" title="No matching section in the other schedule(s)">only here</span>}{line.how === "manual" && <span className="tag paired" title="You paired these sections">paired by you</span>}{line.how === "similar" && <span className="tag paired" title={`Not the same letter or id: matched because ${line.why.join(" and ") || "it is the same course and term"}`}>{line.why.length ? `matched: ${line.why.join(", ")}` : "matched"}</span>}</td>
                                           <td className={cell("section")}>{v.section}</td>
                                           <td className={cell("term", "nowrap")}>{v.term}</td>
                                           <td className={cell("title")}>{v.title}</td>
@@ -237,6 +251,49 @@ export function ComparePage() {
                                           <td className={cell("meets", "nowrap")}>{v.meets}</td>
                                           <td className={cell("room", "nowrap")}>{v.room}</td>
                                           <td className={line.others.length ? "d" : undefined}>{line.others.join(" · ")}</td>
+                                          <td className="pairctl" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                                            {line.ref && line.partners.length > 0 && (
+                                              <button
+                                                type="button"
+                                                className="pairbtn"
+                                                title="These are not the same section: pair them differently"
+                                                aria-label="Not the same section"
+                                                onClick={() => {
+                                                  pairing.unpair(line.ref!);
+                                                  for (const [sj, k] of line.partners) {
+                                                    const other = views[sj]?.[k]?.ref;
+                                                    if (other) pairing.apart(line.ref!, other);
+                                                  }
+                                                }}
+                                              >
+                                                ✕
+                                              </button>
+                                            )}
+                                            {line.ref && line.solo && (() => {
+                                              const options = views.flatMap((vs, sj) => (sj === si ? [] : vs.flatMap((o, k) => (o.solo && o.ref ? [{ sj, k, o }] : []))));
+                                              if (options.length === 0) return null;
+                                              return (
+                                                <select
+                                                  className="pairpick"
+                                                  value=""
+                                                  aria-label="Pair with a section of another schedule"
+                                                  title="Say which section of another schedule this is"
+                                                  onChange={(e) => {
+                                                    const [sj, k] = e.target.value.split(":").map(Number) as [number, number];
+                                                    const other = views[sj]?.[k]?.ref;
+                                                    if (other) pairing.pair(line.ref!, other);
+                                                  }}
+                                                >
+                                                  <option value="">Same as…</option>
+                                                  {options.map(({ sj, k, o }) => (
+                                                    <option key={`${sj}:${k}`} value={`${sj}:${k}`}>
+                                                      {comparison.schedules[sj]?.name}: {o.member.course} {o.member.section} · {o.member.meets || "no time"} · {o.member.instructor || "no instructor"}
+                                                    </option>
+                                                  ))}
+                                                </select>
+                                              );
+                                            })()}
+                                          </td>
                                         </tr>
                                       );
                                     })}
