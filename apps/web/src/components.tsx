@@ -9,6 +9,7 @@ import {
   type Issue,
   type Schedule,
 } from "@schedulizer/core";
+import { useLocation } from "react-router-dom";
 import { EXAMPLES, type ExampleKey } from "./demo";
 import { downloadBytes, XLSX_TYPE } from "./download";
 import { allIssues, errorsOf, issueText, needsAcademicYear } from "./issues";
@@ -130,6 +131,9 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
 /** Undo/redo (for everything in the workspace) and re-letter by time for the current schedule. */
 export function Toolbar() {
   const ws = useWorkspace();
+  // Section letters only appear on the Schedule tab and the week tabs.
+  const { pathname } = useLocation();
+  const showsLetters = ["/", "/dept", "/faculty", "/rooms"].includes(pathname);
   const current = ws.current;
   const schedule = current?.schedule;
   const empty = !schedule || (schedule.sessions.length === 0 && schedule.nonTeaching.length === 0);
@@ -154,7 +158,7 @@ export function Toolbar() {
     <div className="toolbar">
       <button onClick={ws.undo} disabled={!ws.canUndo}>Undo</button>
       <button onClick={ws.redo} disabled={!ws.canRedo}>Redo</button>
-      <button onClick={reletter} disabled={empty} title={current ? `Re-letter the sections of “${current.name}”` : ""}>Re-letter by time…</button>
+      {showsLetters && <button onClick={reletter} disabled={empty} title={current ? `Re-letter the sections of “${current.name}”` : ""}>Re-letter by time…</button>}
     </div>
   );
 }
