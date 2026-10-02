@@ -180,6 +180,7 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
   const crossListings: CrossListing[] = [];
   const items: { row: number; section: Record<string, unknown>; ms: Meeting[] }[] = [];
   const seenListing = new Set<string>();
+  const unassigned = new Map<string, number>();
 
   records.forEach((rec, idx) => {
     const row = idx + 2;
@@ -251,7 +252,14 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
       }
       return;
     }
-    const sectionId = k.SectionId || (base.academicYear && term && base.prefix && base.courseNumber && base.section ? deriveSectionId(base) : "");
+    let sectionId = k.SectionId || (base.academicYear && term && base.prefix && base.courseNumber && base.section ? deriveSectionId(base) : "");
+    // Sections lettered "?" (the registrar assigns the letter) can be many in one course, so without an
+    // explicit SectionId every record is its own section: the 2nd gets "-2" after its id, and so on.
+    if (!k.SectionId && sectionId && base.section === "?") {
+      const n = unassigned.get(sectionId) ?? 0;
+      unassigned.set(sectionId, n + 1);
+      if (n > 0) sectionId = `${sectionId}-${n + 1}`;
+    }
 
     const section = {
       sectionId,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { importRecords } from "./import.js";
-import { changeLetter, lettersInUse, nextFreeLetter, relabelByTime, uniqueSectionId } from "./sections.js";
+import { changeLetter, isUnassignedLetter, lettersInUse, nextFreeLetter, relabelByTime, sameLetter, uniqueSectionId } from "./sections.js";
 import type { Schedule } from "./types.js";
 
 const rec = (section: string, o: Record<string, string> = {}) => ({
@@ -135,5 +135,61 @@ describe("relabelByTime", () => {
     const sched = make(rec("A", meets("F", "8:00")), rec("A", meets("M", "15:00")), rec("B", meets("W", "9:00")));
     // A's earliest meeting is Monday 15:00, before B's Wednesday 9:00: no change.
     expect(relabelByTime(sched).changes).toEqual([]);
+  });
+});
+
+describe("sections lettered ? (left for the registrar)", () => {
+  const q = (o: Record<string, string> = {}) => rec("?", o);
+  const s = () =>
+    make(
+      rec("A", meets("TR", "9:00")),
+      q(meets("MWF", "7:00")), // earliest of all, but not ours to letter
+      rec("B", meets("MWF", "13:00")),
+      q({ ...meets("MWF", "8:00"), Faculty: "Other" }),
+      rec("C", meets("MWF", "8:00")),
+      rec("A", { CourseNumber: "102", ...meets("MWF", "14:00") }),
+      rec("?", { CourseNumber: "102", ...meets("MWF", "8:00") }),
+    );
+
+  it("re-lettering skips them: they keep ?, and the others are lettered as if they were not there", () => {
+    const { schedule, changes } = relabelByTime(s());
+    const sections = schedule.sessions.map((x) => [x.sectionId, x.section]);
+    expect(new Map(sections).get("AY1-FA-MATH101-A")).toBe("C"); // TR is after both MWF sections
+    expect(new Map(sections).get("AY1-FA-MATH101-B")).toBe("B");
+    expect(new Map(sections).get("AY1-FA-MATH101-C")).toBe("A");
+    expect([...new Set(schedule.sessions.filter((x) => x.courseNumber === "101").map((x) => x.section))].sort()).toEqual(["?", "A", "B", "C"]);
+    expect(schedule.sessions.filter((x) => x.section === "?")).toHaveLength(3);
+    expect(changes.every((c) => c.from !== "?" && c.to !== "?")).toBe(true);
+  });
+  it("a course with only one lettered section and the rest ? is lettered A, whatever it was", () => {
+    const only = make(rec("D", meets("MWF", "9:00")), q(meets("MWF", "8:00")), q(meets("MWF", "10:00")));
+    const { schedule } = relabelByTime(only);
+    expect(schedule.sessions.map((x) => x.section)).toEqual(["A", "?", "?"]);
+  });
+  it("a course whose sections are all ? is untouched, by schedule or by course", () => {
+    const all = make(q(meets("MWF", "9:00")), q(meets("MWF", "8:00")));
+    expect(relabelByTime(all).changes).toEqual([]);
+    expect(relabelByTime(all, { kind: "course", offering: off }).changes).toEqual([]);
+  });
+  it("is limited to one course as before, and idempotent", () => {
+    const once = relabelByTime(s()).schedule;
+    expect(relabelByTime(once).changes).toEqual([]);
+    const { schedule } = relabelByTime(s(), { kind: "course", offering: { ...off, courseNumber: "102" } });
+    expect(letters(schedule)["AY1-FA-MATH101-A"]).toBe("A");
+  });
+  it("many sections of a course may be ?: a letter change to ? never collides, nor does one from ?", () => {
+    const sched = make(rec("A", meets("MW", "9:00")), q(), rec("B"));
+    const toQ = changeLetter(sched, "AY1-FA-MATH101-B", "?");
+    expect(toQ.kind).toBe("changed");
+    if (toQ.kind !== "changed") return;
+    expect(toQ.schedule.sessions.filter((x) => x.section === "?")).toHaveLength(2);
+    // but changing one TO a real letter that is taken still asks
+    expect(changeLetter(sched, "AY1-FA-MATH101-A", "B").kind).toBe("collision");
+    expect(changeLetter(toQ.schedule, "AY1-FA-MATH101-A", "B").kind).toBe("changed"); // B is now free
+  });
+  it("? does not use up a letter for a new section, and sameLetter treats it as never equal", () => {
+    expect(nextFreeLetter(make(q(), q()), off)).toBe("A");
+    expect(nextFreeLetter(make(q(), rec("A")), off)).toBe("B");
+    expect([sameLetter("?", "?"), sameLetter("?", "A"), sameLetter("a", "A"), isUnassignedLetter(" ? "), isUnassignedLetter("A")]).toEqual([false, false, true, true, false]);
   });
 });

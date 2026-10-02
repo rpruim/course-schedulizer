@@ -179,7 +179,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
             <div className="row">
               {field("prefix", "Prefix", { list: "dl-prefix", size: 8 })}
               {field("courseNumber", "Number", { size: 8 })}
-              {field("section", "Section", { size: 4, hint: isNew ? "first free letter" : "" })}
+              {field("section", "Section", { size: 4, hint: "? if the registrar assigns it" })}
               <div className="grow">{field("shortTitle", "Title")}</div>
             </div>
             <div className="row">

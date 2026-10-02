@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import {
   constraintsNaming,
+  isUnassignedLetter,
   readWorkbook,
   relabelByTime,
   writeWorkbook,
@@ -150,7 +151,10 @@ export function Toolbar() {
     const stale = changes.reduce((n, c) => n + constraintsNaming(s, c.sectionId).filter((k) => k.section !== "").length, 0);
     const sample = changes.slice(0, 5).map((c) => `${c.sectionId}: ${c.from} → ${c.to}`).join("\n");
     const warn = stale ? `\n\nWarning: ${stale} cohort-constraint row(s) name a section by letter and may stop matching it.` : "";
-    if (window.confirm(`Re-letter ${changes.length} section(s) of “${current.name}” by first class time, for all courses?\n\n${sample}${changes.length > 5 ? "\n…" : ""}${warn}\n\nYou can undo this.`)) {
+    // sections lettered ? are left for the registrar to assign
+    const left = new Set(s.sessions.filter((x) => isUnassignedLetter(x.section)).map((x) => x.sectionId)).size;
+    const leftNote = left ? `\n\n${left} section${left === 1 ? "" : "s"} lettered ? ${left === 1 ? "is" : "are"} left alone (the registrar assigns those).` : "";
+    if (window.confirm(`Re-letter ${changes.length} section(s) of “${current.name}” by first class time, for all courses?\n\n${sample}${changes.length > 5 ? "\n…" : ""}${leftNote}${warn}\n\nYou can undo this.`)) {
       ws.applyTo(current.id, (x: Schedule) => relabelByTime(x).schedule);
     }
   }

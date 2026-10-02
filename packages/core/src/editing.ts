@@ -2,7 +2,7 @@ import { crossListingsOf, setCrossListings } from "./crosslistings.js";
 import { parseDays } from "./format.js";
 import { sectionShares } from "./load.js";
 import type { Listing } from "./names.js";
-import { nextFreeLetter, offeringOf, uniqueSectionId, type LetterResolution, type Offering } from "./sections.js";
+import { nextFreeLetter, offeringOf, sameLetter, uniqueSectionId, type LetterResolution, type Offering } from "./sections.js";
 import { partsFor } from "./terms.js";
 import { deriveSectionId } from "./import.js";
 import { sessionSchema, type Instructor, type Schedule, type Session } from "./types.js";
@@ -249,7 +249,6 @@ export type SaveResult =
 /** A purely alphabetic section letter is stored upper-case (`a` → `A`); anything else (`04`, `O1`) is kept as typed. */
 export const tidyLetter = (s: string) => (/^[A-Za-z]+$/.test(s.trim()) ? s.trim().toUpperCase() : s.trim());
 
-const sameLetter = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 const sameOffering = (a: Offering, b: Offering) =>
   a.academicYear === b.academicYear && a.term === b.term && a.prefix === b.prefix && a.courseNumber === b.courseNumber;
 

@@ -217,3 +217,33 @@ describe("deleteSection / draftShares", () => {
     expect(draftShares(d)).toEqual([{ name: "A", load: 3 }, { name: "B", load: 1 }]);
   });
 });
+
+describe("saving sections lettered ?", () => {
+  const s = () => make(sec("A", meets("MW", "9:00")), sec("?", meets("TR", "9:00")));
+  const addQ = (sched: Schedule, o: Partial<SectionDraft> = {}) =>
+    saveDraft(sched, { ...newSectionDraft(sched, { academicYear: "Y", term: "FA", prefix: "MATH", courseNumber: "101" }), section: "?", ...o });
+
+  it("allows another ? section of the same course, with its own id, and never asks about a collision", () => {
+    const r = saved(addQ(s()));
+    expect(r.sectionId).toBe("Y-FA-MATH101-?-2");
+    expect(r.other).toBeUndefined();
+    expect(saved(addQ(r.schedule)).sectionId).toBe("Y-FA-MATH101-?-3");
+  });
+  it("lets an existing section be changed to ?, and a ? section be given a free letter", () => {
+    const sched = s();
+    const toQ = saved(saveDraft(sched, { ...draft(sched, "Y-FA-MATH101-A"), section: "?" }));
+    expect(toQ.schedule.sessions.filter((x) => x.section === "?")).toHaveLength(2);
+    const fromQ = saved(saveDraft(sched, { ...draft(sched, "Y-FA-MATH101-?"), section: "B" }));
+    expect(letters(fromQ.schedule)["Y-FA-MATH101-?"]).toBe("B");
+    expect(saveDraft(sched, { ...draft(sched, "Y-FA-MATH101-?"), section: "A" }).kind).toBe("collision"); // A is taken
+  });
+  it("a relabel resolution may give the other section ?", () => {
+    const sched = make(sec("A"), sec("B"));
+    const r = saved(saveDraft(sched, { ...draft(sched, "Y-FA-MATH101-A"), section: "B" }, { kind: "relabel", letter: "?" }));
+    expect(letters(r.schedule)).toEqual({ "Y-FA-MATH101-A": "B", "Y-FA-MATH101-B": "?" });
+  });
+  it("moving a section into a course that has ? sections is no collision for ?", () => {
+    const sched = make(sec("?"), sec("?", { CourseNumber: "102" }));
+    expect(saveDraft(sched, { ...draft(sched, "Y-FA-MATH101-?"), courseNumber: "102" }).kind).toBe("saved");
+  });
+});

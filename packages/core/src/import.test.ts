@@ -96,6 +96,43 @@ describe("inline non-teaching rows and default academic year", () => {
   });
 });
 
+describe("sections lettered ?", () => {
+  it("makes every record without a SectionId its own section, however many share a course", () => {
+    const r = importSessions([
+      rec({ Section: "?", Faculty: "Ada", MeetingDays: "MW", StartTime: "9:00", MeetingDuration: "50" }),
+      rec({ Section: "?", Faculty: "Ben", MeetingDays: "TR", StartTime: "9:00", MeetingDuration: "50" }),
+      rec({ Section: "?", Faculty: "Cy" }),
+      rec({ Section: "A", Faculty: "Dee" }),
+    ]);
+    expect(r.issues).toEqual([]);
+    expect(r.sessions.map((s) => [s.sectionId, s.faculty[0]!.name])).toEqual([
+      ["AY1-FA-MATH101-?", "Ada"], ["AY1-FA-MATH101-?-2", "Ben"], ["AY1-FA-MATH101-?-3", "Cy"], ["AY1-FA-MATH101-A", "Dee"],
+    ]);
+  });
+  it("keeps the several meetings of one packed record together", () => {
+    const r = importSessions([rec({ Section: "?", MeetingDays: "MW\nF", StartTime: "9:00\n10:00", MeetingDuration: "50" })]);
+    expect(r.sessions).toHaveLength(2);
+    expect(new Set(r.sessions.map((s) => s.sectionId)).size).toBe(1);
+  });
+  it("uses an explicit SectionId as the section, so rows sharing one are one section", () => {
+    const r = importSessions([
+      rec({ Section: "?", SectionId: "x1", Faculty: "Ada", MeetingDays: "MW", StartTime: "9:00", MeetingDuration: "50" }),
+      rec({ Section: "?", SectionId: "x1", MeetingDays: "F", StartTime: "9:00", MeetingDuration: "50" }),
+      rec({ Section: "?", SectionId: "x2", Faculty: "Ben" }),
+    ]);
+    expect(r.issues).toEqual([]);
+    expect(r.sessions.map((s) => s.sectionId)).toEqual(["x1", "x1", "x2"]);
+  });
+  it("survives a trip through a workbook export", async () => {
+    const schedule = importSessions([rec({ Section: "?", Faculty: "Ada" }), rec({ Section: "?", Faculty: "Ben" })]);
+    const sched = importRecords({ sessions: [rec({ Section: "?", Faculty: "Ada" }), rec({ Section: "?", Faculty: "Ben" })] }).schedule;
+    const { writeWorkbook, readWorkbook } = await import("./xlsx.js");
+    const back = await readWorkbook(await writeWorkbook(sched));
+    expect(back.schedule.sessions.map((s) => s.sectionId)).toEqual(schedule.sessions.map((s) => s.sectionId));
+    expect(back.issues).toEqual([]);
+  });
+});
+
 describe("importSessions: multi-row form", () => {
   it("ties rows together by SectionId without duplicating listings", () => {
     const r = importSessions([

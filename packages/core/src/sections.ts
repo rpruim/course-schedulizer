@@ -16,7 +16,20 @@ export const offeringOf = (s: Offering): Offering => ({
 });
 
 const offeringKey = (o: Offering) => JSON.stringify([o.academicYear, o.term, o.prefix, o.courseNumber]);
-const sameLetter = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+/**
+ * `?` as a section letter means the registrar will assign it (typically a course taught
+ * across many departments, so no department sees all its sections). Any number of
+ * sections of a course may be `?`, and re-lettering leaves them alone.
+ */
+export const UNASSIGNED_LETTER = "?";
+export const isUnassignedLetter = (letter: string) => letter.trim() === UNASSIGNED_LETTER;
+
+/**
+ * Do two section letters name the same section of a course? Case-insensitive. `?` is
+ * never the same as anything, not even another `?`, so it never causes a letter collision.
+ */
+export const sameLetter = (a: string, b: string) =>
+  !isUnassignedLetter(a) && !isUnassignedLetter(b) && a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /** Section ids in order of first appearance. */
 export const sectionIds = (sessions: Session[]): string[] => [...new Set(sessions.map((s) => s.sectionId))];
@@ -161,7 +174,8 @@ function firstMeetingTime(meetings: Session[]): number {
 /**
  * Re-letter sections A, B, C… within each course offering in order of their
  * first class session in the week (ties and unscheduled sections keep their
- * current relative order). Section ids are untouched. Returns the new schedule
+ * current relative order). Sections lettered `?` are left alone and do not use up a
+ * letter. Section ids are untouched. Returns the new schedule
  * and the list of changes, so a UI can preview by discarding the schedule.
  */
 export function relabelByTime(schedule: Schedule, scope: RelabelScope = { kind: "schedule" }): { schedule: Schedule; changes: LetterChange[] } {
@@ -172,6 +186,7 @@ export function relabelByTime(schedule: Schedule, scope: RelabelScope = { kind: 
   [...firstSessions(schedule.sessions).values()].forEach((s, order) => {
     const key = offeringKey(s);
     if (only !== undefined && key !== only) return;
+    if (isUnassignedLetter(s.section)) return; // left for the registrar: neither re-lettered nor counted
     const g = groups.get(key) ?? [];
     g.push({ id: s.sectionId, letter: s.section, time: firstMeetingTime(meetings.get(s.sectionId)!), order });
     groups.set(key, g);
