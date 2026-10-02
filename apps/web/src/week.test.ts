@@ -190,7 +190,7 @@ describe("filtering by part of the term", () => {
     expect(lanes("A")).toBe(3);
   });
   it("offers the parts of the term", () => {
-    expect(weekGrids(s, opts()).parts.map((p) => p.code)).toEqual(parts);
+    expect(weekGrids(s, opts()).parts.map((p) => p.code)).toEqual(["Full", "First", "A", "B", "Second", "C", "D"]);
     expect(weekGrids(s, opts({ term: "WI" })).parts.map((p) => p.code)).toEqual(["Full"]);
   });
   it("applies to faculty and room grids and their unscheduled lists, but never changes the choices", () => {
@@ -254,5 +254,18 @@ describe("quarter dots", () => {
     expect(quarters("Second")).toEqual([false, false, true, true]);
     expect(quarters("A")).toEqual([true, false, false, false]);
     expect(quarters("D")).toEqual([false, false, false, true]);
+  });
+});
+
+describe("order by part of term", () => {
+  it("puts blocks that start together left to right: full, first, A, B, second, C, D", () => {
+    const shuffled = ["D", "Second", "A", "Full", "C", "B", "First"];
+    const g = weekGrids(make(shuffled.map((p, i) => sec("MATH", String(100 + i), "A", { TermPart: p, ...mt("M", "9:00", "50", `NH ${i}`) }))), opts());
+    const byLane = [...g.grids[0]!.blocks].sort((a, b) => a.lane - b.lane).map((b) => shuffled[Number(b.title.split(" ")[1]) - 100]);
+    expect(byLane).toEqual(["Full", "First", "A", "B", "Second", "C", "D"]);
+  });
+  it("lists unscheduled sections in the same order", () => {
+    const g = weekGrids(make(["B", "Full", "First"].map((p, i) => sec("MATH", String(200 + i), "A", { TermPart: p }))), opts());
+    expect(g.grids[0]!.unscheduled.map((u) => u.label.split(" ")[1])).toEqual(["201", "202", "200"]);
   });
 });

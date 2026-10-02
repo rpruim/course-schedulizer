@@ -30,6 +30,8 @@ export interface Block {
    * split into four equal parts (a half term fills two dots, a full term all four).
    */
   quarters: boolean[];
+  /** Rank of the section's part of term (full first), to order blocks that start together. */
+  order: number;
   /** `MATH 102A` — the primary listing only, for crowded blocks. */
   short: string;
   /** A second line: who or where, depending on the grid. */
@@ -104,8 +106,9 @@ export function hueOf(s: string): number {
  * and the number of lanes its cluster needs. Blocks that merely touch (one ends as
  * the next starts) do not overlap. Mutates and returns the blocks.
  */
-export function layoutLanes<T extends { start: number; end: number; lane: number; lanes: number }>(blocks: T[]): T[] {
-  const sorted = [...blocks].sort((a, b) => a.start - b.start || a.end - b.end);
+export function layoutLanes<T extends { start: number; end: number; lane: number; lanes: number; order?: number }>(blocks: T[]): T[] {
+  // Blocks starting together go left to right by `order` (term part: full, first, A, B, second, C, D).
+  const sorted = [...blocks].sort((a, b) => a.start - b.start || (a.order ?? 0) - (b.order ?? 0) || a.end - b.end);
   let cluster: T[] = [];
   let clusterEnd = -1;
   const laneEnds: number[] = [];
@@ -163,6 +166,10 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
       return mine[0] <= Math.max(to, from) && from <= mine[1];
     });
   };
+  const partRank = (s: Session) => {
+    const i = partsFor(schedule.settings, s.term).findIndex((p) => p.code.toLowerCase() === s.termPart.toLowerCase());
+    return i === -1 ? 99 : i;
+  };
   const partTag = (s: Session) => (s.termPart !== "Full" ? ` · ${s.termPart}` : "");
 
   const blockFor = (s: Session, day: string, sub: string): Block => ({
@@ -173,6 +180,7 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
     end: Math.min(1440, s.start! + s.duration!),
     title: label(s),
     quarters: quartersOf(s),
+    order: partRank(s),
     short: `${s.prefix} ${s.courseNumber}${s.section}`,
     sub,
     detail: [`${label(s)}${partTag(s)}`, s.shortTitle, s.faculty.map((f) => f.name).join(", "), `${[...s.days].join("")} ${timeRange(s)}`, s.room].filter(Boolean).join("\n"),
@@ -196,7 +204,7 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
     const startMin = Math.min(480, starts.length ? Math.floor(Math.min(...starts) / 60) * 60 : 480);
     const endMin = Math.max(1020, ends.length ? Math.ceil(Math.max(...ends) / 60) * 60 : 1020);
     const withTime = new Set(sessions.filter(scheduled).map((s) => s.sectionId));
-    const unscheduled = sectionIds.filter((sid) => !withTime.has(sid)).map((sid) => ({ sectionId: sid, label: label(firstOf.get(sid)!) }));
+    const unscheduled = sectionIds.filter((sid) => !withTime.has(sid)).sort((a, b) => partRank(firstOf.get(a)!) - partRank(firstOf.get(b)!)).map((sid) => ({ sectionId: sid, label: label(firstOf.get(sid)!) }));
     return { id, title, days, startMin, endMin, blocks, unscheduled };
   };
 

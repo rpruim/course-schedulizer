@@ -4,10 +4,13 @@ import type { PartDef, Settings } from "./types.js";
  * The term parts valid for a term: the parts that name the term, or, if it has
  * none, the default (term-less) semester parts. FA, SP and SU all use the
  * default grid (full, half and quarter terms); WI (2 weeks) has its own.
+ * In the order they run: by first week, the longer part first, so the semester grid
+ * reads Full, First, A, B, Second, C, D.
  */
 export function partsFor(settings: Settings, term: string): PartDef[] {
   const own = settings.parts.filter((p) => p.term?.toUpperCase() === term.toUpperCase());
-  return own.length ? own : settings.parts.filter((p) => !p.term);
+  const parts = own.length ? own : settings.parts.filter((p) => !p.term);
+  return [...parts].sort((a, b) => a.startWeek - b.startWeek || b.endWeek - a.endWeek);
 }
 
 /** Inclusive week range of a part within a term, or `undefined` if the part is not defined for it. */
