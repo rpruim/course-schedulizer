@@ -40,10 +40,14 @@ export function parseDays(text: string): string | null {
   return [..."MTWRFSU"].filter((d) => s.includes(d)).join("");
 }
 
-/** `"Ada Example (3), Ben Sample"` → instructors. Commas or newlines separate. */
-export function parseFaculty(text: string): Instructor[] {
+/**
+ * `"Ada Example (3); Ben Sample"` → instructors. Semicolons or newlines separate; so do commas,
+ * unless the text has a semicolon or `commas` is false (names such as `Pruim, Randall` contain commas).
+ */
+export function parseFaculty(text: string, o: { commas?: boolean } = {}): Instructor[] {
+  const commas = (o.commas ?? true) && !text.includes(";");
   return text
-    .split(/[,\n]/)
+    .split(commas ? /[,\n]/ : /[;\n]/)
     .map((p) => p.trim())
     .filter(Boolean)
     .map((p) => {
@@ -52,5 +56,8 @@ export function parseFaculty(text: string): Instructor[] {
     });
 }
 
-export const formatFaculty = (fac: Instructor[]) =>
-  fac.map((f) => (f.load === undefined ? f.name : `${f.name} (${formatNumber(f.load)})`)).join(", ");
+/** Instructors as text: `Ada Example (3), Ben Sample`; with `;` (always, or whenever a name has a comma, so it reads back the same). */
+export function formatFaculty(fac: Instructor[], o: { semicolons?: boolean } = {}): string {
+  const sep = o.semicolons || fac.some((f) => f.name.includes(",")) ? "; " : ", ";
+  return fac.map((f) => (f.load === undefined ? f.name : `${f.name} (${formatNumber(f.load)})`)).join(sep);
+}

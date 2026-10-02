@@ -140,7 +140,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li><strong>Edit a section</strong> by clicking it: a row on the Schedule tab, a block on a week grid, or a section named in the Conflicts list.</li>
           <li><strong>Make several similar sections</strong> by editing one and choosing <em>Add another section of this course</em>: it opens a copy with the next free letter. Change what differs and save.</li>
           <li><strong>Several meetings</strong> (for example MW at one time and F at another) are separate meetings in the same section: use <em>+ Add meeting</em> in the editor.</li>
-          <li><strong>Instructors and load.</strong> List instructors separated by commas. A section’s load is split equally among them; write <code>Ada Example (3), Ben Sample</code> to
+          <li><strong>Instructors and load.</strong> List instructors separated by semicolons (names may contain commas, as in <code>Pruim, Randall</code>). A section’s load is split equally among them; write <code>Ada Example (3); Ben Sample</code> to
             give someone a specific share. The editor shows each person’s share, and warns if shares do not add up.</li>
           <li><strong>Cross-listings.</strong> For a course that is also listed under another prefix or number (<code>DATA 385</code> and <code>STAT 385</code>), add the other listings under <em>Also listed as</em>.
             The section is shown under all its names but its load is counted once.</li>

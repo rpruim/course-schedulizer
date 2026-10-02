@@ -1,6 +1,6 @@
 {
   "name": "course-schedulizer-2",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
   "description": "Course Schedulizer 2.0 (TypeScript)",
   "engines": { "node": ">=20" },

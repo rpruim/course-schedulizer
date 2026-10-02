@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { HashRouter, NavLink, Route, Routes, useNavigate } from "react-router-dom";
 import { Toolbar, type OpenReport } from "./components";
 import { EditorProvider } from "./editor/context";
+import { AboutPage } from "./pages/AboutPage";
 import { ComparePage } from "./pages/ComparePage";
 import { ConstraintsPage } from "./pages/ConstraintsPage";
 import { ConflictsPage } from "./pages/ConflictsPage";
@@ -30,6 +31,7 @@ const tabs = (reports: OpenReport[] | undefined, setReports: (r: OpenReport[] | 
   { to: "/import", label: "Import", element: <ImportPage reports={reports} onReports={setReports} onDismiss={() => setReports(undefined)} /> },
   { to: "/export", label: "Export", element: <ExportPage /> },
   { to: "/help", label: "Help", element: <HelpPage /> },
+  { to: "/about", label: "About", element: <AboutPage /> },
 ];
 
 function Shell() {
@@ -53,7 +55,7 @@ function Shell() {
     <EditorProvider onNotice={setNotice}>
       <div className="app">
         <header>
-          <h1>Course Schedulizer 2.0</h1>
+          <h1>Course Schedulizer</h1>
           <Toolbar />
         </header>
         <SchedulePicker />

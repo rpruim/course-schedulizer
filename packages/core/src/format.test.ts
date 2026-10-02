@@ -35,6 +35,13 @@ describe("faculty", () => {
   it("parses shares", () => {
     expect(parseFaculty("Ada Example (3), Ben Sample")).toEqual([{ name: "Ada Example", load: 3 }, { name: "Ben Sample" }]);
     expect(parseFaculty("Ada\nBen (1.5)")).toEqual([{ name: "Ada" }, { name: "Ben", load: 1.5 }]);
+    // semicolons let a name contain a comma; commas still separate when there is no semicolon
+    expect(parseFaculty("Pruim, Randall; Smith, Jo (2)")).toEqual([{ name: "Pruim, Randall" }, { name: "Smith, Jo", load: 2 }]);
+    expect(parseFaculty("Pruim, Randall", { commas: false })).toEqual([{ name: "Pruim, Randall" }]);
+    expect(parseFaculty("Ada, Ben")).toEqual([{ name: "Ada" }, { name: "Ben" }]);
+    expect(formatFaculty([{ name: "Ada" }, { name: "Ben", load: 1 }])).toBe("Ada, Ben (1)");
+    expect(formatFaculty([{ name: "Ada" }, { name: "Ben", load: 1 }], { semicolons: true })).toBe("Ada; Ben (1)");
+    expect(formatFaculty([{ name: "Pruim, Randall" }, { name: "Ben" }])).toBe("Pruim, Randall; Ben");
     expect(parseFaculty("Smith (Chair)")).toEqual([{ name: "Smith (Chair)" }]);
     expect(parseFaculty("")).toEqual([]);
     expect(parseFaculty("*")).toEqual([{ name: "*" }]);
