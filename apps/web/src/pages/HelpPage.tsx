@@ -227,13 +227,13 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </p>
         <h3>Time window</h3>
         <p>
-          “These courses or instructors <em>should</em> (or <em>should not</em>) meet between two times on some days.” For example, no 300-level course during the 10:00–10:50 slot on M/W/F, or
+          “The sections of these courses — or taught by these instructors — <em>should</em> (or <em>should not</em>) meet between two times on some days.” Choose once whether the rule is about <em>courses</em> or about <em>instructors</em>, then list them. For example, no 300-level course during the 10:00–10:50 slot on M/W/F, or
           Kim not teaching before 9:00.
         </p>
         <ul>
           <li><strong>Counts as meeting</strong>: <em>any overlap</em> (the default for “should not”: a class 9:30–10:20 breaks a 10:00–10:50 rule) or <em>entirely within</em> (the default for “should”). A class that ends exactly when the window starts does not overlap it.</li>
           <li><strong>Any or all of the days</strong>: with “any of M W F”, one meeting in the window is enough to count; with “all of”, the section must meet in the window on each of those days.</li>
-          <li><strong>Every section, or at least some</strong>: by default every section named must satisfy the rule. Choose <em>at least some</em> for rules such as “at least one section of Core 100 should meet between 5pm and 10pm”, so a day-time section is fine as long as an evening one exists.</li>
+          <li><strong>Every section, or at least some</strong>: by default every section of those courses (or taught by those instructors) must satisfy the rule. Choose <em>at least some</em> for rules such as “at least one section of Core 100 should meet between 5pm and 10pm”, so a day-time section is fine as long as an evening one exists.</li>
           <li>Sections with no scheduled time are not checked.</li>
         </ul>
         <p>

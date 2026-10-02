@@ -34,6 +34,10 @@ export const emptyRule = (type: Rule["type"] = "takeable"): Rule => ({
   ...(type === "window" ? { from: 600, to: 660 } : {}),
 });
 
+/** What a window rule is about: sections of courses, or sections taught by instructors (all lines of a rule are one or the other). */
+export const ruleSubject = (r: Pick<Rule, "items">): "courses" | "instructors" =>
+  r.items.length > 0 && r.items.every((i) => i.instructor.trim() !== "" && i.course.trim() === "") ? "instructors" : "courses";
+
 /** The days a window rule looks at: its own, or Monday to Friday. */
 export const ruleDays = (r: Pick<Rule, "days">) => r.days || "MTWRF";
 
@@ -112,6 +116,7 @@ export function validateRule(schedule: Schedule, rule: Rule, original?: string):
   rule.items.forEach((it, i) => {
     if (!it.course.trim() && !it.instructor.trim()) out.push({ field: `items.${i}`, message: "Name a course or an instructor." });
     if (it.course.trim() && it.instructor.trim()) out.push({ field: `items.${i}`, message: "Use a course or an instructor on a line, not both." });
+    if (rule.type === "window" && ruleSubject(rule) === "courses" && it.instructor.trim() && !it.course.trim()) out.push({ field: `items.${i}`, message: "A rule is about courses or about instructors, not both." });
     if (rule.type === "takeable" && it.instructor.trim()) out.push({ field: `items.${i}`, message: "A “take together” rule lists courses." });
     if (it.course.trim() && !/^\S+(\s+\S+)?$/.test(it.course.trim())) out.push({ field: `items.${i}`, message: "Write a course as PREFIX NUMBER, for example MATH 231 or MATH 3*." });
   });
@@ -142,7 +147,9 @@ export function describeRule(r: Rule): string {
     const n = r.count === undefined ? "all" : `${r.choose} ${r.count}`;
     return `A student must be able to take ${n} of ${items}${when}.`;
   }
-  const which = r.count === undefined ? "Each of" : `At least ${r.count} of`;
+  const people = ruleSubject(r) === "instructors";
+  const of = people ? "sections taught by" : "sections of";
+  const which = r.count === undefined ? `Every section ${people ? "taught by" : "of"}` : `At least ${r.count} of the ${of}`;
   const verb = r.should === "should" ? "should" : "should not";
   const how = meetsMode(r) === "within" ? "meet within" : "meet during";
   const days = ruleDays(r);

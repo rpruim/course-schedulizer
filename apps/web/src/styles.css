@@ -269,3 +269,5 @@ td button.link + button.link { margin-left: 6px; }
 .menu-list a.active { border-bottom: 0; background: var(--bg); }
 
 .take-row { align-items: center; }
+
+.subject-row { gap: 6px 18px; margin: 0 0 4px; }

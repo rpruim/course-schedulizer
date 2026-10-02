@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { conflictedSessions } from "./conflicts.js";
 import { recordsFromCsv } from "./csv.js";
 import { importConstraints, importRecords } from "./import.js";
-import { deleteRule, describeRule, emptyRule, findRuleViolations, rulesOf, saveRule, validateRule, type Rule } from "./rules.js";
+import { deleteRule, describeRule, emptyRule, findRuleViolations, rulesOf, ruleSubject, saveRule, validateRule, type Rule } from "./rules.js";
 import { fixtureText } from "./testutil.js";
 import { readWorkbook, writeWorkbook } from "./xlsx.js";
 
@@ -203,6 +203,17 @@ describe("editing rules", () => {
     expect(rulesOf(deleteRule(u, "B")).map((x) => x.name)).toEqual(["A2", "N"]);
     expect(rulesOf(u)[2]).toMatchObject({ type: "window", from: 600, to: 660 });
   });
+  it("tells courses from instructors, and does not allow a mix", () => {
+    const base = { ...emptyRule("window"), name: "W" };
+    const people = { ...base, items: [{ course: "", section: "", instructor: "Kim" }, { course: "", section: "", instructor: "Lee" }] };
+    expect(ruleSubject(people)).toBe("instructors");
+    expect(describeRule(people)).toBe("Every section taught by Kim, Lee should not meet during 10:00–11:00 on any of M T W R F.");
+    expect(describeRule({ ...people, count: 1 })).toBe("At least 1 of the sections taught by Kim, Lee should not meet during 10:00–11:00 on any of M T W R F.");
+    const mixed = { ...base, items: [{ course: "MATH 1", section: "", instructor: "" }, { course: "", section: "", instructor: "Kim" }] };
+    expect(ruleSubject(mixed)).toBe("courses");
+    expect(validateRule(build([]), mixed).map((p) => p.field)).toEqual(["items.1"]);
+    expect(validateRule(build([]), people)).toEqual([]);
+  });
   it("validates", () => {
     const base: Rule = { ...emptyRule("takeable"), name: "X", items: [{ course: "MATH 1", section: "", instructor: "" }, { course: "MATH 2", section: "", instructor: "" }] };
     expect(validateRule(s, base)).toEqual([]);
@@ -221,7 +232,7 @@ describe("editing rules", () => {
     expect(describeRule({ ...emptyRule("takeable"), name: "x", items: [item("MATH 231"), item("STAT 243", "B")], count: 2 })).toBe("A student must be able to take some 2 of MATH 231, STAT 243 B.");
     expect(describeRule({ ...emptyRule("takeable"), name: "x", items: [item("MATH 3*")], count: 2, choose: "any" })).toBe("A student must be able to take any 2 of MATH 3*.");
     expect(describeRule({ ...emptyRule("takeable"), name: "x", items: [item("MATH 3*")] })).toBe("A student must be able to take all of MATH 3*.");
-    expect(describeRule({ ...emptyRule("window"), name: "x", items: [item("MATH 231")], from: 600, to: 650, days: "MWF" })).toBe("Each of MATH 231 should not meet during 10:00–10:50 on any of M W F.");
-    expect(describeRule({ ...emptyRule("window"), name: "x", items: [item("CORE 100")], from: 1020, to: 1320, should: "should", count: 1, term: "FA" })).toBe("At least 1 of CORE 100 should meet within 17:00–22:00 on any of M T W R F in FA.");
+    expect(describeRule({ ...emptyRule("window"), name: "x", items: [item("MATH 231")], from: 600, to: 650, days: "MWF" })).toBe("Every section of MATH 231 should not meet during 10:00–10:50 on any of M W F.");
+    expect(describeRule({ ...emptyRule("window"), name: "x", items: [item("CORE 100")], from: 1020, to: 1320, should: "should", count: 1, term: "FA" })).toBe("At least 1 of the sections of CORE 100 should meet within 17:00–22:00 on any of M T W R F in FA.");
   });
 });

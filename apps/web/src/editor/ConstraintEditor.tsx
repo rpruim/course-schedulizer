@@ -9,6 +9,7 @@ import {
   meetsMode,
   parseTime,
   rulesOf,
+  ruleSubject,
   saveRule,
   validateRule,
   type Rule,
@@ -32,6 +33,8 @@ interface Props {
 interface Form {
   name: string;
   type: Rule["type"];
+  /** Window rules: are the lines courses or instructors? (One choice for the whole rule.) */
+  subject: "courses" | "instructors";
   items: RuleItem[];
   count: string;
   choose: Rule["choose"];
@@ -46,7 +49,7 @@ interface Form {
 }
 
 const toForm = (r: Rule): Form => ({
-  name: r.name, type: r.type, items: r.items.map((i) => ({ ...i })), count: r.count === undefined ? "" : String(r.count), choose: r.choose,
+  name: r.name, type: r.type, subject: ruleSubject(r), items: r.items.map((i) => ({ ...i })), count: r.count === undefined ? "" : String(r.count), choose: r.choose,
   term: r.term, days: r.days, dayRule: r.dayRule, from: r.from === undefined ? "" : formatTime(r.from), to: r.to === undefined ? "" : formatTime(r.to),
   should: r.should, meets: r.meets, comment: r.comment,
 });
@@ -67,7 +70,9 @@ function toRule(f: Form): { rule: Rule; problems: { field: string; message: stri
     else problems.push({ field: "count", message: "Use a whole number, 1 or more" });
   }
   const rule: Rule = {
-    name: f.name.trim(), type: f.type, items: f.items.filter((i) => i.course.trim() || i.section.trim() || i.instructor.trim()), term: f.term, days: f.days, dayRule: f.dayRule,
+    name: f.name.trim(), type: f.type, items: f.items
+      .map((i) => (f.type === "window" && f.subject === "instructors" ? { course: "", section: "", instructor: i.instructor } : { ...i, instructor: "" }))
+      .filter((i) => i.course.trim() || i.section.trim() || i.instructor.trim()), term: f.term, days: f.days, dayRule: f.dayRule,
     choose: f.choose, should: f.should, meets: f.meets, comment: f.comment, ...(count !== undefined ? { count } : {}),
     ...(from !== undefined ? { from } : {}), ...(to !== undefined ? { to } : {}),
   };
@@ -133,8 +138,9 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
       type,
       from: type === "window" && f.from === "" ? "10:00" : f.from,
       to: type === "window" && f.to === "" ? "11:00" : f.to,
-      items: type === "takeable" ? f.items.map((i) => ({ ...i, instructor: "" })) : f.items,
+      subject: type === "takeable" ? "courses" : f.subject,
     }));
+  const switchSubject = (subject: Form["subject"]) => setForm((f) => (f.subject === subject ? f : { ...f, subject, items: [{ course: "", section: "", instructor: "" }] }));
   const toggleDay = (d: string) => set("days", [..."MTWRF"].filter((x) => (x === d ? !form.days.includes(x) : form.days.includes(x))).join(""));
   const allDays = form.days === "" || form.days === "MTWRF";
 
@@ -161,25 +167,21 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
           </fieldset>
 
           <fieldset>
-            <legend>{form.type === "takeable" ? "Courses" : "Courses or instructors"}</legend>
+            <legend>{form.type === "takeable" ? "Courses" : "What the rule is about"}</legend>
+            {form.type === "window" && (
+              <div className="row subject-row">
+                <label className="choice"><input type="radio" checked={form.subject === "courses"} onChange={() => switchSubject("courses")} /> Courses</label>
+                <label className="choice"><input type="radio" checked={form.subject === "instructors"} onChange={() => switchSubject("instructors")} /> Instructors</label>
+              </div>
+            )}
             {form.items.map((it, i) => {
-              // a lone space marks a line that is about a person but has no name yet
-              const byPerson = it.instructor !== "";
+              const person = form.type === "window" && form.subject === "instructors";
               return (
                 <div className="row item-row" key={i}>
-                  {form.type === "window" && (
-                    <label className="f">
-                      <span>{i === 0 ? "Is about" : " "}</span>
-                      <select value={byPerson ? "person" : "course"} onChange={(e) => setItem(i, e.target.value === "person" ? { course: "", section: "", instructor: it.instructor || " " } : { instructor: "" })}>
-                        <option value="course">a course</option>
-                        <option value="person">an instructor</option>
-                      </select>
-                    </label>
-                  )}
-                  {byPerson ? (
+                  {person ? (
                     <label className="f grow">
-                      <span>{i === 0 || form.type === "window" ? "Instructor" : " "}</span>
-                      <input value={it.instructor.trim() === "" ? "" : it.instructor} list="rule-people" onChange={(e) => setItem(i, { instructor: e.target.value === "" ? " " : e.target.value })} />
+                      <span>Instructor</span>
+                      <input value={it.instructor} list="rule-people" onChange={(e) => setItem(i, { instructor: e.target.value })} />
                     </label>
                   ) : (
                     <>
@@ -198,10 +200,14 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                 </div>
               );
             })}
-            <p className="muted small">
-              Patterns: <code>*</code> any run of characters, <code>?</code> any one character, <code>[23]</code> either of those. <code>MATH 3*</code> is every 300-level MATH course, <code>STAT [23]4?</code> is 241, 243, 345 and so on, <code>MATH *</code> every MATH course. Leave Section blank for every section.
-            </p>
-            <button type="button" onClick={() => set("items", [...form.items, { course: "", section: "", instructor: "" }])}>+ Add {form.type === "takeable" ? "course" : "line"}</button>
+            {form.subject === "courses" || form.type === "takeable" ? (
+              <p className="muted small">
+                Patterns: <code>*</code> any run of characters, <code>?</code> any one character, <code>[23]</code> either of those. <code>MATH 3*</code> is every 300-level MATH course, <code>STAT [23]4?</code> is 241, 243, 345 and so on, <code>MATH *</code> every MATH course. Leave Section blank for every section.
+              </p>
+            ) : (
+              <p className="muted small">The rule is about the sections each of these instructors teaches.</p>
+            )}
+            <button type="button" onClick={() => set("items", [...form.items, { course: "", section: "", instructor: "" }])}>+ Add {form.type === "takeable" || form.subject === "courses" ? "course" : "instructor"}</button>
             {err("items")}
           </fieldset>
 
@@ -271,8 +277,8 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                 <label className="f">
                   <span>Applies to</span>
                   <select value={form.count === "" ? "each" : "some"} onChange={(e) => set("count", e.target.value === "each" ? "" : "1")}>
-                    <option value="each">every section named</option>
-                    <option value="some">at least some of the sections</option>
+                    <option value="each">{form.subject === "instructors" ? "every section they teach" : "every section of those courses"}</option>
+                    <option value="some">{form.subject === "instructors" ? "at least some of the sections they teach" : "at least some of those sections"}</option>
                   </select>
                 </label>
                 {form.count !== "" && (
