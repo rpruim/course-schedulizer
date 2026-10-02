@@ -87,7 +87,7 @@ export interface RowFilter {
 }
 
 /** Year and term are exact; text matches course, title, faculty and room, case-insensitively. */
-export function filterRows(rows: SectionRow[], f: RowFilter): SectionRow[] {
+export function filterRows<T extends SectionRow>(rows: T[], f: RowFilter): T[] {
   const text = f.text?.trim().toLowerCase();
   return rows.filter((r) => {
     if (f.year && r.year !== f.year) return false;
@@ -107,4 +107,56 @@ export function yearsOf(schedule: Schedule): string[] {
 export function termsInUse(schedule: Schedule): { code: string; name: string }[] {
   const used = new Set(schedule.sessions.map((s) => s.term));
   return schedule.settings.terms.filter((t) => used.has(t.code));
+}
+
+/** A section row from one of several open schedules. */
+export interface MultiRow extends SectionRow {
+  scheduleId: string;
+  scheduleName: string;
+}
+
+interface Named {
+  id: string;
+  name: string;
+  schedule: Schedule;
+}
+
+/** Configured terms across schedules, first-seen order (schedules may configure terms differently). */
+export function termsAcross(entries: Named[]): { code: string; name: string }[] {
+  const seen = new Map<string, string>();
+  for (const e of entries) for (const t of e.schedule.settings.terms) if (!seen.has(t.code)) seen.set(t.code, t.name);
+  return [...seen].map(([code, name]) => ({ code, name }));
+}
+
+/**
+ * Section rows from several schedules in one list, in natural course order
+ * (year, prefix, number, section, term) with the schedules in workspace order, so the
+ * same section in different schedules sits together. Conflicts are flagged within
+ * each schedule, never across them.
+ */
+export function multiSectionRows(entries: Named[]): MultiRow[] {
+  const termRank = new Map(termsAcross(entries).map((t, i) => [t.code, i]));
+  return entries
+    .flatMap((e, index) => sectionRows(e.schedule).map((r) => ({ row: { ...r, scheduleId: e.id, scheduleName: e.name } as MultiRow, index })))
+    .sort(
+      (a, b) =>
+        natural(a.row.year, b.row.year) ||
+        natural(a.row.prefix, b.row.prefix) ||
+        natural(a.row.courseNumber, b.row.courseNumber) ||
+        natural(a.row.section, b.row.section) ||
+        (termRank.get(a.row.term) ?? 99) - (termRank.get(b.row.term) ?? 99) ||
+        a.index - b.index,
+    )
+    .map((x) => x.row);
+}
+
+/** Distinct academic years across schedules, in order of appearance. */
+export function yearsAcross(entries: Named[]): string[] {
+  return [...new Set(entries.flatMap((e) => yearsOf(e.schedule)))];
+}
+
+/** Configured terms (first-seen order) that any of the schedules uses. */
+export function termsInUseAcross(entries: Named[]): { code: string; name: string }[] {
+  const used = new Set(entries.flatMap((e) => e.schedule.sessions.map((s) => s.term)));
+  return termsAcross(entries).filter((t) => used.has(t.code));
 }

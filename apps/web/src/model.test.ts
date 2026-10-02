@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { importRecords, type Schedule } from "@schedulizer/core";
-import { filterRows, sectionRows, termsInUse, timeRange, yearsOf } from "./model";
+import { filterRows, multiSectionRows, sectionRows, termsInUse, termsInUseAcross, timeRange, yearsAcross, yearsOf } from "./model";
 
 const sec = (prefix: string, n: string, letter: string, o: Record<string, string> = {}) => ({
   AcademicYear: "Y1", Term: "FA", Prefix: prefix, CourseNumber: n, Section: letter, ShortTitle: `${prefix} ${n}`, ...o,
@@ -79,4 +79,28 @@ describe("filterRows", () => {
     expect(yearsOf(s)).toEqual(["Y1", "Y2"]);
     expect(termsInUse(s).map((t) => t.code)).toEqual(["FA", "SP"]);
   });
+});
+
+describe("multiSectionRows", () => {
+  const mk = (rows: Record<string, string>[]) => make(rows);
+  const a = mk([sec("MATH", "101", "A", { Faculty: "Smith", MeetingDays: "M", StartTime: "9:00", MeetingDuration: "50" }), sec("MATH", "102", "A")]);
+  const b = mk([sec("MATH", "101", "A", { Faculty: "Lee" }), sec("STAT", "200", "A", { Term: "SP" })]);
+  const entries = [{ id: "a", name: "Draft A", schedule: a }, { id: "b", name: "Draft B", schedule: b }];
+  it("keeps the same section from different schedules together, in schedule order", () => {
+    expect(multiSectionRows(entries).map((r) => `${r.prefix} ${r.courseNumber} ${r.section} ${r.scheduleName}`)).toEqual([
+      "MATH 101 A Draft A", "MATH 101 A Draft B", "MATH 102 A Draft A", "STAT 200 A Draft B",
+    ]);
+    expect(multiSectionRows([...entries].reverse()).map((r) => r.scheduleName).slice(0, 2)).toEqual(["Draft B", "Draft A"]);
+  });
+  it("tags each row with its schedule, and flags conflicts only within one schedule", () => {
+    const clash = mk([sec("A", "1", "A", { Faculty: "Smith", MeetingDays: "M", StartTime: "9:00", MeetingDuration: "50" })]);
+    const same = mk([sec("B", "2", "A", { Faculty: "Smith", MeetingDays: "M", StartTime: "9:00", MeetingDuration: "50" })]);
+    const rows = multiSectionRows([{ id: "x", name: "X", schedule: clash }, { id: "y", name: "Y", schedule: same }]);
+    expect(rows.map((r) => [r.scheduleId, r.conflict])).toEqual([["x", false], ["y", false]]);
+  });
+  it("lists years and terms across schedules", () => {
+    expect(yearsAcross([...entries, { id: "c", name: "C", schedule: mk([sec("M", "1", "A", { AcademicYear: "Z" })]) }])).toEqual(["Y1", "Z"]);
+    expect(termsInUseAcross(entries).map((t) => t.code)).toEqual(["FA", "SP"]);
+  });
+  it("is empty for no schedules", () => expect(multiSectionRows([])).toEqual([]));
 });

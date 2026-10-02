@@ -225,3 +225,34 @@ export function termsFor(schedule: Schedule, year: string): { code: string; name
   const used = new Set(schedule.sessions.filter((s) => s.academicYear === year).map((s) => s.term));
   return schedule.settings.terms.filter((t) => used.has(t.code));
 }
+
+/** One schedule's contribution to a group of grids (a department, an instructor, a room). */
+export interface GridItem {
+  scheduleId: string;
+  scheduleName: string;
+  /** Absent when this schedule has nothing for the group (the person or room does not appear in it). */
+  grid: Grid | undefined;
+}
+
+export interface GridGroup {
+  /** The instructor's or room's name; empty for the department grid. */
+  title: string;
+  items: GridItem[];
+}
+
+/**
+ * Arrange the grids of several schedules for display: one group per instructor or room
+ * (names in natural order, taken from every schedule), each holding that group's grid
+ * from every schedule — or nothing, which is itself worth seeing when comparing. The
+ * department view is one group. With a single schedule this is just its grids.
+ */
+export function groupGrids(results: { id: string; name: string; result: WeekResult }[], kind: GridKind, only?: string): GridGroup[] {
+  const itemFor = (r: (typeof results)[number], title: string): GridItem => ({
+    scheduleId: r.id,
+    scheduleName: r.name,
+    grid: r.result.grids.find((g) => g.title === title || (kind === "dept" && title === "")),
+  });
+  if (kind === "dept") return [{ title: "", items: results.map((r) => itemFor(r, "")) }];
+  const titles = only ? [only] : [...new Set(results.flatMap((r) => r.result.grids.map((g) => g.title)))].sort(natural);
+  return titles.map((title) => ({ title, items: results.map((r) => itemFor(r, title)) }));
+}

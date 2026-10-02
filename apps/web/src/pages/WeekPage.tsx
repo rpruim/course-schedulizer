@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import { partsFor } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
-import { yearsOf } from "../model";
-import { useSchedule } from "../state";
-import { hourLabel, termsFor, weekGrids, type ColorBy, type Grid, type GridKind } from "../week";
-import { Empty } from "./SchedulePage";
+import { termsAcross, yearsAcross } from "../model";
+import { useWorkspace } from "../state";
+import { groupGrids, hourLabel, termsFor, weekGrids, type ColorBy, type Grid, type GridKind } from "../week";
+import { Empty, NoneShown } from "./SchedulePage";
 
 const DAY_NAMES: Record<string, string> = { M: "Mon", T: "Tue", W: "Wed", R: "Thu", F: "Fri", S: "Sat", U: "Sun" };
 const HOUR_PX = 52;
@@ -17,7 +17,7 @@ const KIND = {
 
 /** Department, faculty or room week: sections as blocks on a Monday–Friday grid; click a block to edit it. */
 export function WeekPage({ kind }: { kind: GridKind }) {
-  const { schedule } = useSchedule();
+  const ws = useWorkspace();
   const { openSection } = useEditor();
   const [pickedYear, setPickedYear] = useState("");
   const [pickedTerm, setPickedTerm] = useState("");
@@ -25,25 +25,42 @@ export function WeekPage({ kind }: { kind: GridKind }) {
   const [colorBy, setColorBy] = useState<ColorBy>("prefix");
   const [only, setOnly] = useState("");
 
-  const years = yearsOf(schedule);
+  const entries = ws.includedEntries;
+  const years = yearsAcross(entries);
   const year = years.includes(pickedYear) ? pickedYear : (years[0] ?? "");
-  const terms = termsFor(schedule, year);
+  const terms = termsAcross(entries).filter((t) => entries.some((e) => termsFor(e.schedule, year).some((x) => x.code === t.code)));
   const term = terms.some((t) => t.code === pickedTerm) ? pickedTerm : (terms[0]?.code ?? "");
 
   // The part of the term to show; a part this term does not have means the whole term.
-  const termParts = partsFor(schedule.settings, term);
+  const termParts = entries[0] ? partsFor(entries[0].schedule.settings, term) : [];
   const part = termParts.some((p) => p.code === pickedPart) ? pickedPart : "Full";
 
-  const result = useMemo(
-    () => weekGrids(schedule, { year, term, kind, colorBy, part, ...(only ? { only } : {}), ...(kind === "dept" && only ? { prefix: only } : {}) }),
-    [schedule, year, term, kind, colorBy, part, only],
+  const results = useMemo(
+    () =>
+      entries.map((e) => ({
+        id: e.id,
+        name: e.name,
+        result: weekGrids(e.schedule, { year, term, kind, colorBy, part, ...(kind === "dept" && only ? { prefix: only } : {}) }),
+      })),
+    [entries, year, term, kind, colorBy, part, only],
   );
-  // A choice that no longer exists (a different file or term) means "all".
-  const effectiveOnly = result.choices.includes(only) ? only : "";
-  const shown = effectiveOnly === only ? result : weekGrids(schedule, { year, term, kind, colorBy, part });
+  // Choices come from every included schedule; one that no longer exists (a different file or term) means "all".
+  const choices = [...new Set(results.flatMap((r) => r.result.choices))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+  const effectiveOnly = choices.includes(only) ? only : "";
+  const shownResults = useMemo(
+    () =>
+      kind === "dept" || !effectiveOnly
+        ? results
+        : entries.map((e) => ({ id: e.id, name: e.name, result: weekGrids(e.schedule, { year, term, kind, colorBy, part, only: effectiveOnly }) })),
+    [results, entries, year, term, kind, colorBy, part, effectiveOnly],
+  );
+  const groups = useMemo(() => groupGrids(shownResults, kind, kind === "dept" ? undefined : effectiveOnly || undefined), [shownResults, kind, effectiveOnly]);
+  const withoutRoom = shownResults.reduce((n, r) => n + r.result.withoutRoom, 0);
 
-  if (schedule.sessions.length === 0) return <Empty />;
+  if (ws.entries.length === 0) return <Empty />;
+  if (entries.length === 0) return <NoneShown />;
   const k = KIND[kind];
+  const several = entries.length > 1;
 
   return (
     <>
@@ -70,7 +87,7 @@ export function WeekPage({ kind }: { kind: GridKind }) {
         <label className="field">{k.label}
           <select value={effectiveOnly} onChange={(e) => setOnly(e.target.value)}>
             <option value="">{k.all}</option>
-            {result.choices.map((c) => <option key={c}>{c}</option>)}
+            {choices.map((c) => <option key={c}>{c}</option>)}
           </select>
         </label>
         <label className="field">Colour by
@@ -82,22 +99,33 @@ export function WeekPage({ kind }: { kind: GridKind }) {
         </label>
         <span className="muted legend"><span className="swatch conflict-swatch" /> conflict</span>
       </div>
-      {kind === "room" && shown.withoutRoom > 0 && (
-        <p className="note">{shown.withoutRoom} meeting{shown.withoutRoom === 1 ? " has" : "s have"} no room (or a room such as “Online”), so they are not on a room grid.</p>
+      {kind === "room" && withoutRoom > 0 && (
+        <p className="note">{withoutRoom} meeting{withoutRoom === 1 ? " has" : "s have"} no room (or a room such as “Online”), so they are not on a room grid.</p>
       )}
-      {shown.grids.length === 0 && <p className="empty">{k.empty}</p>}
-      {shown.grids.map((g) => (
-        <section className="week-section" key={g.id}>
-          {(kind !== "dept" || shown.grids.length > 1) && <h2>{g.title}</h2>}
-          <WeekGrid grid={g} onOpen={openSection} />
-          {g.unscheduled.length > 0 && (
-            <p className="unscheduled">
-              <span className="muted">No scheduled time: </span>
-              {g.unscheduled.map((u) => (
-                <button key={u.sectionId} className="chip wide" onClick={() => openSection(u.sectionId)}>{u.label}</button>
-              ))}
-            </p>
-          )}
+      {groups.length === 0 && <p className="empty">{k.empty}</p>}
+      {groups.map((g) => (
+        <section className="week-section" key={g.title || "dept"}>
+          {g.title && <h2>{g.title}</h2>}
+          {g.items.map((item) => (
+            <div key={item.scheduleId} className="week-item">
+              {several && <h3 className="sched-heading">{item.scheduleName}</h3>}
+              {item.grid ? (
+                <>
+                  <WeekGrid grid={item.grid} onOpen={(sectionId) => openSection(sectionId, item.scheduleId)} />
+                  {item.grid.unscheduled.length > 0 && (
+                    <p className="unscheduled">
+                      <span className="muted">No scheduled time: </span>
+                      {item.grid.unscheduled.map((u) => (
+                        <button key={u.sectionId} className="chip wide" onClick={() => openSection(u.sectionId, item.scheduleId)}>{u.label}</button>
+                      ))}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="muted">{g.title ? `${g.title} has no sections in this schedule.` : "No sections in this term."}</p>
+              )}
+            </div>
+          ))}
         </section>
       ))}
     </>

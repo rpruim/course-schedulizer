@@ -1,18 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   deleteNonTeaching,
+  emptySchedule,
   facultyLoad,
   nonTeachingShown,
   nonTeachingWarnings,
   saveNonTeaching,
   validateNonTeaching,
   type NonTeachingDraft,
+  type Schedule,
 } from "@schedulizer/core";
-import { useSchedule } from "../state";
+import { useWorkspace } from "../state";
 import { byField } from "./form";
 import { draftToNtForm, ntFormToDraft, type NtForm } from "./ntForm";
 
+const EMPTY = emptySchedule();
+
 interface Props {
+  /** The schedule being edited; absent when there are none yet (saving then creates one). */
+  scheduleId: string | undefined;
   initial: NonTeachingDraft;
   /** Position of the row being edited; absent for a new row. */
   index: number | undefined;
@@ -24,8 +30,14 @@ const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 const num = (n: number) => String(Math.round(n * 100) / 100);
 
 /** Dialog for one non-teaching load row: who, what, which term (or the full year), and how much. */
-export function NonTeachingEditor({ initial, index, onClose, onNotice }: Props) {
-  const { schedule, apply } = useSchedule();
+export function NonTeachingEditor({ scheduleId, initial, index, onClose, onNotice }: Props) {
+  const ws = useWorkspace();
+  const entry = scheduleId ? ws.get(scheduleId) : undefined;
+  const schedule = entry?.schedule ?? EMPTY;
+  const apply = (fn: (s: Schedule) => Schedule) => {
+    if (scheduleId) ws.applyTo(scheduleId, fn);
+    else ws.addSchedule("New schedule", fn(EMPTY));
+  };
   const dialog = useRef<HTMLDialogElement>(null);
   const [form, setForm] = useState<NtForm>(() => draftToNtForm(initial));
   const [attempted, setAttempted] = useState(false);
@@ -90,7 +102,7 @@ export function NonTeachingEditor({ initial, index, onClose, onNotice }: Props) 
       <form method="dialog" onSubmit={(e) => { e.preventDefault(); save(); }}>
         <header className="editor-head">
           <h2>{isNew ? "Add non-teaching load" : "Edit non-teaching load"}</h2>
-          <span className="course-name" />
+          <span className="course-name">{ws.entries.length > 1 && entry ? <small className="muted">in “{entry.name}”</small> : null}</span>
           <button type="button" className="link" onClick={onClose} aria-label="Close">✕</button>
         </header>
 

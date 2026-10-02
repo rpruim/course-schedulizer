@@ -6,6 +6,7 @@ import {
   deleteSection,
   displayNames,
   draftShares,
+  emptySchedule,
   findConflicts,
   formatTime,
   parseTime,
@@ -14,15 +15,20 @@ import {
   validateDraft,
   type LetterResolution,
   type SaveResult,
+  type Schedule,
   type SectionDraft,
 } from "@schedulizer/core";
-import { useSchedule } from "../state";
+import { useWorkspace } from "../state";
 import { byField, DAYS, draftToForm, emptyMeetingForm, formToDraft, type Form, type MeetingForm } from "./form";
 
 const STANDARD_DURATIONS = [50, 65, 100];
 const DELIVERY_MODES = ["In-Person", "Online", "Hybrid"];
 
+const EMPTY = emptySchedule();
+
 interface Props {
+  /** The schedule being edited; absent when there are none yet (saving then creates one). */
+  scheduleId: string | undefined;
   initial: SectionDraft;
   onClose: () => void;
   onNotice: (message: string) => void;
@@ -32,8 +38,14 @@ interface Props {
 
 type Collision = Extract<SaveResult, { kind: "collision" }>;
 
-export function SectionEditor({ initial, onClose, onNotice, onCopy }: Props) {
-  const { schedule, apply } = useSchedule();
+export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }: Props) {
+  const ws = useWorkspace();
+  const entry = scheduleId ? ws.get(scheduleId) : undefined;
+  const schedule = entry?.schedule ?? EMPTY;
+  const apply = (fn: (s: Schedule) => Schedule) => {
+    if (scheduleId) ws.applyTo(scheduleId, fn);
+    else ws.addSchedule("New schedule", fn(EMPTY));
+  };
   const dialog = useRef<HTMLDialogElement>(null);
   const [form, setForm] = useState<Form>(() => draftToForm(initial));
   const [attempted, setAttempted] = useState(false);
@@ -157,7 +169,7 @@ export function SectionEditor({ initial, onClose, onNotice, onCopy }: Props) {
       <form method="dialog" onSubmit={(e) => { e.preventDefault(); save(); }}>
         <header className="editor-head">
           <h2>{isNew ? "Add section" : "Edit section"}</h2>
-          <span className="course-name">{name ? `${name} ${form.section.trim()}` : ""}</span>
+          <span className="course-name">{name ? `${name} ${form.section.trim()}` : ""}{ws.entries.length > 1 && entry ? <small className="muted"> · in “{entry.name}”</small> : null}</span>
           <button type="button" className="link" onClick={onClose} aria-label="Close">✕</button>
         </header>
 

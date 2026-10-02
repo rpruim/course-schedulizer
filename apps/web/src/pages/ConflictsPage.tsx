@@ -2,15 +2,33 @@ import { useMemo } from "react";
 import { displayNames, findConflicts, type Conflict } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
 import { timeRange, yearsOf } from "../model";
-import { useSchedule } from "../state";
-import { Empty } from "./SchedulePage";
+import { useWorkspace, type Entry } from "../state";
+import { Empty, NoneShown } from "./SchedulePage";
 
 export function ConflictsPage() {
-  const { schedule } = useSchedule();
+  const ws = useWorkspace();
+  if (ws.entries.length === 0) return <Empty />;
+  if (ws.includedEntries.length === 0) return <NoneShown />;
+  const several = ws.includedEntries.length > 1;
+  return (
+    <>
+      {several && <p className="muted small">Conflicts are found within each schedule, never between schedules.</p>}
+      {ws.includedEntries.map((e) => (
+        <section key={e.id} className="sched-section">
+          {several && <h2 className="sched-heading">{e.name}</h2>}
+          <ConflictsTable entry={e} />
+        </section>
+      ))}
+    </>
+  );
+}
+
+function ConflictsTable({ entry }: { entry: Entry }) {
   const { openSection } = useEditor();
+  const schedule = entry.schedule;
   const conflicts = useMemo(() => findConflicts(schedule), [schedule]);
   const names = useMemo(() => displayNames(schedule), [schedule]);
-  if (schedule.sessions.length === 0) return <Empty />;
+  if (schedule.sessions.length === 0) return <p className="muted">No sections in this schedule.</p>;
 
   const manyYears = yearsOf(schedule).length > 1;
   const label = (id: string) => {
@@ -33,8 +51,8 @@ export function ConflictsPage() {
           {conflicts.map((c, i) => (
             <tr key={i}>
               <td><span className={`tag tag-${c.type.toLowerCase()}`}>{c.type}</span></td>
-              <td><button className="link" onClick={() => openSection(c.sectionIdA)} title="Edit this section">{label(c.sectionIdA)}</button></td>
-              <td><button className="link" onClick={() => openSection(c.sectionIdB)} title="Edit this section">{label(c.sectionIdB)}</button></td>
+              <td><button className="link" onClick={() => openSection(c.sectionIdA, entry.id)} title="Edit this section">{label(c.sectionIdA)}</button></td>
+              <td><button className="link" onClick={() => openSection(c.sectionIdB, entry.id)} title="Edit this section">{label(c.sectionIdB)}</button></td>
               <td>{c.detail}</td>
               <td className="nowrap">{when(c)}</td>
             </tr>

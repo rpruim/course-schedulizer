@@ -137,3 +137,19 @@ details summary { cursor: pointer; color: var(--muted); }
 /* non-teaching editor */
 dialog.editor.narrow { width: min(520px, calc(100vw - 24px)); }
 .preview-box { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--panel); display: flex; flex-direction: column; gap: 2px; font-size: .9rem; }
+
+/* open schedules */
+.picker { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 4px 0 8px; }
+.sched { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+.sched.current { border-color: var(--accent); }
+.sched.hidden .name { opacity: .55; text-decoration: line-through; text-decoration-color: var(--line); }
+.sched .name { border: 0; background: none; padding: 2px 4px; font: inherit; color: var(--fg); cursor: pointer; }
+.sched .icon { border: 0; background: none; padding: 0 3px; color: var(--muted); font-size: .85rem; }
+.sched .icon:hover { color: var(--fg); }
+.sched input[type="checkbox"] { margin: 0; }
+.sched .rename { padding: 1px 6px; width: 12em; }
+.badge { font-size: .65rem; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); }
+.sched-section { margin: 0 0 24px; }
+.sched-heading { font-size: 1rem; margin: 14px 0 6px; padding: 2px 10px; border-left: 3px solid var(--accent); background: var(--panel); }
+.week-item { margin-bottom: 10px; }
+.report-file { margin: 6px 0 0; font-weight: 600; font-size: .9rem; }

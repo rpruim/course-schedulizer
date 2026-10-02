@@ -1,28 +1,20 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { loadTable, type LoadTableRow } from "@schedulizer/core";
-import { yearsOf } from "../model";
-import { useSchedule } from "../state";
-import { Empty } from "./SchedulePage";
+import { yearsAcross, yearsOf } from "../model";
+import { useWorkspace, type Entry } from "../state";
+import { Empty, NoneShown } from "./SchedulePage";
 
 const fmt = (n: number | undefined) => (n === undefined || n === 0 ? "" : String(Math.round(n * 100) / 100));
 
 export function LoadsPage() {
-  const { schedule } = useSchedule();
-  const years = yearsOf(schedule);
+  const ws = useWorkspace();
+  const years = yearsAcross(ws.includedEntries);
   const [picked, setPicked] = useState("");
-  if (years.length === 0) return <Empty />;
-  const year = years.includes(picked) ? picked : years[0]!;
-  const table = loadTable(schedule, year);
-  const name = (code: string) => (code === "AY" ? "Full year" : (schedule.settings.terms.find((t) => t.code === code)?.name ?? code));
-
-  const cells = (r: LoadTableRow) =>
-    table.terms.map((t) => (
-      <td key={t} className="num">
-        <div>{fmt(r.teaching[t])}</div>
-        {r.nonteaching[t] ? <div className="sub" title="non-teaching load">+{fmt(r.nonteaching[t])}</div> : null}
-      </td>
-    ));
+  if (ws.entries.length === 0) return <Empty />;
+  if (ws.includedEntries.length === 0) return <NoneShown />;
+  const year = years.includes(picked) ? picked : (years[0] ?? "");
+  const several = ws.includedEntries.length > 1;
 
   return (
     <>
@@ -38,6 +30,32 @@ export function LoadsPage() {
         <span className="spacer" />
         <Link to="/nonteaching">Edit non-teaching load</Link>
       </div>
+      {ws.includedEntries.map((e) => (
+        <section key={e.id} className="sched-section">
+          {several && <h2 className="sched-heading">{e.name}</h2>}
+          <LoadTableView entry={e} year={year} />
+        </section>
+      ))}
+    </>
+  );
+}
+
+function LoadTableView({ entry, year }: { entry: Entry; year: string }) {
+  const schedule = entry.schedule;
+  if (!yearsOf(schedule).includes(year)) return <p className="muted">Nothing for {year} in this schedule.</p>;
+  const table = loadTable(schedule, year);
+  const name = (code: string) => (code === "AY" ? "Full year" : (schedule.settings.terms.find((t) => t.code === code)?.name ?? code));
+
+  const cells = (r: LoadTableRow) =>
+    table.terms.map((t) => (
+      <td key={t} className="num">
+        <div>{fmt(r.teaching[t])}</div>
+        {r.nonteaching[t] ? <div className="sub" title="non-teaching load">+{fmt(r.nonteaching[t])}</div> : null}
+      </td>
+    ));
+
+  return (
+    <>
       {!table.hasNonTeaching && (
         <p className="note">This schedule has no non-teaching load, so these totals cover teaching load only. <Link to="/nonteaching">Add non-teaching load</Link></p>
       )}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { importRecords, type Schedule } from "@schedulizer/core";
-import { hourLabel, hueOf, layoutLanes, weekGrids, type WeekOptions } from "./week";
+import { groupGrids, hourLabel, hueOf, layoutLanes, weekGrids, type WeekOptions } from "./week";
 
 const sec = (prefix: string, n: string, letter: string, o: Record<string, string> = {}) => ({
   AcademicYear: "Y", Term: "FA", Prefix: prefix, CourseNumber: n, Section: letter, ...o,
@@ -210,5 +210,35 @@ describe("filtering by part of the term", () => {
       },
     });
     expect(weekGrids(custom, opts({ term: "XT", part: "S1" })).grids[0]!.blocks.map((b) => b.title)).toEqual(["X 1 A · S1"]);
+  });
+});
+
+describe("groupGrids", () => {
+  const a = make([sec("MATH", "1", "A", { Faculty: "Ada", ...mt("M", "9:00", "50", "NH 1") }), sec("MATH", "2", "A", { Faculty: "Ben", ...mt("T", "9:00", "50", "NH 2") })]);
+  const b = make([sec("MATH", "1", "A", { Faculty: "Ada", ...mt("W", "9:00", "50", "NH 1") }), sec("MATH", "3", "A", { Faculty: "Cy", ...mt("T", "9:00", "50", "NH 3") })]);
+  const results = (kind: "dept" | "faculty" | "room") => [
+    { id: "a", name: "Draft A", result: weekGrids(a, opts({ kind })) },
+    { id: "b", name: "Draft B", result: weekGrids(b, opts({ kind })) },
+  ];
+  it("makes one group per instructor from every schedule, with a gap where a schedule lacks the person", () => {
+    const g = groupGrids(results("faculty"), "faculty");
+    expect(g.map((x) => x.title)).toEqual(["Ada", "Ben", "Cy"]);
+    expect(g[0]!.items.map((i) => [i.scheduleName, !!i.grid])).toEqual([["Draft A", true], ["Draft B", true]]);
+    expect(g[1]!.items.map((i) => !!i.grid)).toEqual([true, false]);
+    expect(g[2]!.items.map((i) => !!i.grid)).toEqual([false, true]);
+  });
+  it("makes one group per room, or just the chosen one", () => {
+    expect(groupGrids(results("room"), "room").map((x) => x.title)).toEqual(["NH 1", "NH 2", "NH 3"]);
+    expect(groupGrids(results("faculty"), "faculty", "Ben").map((x) => x.title)).toEqual(["Ben"]);
+  });
+  it("makes the department a single group with a grid per schedule", () => {
+    const g = groupGrids(results("dept"), "dept");
+    expect(g).toHaveLength(1);
+    expect(g[0]!.items.map((i) => i.grid?.blocks.length)).toEqual([2, 2]);
+  });
+  it("handles one schedule, and none", () => {
+    expect(groupGrids([results("faculty")[0]!], "faculty").map((x) => x.title)).toEqual(["Ada", "Ben"]);
+    expect(groupGrids([], "faculty")).toEqual([]);
+    expect(groupGrids([], "dept")[0]!.items).toEqual([]);
   });
 });
