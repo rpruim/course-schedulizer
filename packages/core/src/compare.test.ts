@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { recordsFromCsv } from "./csv.js";
 import {
-  COMPARE_COLUMNS, COUNT_KEY, aggregateRows, compareTables, comparisonRows, defaultOnlyDifferences, difference, formatCell, resolvePartition, rowTones, visibleRows,
+  COMPARE_COLUMNS, COUNT_KEY, rowSource, aggregateRows, compareTables, comparisonRows, defaultOnlyDifferences, difference, formatCell, resolvePartition, rowTones, visibleRows,
   type ColumnRole, type CompareRow, type Comparison,
 } from "./compare.js";
 import { importRecords } from "./import.js";
@@ -192,7 +192,7 @@ describe("showing only the differences", () => {
     groups: [],
     aggregates: [],
     countForced: false,
-    rows: Array.from({ length: n }, (_, i) => ({ group: [String(i)], values: [], present: [true, true], differs: i < diffs })),
+    rows: Array.from({ length: n }, (_, i) => ({ group: [String(i)], values: [], present: [true, true], members: [], differs: i < diffs })),
   });
   it("shows everything for 10 rows or fewer, only differences above that", () => {
     expect(defaultOnlyDifferences(mk(10, 3))).toBe(false);
@@ -208,7 +208,7 @@ describe("rowTones", () => {
     groups: [],
     aggregates: [{ key: "FacultyLoad", label: "FacultyLoad", kind }],
     countForced: false,
-    rows: values.map((v, i) => ({ group: [String(i)], values: [v], present: v.map((x) => x !== undefined), differs: true })),
+    rows: values.map((v, i) => ({ group: [String(i)], values: [v], present: v.map((x) => x !== undefined), members: [], differs: true })),
   });
   it("is the sign and relative size of the difference for two schedules", () => {
     const t = rowTones(cmp([[4, 4], [2, 4], [4, 3], [0, 8], [undefined, 2]]))!;
@@ -233,7 +233,7 @@ describe("rowTones", () => {
 });
 
 describe("difference / formatCell", () => {
-  const row = (vs: (number | string | undefined)[]) => ({ group: [], values: [vs], present: [], differs: true });
+  const row = (vs: (number | string | undefined)[]) => ({ group: [], values: [vs], present: [], members: [], differs: true });
   it("is B − A for two schedules, with a missing group as 0", () => {
     expect(difference(row([4, 6]), 0)).toBe(2);
     expect(difference(row([undefined, 6]), 0)).toBe(6);
@@ -266,5 +266,58 @@ describe("on the registrar-case fixture", () => {
     // sections: 4+4+4+1.8+4+4+2+2 = 25.8; non-teaching adds 3 (a full year, split) + 4 = 7
     expect(total(false)).toBeCloseTo(25.8);
     expect(total(true)).toBeCloseTo(32.8);
+  });
+});
+
+describe("where rows came from", () => {
+  const s = make(
+    [
+      sec("MATH", "1", "A", { Faculty: "Ada (3), Ben", FacultyLoad: "4" }),
+      sec("MATH", "1", "A", { MeetingDays: "F", StartTime: "9:00", MeetingDuration: "50" }),
+      sec("MATH", "2", "B", { Faculty: "Cy", FacultyLoad: "2" }),
+    ],
+    { nonTeaching: [{ AcademicYear: "Y", Faculty: "Ada", Activity: "Chair", Term: "AY", Load: "3" }, { AcademicYear: "Y", Faculty: "Ben", Activity: "Sabbatical", Term: "SP", Load: "4" }] },
+  );
+  it("marks a section row with its section, and a non-teaching row with its position", () => {
+    const rows = comparisonRows(s, "section", { nonTeaching: true });
+    expect(rows.map((r) => rowSource(r))).toEqual([
+      { kind: "section", sectionId: "Y-FA-MATH1-A" },
+      { kind: "section", sectionId: "Y-FA-MATH2-B" },
+      { kind: "nonteaching", index: 0 }, // a full-year row, split across FA and SP
+      { kind: "nonteaching", index: 0 },
+      { kind: "nonteaching", index: 1 },
+    ]);
+  });
+  it("marks every instructor row of a section with that section", () => {
+    const rows = comparisonRows(s, "instructor");
+    expect(rows.map((r) => [r.Faculty, rowSource(r)])).toEqual([
+      ["Ada", { kind: "section", sectionId: "Y-FA-MATH1-A" }],
+      ["Ben", { kind: "section", sectionId: "Y-FA-MATH1-A" }],
+      ["Cy", { kind: "section", sectionId: "Y-FA-MATH2-B" }],
+    ]);
+  });
+  it("is not a column, and survives copying", () => {
+    const row = comparisonRows(s)[0]!;
+    expect(Object.keys(row)).toEqual(COMPARE_COLUMNS.map((c) => c.key));
+    expect(rowSource({ ...row })).toEqual({ kind: "section", sectionId: "Y-FA-MATH1-A" });
+    expect(rowSource({ Prefix: "x" })).toBeUndefined();
+  });
+  it("lists the rows behind each comparison row, per schedule, and none where a schedule lacks the group", () => {
+    const other = make([sec("MATH", "1", "A", { FacultyLoad: "9" }), sec("STAT", "5", "A")]);
+    const c = compareTables(
+      [{ id: "a", name: "A", rows: comparisonRows(s) }, { id: "b", name: "B", rows: comparisonRows(other) }],
+      roles(group("Prefix", "CourseNumber")),
+    );
+    const byGroup = Object.fromEntries(c.rows.map((r) => [r.group.join(" "), r.members.map((m) => m.map((x) => rowSource(x)))]));
+    expect(byGroup).toEqual({
+      "MATH 1": [[{ kind: "section", sectionId: "Y-FA-MATH1-A" }], [{ kind: "section", sectionId: "Y-FA-MATH1-A" }]],
+      "MATH 2": [[{ kind: "section", sectionId: "Y-FA-MATH2-B" }], []],
+      "STAT 5": [[], [{ kind: "section", sectionId: "Y-FA-STAT5-A" }]],
+    });
+  });
+  it("lists several rows when a group has several (sections of a course)", () => {
+    const two = make([sec("MATH", "1", "A"), sec("MATH", "1", "B")]);
+    const c = compareTables([{ id: "a", name: "A", rows: comparisonRows(two) }], roles(group("Prefix", "CourseNumber")));
+    expect(c.rows[0]!.members[0]!.map((r) => r.Section)).toEqual(["A", "B"]);
   });
 });

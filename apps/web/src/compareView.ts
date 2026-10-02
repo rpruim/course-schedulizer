@@ -3,7 +3,12 @@ import {
   COUNT_KEY,
   difference,
   formatCell,
+  formatTime,
+  parseTime,
+  rowSource,
   type Cell,
+  type CompareRow,
+  type RowSource,
   type SheetSpec,
   type ColumnRole,
   type Comparison,
@@ -256,4 +261,55 @@ export function comparisonSheets(c: Comparison, columns: TableColumn[], rows: Co
     { name: "Comparison", header, rows: body, rowFills: fills, filter: true },
     { name: "About this comparison", header: ["Setting", "Value"], rows: about },
   ];
+}
+
+/** One row behind a comparison row, as a line in the detail view. */
+export interface Member {
+  course: string;
+  section: string;
+  term: string;
+  /** The title, or for non-teaching load the activity. */
+  title: string;
+  instructor: string;
+  load: string;
+  /** `MW 09:15–10:20 + F 10:20–11:10`, or empty when unscheduled. */
+  meets: string;
+  room: string;
+  /** What to open when the line is clicked: the section, or the non-teaching row. */
+  source: RowSource | undefined;
+}
+
+const MEETINGS = " + ";
+
+/** The meeting days and times of a section row (cells joined with " + ") as one readable string. */
+export function meetsText(r: CompareRow): string {
+  const days = String(r.MeetingDays ?? "").split(MEETINGS);
+  const starts = String(r.StartTime ?? "").split(MEETINGS);
+  const durations = String(r.MeetingDuration ?? "").split(MEETINGS);
+  const parts = days.map((d, i) => {
+    const start = parseTime(starts[i] ?? "");
+    const dur = Number(durations[i]);
+    const when = typeof start === "number" ? (dur > 0 ? `${formatTime(start)}–${formatTime((start + dur) % 1440)}` : formatTime(start)) : "";
+    return [d, when].filter(Boolean).join(" ");
+  });
+  return parts.every((p) => p === "") ? "" : parts.filter(Boolean).join(MEETINGS);
+}
+
+/** A comparison source row as a readable line: course, section, term, title, who, load, when and where. */
+export function memberOf(r: CompareRow): Member {
+  const text = (k: string) => String(r[k] ?? "");
+  const teaching = text("Prefix") !== "" || text("CourseNumber") !== "";
+  const course = teaching ? `${text("Prefix")} ${text("CourseNumber")}`.trim() + (text("CrossListings") ? ` (also ${text("CrossListings")})` : "") : "";
+  const part = text("TermPart");
+  return {
+    course: course || "Non-teaching",
+    section: text("Section"),
+    term: `${text("Term")}${part && part !== "Full" ? ` · ${part}` : ""}`,
+    title: teaching ? text("ShortTitle") : text("InstructionalMethod"),
+    instructor: text("Faculty"),
+    load: formatCell(r.FacultyLoad),
+    meets: meetsText(r),
+    room: text("Classroom"),
+    source: rowSource(r),
+  };
 }

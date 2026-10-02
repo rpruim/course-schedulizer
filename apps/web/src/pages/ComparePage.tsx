@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   COMPARE_COLUMNS,
   COUNT_KEY,
@@ -13,7 +13,8 @@ import {
   type ComparisonRow,
   type RowKind,
 } from "@schedulizer/core";
-import { aggregateDiffers, comparisonSheets, hueFor, loadSettings, PRESETS, saveSettings, tableColumns, toneColor, type Roles } from "../compareView";
+import { aggregateDiffers, comparisonSheets, hueFor, loadSettings, memberOf, PRESETS, saveSettings, tableColumns, toneColor, type Roles } from "../compareView";
+import { useEditor } from "../editor/context";
 import { downloadBytes, XLSX_TYPE } from "../download";
 import { SortTh, useSort } from "../sort";
 import { useWorkspace } from "../state";
@@ -34,8 +35,13 @@ export function ComparePage() {
   const [nonTeaching, setNonTeaching] = useState(initial.nonTeaching);
   const [onlyDiff, setOnlyDiff] = useState<boolean | null>(null); // null: the default rule
   const [showPartition, setShowPartition] = useState(false);
+  /** Groups whose sections are shown under their row (keyed by the group's values). */
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  const { openSection, openNonTeaching } = useEditor();
 
   useEffect(() => saveSettings({ roles, rows: rowKind, nonTeaching }), [roles, rowKind, nonTeaching]);
+  // A different partition means different groups, so what was open no longer refers to anything.
+  useEffect(() => setOpen(new Set()), [roles, rowKind, nonTeaching]);
 
   const inputs = useMemo(() => entries.map((e) => ({ id: e.id, name: e.name, rows: comparisonRows(e.schedule, rowKind, { nonTeaching }) })), [entries, rowKind, nonTeaching]);
   const comparison = useMemo(() => compareTables(inputs, { roles }), [inputs, roles]);
@@ -61,6 +67,14 @@ export function ComparePage() {
   }
 
   const setRole = (key: string, role: ColumnRole) => setRoles((r) => ({ ...r, [key]: role }));
+  const rowKey = (r: ComparisonRow) => JSON.stringify(r.group);
+  const toggle = (key: string) =>
+    setOpen((o) => {
+      const next = new Set(o);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
+  const EXPAND_LIMIT = 60;
   /** Export what is on screen: the rows shown, in the order shown. */
   async function exportXlsx() {
     const sheets = comparisonSheets(comparison, columns, sorting.sorted, tones, { rowKind, nonTeaching, onlyDifferences: only, exportedAt: new Date() });
@@ -131,6 +145,11 @@ export function ComparePage() {
           {onlyDiff === null && comparison.rows.length > 10 ? " (more than 10 groups, so only differences are shown by default)" : ""}
         </span>
         <span className="spacer" />
+        {open.size > 0 ? (
+          <button className="link" onClick={() => setOpen(new Set())}>Collapse all</button>
+        ) : (
+          <button className="link" disabled={rows.length === 0 || rows.length > EXPAND_LIMIT} onClick={() => setOpen(new Set(rows.map(rowKey)))} title={rows.length > EXPAND_LIMIT ? `Too many rows to open at once (more than ${EXPAND_LIMIT})` : "Show the sections behind every row"}>Expand all</button>
+        )}
         <button onClick={() => void exportXlsx()} disabled={rows.length === 0} title="Download the rows shown, in the order shown, as an Excel file">Export comparison</button>
         {tones && (
           <span className="tone-legend" aria-label="Colour key">
@@ -149,6 +168,7 @@ export function ComparePage() {
           <table className="cmp">
             <thead>
               <tr>
+                <th className="caret" aria-label="Show the sections behind each row" />
                 {columns.map((c) => (
                   <SortTh key={c.key} sorting={sorting} sortKey={c.key} className={c.numeric ? "num" : undefined}>
                     <span className="cmp-head">{c.label}{c.sub && <small>{c.sub}</small>}</span>
@@ -159,8 +179,20 @@ export function ComparePage() {
             <tbody>
               {sorting.sorted.map((r) => {
                 const color = toneColor(tones?.get(r));
+                const key = rowKey(r);
+                const isOpen = open.has(key);
                 return (
-                  <tr key={JSON.stringify(r.group)} style={color ? { background: color } : undefined} className={r.differs ? "differs" : undefined}>
+                  <Fragment key={key}>
+                  <tr
+                    style={color ? { background: color } : undefined}
+                    className={`clickable${r.differs ? " differs" : ""}`}
+                    tabIndex={0}
+                    aria-expanded={isOpen}
+                    onClick={() => toggle(key)}
+                    onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), toggle(key))}
+                    title={isOpen ? "Hide the sections behind this row" : "Show the sections behind this row"}
+                  >
+                    <td className="caret" aria-hidden="true">{isOpen ? "▾" : "▸"}</td>
                     {columns.map((c) => {
                       const absent = c.aggregate !== undefined && c.key.startsWith("a") && c.text(r) === "—";
                       const cellDiffers = c.aggregate !== undefined && !c.key.startsWith("d") && aggregateDiffers(r, c.aggregate);
@@ -169,6 +201,39 @@ export function ComparePage() {
                       );
                     })}
                   </tr>
+                  {isOpen && (
+                    <tr className="detail">
+                      <td colSpan={columns.length + 1}>
+                        {comparison.schedules.map((s, si) => {
+                          const members = r.members[si] ?? [];
+                          return (
+                            <div className="members" key={s.id}>
+                              <h4><span className="swatch" style={{ background: `hsl(${hueFor(si)} 75% 52% / 0.5)` }} /> {s.name} <span className="muted">— {members.length === 0 ? "none" : `${members.length} ${members.length === 1 ? "item" : "items"}`}</span></h4>
+                              {members.length === 0 ? (
+                                <p className="muted small">Nothing in this schedule for this row.</p>
+                              ) : (
+                                <table className="mini">
+                                  <thead><tr><th>Course</th><th>Sec</th><th>Term</th><th>Title</th><th>Instructor</th><th className="num">Load</th><th>Meets</th><th>Room</th></tr></thead>
+                                  <tbody>
+                                    {members.map((m, mi) => {
+                                      const v = memberOf(m);
+                                      const go = () => (v.source?.kind === "section" ? openSection(v.source.sectionId, s.id) : v.source?.kind === "nonteaching" ? openNonTeaching(v.source.index, undefined, s.id) : undefined);
+                                      return (
+                                        <tr key={mi} className={v.source ? "clickable" : undefined} tabIndex={v.source ? 0 : undefined} onClick={go} onKeyDown={(e) => e.key === "Enter" && go()} title={v.source ? "Click to edit" : undefined}>
+                                          <td className="nowrap">{v.course}</td><td>{v.section}</td><td className="nowrap">{v.term}</td><td>{v.title}</td><td>{v.instructor}</td><td className="num">{v.load}</td><td className="nowrap">{v.meets}</td><td className="nowrap">{v.room}</td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 );
               })}
             </tbody>

@@ -16,7 +16,26 @@ import type { Schedule, Session } from "./types.js";
 
 export type ColumnRole = "ignore" | "group" | "aggregate";
 export type Cell = string | number;
-export type CompareRow = Record<string, Cell>;
+
+/** Where a comparison row came from, so a row on screen can lead back to what it was made of. */
+export type RowSource =
+  | { kind: "section"; sectionId: string }
+  /** `index` is the position in the schedule's non-teaching list (a full-year row split across terms shares one). */
+  | { kind: "nonteaching"; index: number };
+
+const SOURCE = Symbol("rowSource");
+
+/** A row of cells, one per column (see `COMPARE_COLUMNS`). It also carries its `RowSource`, out of sight of `Object.keys`. */
+export type CompareRow = Record<string, Cell> & { [SOURCE]?: RowSource };
+
+/** Mark a row with where it came from. The mark survives object spread, and is not a column. */
+const from = (row: CompareRow, source: RowSource): CompareRow => {
+  Object.defineProperty(row, SOURCE, { value: source, enumerable: true, writable: true, configurable: true });
+  return row;
+};
+
+/** Where a comparison row came from, if it knows. */
+export const rowSource = (row: CompareRow): RowSource | undefined => row[SOURCE];
 
 export interface CompareColumn {
   key: string;
@@ -120,18 +139,19 @@ export function comparisonRows(schedule: Schedule, kind: RowKind = "section", op
       EnrollmentDay10: num(h.enrollmentDay10),
       CrossListings: others.map((l) => `${l.prefix} ${l.courseNumber}`).join(", "),
     });
+    const source: RowSource = { kind: "section", sectionId: h.sectionId };
     if (kind === "section") {
-      rows.push({ ...base(), Faculty: formatFaculty(h.faculty), FacultyLoad: num(h.facultyLoad) });
+      rows.push(from({ ...base(), Faculty: formatFaculty(h.faculty), FacultyLoad: num(h.facultyLoad) }, source));
     } else if (h.faculty.length === 0) {
-      rows.push({ ...base(), Faculty: "", FacultyLoad: num(h.facultyLoad) });
+      rows.push(from({ ...base(), Faculty: "", FacultyLoad: num(h.facultyLoad) }, source));
     } else {
-      for (const share of sectionShares(h.facultyLoad ?? 0, h.faculty)) rows.push({ ...base(), Faculty: share.name, FacultyLoad: share.load });
+      for (const share of sectionShares(h.facultyLoad ?? 0, h.faculty)) rows.push(from({ ...base(), Faculty: share.name, FacultyLoad: share.load }, source));
     }
   }
 
-  for (const n of options.nonTeaching ? schedule.nonTeaching : []) {
+  for (const [index, n] of (options.nonTeaching ? schedule.nonTeaching : []).entries()) {
     for (const part of nonTeachingShown(schedule, n)) {
-      rows.push({
+      rows.push(from({
         ...blankRow(),
         AcademicYear: n.academicYear,
         Term: part.term,
@@ -140,7 +160,7 @@ export function comparisonRows(schedule: Schedule, kind: RowKind = "section", op
         FacultyLoad: part.load,
         InstructionalMethod: n.activity,
         Comment: n.comment,
-      });
+      }, { kind: "nonteaching", index }));
     }
   }
   return rows;
@@ -165,7 +185,7 @@ const same = (a: Cell | undefined, b: Cell | undefined) =>
   typeof a === "number" && typeof b === "number" ? Math.abs(a - b) < 1e-9 : a === b;
 
 /** Reduce one schedule's rows to one row per combination of the grouping columns. */
-export function aggregateRows(rows: CompareRow[], groups: CompareColumn[], aggregates: CompareColumn[]): Map<string, { group: string[]; values: Record<string, Cell> }> {
+export function aggregateRows(rows: CompareRow[], groups: CompareColumn[], aggregates: CompareColumn[]): Map<string, { group: string[]; values: Record<string, Cell>; rows: CompareRow[] }> {
   const buckets = new Map<string, { group: string[]; rows: CompareRow[] }>();
   for (const r of rows) {
     const group = groups.map((g) => String(r[g.key] ?? ""));
@@ -174,7 +194,7 @@ export function aggregateRows(rows: CompareRow[], groups: CompareColumn[], aggre
     b.rows.push(r);
     buckets.set(key, b);
   }
-  const out = new Map<string, { group: string[]; values: Record<string, Cell> }>();
+  const out = new Map<string, { group: string[]; values: Record<string, Cell>; rows: CompareRow[] }>();
   for (const [key, b] of buckets) {
     const values: Record<string, Cell> = {};
     for (const a of aggregates) {
@@ -182,7 +202,7 @@ export function aggregateRows(rows: CompareRow[], groups: CompareColumn[], aggre
       else if ((kindOf.get(a.key) ?? "text") === "number") values[a.key] = Math.round(b.rows.reduce((n, r) => n + (Number(r[a.key]) || 0), 0) * 1e6) / 1e6;
       else values[a.key] = b.rows.map((r) => String(r[a.key] ?? "")).filter((v) => v !== "").sort(natural).join(JOIN);
     }
-    out.set(key, { group: b.group, values });
+    out.set(key, { group: b.group, values, rows: b.rows });
   }
   return out;
 }
@@ -194,6 +214,8 @@ export interface ComparisonRow {
   values: (Cell | undefined)[][];
   /** Which schedules have this group. */
   present: boolean[];
+  /** `members[s]`: the rows of schedule `s` that make up this group (none if it lacks the group). */
+  members: CompareRow[][];
   /** The schedules do not all agree: a group missing from one, or an aggregate that differs. */
   differs: boolean;
 }
@@ -230,7 +252,8 @@ export function compareTables(inputs: CompareInput[], partition: Partition): Com
     const present = reduced.map((r) => r.has(key));
     const values = aggregates.map((a) => reduced.map((r) => r.get(key)?.values[a.key]));
     const differs = present.some((p) => !p) || values.some((vs) => vs.some((v) => !same(v, vs[0])));
-    return { group, values, present, differs };
+    const members = reduced.map((r) => r.get(key)?.rows ?? []);
+    return { group, values, present, members, differs };
   });
   return { schedules: inputs.map((i) => ({ id: i.id, name: i.name })), groups, aggregates, countForced, rows };
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { compareTables, comparisonRows, importRecords, rowTones, type Comparison } from "@schedulizer/core";
-import { PRESETS, aggregateDiffers, comparisonSheets, hueFor, readSettings, tableColumns, toneColor, toneHex } from "./compareView";
+import { COMPARE_COLUMNS, compareTables, comparisonRows, importRecords, rowTones, type Comparison } from "@schedulizer/core";
+import { PRESETS, aggregateDiffers, comparisonSheets, hueFor, memberOf, meetsText, readSettings, tableColumns, toneColor, toneHex } from "./compareView";
 
 const sec = (prefix: string, n: string, o: Record<string, string> = {}) => ({ AcademicYear: "Y", Term: "FA", Prefix: prefix, CourseNumber: n, Section: "A", ...o });
 const sched = (rows: Record<string, string>[]) => importRecords({ sessions: rows }).schedule;
@@ -163,5 +163,29 @@ describe("comparisonSheets", () => {
     const sheet = comparisonSheets(text, tableColumns(text), text.rows, undefined, info)[0]!;
     expect(sheet.header).toEqual(["Prefix", "Faculty\nA", "Faculty\nB"]);
     expect(sheet.rows).toEqual([["MATH", "Smith", "Lee"]]);
+  });
+});
+
+describe("meetsText / memberOf", () => {
+  const row = (o: Record<string, string | number>) => ({ ...Object.fromEntries(COMPARE_COLUMNS.map((c) => [c.key, ""])), ...o });
+  it("writes meeting days and times readably, one per meeting", () => {
+    expect(meetsText(row({ MeetingDays: "MWF", StartTime: "09:15", MeetingDuration: "65" }))).toBe("MWF 09:15–10:20");
+    expect(meetsText(row({ MeetingDays: "MW + F", StartTime: "09:15 + 10:20", MeetingDuration: "65 + 50" }))).toBe("MW 09:15–10:20 + F 10:20–11:10");
+    expect(meetsText(row({ MeetingDays: "R", StartTime: "23:30", MeetingDuration: "60" }))).toBe("R 23:30–00:30");
+    expect(meetsText(row({}))).toBe("");
+    expect(meetsText(row({ MeetingDays: "MWF + ", StartTime: "08:00 + ", MeetingDuration: "65 + " }))).toBe("MWF 08:00–09:05");
+  });
+  it("describes a section row", () => {
+    const sched = importRecords({
+      sessions: [sec("DATA", "385", { Faculty: "Ada", FacultyLoad: "4", ShortTitle: "Opt", MeetingDays: "MWF", StartTime: "11:00", MeetingDuration: "65", Classroom: "NH 1", TermPart: "First" })],
+      crossListings: [{ SectionId: "Y-FA-DATA385-A", Prefix: "STAT", CourseNumber: "385" }],
+    }).schedule;
+    const m = memberOf(comparisonRows(sched)[0]!);
+    expect(m).toEqual({ course: "DATA 385 (also STAT 385)", section: "A", term: "FA · First", title: "Opt", instructor: "Ada", load: "4", meets: "MWF 11:00–12:05", room: "NH 1", source: { kind: "section", sectionId: "Y-FA-DATA385-A" } });
+  });
+  it("describes a non-teaching row by its activity", () => {
+    const sched = importRecords({ sessions: [sec("M", "1")], nonTeaching: [{ AcademicYear: "Y", Faculty: "Ada", Activity: "Chair release", Term: "SP", Load: "3" }] }).schedule;
+    const nt = comparisonRows(sched, "section", { nonTeaching: true }).map(memberOf).find((x) => x.course === "Non-teaching")!;
+    expect(nt).toMatchObject({ title: "Chair release", instructor: "Ada", load: "3", term: "SP", section: "", meets: "", source: { kind: "nonteaching", index: 0 } });
   });
 });
