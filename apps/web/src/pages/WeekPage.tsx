@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { partsFor } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
 import { termsAcross, yearsAcross } from "../model";
@@ -19,11 +20,13 @@ const KIND = {
 export function WeekPage({ kind }: { kind: GridKind }) {
   const ws = useWorkspace();
   const { openSection } = useEditor();
-  const [pickedYear, setPickedYear] = useState("");
-  const [pickedTerm, setPickedTerm] = useState("");
+  // Arriving from a link (the loads table) can name the person, year and term to show.
+  const [params] = useSearchParams();
+  const [pickedYear, setPickedYear] = useState(params.get("year") ?? "");
+  const [pickedTerm, setPickedTerm] = useState(params.get("term") ?? "");
   const [pickedPart, setPickedPart] = useState("Full");
   const [colorBy, setColorBy] = useState<ColorBy>("prefix");
-  const [only, setOnly] = useState("");
+  const [only, setOnly] = useState(kind === "faculty" ? (params.get("who") ?? "") : "");
 
   const entries = ws.viewEntries;
   const years = yearsAcross(entries);
@@ -46,7 +49,9 @@ export function WeekPage({ kind }: { kind: GridKind }) {
   );
   // Choices come from every included schedule; one that no longer exists (a different file or term) means "all".
   const choices = [...new Set(results.flatMap((r) => r.result.choices))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
-  const effectiveOnly = choices.includes(only) ? only : "";
+  // A name from a link may differ in case or spacing from the one the grid uses.
+  const sameName = (a: string, b: string) => a.trim().replace(/\s+/g, " ").toLowerCase() === b.trim().replace(/\s+/g, " ").toLowerCase();
+  const effectiveOnly = choices.find((c) => sameName(c, only)) ?? "";
   const shownResults = useMemo(
     () =>
       kind === "dept" || !effectiveOnly

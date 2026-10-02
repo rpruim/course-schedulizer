@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { loadTable, type LoadTableRow } from "@schedulizer/core";
+import { loadItems, loadTable, UNASSIGNED, type LoadTableRow } from "@schedulizer/core";
 import { yearsAcross, yearsOf } from "../model";
 import { SortTh, useSort, type SortValue } from "../sort";
 import { useWorkspace, type Entry } from "../state";
@@ -49,18 +49,28 @@ function LoadTableView({ entry, year }: { entry: Entry; year: string }) {
 
 function LoadTableInner({ schedule, year }: { schedule: Entry["schedule"]; year: string }) {
   const table = loadTable(schedule, year);
+  const items = useMemo(() => loadItems(schedule, year), [schedule, year]);
   const name = (code: string) => (code === "AY" ? "Full year" : (schedule.settings.terms.find((t) => t.code === code)?.name ?? code));
   const sorting = useSort(table.rows, (r: LoadTableRow, key: string): SortValue =>
     key === "faculty" ? r.faculty : key === "total" ? r.total : (r.teaching[key.slice(5)] ?? 0) + (r.nonteaching[key.slice(5)] ?? 0),
   );
 
+  // Hovering a number lists what it is made of: courses for teaching load, activities for non-teaching.
   const cells = (r: LoadTableRow) =>
     table.terms.map((t) => (
       <td key={t} className="num">
-        <div>{fmt(r.teaching[t])}</div>
-        {r.nonteaching[t] ? <div className="sub" title="non-teaching load">+{fmt(r.nonteaching[t])}</div> : null}
+        <div title={items(r.faculty, t, "teaching")}>{fmt(r.teaching[t])}</div>
+        {r.nonteaching[t] ? <div className="sub" title={items(r.faculty, t, "nonteaching")}>+{fmt(r.nonteaching[t])}</div> : null}
       </td>
     ));
+  const totalCell = (r: LoadTableRow, strong: boolean) => <td className={strong ? "num strong" : "num"} title={items(r.faculty)}>{fmt(r.total)}</td>;
+
+  // The faculty week shows one term: the first in which this person teaches.
+  const weekLink = (r: LoadTableRow) => {
+    const term = table.terms.find((t) => t !== "AY" && (r.teaching[t] ?? 0) !== 0) ?? table.terms.find((t) => t !== "AY" && r.teaching[t] !== undefined);
+    const q = new URLSearchParams({ who: r.faculty, year, ...(term ? { term } : {}) });
+    return `/faculty?${q}`;
+  };
 
   return (
     <>
@@ -78,10 +88,14 @@ function LoadTableInner({ schedule, year }: { schedule: Entry["schedule"]; year:
           </thead>
           <tbody>
             {sorting.sorted.map((r) => (
-              <tr key={r.faculty}><td>{r.faculty}</td>{cells(r)}<td className="num strong">{fmt(r.total)}</td></tr>
+              <tr key={r.faculty}>
+                <td><Link to={weekLink(r)} title={`See ${r.faculty}’s week`}>{r.faculty}</Link></td>
+                {cells(r)}
+                {totalCell(r, true)}
+              </tr>
             ))}
             {table.unassigned && (
-              <tr className="muted-row"><td>Unassigned sections</td>{cells(table.unassigned)}<td className="num">{fmt(table.unassigned.total)}</td></tr>
+              <tr className="muted-row"><td>Unassigned sections</td>{cells(table.unassigned)}{totalCell({ ...table.unassigned, faculty: UNASSIGNED }, false)}</tr>
             )}
           </tbody>
           <tfoot>

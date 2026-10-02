@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { recordsFromCsv } from "./csv.js";
 import { importRecords } from "./import.js";
-import { facultyLoad, loadTable, loadWarnings, sectionShares, UNASSIGNED } from "./load.js";
+import { facultyLoad, loadItems, loadTable, loadWarnings, sectionShares, summarizeItems, UNASSIGNED } from "./load.js";
 import { fixtureText } from "./testutil.js";
 
 const rows = (rs: { faculty: string; term: string; kind: string; load: number }[]) =>
@@ -114,5 +114,29 @@ describe("loadTable", () => {
     const totals = t.rows.map((r) => r.total);
     expect(totals).toEqual([...totals].sort((a, b) => b - a));
     expect(t.totals.total).toBeCloseTo(totals.reduce((a, b) => a + b, 0));
+  });
+});
+
+describe("loadItems / summarizeItems", () => {
+  it("lists distinct items with counts for repeats, sorted, joined by semicolons", () => {
+    expect(summarizeItems(["MATH 271", "MATH 171", "MATH 171"])).toBe("MATH 171 (2); MATH 271");
+    expect(summarizeItems([])).toBe("");
+  });
+
+  it("explains each cell of the load table", () => {
+    const s = importRecords({
+      sessions: [
+        { SectionId: "a", AcademicYear: "AY1", Term: "FA", Prefix: "MATH", CourseNumber: "171", Section: "A", Faculty: "Kim", FacultyLoad: "4" },
+        { SectionId: "b", AcademicYear: "AY1", Term: "FA", Prefix: "MATH", CourseNumber: "171", Section: "B", Faculty: "kim", FacultyLoad: "4" },
+        { SectionId: "c", AcademicYear: "AY1", Term: "SP", Prefix: "MATH", CourseNumber: "271", Section: "A", Faculty: "Kim", FacultyLoad: "4" },
+      ],
+      nonTeaching: [{ AcademicYear: "AY1", Faculty: "Kim", Activity: "Chair", Term: "AY", Load: "3" }],
+    }).schedule;
+    const items = loadItems(s, "AY1");
+    expect(items("Kim", "FA", "teaching")).toBe("MATH 171 (2)");
+    expect(items("Kim", "SP", "teaching")).toBe("MATH 271");
+    expect(items("Kim", "FA", "nonteaching")).toBe("Chair");
+    expect(items("Kim")).toBe("Chair; MATH 171 (2); MATH 271");
+    expect(items("Nobody", "FA")).toBe("");
   });
 });

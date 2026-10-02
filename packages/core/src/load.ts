@@ -1,3 +1,4 @@
+import { displayNames } from "./names.js";
 import { AY, type Instructor, type Issue, type Schedule } from "./types.js";
 
 export const UNASSIGNED = "(unassigned)";
@@ -35,6 +36,20 @@ export function sectionShares(load: number, instructors: Instructor[]): { name: 
  * (someone who teaches a zero-load section still appears).
  */
 export function facultyLoad(schedule: Schedule): LoadRow[] {
+  return collectLoad(schedule).rows;
+}
+
+interface Collected {
+  rows: LoadRow[];
+  /** `[year, faculty, term, kind]` (faculty by its displayed name) → what the load came from, one entry per section or non-teaching row. */
+  items: Map<string, { label: string; id: string }[]>;
+}
+
+const itemKey = (year: string, faculty: string, term: string, kind: LoadKind) => JSON.stringify([year, nameKey(faculty), term, kind]);
+
+function collectLoad(schedule: Schedule): Collected {
+  const names = displayNames(schedule);
+  const items = new Map<string, { label: string; id: string }[]>();
   const display = new Map<string, string>();
   const name = (n: string) => {
     const k = nameKey(n);
@@ -42,8 +57,10 @@ export function facultyLoad(schedule: Schedule): LoadRow[] {
     return k === nameKey(UNASSIGNED) ? UNASSIGNED : k;
   };
   const acc = new Map<string, { academicYear: string; key: string; term: string; kind: LoadKind; load: number }>();
-  const add = (academicYear: string, who: string, term: string, kind: LoadKind, load: number) => {
+  const add = (academicYear: string, who: string, term: string, kind: LoadKind, load: number, item: { label: string; id: string }) => {
     const key = name(who);
+    const ik = itemKey(academicYear, key === nameKey(UNASSIGNED) ? UNASSIGNED : who, term, kind);
+    items.set(ik, [...(items.get(ik) ?? []), item]);
     const id = JSON.stringify([academicYear, key, term, kind]);
     const row = acc.get(id) ?? { academicYear, key, term, kind, load: 0 };
     row.load += load;
@@ -55,21 +72,50 @@ export function facultyLoad(schedule: Schedule): LoadRow[] {
     if (seen.has(s.sectionId)) continue;
     seen.add(s.sectionId);
     for (const sh of sectionShares(s.facultyLoad ?? 0, s.faculty)) {
-      if (sh.name !== "*") add(s.academicYear, sh.name, s.term, "teaching", sh.load);
+      if (sh.name !== "*") add(s.academicYear, sh.name, s.term, "teaching", sh.load, { label: names.get(s.sectionId) ?? `${s.prefix} ${s.courseNumber}`, id: `s:${s.sectionId}` });
     }
   }
   const spread = schedule.settings.spreadTerms;
-  for (const n of schedule.nonTeaching) {
-    if (n.term === AY && spread.length) for (const t of spread) add(n.academicYear, n.faculty, t, "nonteaching", n.load / spread.length);
-    else add(n.academicYear, n.faculty, n.term, "nonteaching", n.load);
-  }
-  return [...acc.values()].map((r) => ({
+  schedule.nonTeaching.forEach((n, index) => {
+    const item = { label: n.activity, id: `n:${index}` };
+    if (n.term === AY && spread.length) for (const t of spread) add(n.academicYear, n.faculty, t, "nonteaching", n.load / spread.length, item);
+    else add(n.academicYear, n.faculty, n.term, "nonteaching", n.load, item);
+  });
+  const rows = [...acc.values()].map((r) => ({
     academicYear: r.academicYear,
     faculty: r.key === UNASSIGNED ? UNASSIGNED : (display.get(r.key) ?? r.key),
     term: r.term,
     kind: r.kind,
     load: round(r.load),
   }));
+  return { rows, items };
+}
+
+/** `Math 171 (2); Math 271` — each distinct item once, with the number of instances in parentheses when repeated. */
+export function summarizeItems(items: string[]): string {
+  const counts = new Map<string, number>();
+  for (const i of items) counts.set(i, (counts.get(i) ?? 0) + 1);
+  return [...counts]
+    .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }))
+    .map(([i, n]) => (n > 1 ? `${i} (${n})` : i))
+    .join("; ");
+}
+
+/**
+ * What a cell of the faculty-load table is made of, as text for a tooltip: course names for
+ * teaching load, activities for non-teaching load. `term` omitted = the whole year (a Total cell);
+ * `kind` omitted = both kinds. Empty string when there is nothing.
+ */
+export function loadItems(schedule: Schedule, academicYear: string): (faculty: string, term?: string, kind?: LoadKind) => string {
+  const { items } = collectLoad(schedule);
+  return (faculty, term, kind) => {
+    const hits = new Map<string, string>(); // by origin, so load spread over terms is one item
+    for (const [key, list] of items) {
+      const [y, f, t, k] = JSON.parse(key) as [string, string, string, LoadKind];
+      if (y === academicYear && f === nameKey(faculty) && (term === undefined || t === term) && (kind === undefined || k === kind)) for (const i of list) hits.set(i.id, i.label);
+    }
+    return summarizeItems([...hits.values()]);
+  };
 }
 
 /** Validation warnings about how section loads are divided (never errors). */
