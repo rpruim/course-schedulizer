@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Course Schedulizer</title>
+  <rect width="64" height="64" rx="14" fill="#8c2131"/>
+  <!-- three days of a week grid, with course blocks interleaving -->
+  <rect x="9" y="13" width="13" height="24" rx="3" fill="#f6c453"/>
+  <rect x="25.5" y="25" width="13" height="26" rx="3" fill="#ffffff"/>
+  <rect x="42" y="13" width="13" height="14" rx="3" fill="#ffffff"/>
+  <rect x="42" y="31" width="13" height="20" rx="3" fill="#f6c453"/>
+</svg>

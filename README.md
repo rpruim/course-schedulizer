@@ -38,6 +38,12 @@ and Node 22, and `packageManager` in `package.json` pins the pnpm version. Every
 branch deploys, and every branch or pull request gets a preview URL. Nothing else is needed: no
 redirects, no environment variables. Schedules stay in each visitor's browser.
 
+## Site icon
+
+The icon (a week grid of course blocks in maroon and gold) is `apps/web/public/favicon.svg`, used by
+modern browsers. `python3 tools/make-icons.py` redraws the PNG versions (`favicon-32.png` and
+`apple-touch-icon.png`) from the same geometry; edit both if the design changes.
+
 ## Branches and releases
 
 New work happens on `dev`; `main` is the released version that Netlify deploys. To release, fast-forward
