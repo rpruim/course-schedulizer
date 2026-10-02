@@ -1,24 +1,24 @@
-Term,Prefix,CourseNumber,Section,StudentCredits,FacultyLoad,MeetingDays,MeetingTime,BuildingAndRoom,TermPart,TermAndPart,Duration,ShortTitle,Faculty,InstructionalMethod,DeliveryMode,Comment
-FA,,,,0,1.5,,,,Full,FA-Full,,,Ada Example,Chair release,,"SYNTHETIC: AY, one row per spread term"
-SP,,,,0,1.5,,,,Full,SP-Full,,,Ada Example,Chair release,,"SYNTHETIC: AY, one row per spread term"
-SP,,,,0,4,,,,Full,SP-Full,,,Ben Sample,Sabbatical,,
-FA,MATH,101,A,4,4,MWF,09:15:00 - 10:20:00,NH 101,Full,FA-Full,65,Calculus,Smith,Lecture,In-Person,
+Term,Prefix,CourseNumber,Section,StudentCredits,FacultyLoad,MeetingDays,MeetingTime,BuildingAndRoom,TermPart,TermAndPart,Duration,ShortTitle,Faculty,InstructionalMethod,DeliveryMode,Comment,CrossListings
+FA,,,,0,1.5,,,,Full,FA-Full,,,Ada Example,Chair release,,"SYNTHETIC: AY, one row per spread term",
+SP,,,,0,1.5,,,,Full,SP-Full,,,Ada Example,Chair release,,"SYNTHETIC: AY, one row per spread term",
+SP,,,,0,4,,,,Full,SP-Full,,,Ben Sample,Sabbatical,,,
+SP,DATA,301,A,4,4,TR,14:10:00 - 15:50:00,NH 104,Full,SP-Full,100,Topics,Ben Sample,Lecture,In-Person,,"STAT 305, MATH 307"
+FA,DATA,385,A,4,4,MWF,11:00:00 - 12:05:00,NH 103,Full,FA-Full,65,Optimization,Lee,Lecture,In-Person,,STAT 385
+FA,EDUC,346,J,12,1.8,,,Off Campus,Full,FA-Full,,Internship,Kim,Internship,,Might be 1.8 hours,
+FA,MATH,101,A,4,4,MWF,09:15:00 - 10:20:00,NH 101,Full,FA-Full,65,Calculus,Smith,Lecture,In-Person,,
 SP,MATH,102,A,4,4,"MW
 F","09:15:00 - 10:20:00
 10:20:00 - 11:10:00","NH 101
 NH 102",Full,SP-Full,"65
-50",Linear Algebra,"Ada Example, Ben Sample",Lecture,In-Person,
-FA,STAT,201,A,4,4,"TR
-TR","10:20:00 - 12:00:00
-10:20:00 - 12:00:00","NH 1
-NH 2",Full,FA-Full,"100
-100",Statistics,Lee,Lecture,Online,
-FA,EDUC,346,J,12,1.8,,,Off Campus,Full,FA-Full,,Internship,Kim,Internship,,Might be 1.8 hours
-FA,"DATA, STAT",385,A,4,4,MWF,11:00:00 - 12:05:00,NH 103,Full,FA-Full,65,Optimization,Lee,Lecture,In-Person,
-SP,"DATA, STAT, MATH","301, 305, 307",A,4,4,TR,14:10:00 - 15:50:00,NH 104,Full,SP-Full,100,Topics,Ben Sample,Lecture,In-Person,
+50",Linear Algebra,"Ada Example, Ben Sample",Lecture,In-Person,,
 SU,MATH,150,A,2,2,"MWF
 ","08:00:00 - 09:05:00
 ","NH 105
 Online",Full,SU-Full,"65
-",Summer Topics,Smith,Lecture,In-Person,
-SU,MATH,160,A,2,2,MTWRF,13:00:00 - 13:50:00,NH 106,First,SU-First,50,Half Term,Smith,Lecture,,
+",Summer Topics,Smith,Lecture,In-Person,,
+SU,MATH,160,A,2,2,MTWRF,13:00:00 - 13:50:00,NH 106,First,SU-First,50,Half Term,Smith,Lecture,,,
+FA,STAT,201,A,4,4,"TR
+TR","10:20:00 - 12:00:00
+10:20:00 - 12:00:00","NH 1
+NH 2",Full,FA-Full,"100
+100",Statistics,Lee,Lecture,Online,,

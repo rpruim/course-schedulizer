@@ -4,13 +4,14 @@ import type { Schedule, Session } from "./types.js";
 import { AY } from "./types.js";
 
 /**
- * The registrar's tab, exactly as the old app wrote it ("Registrar Schedule"):
- * these 17 columns, in this order, one row per section.
+ * The registrar's tab ("Registrar Schedule"): the old app's 17 columns in the
+ * same order, then `CrossListings` next to the notes (`Comment`) column. One row
+ * per section.
  */
 export const REGISTRAR_COLUMNS = [
   "Term", "Prefix", "CourseNumber", "Section", "StudentCredits", "FacultyLoad", "MeetingDays",
   "MeetingTime", "BuildingAndRoom", "TermPart", "TermAndPart", "Duration", "ShortTitle", "Faculty",
-  "InstructionalMethod", "DeliveryMode", "Comment",
+  "InstructionalMethod", "DeliveryMode", "Comment", "CrossListings",
 ] as const;
 
 export const REGISTRAR_SHEET = "Registrar Schedule";
@@ -29,8 +30,10 @@ const compact = (values: string[]) => values.join("\n");
  *   BuildingAndRoom and Duration with one value per meeting, aligned and
  *   newline-separated (the compact form, so a section with two meetings has two
  *   lines in each — unlike the old app, which kept only the first meeting's time).
- * - Cross-listings: prefixes joined with ", "; if the listings do not share a
- *   course number the numbers are joined the same way, aligned with the prefixes.
+ * - Prefix and CourseNumber are the section's primary listing only; any other
+ *   listings go in `CrossListings` as `STAT 385, MATH 307`.
+ * - Rows are in natural course order: prefix, then course number, then section
+ *   letter (then term, then academic year); non-teaching rows come first.
  * - Faculty: names only (a `Name (n)` load share is not shown here); `FacultyLoad`
  *   is the section's total.
  * - Non-teaching load follows the old app and is listed inline first, as rows
@@ -51,23 +54,35 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
         FacultyLoad: formatNumber(Math.round((n.load / terms.length) * 1e6) / 1e6),
         MeetingDays: "", MeetingTime: "", BuildingAndRoom: "", TermPart: "Full", TermAndPart: `${term}-Full`,
         Duration: "", ShortTitle: "", Faculty: n.faculty, InstructionalMethod: n.activity,
-        DeliveryMode: "", Comment: n.comment,
+        DeliveryMode: "", Comment: n.comment, CrossListings: "",
       }));
     }
   }
 
   const bySection = new Map<string, Session[]>();
   for (const s of schedule.sessions) bySection.set(s.sectionId, [...(bySection.get(s.sectionId) ?? []), s]);
-  for (const [id, ms] of bySection) {
+  const termRank = new Map(schedule.settings.terms.map((t, i) => [t.code, i]));
+  const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+  const ordered = [...bySection].sort(([, a], [, b]) => {
+    const x = a[0]!;
+    const y = b[0]!;
+    return (
+      natural(x.academicYear, y.academicYear) ||
+      natural(x.prefix, y.prefix) ||
+      natural(x.courseNumber, y.courseNumber) ||
+      natural(x.section, y.section) ||
+      (termRank.get(x.term) ?? 99) - (termRank.get(y.term) ?? 99)
+    );
+  });
+  for (const [id, ms] of ordered) {
     const head = ms[0]!;
-    const listings = [{ prefix: head.prefix, courseNumber: head.courseNumber }, ...schedule.crossListings.filter((l) => l.sectionId === id)];
-    const sameNumber = listings.every((l) => l.courseNumber === head.courseNumber);
+    const others = schedule.crossListings.filter((l) => l.sectionId === id);
     const scheduled = ms.some((m) => m.days !== "");
     const when = (m: Session) => (m.days !== "" && m.start !== undefined && m.duration !== undefined ? m : undefined);
     rows.push(row({
       Term: head.term,
-      Prefix: listings.map((l) => l.prefix).join(", "),
-      CourseNumber: sameNumber ? head.courseNumber : listings.map((l) => l.courseNumber).join(", "),
+      Prefix: head.prefix,
+      CourseNumber: head.courseNumber,
       Section: head.section,
       StudentCredits: formatNumber(head.minimumCredits),
       FacultyLoad: formatNumber(head.facultyLoad),
@@ -82,6 +97,7 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
       InstructionalMethod: head.instructionalMethod,
       DeliveryMode: head.deliveryMode,
       Comment: head.comment,
+      CrossListings: others.map((l) => `${l.prefix} ${l.courseNumber}`).join(", "),
     }));
   }
   return { header: [...REGISTRAR_COLUMNS], rows };

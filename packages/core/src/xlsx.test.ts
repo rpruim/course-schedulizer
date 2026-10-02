@@ -69,10 +69,10 @@ describe("workbook layout", () => {
     expect((reg.getRow(1).values as string[]).slice(1)).toEqual([...REGISTRAR_COLUMNS]);
     // text for load and credits (as the old app wrote them), a number only for a single Duration
     expect(typeof reg.getRow(5).getCell(6).value).toBe("string");
-    expect(reg.getRow(5).getCell(12).value).toBe(65);
-    expect(reg.getRow(6).getCell(12).value).toBe("65\n50");
+    expect(reg.getRow(8).getCell(12).value).toBe(65); // MATH 101: one meeting, so a number
+    expect(reg.getRow(9).getCell(12).value).toBe("65\n50"); // MATH 102: two meetings
     // a compact cell with a trailing empty value must stay text ("65\n"), not collapse to the number 65
-    expect(reg.getRow(11).getCell(12).value).toBe("65\n");
+    expect(reg.getRow(10).getCell(12).value).toBe("65\n"); // MATH 150
     const meta = wb.getWorksheet("Metadata")!;
     expect(meta.getSheetValues().slice(1).map((r) => (r as string[]).slice(1))).toEqual([
       ["Label", "Value"], ["Export Date", "2026-10-01"], ["Export Time", "17:14:20"], ["Academic Year", "R1"], ["Name", "Test"], ["Version", "2"], ["Notes", "n"],
