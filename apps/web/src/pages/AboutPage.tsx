@@ -64,7 +64,7 @@ export function AboutPage() {
         <h2>Previous versions</h2>
         <p>
           Course Schedulizer began as a tool written by Professors Randall Pruim and Keith VanderLinden. From 2020 until 2026, 
-          it was built up and maintained by teams of Calvin University computer science
+          it was rewritten, built up, and maintained by teams of Calvin University computer science
           students, working as “Senior Knights” and advised by the two of them. That version is still online as the{" "}
           <a href="https://senior-knights.github.io/course-schedulizer/#/" {...ext}>original Course Schedulizer</a>, and its code is in the{" "}
           <a href="https://github.com/senior-knights/course-schedulizer" {...ext}>GitHub repository</a>. This version is a rewrite that keeps what that one did and adds to it.
