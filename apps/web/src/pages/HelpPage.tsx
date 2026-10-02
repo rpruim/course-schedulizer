@@ -9,19 +9,45 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
       <>
         <p>
           Course Schedulizer helps a department build its schedule for an academic year: which sections run, when and where they meet, who teaches them and
-          for how much load. It warns you about conflicts, tallies faculty load (including non-teaching load) and lets you compare drafts.
+          for how much load. 
+          It warns you about conflicts, tallies faculty load (including non-teaching load) and 
+          lets you compare schedules (this year's to last year's; the one you submitted to the one that was re-entered in the registrar's office).
         </p>
         <p>A typical session looks like this:</p>
         <ol>
-          <li><a href="#get-official" onClick={jump("get-official")}>Get last year’s schedule</a> from the registrar’s report (or start from nothing).</li>
-          <li><Link to="/import">Import</Link> it, then look it over in the <Link to="/">Schedule</Link>, week and <Link to="/conflicts">Conflicts</Link> tabs.</li>
-          <li>Change what needs changing: <a href="#edit" onClick={jump("edit")}>edit and add sections</a>, add <a href="#nonteaching" onClick={jump("nonteaching")}>non-teaching load</a>.</li>
+          <li><Link to="/import">Import</Link> one or more schedules.
+          <ol type="a">
+            <li> The starting point for a new schedule is often a previous 
+              schedule.
+              You can <a href="#get-official" onClick={jump("get-official")}>get 
+                a previous year’s schedule</a> from the registrar’s report
+                at <a href="https://reports.calvin.edu">reports.calvin.edu</a>.
+            </li>
+            <li>You can also start from scratch and enter the entire 
+              schedule using Course Schedulizer.
+            </li>
+            <li>Once you begin working on a schedule, you can import your
+              previous work.
+            </li>
+          </ol>
+          </li>
+          <li> Look over your schedule in the 
+            <Link to="/">Schedule</Link>, week or <Link to="/conflicts">Conflicts</Link> tabs.
+          </li>
+          <li>Change what needs changing: 
+              <a href="#edit" onClick={jump("edit")}>edit and add sections</a>, 
+              add <a href="#nonteaching" onClick={jump("nonteaching")}>non-teaching load</a>.
+          </li>
           <li>Check <Link to="/loads">Teaching loads</Link> and conflicts again.</li>
-          <li><Link to="/export">Export</Link> to Excel to save your work and to send to the registrar.</li>
+          <li><Link to="/export">Export</Link> to Excel to save your work and to send to the registrar.
+          </li>
         </ol>
+
         <p className="note ok">
-          Your work is kept automatically in <em>this browser</em> while you work, but a browser can lose it (clearing site data, a different computer). Export to Excel
-          whenever you want a copy you can rely on.
+          Your work is kept automatically in <em>this browser</em> on <em>this device</em> while you work, 
+          but a browser can lose it (for example if site data are cleared), and you won't have access to your
+          schedule in a different browser or on a different device unless you save a copy. 
+          Export to Excel whenever you want a copy you can rely on.
         </p>
       </>
     ),
@@ -40,13 +66,16 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li>Export the report as an Excel file (<code>.xlsx</code>). It will land in your browser’s download folder.</li>
           <li>Open that file on the <Link to="/import">Import</Link> tab.</li>
         </ol>
-        <p>
-          Start from the file you get from the report, not one you have edited by hand. Once it is open here you can change anything, and the file you export
-          from Schedulizer is the better one to keep editing.
-        </p>
-        <p>
-          Files you saved from this app, and files saved from the old Course Schedulizer, open too. This app reads Excel files (<code>.xlsx</code>); it does not
-          read CSV files.
+        <p className="note warning">
+          Avoid the temptation to hand edit this Excel file. If your edits don't follow Schedulizer's expectations, you may 
+          have lost or corrupted data when you import the file.
+          </p>
+          <p>
+          Once your schedule is open here, you can change anything, then export it so you have a file to import
+          the next time.  
+          Course Schedulizer can read files from the Schedulizer Course Sections report, files you saved from this app, 
+          and Excel files saved from the old Course Schedulizer, too. This app reads Excel files (<code>.xlsx</code>) only; 
+          it does not read CSV files.
         </p>
       </>
     ),
@@ -59,7 +88,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <p>On the <Link to="/import">Import</Link> tab:</p>
         <ul>
           <li><strong>Open Excel file…</strong> picks one or more files. Each file becomes its own schedule, named after the file.</li>
-          <li><strong>Open as</strong> chooses <em>A new schedule</em> or <em>Replace “…”</em> to load the file over a schedule that is already open.</li>
+          <li><strong>Open as</strong> chooses <em>A new schedule</em> or <em>Replace “…”</em> to load the file in place of a schedule 
+          that is already open.</li>
           <li><strong>Academic year</strong> is used only when the file has no academic year of its own (for example <code>AY25</code>). If a report says some rows have no
             academic year, type one here and open the file again, choosing the schedule to replace.</li>
           <li><strong>Examples</strong> load small made-up schedules, handy for trying things out.</li>
@@ -77,14 +107,14 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     title: "Looking at your schedule",
     body: () => (
       <>
-        <p>Each tab shows the schedule in a different way. Click a column heading to sort a table; click again to reverse it.</p>
+        <p>Each view tab shows the schedule in a different way. Click a column heading to sort a table; click again to reverse the sort.</p>
         <dl>
           <dt><Link to="/">Schedule</Link></dt>
           <dd>One row per section: course, section letter, term, title, instructor, load and meeting times. Filter by year, term or text. Click a row to edit it. A ⚠ marks a section in a conflict.</dd>
           <dt><Link to="/loads">Teaching loads</Link></dt>
           <dd>Load per person per term, with non-teaching load in smaller type. Hover over a number to see which courses or activities add up to it; click a name to see that person’s week.</dd>
           <dt><Link to="/nonteaching">Non-teaching</Link></dt>
-          <dd>Load for things other than teaching: chair duties, release time, sabbaticals.</dd>
+          <dd>Load for things other than teaching: chair duties, release time, sabbaticals, etc.</dd>
           <dt><Link to="/conflicts">Conflicts</Link></dt>
           <dd>Pairs of sections that clash. See <a href="#conflicts" onClick={jump("conflicts")}>Conflicts</a> below.</dd>
           <dt><Link to="/dept">Dept week</Link>, <Link to="/faculty">Faculty week</Link>, <Link to="/rooms">Room week</Link></dt>
@@ -92,7 +122,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dt><Link to="/compare">Compare</Link></dt>
           <dd>Side-by-side comparison of schedules. See <a href="#compare" onClick={jump("compare")}>Comparing schedules</a>.</dd>
           <dt><Link to="/meta">Meta</Link></dt>
-          <dd>A nickname, version and notes for each schedule, and the name used when exporting.</dd>
+          <dd>View and edit information about the schedule as a whole.  Give your schedule a nickname. Specify the file name 
+            used when exporting. Label your schedule with a version and provide some notes about the schedule.</dd>
         </dl>
       </>
     ),
@@ -244,7 +275,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <p>On the <Link to="/export">Export</Link> tab, choose a schedule and <em>Export Excel</em>. The file name comes from <em>Save as</em> on the <Link to="/meta">Meta</Link> tab (default <code>schedulizer</code>), with the date and time added unless you turn that off there.</p>
         <ul>
           <li>The first sheet, <em>Registrar Schedule</em>, is in the format the registrar asked for, including a column for cross-listings and your notes. The other sheets let Schedulizer read the file back in full.</li>
-          <li><em>Teaching schedule only</em> leaves non-teaching load out of the file, to share a schedule without its load details. Whoever opens it still sees the schedule; loads will cover teaching only.</li>
+          <li><em>Teaching schedule only</em> leaves non-teaching load out of the file, to share a schedule without those details. Whoever opens it still sees the schedule; loads will cover teaching only.</li>
           <li>To <strong>share</strong> a schedule, send the Excel file. A colleague can open it here, and any changes they make stay in their copy.</li>
         </ul>
         <h3>Editing the file in Excel</h3>

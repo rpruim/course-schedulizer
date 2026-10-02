@@ -51,7 +51,7 @@ function Shell() {
     <EditorProvider onNotice={setNotice}>
       <div className="app">
         <header>
-          <h1>Course Schedulizer</h1>
+          <h1>Course Schedulizer 2.0</h1>
           <Toolbar />
         </header>
         <SchedulePicker />
