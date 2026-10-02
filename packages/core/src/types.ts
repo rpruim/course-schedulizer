@@ -40,6 +40,7 @@ export const sessionSchema = z
     instructionalMethod: str,
     courseLevel: str,
     group: str,
+    deliveryMode: str,
     comment: str,
     enrollment: optInt,
     enrollmentDay10: optInt,

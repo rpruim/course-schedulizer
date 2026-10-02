@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseDays, parseFaculty, parseTime } from "./format.js";
+import { sectionShares } from "./load.js";
 import { partsFor, splitTermCode } from "./terms.js";
 import {
   AY,
@@ -27,7 +28,7 @@ import {
 export const SESSION_COLUMNS = [
   "SectionId", "Department", "AcademicYear", "Term", "TermPart", "Prefix", "CourseNumber", "Section",
   "Faculty", "FacultyLoad", "MinimumCredits", "MaximumCredits", "MeetingDays", "StartTime",
-  "MeetingDuration", "Classroom", "ShortTitle", "InstructionalMethod", "CourseLevel", "Group",
+  "MeetingDuration", "Classroom", "ShortTitle", "InstructionalMethod", "CourseLevel", "Group", "DeliveryMode",
   "Comment", "Enrollment", "EnrollmentDay10",
 ] as const;
 export const CROSSLISTING_COLUMNS = ["SectionId", "Prefix", "CourseNumber"] as const;
@@ -36,13 +37,16 @@ export const CONSTRAINT_COLUMNS = ["Constraint", "Course", "Section", "Comment"]
 
 const key = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, "");
 
+/** Columns whose newlines mean something (one value per meeting): keep a trailing empty line, trim line by line later. */
+const LINE_COLUMNS = new Set(["MeetingDays", "StartTime", "MeetingDuration", "Classroom"]);
+
 /** Split a record into known columns (canonical names) and the rest. */
 function split(rec: Rec, known: readonly string[]): { known: Rec; extra: Rec } {
   const byKey = new Map(known.map((k) => [key(k), k]));
   const out = { known: {} as Rec, extra: {} as Rec };
   for (const [h, v] of Object.entries(rec)) {
     const canon = byKey.get(key(h));
-    if (canon) out.known[canon] = v.trim();
+    if (canon) out.known[canon] = LINE_COLUMNS.has(canon) ? v.replace(/\r/g, "") : v.trim();
     else if (h.trim() !== "" && v.trim() !== "") out.extra[h.trim()] = v.trim();
   }
   return out;
@@ -82,16 +86,32 @@ interface Meeting {
 }
 
 /**
- * One record → its meetings. Newlines in MeetingDays/StartTime/MeetingDuration/
- * Classroom separate meetings (the packed form); a record with none is a single
- * (possibly unscheduled) meeting. `00:00` for `0` minutes means "no time".
+ * One record → its meetings (the compact form). Each of MeetingDays, StartTime,
+ * MeetingDuration and Classroom holds either ONE value or n newline-separated
+ * values, with the same n in every column that has more than one; a single value
+ * is repeated for each of the n meetings. A blank cell is one (empty) value.
+ * `00:00` for `0` minutes means "no time".
+ *
+ * Leniency for old exports, which joined rooms with ", ": if only Classroom has
+ * a single line and splitting it on commas gives exactly n parts, it is split.
  */
 function meetings(r: Reporter, row: number, k: Rec): Meeting[] {
-  const cols = ["MeetingDays", "StartTime", "MeetingDuration", "Classroom"].map((c) => lines(k[c]));
-  const n = Math.max(1, ...cols.map((c) => (c.length === 1 && c[0] === "" ? 0 : c.length)));
+  const names = ["MeetingDays", "StartTime", "MeetingDuration", "Classroom"] as const;
+  const cols = names.map((c) => lines(k[c]));
+  const n = Math.max(...cols.map((c) => c.length));
+  const rooms = cols[3]!;
+  if (n > 1 && rooms.length === 1) {
+    const parts = rooms[0]!.split(/\s*,\s*/);
+    if (parts.length === n) cols[3] = parts;
+  }
+  const bad = names.filter((_, i) => cols[i]!.length !== 1 && cols[i]!.length !== n);
+  if (bad.length) {
+    r.add("error", row, `${bad.join(", ")} must hold one value or ${n} newline-separated values (like the other meeting columns), not ${bad.map((c) => cols[names.indexOf(c)]!.length).join(", ")}`);
+    return [];
+  }
   const out: Meeting[] = [];
   for (let i = 0; i < n; i++) {
-    const [d, t, du, room] = cols.map((c) => (c[i] ?? "").trim()) as [string, string, string, string];
+    const [d, t, du, room] = cols.map((c) => (c.length === 1 ? c[0]! : c[i]!).trim()) as [string, string, string, string];
     const days = parseDays(d);
     const start = parseTime(t);
     const duration = du === "" ? undefined : Number(du);
@@ -117,8 +137,9 @@ function meetings(r: Reporter, row: number, k: Rec): Meeting[] {
 
 /** Listings from a Prefix/CourseNumber pair of (possibly multi-line) cells; primary first. */
 function listings(r: Reporter, row: number, k: Rec): { prefix: string; courseNumber: string }[] {
-  const p = lines(k.Prefix).map((x) => x.trim()).filter(Boolean);
-  const c = lines(k.CourseNumber).map((x) => x.trim()).filter(Boolean);
+  const list = (s: string | undefined) => (s ?? "").split(/[\n,]/).map((x) => x.trim()).filter(Boolean);
+  const p = list(k.Prefix);
+  const c = list(k.CourseNumber);
   if (p.length === 0 || c.length === 0) return [];
   const n = Math.max(p.length, c.length);
   if ((p.length !== 1 && p.length !== n) || (c.length !== 1 && c.length !== n)) {
@@ -134,18 +155,26 @@ export const deriveSectionId = (s: Pick<Session, "academicYear" | "term" | "pref
 const SECTION_FIELDS = [
   "department", "academicYear", "term", "termPart", "prefix", "courseNumber", "section", "faculty",
   "facultyLoad", "minimumCredits", "maximumCredits", "shortTitle", "instructionalMethod", "courseLevel",
-  "group", "comment", "enrollment", "enrollmentDay10", "extra",
+  "group", "deliveryMode", "comment", "enrollment", "enrollmentDay10", "extra",
 ] as const;
 
 export interface SessionsImport {
   sessions: Session[];
   crossListings: CrossListing[];
+  /** Rows with no Prefix, CourseNumber or Section: the old export lists non-teaching load inline. */
+  nonTeaching: NonTeaching[];
   issues: Issue[];
 }
 
-/** Sessions sheet records (multi-row or packed form) → sessions + cross-listings. */
-export function importSessions(records: Rec[], settings: Settings = defaultSettings()): SessionsImport {
+export interface ImportOptions {
+  /** Fills a blank AcademicYear (old exports leave it blank on every row). */
+  academicYear?: string;
+}
+
+/** Sessions sheet records (compact or multi-row form) → sessions, cross-listings, inline non-teaching rows. */
+export function importSessions(records: Rec[], settings: Settings = defaultSettings(), opts: ImportOptions = {}): SessionsImport {
   const r = new Reporter("Sessions");
+  const nonTeaching: NonTeaching[] = [];
   const terms = new Set(settings.terms.map((t) => t.code));
   const sessions: Session[] = [];
   const crossListings: CrossListing[] = [];
@@ -155,6 +184,28 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
   records.forEach((rec, idx) => {
     const row = idx + 2;
     const { known: k, extra } = split(rec, SESSION_COLUMNS);
+    if (opts.academicYear && !k.AcademicYear) k.AcademicYear = opts.academicYear;
+
+    // No course at all: a non-teaching load row (activity in InstructionalMethod).
+    if (!k.Prefix && !k.CourseNumber && !k.Section) {
+      const t = (k.Term ?? "").toUpperCase();
+      const people = parseFaculty(k.Faculty ?? "");
+      const before = r.issues.length;
+      const who = `${k.Faculty || "no faculty"}: ${k.InstructionalMethod || "no activity"}`;
+      if (!t) r.add("error", row, `a non-teaching row needs a Term (${who})`);
+      else if (!terms.has(t) && t !== AY) r.add("error", row, `Term: "${k.Term}" is not a configured term (${[...terms].join(", ")}) (${who})`);
+      if (!people.length) r.add("error", row, "a non-teaching row (no Prefix, CourseNumber or Section) needs a Faculty");
+      if (!k.InstructionalMethod) r.add("error", row, "a non-teaching row needs its activity in InstructionalMethod");
+      const load = num(r, row, "FacultyLoad", k.FacultyLoad) ?? 0;
+      if (r.issues.length === before) {
+        for (const share of sectionShares(load, people)) {
+          const parsed = nonTeachingSchema.safeParse({ academicYear: k.AcademicYear ?? "", faculty: share.name, activity: k.InstructionalMethod, term: t, load: share.load, comment: k.Comment ?? "", extra });
+          if (parsed.success) nonTeaching.push(parsed.data);
+          else r.zod(row, parsed.error);
+        }
+      }
+      return;
+    }
     const ls = listings(r, row, k);
     const primary = ls[0] ?? { prefix: k.Prefix ?? "", courseNumber: k.CourseNumber ?? "" };
     // A combined code like FA1 fills both columns when TermPart is blank (or agrees).
@@ -204,6 +255,7 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
       instructionalMethod: k.InstructionalMethod ?? "",
       courseLevel: k.CourseLevel ?? "",
       group: k.Group ?? "",
+      deliveryMode: k.DeliveryMode ?? "",
       comment: k.Comment ?? "",
       enrollment: num(r, row, "Enrollment", k.Enrollment),
       enrollmentDay10: num(r, row, "EnrollmentDay10", k.EnrollmentDay10),
@@ -249,7 +301,7 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
       else r.zod(it.row, parsed.error);
     }
   }
-  return { sessions, crossListings, issues: r.issues };
+  return { sessions, crossListings, nonTeaching, issues: r.issues };
 }
 
 /** CrossListings sheet records, merged into `existing` (duplicates ignored). */
@@ -278,13 +330,14 @@ export function importCrossListings(
   return { crossListings: out, issues: r.issues };
 }
 
-export function importNonTeaching(records: Rec[], settings: Settings = defaultSettings()): { nonTeaching: NonTeaching[]; issues: Issue[] } {
+export function importNonTeaching(records: Rec[], settings: Settings = defaultSettings(), opts: ImportOptions = {}): { nonTeaching: NonTeaching[]; issues: Issue[] } {
   const r = new Reporter("NonTeaching");
   const terms = new Set([AY, ...settings.terms.map((t) => t.code)]);
   const out: NonTeaching[] = [];
   records.forEach((rec, idx) => {
     const row = idx + 2;
     const { known: k, extra } = split(rec, NONTEACHING_COLUMNS);
+    if (opts.academicYear && !k.AcademicYear) k.AcademicYear = opts.academicYear;
     const term = (k.Term ?? "").toUpperCase();
     if (term && !terms.has(term)) r.add("error", row, `Term: "${k.Term}" is not a configured term (${[...terms].join(", ")})`);
     const parsed = nonTeachingSchema.safeParse({
@@ -384,6 +437,8 @@ export interface ImportInput {
   constraints?: Rec[];
   settings?: Settings;
   meta?: Meta;
+  /** Fills a blank AcademicYear (see `ImportOptions`). */
+  academicYear?: string;
 }
 
 export interface ImportResult {
@@ -396,9 +451,10 @@ export interface ImportResult {
 /** Record-level import of a whole schedule. Pure and synchronous. */
 export function importRecords(input: ImportInput): ImportResult {
   const settings = input.settings ?? defaultSettings();
-  const s = importSessions(input.sessions, settings);
+  const opts = input.academicYear ? { academicYear: input.academicYear } : {};
+  const s = importSessions(input.sessions, settings, opts);
   const cl = importCrossListings(input.crossListings ?? [], s.sessions, s.crossListings);
-  const nt = importNonTeaching(input.nonTeaching ?? [], settings);
+  const nt = importNonTeaching(input.nonTeaching ?? [], settings, opts);
   const co = importConstraints(input.constraints ?? []);
   const issues = [...s.issues, ...cl.issues, ...nt.issues, ...co.issues];
   return {
@@ -407,7 +463,7 @@ export function importRecords(input: ImportInput): ImportResult {
       settings,
       sessions: s.sessions,
       crossListings: cl.crossListings,
-      nonTeaching: nt.nonTeaching,
+      nonTeaching: [...s.nonTeaching, ...nt.nonTeaching],
       constraints: co.constraints,
     },
     issues,

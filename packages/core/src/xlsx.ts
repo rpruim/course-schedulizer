@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import { constraintsTable, crossListingsTable, nonTeachingTable, sessionsTable, type ExportOptions, type Table } from "./export.js";
-import { importRecords, importSettings, type ImportResult } from "./import.js";
+import { REGISTRAR_SHEET, registrarTable } from "./registrar.js";
+import { importRecords, importSettings, type ImportOptions, type ImportResult } from "./import.js";
 import { emptyMeta, type Issue, type Rec } from "./types.js";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -51,24 +52,27 @@ const sheetByName = (wb: ExcelJS.Workbook, name: string) =>
  * Read a workbook: the new multi-sheet form, or the legacy single-sheet packed
  * form (first sheet when there is no `Sessions` sheet).
  */
-export async function readWorkbook(data: ArrayBuffer | Uint8Array): Promise<ImportResult> {
+export async function readWorkbook(data: ArrayBuffer | Uint8Array, options: ImportOptions = {}): Promise<ImportResult> {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load((data instanceof Uint8Array ? data : new Uint8Array(data)) as unknown as ArrayBuffer);
   const issues: Issue[] = [];
   const { settings, issues: settingsIssues } = importSettings(sheetRecords(sheetByName(wb, "Settings")));
   issues.push(...settingsIssues);
   const meta = emptyMeta();
-  for (const r of sheetRecords(sheetByName(wb, "Meta"))) {
-    const k = (r.Key ?? "").toLowerCase();
+  // Metadata is Label/Value (as the old app wrote it); older files of ours used Key/Value on "Meta".
+  for (const r of [...sheetRecords(sheetByName(wb, "Metadata")), ...sheetRecords(sheetByName(wb, "Meta"))]) {
+    const k = (r.Label ?? r.Key ?? "").toLowerCase();
     if (k === "name" || k === "notes" || k === "version") meta[k] = r.Value ?? "";
   }
   const result = importRecords({
-    sessions: sheetRecords(sheetByName(wb, "Sessions") ?? wb.worksheets[0]),
+    // Our own "Sessions" sheet, else the old app's first tab ("Schedule"), else the first sheet.
+    sessions: sheetRecords(sheetByName(wb, "Sessions") ?? sheetByName(wb, "Schedule") ?? wb.worksheets[0]),
     crossListings: sheetRecords(sheetByName(wb, "CrossListings")),
     nonTeaching: sheetRecords(sheetByName(wb, "NonTeaching")),
     constraints: sheetRecords(sheetByName(wb, "Constraints")),
     settings,
     meta,
+    ...(options.academicYear ? { academicYear: options.academicYear } : {}),
   });
   result.issues.unshift(...issues);
   return result;
@@ -76,12 +80,16 @@ export async function readWorkbook(data: ArrayBuffer | Uint8Array): Promise<Impo
 
 const NUMERIC = new Set(["FacultyLoad", "MinimumCredits", "MaximumCredits", "MeetingDuration", "Enrollment", "EnrollmentDay10", "Load", "StartWeek", "EndWeek"]);
 
-function addTable(wb: ExcelJS.Workbook, name: string, t: Table) {
+/** Plain decimal numbers only: `Number("65\n")` is 65, which would silently drop a compact cell's trailing empty value. */
+const PLAIN_NUMBER = /^-?\d+(\.\d+)?$/;
+
+/** Cells in `numeric` columns that look like numbers are written as numbers; everything else as text. */
+function addTable(wb: ExcelJS.Workbook, name: string, t: Table, numeric: Set<string> = NUMERIC) {
   const ws = wb.addWorksheet(name);
   ws.addRow(t.header).font = { bold: true };
   ws.views = [{ state: "frozen", ySplit: 1 }];
   for (const row of t.rows) {
-    const r = ws.addRow(row.map((v, i) => (NUMERIC.has(t.header[i]!) && v !== "" && !Number.isNaN(Number(v)) ? Number(v) : v)));
+    const r = ws.addRow(row.map((v, i) => (numeric.has(t.header[i]!) && PLAIN_NUMBER.test(v) ? Number(v) : v)));
     r.eachCell((c) => {
       if (typeof c.value === "string" && c.value.includes("\n")) c.alignment = { wrapText: true, vertical: "top" };
     });
@@ -91,9 +99,22 @@ function addTable(wb: ExcelJS.Workbook, name: string, t: Table) {
   });
 }
 
-/** Write a schedule as an .xlsx workbook. */
-export async function writeWorkbook(schedule: import("./types.js").Schedule, opts: ExportOptions = {}): Promise<Uint8Array> {
+export interface WriteOptions extends ExportOptions {
+  /** The export time shown on the Metadata sheet (default: now). */
+  now?: Date;
+}
+
+const two = (n: number) => String(n).padStart(2, "0");
+
+/**
+ * Write a schedule as an .xlsx workbook. First tab: "Registrar Schedule", the
+ * registrar's layout (see `registrarTable`). Then our own lossless sheets
+ * (Sessions, CrossListings, NonTeaching, Constraints, Settings) and Metadata.
+ */
+export async function writeWorkbook(schedule: import("./types.js").Schedule, opts: WriteOptions = {}): Promise<Uint8Array> {
   const wb = new ExcelJS.Workbook();
+  // The registrar tab keeps FacultyLoad and StudentCredits as text, as the old app did; only Duration is numeric.
+  addTable(wb, REGISTRAR_SHEET, registrarTable(schedule), new Set(["Duration"]));
   addTable(wb, "Sessions", sessionsTable(schedule, opts));
   addTable(wb, "CrossListings", crossListingsTable(schedule, opts));
   addTable(wb, "NonTeaching", nonTeachingTable(schedule));
@@ -107,9 +128,18 @@ export async function writeWorkbook(schedule: import("./types.js").Schedule, opt
       ...schedule.settings.parts.map((p) => ["Part", p.code, p.name, p.term ?? "", String(p.startWeek), String(p.endWeek)]),
     ],
   });
-  addTable(wb, "Meta", {
-    header: ["Key", "Value"],
-    rows: [["name", schedule.meta.name], ["notes", schedule.meta.notes], ["version", schedule.meta.version]],
+  const now = opts.now ?? new Date();
+  const years = [...new Set([...schedule.sessions.map((s) => s.academicYear), ...schedule.nonTeaching.map((n) => n.academicYear)])];
+  addTable(wb, "Metadata", {
+    header: ["Label", "Value"],
+    rows: [
+      ["Export Date", `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`],
+      ["Export Time", `${two(now.getHours())}:${two(now.getMinutes())}:${two(now.getSeconds())}`],
+      ["Academic Year", years.join(", ")],
+      ["Name", schedule.meta.name],
+      ["Version", schedule.meta.version],
+      ["Notes", schedule.meta.notes],
+    ],
   });
   return new Uint8Array(await wb.xlsx.writeBuffer());
 }

@@ -36,6 +36,7 @@ const sessionCells = (s: Session): Rec => ({
   InstructionalMethod: s.instructionalMethod,
   CourseLevel: s.courseLevel,
   Group: s.group,
+  DeliveryMode: s.deliveryMode,
   Comment: s.comment,
   Enrollment: formatNumber(s.enrollment),
   EnrollmentDay10: formatNumber(s.enrollmentDay10),

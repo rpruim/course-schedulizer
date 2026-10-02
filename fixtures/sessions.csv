@@ -1,35 +1,35 @@
-SectionId,Department,AcademicYear,Term,TermPart,Prefix,CourseNumber,Section,Faculty,FacultyLoad,MinimumCredits,MaximumCredits,MeetingDays,StartTime,MeetingDuration,Classroom,ShortTitle,InstructionalMethod,CourseLevel,Group,Comment,Enrollment,EnrollmentDay10
-AY24-FA-MATH101-A,Mathematics and Statistics,AY24,FA,Full,MATH,101,A,Ada Example,4,4,,MWF,09:15,65,NH 101,Calculus I,Lecture,100,,,28,28
-AY24-FA-MATH101-B,Mathematics and Statistics,AY24,FA,Full,MATH,101,B,Ada Example,4,4,,MWF,10:30,65,NH 101,Calculus I,Lecture,100,,,27,27
-AY24-FA-MATH102-A,Mathematics and Statistics,AY24,FA,Full,MATH,102,A,Ben Sample,4,4,,MWF,11:00,65,NH 102,Calculus II,Lecture,100,,,24,25
-AY24-FA-MATH231-A,Mathematics and Statistics,AY24,FA,Full,MATH,231,A,Cy Fictional,4,4,,TR,10:20,100,NH 103,Linear Algebra,Lecture,200,,,22,22
-AY24-FA-MATH250-A,Mathematics and Statistics,AY24,FA,Full,MATH,250,A,Cy Fictional,4,4,,MWF,08:00,65,NH 103,Discrete Mathematics,Lecture,200,,,19,19
-AY24-FA-MATH301-A,Mathematics and Statistics,AY24,FA,Full,MATH,301,A,Ben Sample,4,4,,TR,14:10,100,NH 104,Real Analysis I,Lecture,300,,,12,12
-AY24-FA-MATH391-A,Mathematics and Statistics,AY24,FA,Full,MATH,391,A,Ada Example,1,1,,R,15:05,50,NH 276,Colloquium,Seminar,300,,,9,9
-AY24-FA-STAT143-A,Mathematics and Statistics,AY24,FA,Full,STAT,143,A,Dee Placeholder,4,4,,MWF,12:15,65,NH 105,Introduction to Statistics,Lecture,100,,,30,30
-AY24-FA-STAT143-B,Mathematics and Statistics,AY24,FA,Full,STAT,143,B,Dee Placeholder,4,4,,MWF,13:30,65,NH 105,Introduction to Statistics,Lecture,100,,,29,29
-AY24-FA-STAT143-B,Mathematics and Statistics,AY24,FA,Full,STAT,143,B,Dee Placeholder,4,4,,MWF,13:30,65,NH 106,Introduction to Statistics,Lecture,100,,,29,29
-AY24-FA-STAT243-A,Mathematics and Statistics,AY24,FA,Full,STAT,243,A,Eli Specimen,4,4,,TR,10:20,100,NH 105,Statistical Methods,Lecture,200,,,21,21
-AY24-FA-STAT343-A,Mathematics and Statistics,AY24,FA,Full,STAT,343,A,"Eli Specimen, Dee Placeholder",4,4,,MW,14:10,100,NH 105,Probability,Lecture,300,,,14,14
-AY24-FA-STAT343-A,Mathematics and Statistics,AY24,FA,Full,STAT,343,A,"Eli Specimen, Dee Placeholder",4,4,,F,14:10,50,NH 105,Probability,Lecture,300,,,14,14
-AY24-FA-DATA202-A,Mathematics and Statistics,AY24,FA,Full,DATA,202,A,Fay Mockson,4,4,,TR,08:30,100,SB 110,Data Computing,Lecture,200,,,25,25
-AY24-FA-CS108-A,Computer Science,AY24,FA,Full,CS,108,A,Gus Testwell,4,4,,MWF,09:15,65,SB 120,Introduction to Computing,Lecture,100,,,26,26
-AY24-FA-CS108-B,Computer Science,AY24,FA,Full,CS,108,B,Gus Testwell,4,4,,MWF,10:30,65,SB 120,Introduction to Computing,Lecture,100,,,25,25
-AY24-FA-CS262-A,Computer Science,AY24,FA,Full,CS,262,A,Hal Fakename,4,4,,TR,12:30,100,SB 122,Data Structures,Lecture,200,,,20,20
-AY24-FA-ASC111-A,Student Success,AY24,FA,Full,ASC,111,A,Ivy Sandbox,2,2,,MWF,12:15,65,HH 316,Academic Transitions,Lecture,100,,,20,20
-AY24-FA-ASC111-B,Student Success,AY24,FA,Full,ASC,111,B,Ivy Sandbox,2,2,,MWF,12:15,65,HH 316,Academic Transitions,Lecture,100,,,20,20
-AY24-FA-ASC111-B,Student Success,AY24,FA,Full,ASC,111,B,Ivy Sandbox,2,2,,MWF,12:15,65,HH 323,Academic Transitions,Lecture,100,,,20,20
-AY24-FA-MATH399-A,Mathematics and Statistics,AY24,FA,Full,MATH,399,A,,2,2,,,,,,Independent Study,Independent Study,300,,,1,1
-AY24-SP-MATH101-A,Mathematics and Statistics,AY24,SP,Full,MATH,101,A,Ada Example,4,4,,MWF,09:15,65,NH 101,Calculus I,Lecture,100,,,26,26
-AY24-SP-MATH102-A,Mathematics and Statistics,AY24,SP,Full,MATH,102,A,Ben Sample,4,4,,MWF,11:00,65,NH 102,Calculus II,Lecture,100,,,25,25
-AY24-SP-MATH232-A,Mathematics and Statistics,AY24,SP,Full,MATH,232,A,Cy Fictional,4,4,,TR,10:20,100,NH 103,Multivariable Calculus,Lecture,200,,,18,18
-AY24-SP-MATH302-A,Mathematics and Statistics,AY24,SP,Full,MATH,302,A,Ben Sample,4,4,,TR,14:10,100,NH 104,Real Analysis II,Lecture,300,,,11,11
-AY24-SP-MATH391-A,Mathematics and Statistics,AY24,SP,Full,MATH,391,A,Ada Example,1,1,,R,15:05,50,NH 276,Colloquium,Seminar,300,,,8,8
-AY24-SP-STAT143-A,Mathematics and Statistics,AY24,SP,Full,STAT,143,A,Dee Placeholder,4,4,,MWF,12:15,65,NH 105,Introduction to Statistics,Lecture,100,,,29,29
-AY24-SP-STAT244-A,Mathematics and Statistics,AY24,SP,Full,STAT,244,A,Eli Specimen,4,4,,TR,10:20,100,NH 105,Regression Models,Lecture,200,,,17,17
-AY24-SP-STAT344-A,Mathematics and Statistics,AY24,SP,Full,STAT,344,A,Eli Specimen,4,4,,TR,12:30,100,NH 105,Bayesian Statistics,Lecture,300,,,10,10
-AY24-SP-DATA301-A,Mathematics and Statistics,AY24,SP,Full,DATA,301,A,"Fay Mockson, Ben Sample",4,4,,MW,14:10,100,SB 110,Data Science Topics,Lecture,300,,,13,13
-AY24-SP-CS108-A,Computer Science,AY24,SP,Full,CS,108,A,Gus Testwell,4,4,,MWF,09:15,65,SB 120,Introduction to Computing,Lecture,100,,,24,24
-AY24-SP-CS262-A,Computer Science,AY24,SP,Full,CS,262,A,Hal Fakename,4,4,,TR,12:30,100,SB 122,Data Structures,Lecture,200,,,19,19
-AY24-SP-CS372-A,Computer Science,AY24,SP,Full,CS,372,A,Hal Fakename,4,4,,MWF,13:30,65,SB 122,Algorithms,Lecture,300,,,15,15
-AY24-SP-ASC111-A,Student Success,AY24,SP,Full,ASC,111,A,Ivy Sandbox,2,2,,TR,14:10,100,HH 316,Academic Transitions,Lecture,100,,,13,14
+SectionId,Department,AcademicYear,Term,TermPart,Prefix,CourseNumber,Section,Faculty,FacultyLoad,MinimumCredits,MaximumCredits,MeetingDays,StartTime,MeetingDuration,Classroom,ShortTitle,InstructionalMethod,CourseLevel,Group,DeliveryMode,Comment,Enrollment,EnrollmentDay10
+AY24-FA-MATH101-A,Mathematics and Statistics,AY24,FA,Full,MATH,101,A,Ada Example,4,4,,MWF,09:15,65,NH 101,Calculus I,Lecture,100,,,,28,28
+AY24-FA-MATH101-B,Mathematics and Statistics,AY24,FA,Full,MATH,101,B,Ada Example,4,4,,MWF,10:30,65,NH 101,Calculus I,Lecture,100,,,,27,27
+AY24-FA-MATH102-A,Mathematics and Statistics,AY24,FA,Full,MATH,102,A,Ben Sample,4,4,,MWF,11:00,65,NH 102,Calculus II,Lecture,100,,,,24,25
+AY24-FA-MATH231-A,Mathematics and Statistics,AY24,FA,Full,MATH,231,A,Cy Fictional,4,4,,TR,10:20,100,NH 103,Linear Algebra,Lecture,200,,,,22,22
+AY24-FA-MATH250-A,Mathematics and Statistics,AY24,FA,Full,MATH,250,A,Cy Fictional,4,4,,MWF,08:00,65,NH 103,Discrete Mathematics,Lecture,200,,,,19,19
+AY24-FA-MATH301-A,Mathematics and Statistics,AY24,FA,Full,MATH,301,A,Ben Sample,4,4,,TR,14:10,100,NH 104,Real Analysis I,Lecture,300,,,,12,12
+AY24-FA-MATH391-A,Mathematics and Statistics,AY24,FA,Full,MATH,391,A,Ada Example,1,1,,R,15:05,50,NH 276,Colloquium,Seminar,300,,,,9,9
+AY24-FA-STAT143-A,Mathematics and Statistics,AY24,FA,Full,STAT,143,A,Dee Placeholder,4,4,,MWF,12:15,65,NH 105,Introduction to Statistics,Lecture,100,,,,30,30
+AY24-FA-STAT143-B,Mathematics and Statistics,AY24,FA,Full,STAT,143,B,Dee Placeholder,4,4,,MWF,13:30,65,NH 105,Introduction to Statistics,Lecture,100,,,,29,29
+AY24-FA-STAT143-B,Mathematics and Statistics,AY24,FA,Full,STAT,143,B,Dee Placeholder,4,4,,MWF,13:30,65,NH 106,Introduction to Statistics,Lecture,100,,,,29,29
+AY24-FA-STAT243-A,Mathematics and Statistics,AY24,FA,Full,STAT,243,A,Eli Specimen,4,4,,TR,10:20,100,NH 105,Statistical Methods,Lecture,200,,,,21,21
+AY24-FA-STAT343-A,Mathematics and Statistics,AY24,FA,Full,STAT,343,A,"Eli Specimen, Dee Placeholder",4,4,,MW,14:10,100,NH 105,Probability,Lecture,300,,,,14,14
+AY24-FA-STAT343-A,Mathematics and Statistics,AY24,FA,Full,STAT,343,A,"Eli Specimen, Dee Placeholder",4,4,,F,14:10,50,NH 105,Probability,Lecture,300,,,,14,14
+AY24-FA-DATA202-A,Mathematics and Statistics,AY24,FA,Full,DATA,202,A,Fay Mockson,4,4,,TR,08:30,100,SB 110,Data Computing,Lecture,200,,,,25,25
+AY24-FA-CS108-A,Computer Science,AY24,FA,Full,CS,108,A,Gus Testwell,4,4,,MWF,09:15,65,SB 120,Introduction to Computing,Lecture,100,,,,26,26
+AY24-FA-CS108-B,Computer Science,AY24,FA,Full,CS,108,B,Gus Testwell,4,4,,MWF,10:30,65,SB 120,Introduction to Computing,Lecture,100,,,,25,25
+AY24-FA-CS262-A,Computer Science,AY24,FA,Full,CS,262,A,Hal Fakename,4,4,,TR,12:30,100,SB 122,Data Structures,Lecture,200,,,,20,20
+AY24-FA-ASC111-A,Student Success,AY24,FA,Full,ASC,111,A,Ivy Sandbox,2,2,,MWF,12:15,65,HH 316,Academic Transitions,Lecture,100,,,,20,20
+AY24-FA-ASC111-B,Student Success,AY24,FA,Full,ASC,111,B,Ivy Sandbox,2,2,,MWF,12:15,65,HH 316,Academic Transitions,Lecture,100,,,,20,20
+AY24-FA-ASC111-B,Student Success,AY24,FA,Full,ASC,111,B,Ivy Sandbox,2,2,,MWF,12:15,65,HH 323,Academic Transitions,Lecture,100,,,,20,20
+AY24-FA-MATH399-A,Mathematics and Statistics,AY24,FA,Full,MATH,399,A,,2,2,,,,,,Independent Study,Independent Study,300,,,,1,1
+AY24-SP-MATH101-A,Mathematics and Statistics,AY24,SP,Full,MATH,101,A,Ada Example,4,4,,MWF,09:15,65,NH 101,Calculus I,Lecture,100,,,,26,26
+AY24-SP-MATH102-A,Mathematics and Statistics,AY24,SP,Full,MATH,102,A,Ben Sample,4,4,,MWF,11:00,65,NH 102,Calculus II,Lecture,100,,,,25,25
+AY24-SP-MATH232-A,Mathematics and Statistics,AY24,SP,Full,MATH,232,A,Cy Fictional,4,4,,TR,10:20,100,NH 103,Multivariable Calculus,Lecture,200,,,,18,18
+AY24-SP-MATH302-A,Mathematics and Statistics,AY24,SP,Full,MATH,302,A,Ben Sample,4,4,,TR,14:10,100,NH 104,Real Analysis II,Lecture,300,,,,11,11
+AY24-SP-MATH391-A,Mathematics and Statistics,AY24,SP,Full,MATH,391,A,Ada Example,1,1,,R,15:05,50,NH 276,Colloquium,Seminar,300,,,,8,8
+AY24-SP-STAT143-A,Mathematics and Statistics,AY24,SP,Full,STAT,143,A,Dee Placeholder,4,4,,MWF,12:15,65,NH 105,Introduction to Statistics,Lecture,100,,,,29,29
+AY24-SP-STAT244-A,Mathematics and Statistics,AY24,SP,Full,STAT,244,A,Eli Specimen,4,4,,TR,10:20,100,NH 105,Regression Models,Lecture,200,,,,17,17
+AY24-SP-STAT344-A,Mathematics and Statistics,AY24,SP,Full,STAT,344,A,Eli Specimen,4,4,,TR,12:30,100,NH 105,Bayesian Statistics,Lecture,300,,,,10,10
+AY24-SP-DATA301-A,Mathematics and Statistics,AY24,SP,Full,DATA,301,A,"Fay Mockson, Ben Sample",4,4,,MW,14:10,100,SB 110,Data Science Topics,Lecture,300,,,,13,13
+AY24-SP-CS108-A,Computer Science,AY24,SP,Full,CS,108,A,Gus Testwell,4,4,,MWF,09:15,65,SB 120,Introduction to Computing,Lecture,100,,,,24,24
+AY24-SP-CS262-A,Computer Science,AY24,SP,Full,CS,262,A,Hal Fakename,4,4,,TR,12:30,100,SB 122,Data Structures,Lecture,200,,,,19,19
+AY24-SP-CS372-A,Computer Science,AY24,SP,Full,CS,372,A,Hal Fakename,4,4,,MWF,13:30,65,SB 122,Algorithms,Lecture,300,,,,15,15
+AY24-SP-ASC111-A,Student Success,AY24,SP,Full,ASC,111,A,Ivy Sandbox,2,2,,TR,14:10,100,HH 316,Academic Transitions,Lecture,100,,,,13,14

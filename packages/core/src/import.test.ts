@@ -35,6 +35,67 @@ describe("importSessions: packed form", () => {
   });
 });
 
+describe("compact form: one value or n values", () => {
+  const meet = (o: Record<string, string>) => importSessions([rec(o)]);
+  it("repeats a single value for each of the n meetings", () => {
+    const { sessions, issues } = meet({ MeetingDays: "R\nR", StartTime: "15:05:00", MeetingDuration: "50", Classroom: "NH 276" });
+    expect(issues).toEqual([]);
+    expect(sessions.map((s) => [s.days, s.start, s.duration, s.room])).toEqual([["R", 905, 50, "NH 276"], ["R", 905, 50, "NH 276"]]);
+  });
+  it("treats a blank cell as one empty value", () => {
+    const { sessions } = meet({ MeetingDays: "MW\nF", StartTime: "9:00\n10:00", MeetingDuration: "50", Classroom: "" });
+    expect(sessions.map((s) => [s.days, s.start, s.room])).toEqual([["MW", 540, ""], ["F", 600, ""]]);
+  });
+  it("keeps an empty trailing line as an unscheduled meeting", () => {
+    const { sessions, issues } = meet({ MeetingDays: "MWF\n", StartTime: "08:00:00\n", MeetingDuration: "65\n", Classroom: "NH 105\nOnline" });
+    expect(issues).toEqual([]);
+    expect(sessions.map((s) => [s.days, s.start, s.room])).toEqual([["MWF", 480, "NH 105"], ["", undefined, "Online"]]);
+  });
+  it("rejects columns whose counts are neither 1 nor n", () => {
+    const { sessions, issues } = meet({ MeetingDays: "M\nW\nF", StartTime: "9:00\n10:00", MeetingDuration: "50" });
+    expect(sessions).toEqual([]);
+    expect(issues[0]!.message).toMatch(/StartTime must hold one value or 3 newline-separated values/);
+  });
+  it("splits old comma-joined rooms when the count matches", () => {
+    const { sessions } = meet({ MeetingDays: "R\nR", StartTime: "15:05:00", MeetingDuration: "50", Classroom: "NH 276, NH 280" });
+    expect(sessions.map((s) => s.room)).toEqual(["NH 276", "NH 280"]);
+    // a single meeting's room is never split
+    expect(meet({ MeetingDays: "R", StartTime: "15:05", MeetingDuration: "50", Classroom: "NH 276, NH 280" }).sessions[0]!.room).toBe("NH 276, NH 280");
+  });
+  it("reads cross-listed prefixes joined with commas or newlines", () => {
+    expect(importSessions([rec({ Prefix: "DATA, STAT", CourseNumber: "385" })]).crossListings).toEqual([{ sectionId: "AY1-FA-DATA385-A", prefix: "STAT", courseNumber: "385" }]);
+    expect(importSessions([rec({ Prefix: "DATA, STAT", CourseNumber: "301, 305" })]).crossListings).toEqual([{ sectionId: "AY1-FA-DATA301-A", prefix: "STAT", courseNumber: "305" }]);
+  });
+});
+
+describe("inline non-teaching rows and default academic year", () => {
+  const nt = (o: Record<string, string>) => ({ AcademicYear: "", Term: "FA", FacultyLoad: "4", Faculty: "Ada Example", InstructionalMethod: "Chair", ...o });
+  it("reads a row with no course as non-teaching load", () => {
+    const r = importSessions([nt({})], undefined, { academicYear: "AY25" });
+    expect(r.issues).toEqual([]);
+    expect(r.sessions).toEqual([]);
+    expect(r.nonTeaching).toEqual([{ academicYear: "AY25", faculty: "Ada Example", activity: "Chair", term: "FA", load: 4, comment: "", extra: {} }]);
+  });
+  it("divides the load among several people, honouring shares", () => {
+    const r = importSessions([nt({ Faculty: "Ada (3), Ben" })], undefined, { academicYear: "Y" });
+    expect(r.nonTeaching.map((n) => [n.faculty, n.load])).toEqual([["Ada", 3], ["Ben", 1]]);
+  });
+  it("reports unusable non-teaching rows", () => {
+    const m = (o: Record<string, string>) => importSessions([nt(o)], undefined, { academicYear: "Y" }).issues.map((i) => i.message);
+    expect(m({ Term: "Full" })[0]).toMatch(/not a configured term/);
+    expect(m({ Term: "" })[0]).toMatch(/needs a Term \(Ada Example: Chair\)/);
+    expect(m({ InstructionalMethod: "" })[0]).toMatch(/needs its activity/);
+    expect(m({ Faculty: "" })[0]).toMatch(/needs a Faculty/);
+  });
+  it("requires an academic year unless a default is given", () => {
+    expect(importSessions([rec({ AcademicYear: "" })]).issues.some((i) => i.severity === "error")).toBe(true);
+    const r = importSessions([rec({ AcademicYear: "" })], undefined, { academicYear: "AY25" });
+    expect(r.issues).toEqual([]);
+    expect(r.sessions[0]!.sectionId).toBe("AY25-FA-MATH101-A");
+    expect(importSessions([rec({ AcademicYear: "AY1" })], undefined, { academicYear: "AY25" }).sessions[0]!.academicYear).toBe("AY1");
+  });
+});
+
 describe("importSessions: multi-row form", () => {
   it("ties rows together by SectionId without duplicating listings", () => {
     const r = importSessions([

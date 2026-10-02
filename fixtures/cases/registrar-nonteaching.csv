@@ -1,0 +1,3 @@
+AcademicYear,Faculty,Activity,Term,Load,Comment
+R1,Ada Example,Chair release,AY,3,"SYNTHETIC: AY, one row per spread term"
+R1,Ben Sample,Sabbatical,SP,4,
