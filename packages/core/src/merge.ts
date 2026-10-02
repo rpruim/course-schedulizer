@@ -29,7 +29,7 @@ export function mergeSchedules(inputs: MergeInput[]): Merged {
   const out = emptySchedule();
   const origin: MergeOrigin = { sections: new Map(), nonTeaching: [] };
   const names = inputs.map((i) => i.name).filter(Boolean);
-  out.meta = { name: names.join(" + "), nickname: "", notes: "", version: "" };
+  out.meta = { name: names.join(" + "), nickname: "", saveAs: "", timestamp: true, notes: "", version: "" };
   const first = inputs[0];
   if (first) out.settings = structuredClone(first.schedule.settings);
 

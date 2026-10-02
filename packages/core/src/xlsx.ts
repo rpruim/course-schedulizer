@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import { constraintsTable, crossListingsTable, nonTeachingTable, sessionsTable, type ExportOptions, type Table } from "./export.js";
 import { REGISTRAR_SHEET, registrarTable } from "./registrar.js";
 import { importRecords, importSettings, type ImportOptions, type ImportResult } from "./import.js";
-import { emptyMeta, type Issue, type Rec } from "./types.js";
+import { DEFAULT_SAVE_AS, emptyMeta, type Issue, type Rec } from "./types.js";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -63,6 +63,8 @@ export async function readWorkbook(data: ArrayBuffer | Uint8Array, options: Impo
   for (const r of [...sheetRecords(sheetByName(wb, "Metadata")), ...sheetRecords(sheetByName(wb, "Meta"))]) {
     const k = (r.Label ?? r.Key ?? "").toLowerCase();
     if (k === "name" || k === "nickname" || k === "notes" || k === "version") meta[k] = r.Value ?? "";
+    else if (k === "save as") meta.saveAs = (r.Value ?? "").trim() || DEFAULT_SAVE_AS;
+    else if (k === "time stamp in file name") meta.timestamp = !/^(no|false|0)$/i.test((r.Value ?? "").trim());
   }
   const result = importRecords({
     // Our own "Sessions" sheet, else the old app's first tab ("Schedule"), else the first sheet.
@@ -146,6 +148,8 @@ export async function writeWorkbook(schedule: import("./types.js").Schedule, opt
       ["Academic Year", years.join(", ")],
       ["Name", schedule.meta.name],
       ["Nickname", schedule.meta.nickname ?? ""],
+      ["Save As", schedule.meta.saveAs || DEFAULT_SAVE_AS],
+      ["Time Stamp In File Name", schedule.meta.timestamp === false ? "No" : "Yes"],
       ["Version", schedule.meta.version],
       ["Notes", schedule.meta.notes],
     ],

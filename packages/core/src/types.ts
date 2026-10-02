@@ -112,10 +112,16 @@ export interface Settings {
   nonRooms: string[];
 }
 
+export const DEFAULT_SAVE_AS = "schedulizer";
+
 export interface Meta {
   name: string;
   /** A short name to show in place of the (often long) file name; blank = use the file name. */
   nickname: string;
+  /** Base of the file name when exporting; blank = `DEFAULT_SAVE_AS`. */
+  saveAs: string;
+  /** Add the date and time to the exported file name. */
+  timestamp: boolean;
   notes: string;
   version: string;
 }
@@ -156,7 +162,7 @@ export const defaultSettings = (): Settings => ({
   spreadTerms: ["FA", "SP"],
   nonRooms: ["Off Campus", "Online", "TBD"],
 });
-export const emptyMeta = (): Meta => ({ name: "", nickname: "", notes: "", version: "" });
+export const emptyMeta = (): Meta => ({ name: "", nickname: "", saveAs: DEFAULT_SAVE_AS, timestamp: true, notes: "", version: "" });
 export const emptySchedule = (): Schedule => ({
   meta: emptyMeta(),
   settings: defaultSettings(),

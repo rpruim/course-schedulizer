@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Schedule } from "@schedulizer/core";
+import { DEFAULT_SAVE_AS, exportFileName, type Schedule } from "@schedulizer/core";
 import { yearsOf } from "../model";
 import { useWorkspace, type Entry } from "../state";
 import { Empty } from "./SchedulePage";
@@ -23,15 +23,15 @@ export function MetaPage() {
   );
 }
 
-type Field = "nickname" | "version" | "notes";
+type Field = "nickname" | "saveAs" | "version" | "notes";
 
 function MetaForm({ entry, fileName, duplicate }: { entry: Entry; fileName: string; duplicate: boolean }) {
   const ws = useWorkspace();
   const meta = entry.schedule.meta;
   const stored = (f: Field) => meta[f] ?? "";
-  const [draft, setDraft] = useState<Record<Field, string>>({ nickname: stored("nickname"), version: stored("version"), notes: stored("notes") });
+  const [draft, setDraft] = useState<Record<Field, string>>({ nickname: stored("nickname"), saveAs: stored("saveAs"), version: stored("version"), notes: stored("notes") });
   // Follow changes made elsewhere (undo, replacing the schedule, the ✎ in the Schedules row).
-  useEffect(() => setDraft({ nickname: meta.nickname ?? "", version: meta.version ?? "", notes: meta.notes ?? "" }), [meta.nickname, meta.version, meta.notes]);
+  useEffect(() => setDraft({ nickname: meta.nickname ?? "", saveAs: meta.saveAs ?? "", version: meta.version ?? "", notes: meta.notes ?? "" }), [meta.nickname, meta.saveAs, meta.version, meta.notes]);
 
   const commit = (f: Field) => {
     const v = draft[f].trim();
@@ -53,6 +53,14 @@ function MetaForm({ entry, fileName, duplicate }: { entry: Entry; fileName: stri
         <span className="muted small">Blank shows the file name.</span>
       </label>
       {duplicate && <p className="note warn">Another schedule is shown under this same name; give one a different nickname so they can be told apart.</p>}
+      <label className="field">Save as
+        <input {...bind("saveAs")} placeholder={DEFAULT_SAVE_AS} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />
+        <span className="muted small">Export downloads as <code>{exportFileName(meta)}</code></span>
+      </label>
+      <label className="field inline">
+        <input type="checkbox" checked={meta.timestamp !== false} onChange={(e) => ws.applyTo(entry.id, (x: Schedule) => ({ ...x, meta: { ...x.meta, timestamp: e.target.checked } }))} />
+        Include time stamp in file name
+      </label>
       <label className="field">Version
         <input {...bind("version")} placeholder="e.g. draft 3, sent to registrar" onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />
       </label>

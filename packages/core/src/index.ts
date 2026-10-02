@@ -16,3 +16,4 @@ export * from "./editing.js";
 export * from "./nonteaching.js";
 export * from "./compare.js";
 export * from "./merge.js";
+export * from "./exportName.js";

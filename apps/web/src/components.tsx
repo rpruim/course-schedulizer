@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import {
   constraintsNaming,
+  exportFileName,
   isUnassignedLetter,
   readWorkbook,
   relabelByTime,
@@ -139,8 +140,7 @@ export function Toolbar() {
     if (!current) return;
     const named = { ...current.schedule, meta: { ...current.schedule.meta, name: ws.fileNameOf(current.id) } };
     const bytes = await writeWorkbook(named, { includeNonTeaching: !teachingOnly });
-    const base = (current.name || "schedule").replace(/[^\w.-]+/g, "_");
-    downloadBytes(bytes, `${base}_${new Date().toISOString().slice(0, 10)}.xlsx`, XLSX_TYPE);
+    downloadBytes(bytes, exportFileName(current.schedule.meta), XLSX_TYPE);
   }
 
   function reletter() {
