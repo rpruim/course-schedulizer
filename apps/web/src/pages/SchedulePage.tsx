@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useEditor } from "../editor/context";
 import { filterRows, multiSectionRows, termsAcross, termsInUseAcross, yearsAcross, type MultiRow } from "../model";
 import { SortTh, useSort, type SortValue } from "../sort";
@@ -106,7 +107,7 @@ export function Empty() {
   return (
     <div className="empty">
       <h2>No schedule yet</h2>
-      <p>Open an Excel file above, or try one of the examples. Files from the old Course Schedulizer open too.</p>
+      <p>Open an Excel file or try an example on the <Link to="/import">Import</Link> tab. Files from the old Course Schedulizer open too.</p>
       <p><button onClick={() => openNew()}>Or start a new schedule by adding a section</button></p>
     </div>
   );

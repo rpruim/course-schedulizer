@@ -21,7 +21,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
 .app { max-width: 1200px; margin: 0 auto; padding: 0 16px 48px; }
-header { display: flex; align-items: baseline; gap: 12px; padding: 16px 0 8px; }
+header { display: flex; align-items: center; gap: 12px; padding: 10px 0 4px; }
 h1 { font-size: 1.25rem; margin: 0; }
 h2 { font-size: 1.1rem; }
 .muted { color: var(--muted); }
@@ -222,3 +222,6 @@ table.mini th:nth-child(9) { width: 10%; }
 .facts { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; margin: 4px 0 0; font-size: .85rem; }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; }
+
+header { align-items: center; }
+.toolbar { display: flex; gap: 6px; margin-left: auto; }

@@ -127,21 +127,12 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
   );
 }
 
-/** Undo/redo (for everything in the workspace), and, for the current schedule: re-letter by time and export. */
+/** Undo/redo (for everything in the workspace) and re-letter by time for the current schedule. */
 export function Toolbar() {
   const ws = useWorkspace();
   const current = ws.current;
-  const [teachingOnly, setTeachingOnly] = useState(false);
   const schedule = current?.schedule;
   const empty = !schedule || (schedule.sessions.length === 0 && schedule.nonTeaching.length === 0);
-  const several = ws.entries.length > 1;
-
-  async function exportXlsx() {
-    if (!current) return;
-    const named = { ...current.schedule, meta: { ...current.schedule.meta, name: ws.fileNameOf(current.id) } };
-    const bytes = await writeWorkbook(named, { includeNonTeaching: !teachingOnly });
-    downloadBytes(bytes, exportFileName(current.schedule.meta), XLSX_TYPE);
-  }
 
   function reletter() {
     if (!current) return;
@@ -160,16 +151,46 @@ export function Toolbar() {
   }
 
   return (
-    <div className="bar">
+    <div className="toolbar">
       <button onClick={ws.undo} disabled={!ws.canUndo}>Undo</button>
       <button onClick={ws.redo} disabled={!ws.canRedo}>Redo</button>
       <button onClick={reletter} disabled={empty} title={current ? `Re-letter the sections of “${current.name}”` : ""}>Re-letter by time…</button>
-      <span className="spacer" />
+    </div>
+  );
+}
+
+/** Download a schedule as an Excel file: pick which one, and whether to leave out non-teaching load. */
+export function ExportPanel() {
+  const ws = useWorkspace();
+  const [picked, setPicked] = useState("");
+  const [teachingOnly, setTeachingOnly] = useState(false);
+  const entry = ws.entries.find((e) => e.id === picked) ?? ws.current;
+  if (!entry) return null;
+  const s = entry.schedule;
+  const empty = s.sessions.length === 0 && s.nonTeaching.length === 0;
+
+  async function exportXlsx() {
+    if (!entry) return;
+    const named = { ...entry.schedule, meta: { ...entry.schedule.meta, name: ws.fileNameOf(entry.id) } };
+    const bytes = await writeWorkbook(named, { includeNonTeaching: !teachingOnly });
+    downloadBytes(bytes, exportFileName(entry.schedule.meta), XLSX_TYPE);
+  }
+
+  return (
+    <div className="bar">
+      {ws.entries.length > 1 && (
+        <label className="field">Schedule
+          <select value={entry.id} onChange={(e) => setPicked(e.target.value)}>
+            {ws.entries.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
+          </select>
+        </label>
+      )}
       <label className="field inline">
         <input type="checkbox" checked={teachingOnly} onChange={(e) => setTeachingOnly(e.target.checked)} />
         Teaching schedule only
       </label>
-      <button className="primary" onClick={() => void exportXlsx()} disabled={empty}>{several && current ? `Export “${current.name}”` : "Export Excel"}</button>
+      <button className="primary" onClick={() => void exportXlsx()} disabled={empty}>Export Excel</button>
+      <span className="muted small">Downloads as <code>{exportFileName(s.meta)}</code> (change this on the Meta tab).</span>
     </div>
   );
 }

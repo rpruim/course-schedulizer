@@ -153,6 +153,8 @@ export interface Workspace {
   setCurrent(id: string): void;
   setIncluded(ids: string[]): void;
   toggleIncluded(id: string): void;
+  /** False until the saved workspace has been read back (so "no schedules" is not yet known to be true). */
+  restored: boolean;
   /** Set when the browser refused to store the working copy (e.g. storage full or disabled). */
   saveError: string;
 }
@@ -167,6 +169,7 @@ export function WorkspaceProvider({ children, store }: { children: ReactNode; st
   const [saveError, setSaveError] = useState("");
   const backing = useMemo(() => store ?? new LocalWorkspaceStore(window.localStorage), [store]);
   const loaded = useRef(false);
+  const [restored, setRestored] = useState(false);
   const [viewAs, setViewAsState] = useState<ViewAs>(loadViewAs);
   const setViewAs = useCallback((v: ViewAs) => {
     setViewAsState(v);
@@ -188,6 +191,7 @@ export function WorkspaceProvider({ children, store }: { children: ReactNode; st
       .catch(() => undefined)
       .finally(() => {
         loaded.current = true;
+        if (live) setRestored(true);
       });
     return () => {
       live = false;
@@ -245,9 +249,10 @@ export function WorkspaceProvider({ children, store }: { children: ReactNode; st
       setCurrent: (id) => dispatch({ type: "setCurrent", id }),
       setIncluded: (ids) => dispatch({ type: "setIncluded", ids }),
       toggleIncluded: (id) => dispatch({ type: "setIncluded", ids: state.included.includes(id) ? state.included.filter((x) => x !== id) : [...state.included, id] }),
+      restored,
       saveError,
     };
-  }, [state, addSchedule, saveError, viewAs, setViewAs]);
+  }, [state, addSchedule, saveError, restored, viewAs, setViewAs]);
 
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }
