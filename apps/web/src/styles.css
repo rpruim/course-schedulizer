@@ -276,3 +276,8 @@ td button.link + button.link { margin-left: 6px; }
 .facts { align-items: baseline; }
 .help .facts dt { margin: 0; }
 .help .facts dd { margin: 0; }
+.about .help-section:first-of-type { margin-top: 20px; }
+.teams { display: flex; flex-direction: column; gap: 4px; margin: 4px 0 0; }
+.teams .team { display: flex; gap: 14px; }
+.teams dt { width: 3rem; flex: none; font-weight: 600; color: var(--muted); margin: 0; }
+.teams dd { margin: 0; }

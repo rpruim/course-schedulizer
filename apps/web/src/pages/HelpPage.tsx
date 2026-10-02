@@ -387,7 +387,7 @@ function jump(id: string) {
 export function HelpPage() {
   return (
     <div className="help">
-      <h2>User guide</h2>
+      <h1>User guide</h1>
       <div className="help-toc" role="navigation" aria-label="Guide contents">
         {SECTIONS.map((s) => (
           <a key={s.id} href={`#${s.id}`} onClick={jump(s.id)}>{s.title}</a>
