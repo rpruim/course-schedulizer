@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   COMPARE_COLUMNS,
   COUNT_KEY,
+  writeSheets,
   compareTables,
   comparisonRows,
   defaultOnlyDifferences,
@@ -12,7 +13,8 @@ import {
   type ComparisonRow,
   type RowKind,
 } from "@schedulizer/core";
-import { aggregateDiffers, hueFor, loadSettings, PRESETS, saveSettings, tableColumns, toneColor, type Roles } from "../compareView";
+import { aggregateDiffers, comparisonSheets, hueFor, loadSettings, PRESETS, saveSettings, tableColumns, toneColor, type Roles } from "../compareView";
+import { downloadBytes, XLSX_TYPE } from "../download";
 import { SortTh, useSort } from "../sort";
 import { useWorkspace } from "../state";
 import { Empty } from "./SchedulePage";
@@ -29,12 +31,13 @@ export function ComparePage() {
   const initial = useMemo(loadSettings, []);
   const [roles, setRoles] = useState<Roles>(initial.roles);
   const [rowKind, setRowKind] = useState<RowKind>(initial.rows);
+  const [nonTeaching, setNonTeaching] = useState(initial.nonTeaching);
   const [onlyDiff, setOnlyDiff] = useState<boolean | null>(null); // null: the default rule
   const [showPartition, setShowPartition] = useState(false);
 
-  useEffect(() => saveSettings({ roles, rows: rowKind }), [roles, rowKind]);
+  useEffect(() => saveSettings({ roles, rows: rowKind, nonTeaching }), [roles, rowKind, nonTeaching]);
 
-  const inputs = useMemo(() => entries.map((e) => ({ id: e.id, name: e.name, rows: comparisonRows(e.schedule, rowKind) })), [entries, rowKind]);
+  const inputs = useMemo(() => entries.map((e) => ({ id: e.id, name: e.name, rows: comparisonRows(e.schedule, rowKind, { nonTeaching }) })), [entries, rowKind, nonTeaching]);
   const comparison = useMemo(() => compareTables(inputs, { roles }), [inputs, roles]);
   const only = onlyDiff ?? defaultOnlyDifferences(comparison);
   const rows = useMemo(() => visibleRows(comparison, only), [comparison, only]);
@@ -58,6 +61,11 @@ export function ComparePage() {
   }
 
   const setRole = (key: string, role: ColumnRole) => setRoles((r) => ({ ...r, [key]: role }));
+  /** Export what is on screen: the rows shown, in the order shown. */
+  async function exportXlsx() {
+    const sheets = comparisonSheets(comparison, columns, sorting.sorted, tones, { rowKind, nonTeaching, onlyDifferences: only, exportedAt: new Date() });
+    downloadBytes(await writeSheets(sheets), `comparison_${new Date().toISOString().slice(0, 10)}.xlsx`, XLSX_TYPE);
+  }
   const differing = comparison.rows.filter((r) => r.differs).length;
   const aggName = comparison.aggregates[0] ? (comparison.aggregates[0].key === COUNT_KEY ? "number of rows" : comparison.aggregates[0].label) : "";
 
@@ -113,12 +121,17 @@ export function ComparePage() {
           <input type="checkbox" checked={only} onChange={(e) => setOnlyDiff(e.target.checked)} />
           Only show rows that differ
         </label>
+        <label className="field inline" title="Include chair releases, sabbaticals and other non-teaching load as rows">
+          <input type="checkbox" checked={nonTeaching} onChange={(e) => setNonTeaching(e.target.checked)} />
+          Include non-teaching items
+        </label>
         <span className="muted">
           {comparison.rows.length} group{comparison.rows.length === 1 ? "" : "s"}, {differing} differ{differing === 1 ? "s" : ""}
           {only && comparison.rows.length > rows.length ? `; showing ${rows.length}` : ""}
           {onlyDiff === null && comparison.rows.length > 10 ? " (more than 10 groups, so only differences are shown by default)" : ""}
         </span>
         <span className="spacer" />
+        <button onClick={() => void exportXlsx()} disabled={rows.length === 0} title="Download the rows shown, in the order shown, as an Excel file">Export comparison</button>
         {tones && (
           <span className="tone-legend" aria-label="Colour key">
             <span className="muted">{comparison.schedules.length === 2 ? `Larger ${aggName}:` : `Largest ${aggName}:`}</span>

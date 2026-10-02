@@ -151,3 +151,44 @@ export async function writeWorkbook(schedule: import("./types.js").Schedule, opt
   });
   return new Uint8Array(await wb.xlsx.writeBuffer());
 }
+
+/** A plain table to write as one sheet (used for exports that are not a whole schedule). */
+export interface SheetSpec {
+  name: string;
+  /** Column headings; a newline starts a second line. */
+  header: string[];
+  /** Cells: numbers are written as numbers, strings as text, `null`/`undefined` as empty. */
+  rows: (string | number | null | undefined)[][];
+  /** A fill colour per row (`RRGGBB` hex), or `undefined` for none. */
+  rowFills?: (string | undefined)[];
+  /** Turn on the filter buttons in the header row. */
+  filter?: boolean;
+}
+
+const CELL_LIMIT = 32767; // the most characters Excel allows in a cell
+
+/** Write tables as an .xlsx workbook, one sheet each, with a bold frozen header row. */
+export async function writeSheets(sheets: SheetSpec[]): Promise<Uint8Array> {
+  const wb = new ExcelJS.Workbook();
+  for (const sheet of sheets) {
+    const ws = wb.addWorksheet(sheet.name.slice(0, 31)); // Excel's sheet-name limit
+    const head = ws.addRow(sheet.header);
+    head.font = { bold: true };
+    head.alignment = { wrapText: true, vertical: "bottom" };
+    ws.views = [{ state: "frozen", ySplit: 1 }];
+    sheet.rows.forEach((row, i) => {
+      const r = ws.addRow(row.map((v) => (v === null || v === undefined ? null : typeof v === "string" && v.length > CELL_LIMIT ? v.slice(0, CELL_LIMIT) : v)));
+      const fill = sheet.rowFills?.[i];
+      if (fill) r.eachCell({ includeEmpty: true }, (c) => { c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: `FF${fill}` } }; });
+      r.eachCell((c) => {
+        if (typeof c.value === "string" && c.value.includes("\n")) c.alignment = { wrapText: true, vertical: "top" };
+      });
+    });
+    sheet.header.forEach((h, i) => {
+      const longest = Math.max(...h.split("\n").map((l) => l.length), ...sheet.rows.map((r) => String(r[i] ?? "").split("\n").reduce((m, l) => Math.max(m, l.length), 0)));
+      ws.getColumn(i + 1).width = Math.min(50, Math.max(8, longest + 2));
+    });
+    if (sheet.filter && sheet.header.length) ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: sheet.header.length } };
+  }
+  return new Uint8Array(await wb.xlsx.writeBuffer());
+}

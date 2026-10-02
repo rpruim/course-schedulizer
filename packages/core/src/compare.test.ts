@@ -58,8 +58,13 @@ describe("comparisonRows: non-teaching load", () => {
       { AcademicYear: "Y", Faculty: "Ben", Activity: "Sabbatical", Term: "SP", Load: "4" },
     ],
   });
+  it("leaves non-teaching load out unless asked", () => {
+    expect(comparisonRows(s).filter((r) => r.Prefix === "")).toEqual([]);
+    expect(comparisonRows(s, "instructor").filter((r) => r.Prefix === "")).toEqual([]);
+    expect(comparisonRows(s, "section", { nonTeaching: false })).toHaveLength(1);
+  });
   it("adds rows with no course, a full-year load split across the spread terms", () => {
-    const nt = comparisonRows(s).filter((r) => r.Prefix === "");
+    const nt = comparisonRows(s, "section", { nonTeaching: true }).filter((r) => r.Prefix === "");
     expect(nt.map((r) => [r.Term, r.Faculty, r.FacultyLoad, r.InstructionalMethod])).toEqual([["FA", "Ada", 1.5, "Chair"], ["SP", "Ada", 1.5, "Chair"], ["SP", "Ben", 4, "Sabbatical"]]);
     expect(nt[0]).toMatchObject({ AcademicYear: "Y", TermPart: "Full", Comment: "why" });
   });
@@ -249,15 +254,17 @@ describe("on the registrar-case fixture", () => {
   it("a schedule compared with itself has no differences, whatever the partition", () => {
     const all = Object.fromEntries(COMPARE_COLUMNS.map((c) => [c.key, "group" as const]));
     for (const r of [all, group("Prefix"), { ...group("Term"), FacultyLoad: "aggregate" as const }]) {
-      const rows = comparisonRows(s);
+      const rows = comparisonRows(s, "section", { nonTeaching: true });
       const c = compareTables([{ id: "a", name: "A", rows }, { id: "b", name: "B", rows }], roles(r));
       expect(c.rows.length).toBeGreaterThan(0);
       expect(c.rows.every((x) => !x.differs)).toBe(true);
     }
   });
   it("totals the load once per section (a 2-meeting section is not counted twice)", () => {
-    const c = compareTables([{ id: "a", name: "A", rows: comparisonRows(s) }], roles({ FacultyLoad: "aggregate" }));
-    // sections: 4+4+4+1.8+4+4+2+2 = 25.8, non-teaching: 3 (AY, split) + 4 = 7
-    expect(c.rows[0]!.values[0]![0]).toBeCloseTo(32.8);
+    const total = (nonTeaching: boolean) =>
+      compareTables([{ id: "a", name: "A", rows: comparisonRows(s, "section", { nonTeaching }) }], roles({ FacultyLoad: "aggregate" })).rows[0]!.values[0]![0];
+    // sections: 4+4+4+1.8+4+4+2+2 = 25.8; non-teaching adds 3 (a full year, split) + 4 = 7
+    expect(total(false)).toBeCloseTo(25.8);
+    expect(total(true)).toBeCloseTo(32.8);
   });
 });

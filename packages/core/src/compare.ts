@@ -73,11 +73,16 @@ export type RowKind = "section" | "instructor";
  * one row, joined with ` + `), so counting rows counts sections and summing `FacultyLoad`
  * counts load once. With `"instructor"`, **one row per section and instructor**: `Faculty`
  * is a single name and `FacultyLoad` that person's share, so grouping by faculty adds up
- * each person's load even for team-taught sections. Non-teaching load is included as rows
- * with no course (activity in `InstructionalMethod`), a full-year row split across the
- * spread terms, as in the registrar tab.
+ * each person's load even for team-taught sections. With `nonTeaching: true`, non-teaching
+ * load is included too, as rows with no course (activity in `InstructionalMethod`), a
+ * full-year row split across the spread terms, as in the registrar tab. Off by default.
  */
-export function comparisonRows(schedule: Schedule, kind: RowKind = "section"): CompareRow[] {
+export interface RowOptions {
+  /** Include non-teaching load rows. Default `false`. */
+  nonTeaching?: boolean;
+}
+
+export function comparisonRows(schedule: Schedule, kind: RowKind = "section", options: RowOptions = {}): CompareRow[] {
   const rows: CompareRow[] = [];
   const bySection = new Map<string, Session[]>();
   for (const s of schedule.sessions) bySection.set(s.sectionId, [...(bySection.get(s.sectionId) ?? []), s]);
@@ -124,7 +129,7 @@ export function comparisonRows(schedule: Schedule, kind: RowKind = "section"): C
     }
   }
 
-  for (const n of schedule.nonTeaching) {
+  for (const n of options.nonTeaching ? schedule.nonTeaching : []) {
     for (const part of nonTeachingShown(schedule, n)) {
       rows.push({
         ...blankRow(),

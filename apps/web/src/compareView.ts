@@ -4,6 +4,7 @@ import {
   difference,
   formatCell,
   type Cell,
+  type SheetSpec,
   type ColumnRole,
   type Comparison,
   type ComparisonRow,
@@ -77,6 +78,25 @@ export function toneColor(tone: Tone | undefined): string | undefined {
   return `hsl(${hueFor(tone.larger)} 75% 52% / ${alpha.toFixed(3)})`;
 }
 
+const HUE_NAMES = ["blue", "orange", "green", "purple", "pink", "yellow", "teal", "magenta"];
+
+/** `RRGGBB` for a row's tone as it looks on a white sheet (the colour blended with white at the tone's opacity). */
+export function toneHex(tone: Tone | undefined): string | undefined {
+  if (!tone) return undefined;
+  const alpha = 0.14 + 0.46 * Math.max(0, Math.min(1, tone.strength));
+  const s = 0.75;
+  const l = 0.52;
+  const h = hueFor(tone.larger) / 360;
+  const hue2rgb = (p: number, q: number, t: number) => {
+    const u = t < 0 ? t + 1 : t > 1 ? t - 1 : t;
+    return u < 1 / 6 ? p + (q - p) * 6 * u : u < 1 / 2 ? q : u < 2 / 3 ? p + (q - p) * (2 / 3 - u) * 6 : p;
+  };
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const rgb = [hue2rgb(p, q, h + 1 / 3), hue2rgb(p, q, h), hue2rgb(p, q, h - 1 / 3)];
+  return rgb.map((c) => Math.round((alpha * c + (1 - alpha)) * 255).toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+
 export interface TableColumn {
   key: string;
   label: string;
@@ -148,23 +168,25 @@ const STORAGE_KEY = "schedulizer:compare";
 export interface CompareSettings {
   roles: Roles;
   rows: RowKind;
+  /** Include non-teaching load rows in the tables being compared. Off by default. */
+  nonTeaching: boolean;
 }
 
 const ROLES = new Set(["ignore", "group", "aggregate"]);
 
 /** Saved settings, repaired: only known columns and roles survive; anything missing falls back to the default preset. */
 export function readSettings(text: string | null): CompareSettings {
-  const fallback: CompareSettings = { roles: { ...DEFAULT_PRESET.roles }, rows: DEFAULT_PRESET.rows };
+  const fallback: CompareSettings = { roles: { ...DEFAULT_PRESET.roles }, rows: DEFAULT_PRESET.rows, nonTeaching: false };
   if (!text) return fallback;
   try {
-    const raw = JSON.parse(text) as { roles?: Record<string, unknown>; rows?: unknown };
+    const raw = JSON.parse(text) as { roles?: Record<string, unknown>; rows?: unknown; nonTeaching?: unknown };
     const known = new Set([...COMPARE_COLUMNS.map((c) => c.key), COUNT_KEY]);
     const roles: Roles = {};
     for (const [k, v] of Object.entries(raw.roles ?? {})) {
       if (known.has(k) && typeof v === "string" && ROLES.has(v) && !(k === COUNT_KEY && v === "group")) roles[k] = v as ColumnRole;
     }
     if (Object.keys(roles).length === 0) return fallback;
-    return { roles, rows: raw.rows === "instructor" ? "instructor" : "section" };
+    return { roles, rows: raw.rows === "instructor" ? "instructor" : "section", nonTeaching: raw.nonTeaching === true };
   } catch {
     return fallback;
   }
@@ -184,4 +206,54 @@ export function saveSettings(s: CompareSettings) {
   } catch {
     // storage may be full or disabled; the settings just are not remembered
   }
+}
+
+export interface ExportInfo {
+  rowKind: RowKind;
+  nonTeaching: boolean;
+  /** Only the rows that differ were shown. */
+  onlyDifferences: boolean;
+  exportedAt: Date;
+}
+
+const two = (n: number) => String(n).padStart(2, "0");
+
+/**
+ * The comparison as it is on screen, for a spreadsheet: sheet 1 has the rows shown, in the
+ * order shown, with the same columns, the difference column, and each row filled with its
+ * colour; sheet 2 says what was compared and how, so the file explains itself.
+ */
+export function comparisonSheets(c: Comparison, columns: TableColumn[], rows: ComparisonRow[], tones: Map<ComparisonRow, Tone | undefined> | undefined, info: ExportInfo): SheetSpec[] {
+  const cell = (col: TableColumn, r: ComparisonRow): string | number | null => {
+    if (col.key.startsWith("d")) return col.value(r) === undefined ? null : (col.value(r) as number); // the difference column
+    if (col.aggregate === undefined) return col.text(r); // a grouping column
+    const absent = !r.present[Number(col.key.split("_")[1])];
+    if (absent) return null;
+    const v = col.value(r);
+    return v === undefined ? null : v;
+  };
+  const header = columns.map((col) => (col.sub ? `${col.label}\n${col.sub}` : col.label));
+  const body = rows.map((r) => columns.map((col) => cell(col, r)));
+  const fills = rows.map((r) => toneHex(tones?.get(r)));
+
+  const aggDescription = c.aggregates.map((a) => (a.key === COUNT_KEY ? "Rows (count of rows)" : `${a.label} (${a.kind === "number" ? "sum" : "sorted and joined"})`));
+  const when = info.exportedAt;
+  const about: [string, string][] = [
+    ["Schedules compared", c.schedules.map((s) => s.name).join("\n")],
+    ["Group by", c.groups.map((g) => g.label).join(", ") || "(nothing: one group)"],
+    ["Aggregate", aggDescription.join("\n")],
+    ["One row for each", info.rowKind === "instructor" ? "section and instructor (a team-taught section's load is divided)" : "section"],
+    ["Non-teaching items", info.nonTeaching ? "included" : "not included"],
+    ["Rows", info.onlyDifferences ? `only the ${rows.length} of ${c.rows.length} groups that differ` : `all ${c.rows.length} groups`],
+  ];
+  if (tones) {
+    const one = c.aggregates[0]!.key === COUNT_KEY ? "number of rows" : c.aggregates[0]!.label;
+    about.push(["Row colours", `${c.schedules.length === 2 ? "Larger" : "Largest"} ${one}: ${c.schedules.map((s, i) => `${s.name} = ${HUE_NAMES[i % HUE_NAMES.length]}`).join(", ")}; darker means a bigger difference`]);
+  }
+  about.push(["Exported", `${when.getFullYear()}-${two(when.getMonth() + 1)}-${two(when.getDate())} ${two(when.getHours())}:${two(when.getMinutes())}`]);
+
+  return [
+    { name: "Comparison", header, rows: body, rowFills: fills, filter: true },
+    { name: "About this comparison", header: ["Setting", "Value"], rows: about },
+  ];
 }
