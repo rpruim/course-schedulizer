@@ -285,6 +285,32 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li>Two meetings of the same section on one day count as one class.</li>
           <li>Choose <strong>terms</strong> on the rule to check only those; with none chosen, every term is checked. (Any rule can be limited to some terms this way.)</li>
         </ul>
+        <h3>Examples</h3>
+        <p>
+          Each of these is in the <em>Example with constraint rules</em> schedule (on the <Link to="/import">Import</Link> tab); open its Constraints and Conflicts pages and click a rule to see how it is set up.
+        </p>
+        <dl>
+          <dt>Take together: all</dt>
+          <dd><em>Math major, year 2.</em> Courses MATH 231, STAT 243, MATH 250; number blank. Met if a student can pick one section of each with no clash (a second section of MATH 231 makes it work).</dd>
+          <dt>Take together: any two</dt>
+          <dd><em>Data science minor.</em> Courses DATA 301, STAT 343, CS 262; <em>any</em> 2. Every pair must fit, so it lists the pair that clashes.</dd>
+          <dt>Take together: some pair</dt>
+          <dd>The same courses with <em>some</em> 2: met as long as one pair fits.</dd>
+          <dt>Time window: courses</dt>
+          <dd><em>Colloquium hour is free.</em> Courses MATH 3*, STAT 3*, DATA 3*; <em>should not</em> meet 15:05–15:55 on R; counts as meeting: any overlap.</dd>
+          <dt>Time window: an instructor</dt>
+          <dd><em>Gus does not teach before 9:00.</em> Instructor Gus Testwell; <em>should not</em> meet 00:00–09:00 on any day.</dd>
+          <dt>Time window: at least some sections</dt>
+          <dd><em>Core 100 needs an evening section.</em> Course CORE 100; <em>should</em> meet within 17:00–22:00; applies to at least 1 section.</dd>
+          <dt>Modify standard times: allow</dt>
+          <dd><em>Colloquium time.</em> Course MATH 290; allow R, 50 minutes, starting 15:05.</dd>
+          <dt>Modify standard times: disallow</dt>
+          <dd><em>No 8:00 MWF.</em> Every course (<code>*</code>); disallow MWF, 65 minutes, starting 8:00.</dd>
+          <dt>Back-to-back: at most</dt>
+          <dd><em>Kim, at most two in a row.</em> Instructor Kim; at most 2 consecutive classes, gap 20 minutes.</dd>
+          <dt>Back-to-back: at least, in some terms</dt>
+          <dd><em>Lee, at least two in a row.</em> Instructor Lee; at least 2 consecutive classes; terms: Fall only.</dd>
+        </dl>
         <p>
           Rules are saved in the <code>Constraints</code> sheet of the Excel file (one row per course or instructor, with the rule’s settings in columns such as <code>Type</code>, <code>Count</code>,
           <code>From</code>, <code>To</code>, <code>Days</code>, <code>Bound</code>, <code>Gap</code>, <code>Action</code>, <code>Starts</code>), and rules from older files, which list courses that must not meet at the same time, still work.

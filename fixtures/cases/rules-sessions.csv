@@ -15,5 +15,7 @@ R2,FA,Full,MATH,290,A,Ada Example,1,1,R,15:05,50,NH 276,Colloquium,Seminar,In-Pe
 R2,FA,Full,STAT,143,A,Lee,4,4,MWF,09:15,65,NH 106,Introduction to Statistics,Lecture,In-Person,Lee's two sections are not back to back
 R2,FA,Full,STAT,143,B,Lee,4,4,MWF,11:00,65,NH 106,Introduction to Statistics,Lecture,In-Person,
 R2,FA,Full,STAT,143,C,Dee Placeholder,4,4,MWF,10:30,65,NH 107,Introduction to Statistics,Lecture,In-Person,10:30 is not a standard start (shown in orange)
+R2,FA,Full,CORE,100,A,Hal Fakename,4,4,MWF,09:15,65,HH 210,Core 100,Lecture,In-Person,There is no evening section yet
+R2,FA,Full,CORE,100,B,Hal Fakename,4,4,TR,12:15,100,HH 210,Core 100,Lecture,In-Person,
 R2,SP,Full,MATH,232,A,Cy Fictional,4,4,TR,10:20,100,NH 103,Multivariable Calculus,Lecture,In-Person,
 R2,SP,Full,STAT,244,A,Eli Specimen,4,4,TR,10:20,100,NH 105,Regression Models,Lecture,In-Person,

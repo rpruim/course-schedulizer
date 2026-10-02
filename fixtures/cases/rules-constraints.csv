@@ -11,6 +11,8 @@ Data science minor: some pair of electives,takeable,CS 262,,,,,,,,,,,,,,,,,
 Colloquium hour is free,window,MATH 3*,,,,,,,,,,,R,any,15:05,15:55,should not,overlaps,No 300-level class during the colloquium.
 Colloquium hour is free,window,STAT 3*,,,,,,,,,,,,,,,,,
 Colloquium hour is free,window,DATA 3*,,,,,,,,,,,,,,,,,
+Gus does not teach before 9:00,window,,,Gus Testwell,,,,,,,,,,any,00:00,09:00,should not,overlaps,A rule about an instructor instead of courses.
+Core 100 needs an evening section,window,CORE 100,,,1,,,,,,,,,any,17:00,22:00,should,within,At least one section must meet within the evening hours.
 Kim: at most two classes in a row,consecutive,,,Kim,2,,atMost,20,,,,,,,,,,,
 Lee: at least two classes in a row,consecutive,,,Lee,2,,atLeast,20,,,,FA,,,,,,,
 Colloquium time,standard,MATH 290,,,,,,,,,,,,,,,,,The colloquium meets at a time that is not standard.
