@@ -117,7 +117,10 @@ export function reducer(state: State, action: Action): State {
 }
 
 export interface Workspace {
+  /** Every open schedule; `name` is the nickname when the schedule has one, else the file name. */
   entries: Entry[];
+  /** The stored file name of a schedule (what `name` is when there is no nickname). */
+  fileNameOf(id: string): string;
   currentId: string;
   /** Ids of the schedules shown in the views. */
   included: string[];
@@ -209,11 +212,18 @@ export function WorkspaceProvider({ children, store }: { children: ReactNode; st
   }, []);
 
   const api: Workspace = useMemo(() => {
-    const byId = (id: string) => state.present.find((e) => e.id === id);
-    const includedEntries = state.present.filter((e) => state.included.includes(e.id));
+    // Views see a schedule under its nickname when it has one, else its file name.
+    const labelled = (e: Entry): Entry => {
+      const nick = e.schedule.meta.nickname?.trim();
+      return nick ? { ...e, name: nick } : e;
+    };
+    const entries = state.present.map(labelled);
+    const byId = (id: string) => entries.find((e) => e.id === id);
+    const includedEntries = entries.filter((e) => state.included.includes(e.id));
     const merged = viewAs === "merged" && includedEntries.length > 1 ? mergeSchedules(includedEntries) : undefined;
     return {
-      entries: state.present,
+      entries,
+      fileNameOf: (id) => state.present.find((e) => e.id === id)?.name ?? "",
       currentId: state.currentId,
       included: state.included,
       includedEntries,

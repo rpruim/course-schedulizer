@@ -4,6 +4,7 @@ import { ImportReport, OpenBar, Toolbar, type OpenReport } from "./components";
 import { EditorProvider } from "./editor/context";
 import { ComparePage } from "./pages/ComparePage";
 import { ConflictsPage } from "./pages/ConflictsPage";
+import { MetaPage } from "./pages/MetaPage";
 import { LoadsPage } from "./pages/LoadsPage";
 import { NonTeachingPage } from "./pages/NonTeachingPage";
 import { SchedulePage } from "./pages/SchedulePage";
@@ -20,6 +21,7 @@ const TABS: { to: string; label: string; element: JSX.Element }[] = [
   { to: "/faculty", label: "Faculty week", element: <WeekPage kind="faculty" /> },
   { to: "/rooms", label: "Room week", element: <WeekPage kind="room" /> },
   { to: "/compare", label: "Compare", element: <ComparePage /> },
+  { to: "/meta", label: "Meta", element: <MetaPage /> },
 ];
 
 function Shell() {

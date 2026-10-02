@@ -62,7 +62,7 @@ export async function readWorkbook(data: ArrayBuffer | Uint8Array, options: Impo
   // Metadata is Label/Value (as the old app wrote it); older files of ours used Key/Value on "Meta".
   for (const r of [...sheetRecords(sheetByName(wb, "Metadata")), ...sheetRecords(sheetByName(wb, "Meta"))]) {
     const k = (r.Label ?? r.Key ?? "").toLowerCase();
-    if (k === "name" || k === "notes" || k === "version") meta[k] = r.Value ?? "";
+    if (k === "name" || k === "nickname" || k === "notes" || k === "version") meta[k] = r.Value ?? "";
   }
   const result = importRecords({
     // Our own "Sessions" sheet, else the old app's first tab ("Schedule"), else the first sheet.
@@ -145,6 +145,7 @@ export async function writeWorkbook(schedule: import("./types.js").Schedule, opt
       ["Export Time", `${two(now.getHours())}:${two(now.getMinutes())}:${two(now.getSeconds())}`],
       ["Academic Year", years.join(", ")],
       ["Name", schedule.meta.name],
+      ["Nickname", schedule.meta.nickname ?? ""],
       ["Version", schedule.meta.version],
       ["Notes", schedule.meta.notes],
     ],

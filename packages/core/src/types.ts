@@ -114,6 +114,8 @@ export interface Settings {
 
 export interface Meta {
   name: string;
+  /** A short name to show in place of the (often long) file name; blank = use the file name. */
+  nickname: string;
   notes: string;
   version: string;
 }
@@ -154,7 +156,7 @@ export const defaultSettings = (): Settings => ({
   spreadTerms: ["FA", "SP"],
   nonRooms: ["Off Campus", "Online", "TBD"],
 });
-export const emptyMeta = (): Meta => ({ name: "", notes: "", version: "" });
+export const emptyMeta = (): Meta => ({ name: "", nickname: "", notes: "", version: "" });
 export const emptySchedule = (): Schedule => ({
   meta: emptyMeta(),
   settings: defaultSettings(),

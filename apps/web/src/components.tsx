@@ -68,7 +68,7 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
 
   /** Put a schedule in the workspace per the "Open as" choice; `first` is true for the first of several files. */
   function place(name: string, schedule: Schedule, first: boolean) {
-    if (replacing && first) ws.replaceSchedule(replacing.id, replacing.name, schedule);
+    if (replacing && first) ws.replaceSchedule(replacing.id, ws.fileNameOf(replacing.id), schedule);
     else ws.addSchedule(name, schedule);
   }
 
@@ -137,7 +137,7 @@ export function Toolbar() {
 
   async function exportXlsx() {
     if (!current) return;
-    const named = { ...current.schedule, meta: { ...current.schedule.meta, name: current.name } };
+    const named = { ...current.schedule, meta: { ...current.schedule.meta, name: ws.fileNameOf(current.id) } };
     const bytes = await writeWorkbook(named, { includeNonTeaching: !teachingOnly });
     const base = (current.name || "schedule").replace(/[^\w.-]+/g, "_");
     downloadBytes(bytes, `${base}_${new Date().toISOString().slice(0, 10)}.xlsx`, XLSX_TYPE);

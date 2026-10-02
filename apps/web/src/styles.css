@@ -216,3 +216,9 @@ table.mini th:nth-child(6) { width: 6%; }
 table.mini th:nth-child(7) { width: 14%; }
 table.mini th:nth-child(8) { width: 10%; }
 table.mini th:nth-child(9) { width: 10%; }
+
+.meta-form { display: flex; flex-direction: column; gap: 10px; max-width: 560px; }
+.meta-form input, .meta-form textarea { font: inherit; padding: 4px 6px; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; margin: 4px 0 0; font-size: .85rem; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; }

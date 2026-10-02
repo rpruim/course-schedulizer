@@ -9,7 +9,7 @@ class FakeStorage {
   removeItem(k: string) { this.data.delete(k); }
 }
 
-const named = (name: string): Schedule => ({ ...emptySchedule(), meta: { name, notes: "", version: "" } });
+const named = (name: string): Schedule => ({ ...emptySchedule(), meta: { name, nickname: "", notes: "", version: "" } });
 const snap = (...names: string[]): WorkspaceSnapshot => ({
   entries: names.map((n) => ({ id: n, name: n, schedule: named(n) })),
   currentId: names[0] ?? "",
