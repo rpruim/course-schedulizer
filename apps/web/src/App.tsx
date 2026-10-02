@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { HashRouter, NavLink, Route, Routes, useNavigate } from "react-router-dom";
+import { HashRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { Toolbar, type OpenReport } from "./components";
 import { EditorProvider } from "./editor/context";
 import { AboutPage } from "./pages/AboutPage";
@@ -15,6 +15,7 @@ import { NonTeachingPage } from "./pages/NonTeachingPage";
 import { SchedulePage } from "./pages/SchedulePage";
 import { WeekPage } from "./pages/WeekPage";
 import { SchedulePicker } from "./schedules";
+import { MenuBar, type MenuGroup } from "./MenuBar";
 import { useWorkspace, WorkspaceProvider } from "./state";
 
 const tabs = (reports: OpenReport[] | undefined, setReports: (r: OpenReport[] | undefined) => void): { to: string; label: string; element: JSX.Element }[] => [
@@ -32,6 +33,16 @@ const tabs = (reports: OpenReport[] | undefined, setReports: (r: OpenReport[] | 
   { to: "/export", label: "Export", element: <ExportPage /> },
   { to: "/help", label: "Help", element: <HelpPage /> },
   { to: "/about", label: "About", element: <AboutPage /> },
+];
+
+/** How the pages are grouped in the menu bar. */
+const GROUPS: MenuGroup[] = [
+  { label: "Schedule", direct: true, items: [{ to: "/", label: "Schedule" }] },
+  { label: "Loads", items: [{ to: "/loads", label: "Teaching loads" }, { to: "/nonteaching", label: "Non-teaching load" }] },
+  { label: "View", items: [{ to: "/dept", label: "Dept week" }, { to: "/faculty", label: "Faculty week" }, { to: "/rooms", label: "Room week" }] },
+  { label: "Check", items: [{ to: "/conflicts", label: "Conflicts" }, { to: "/constraints", label: "Constraints" }, { to: "/compare", label: "Compare" }] },
+  { label: "File", items: [{ to: "/meta", label: "Meta" }, { to: "/import", label: "Import" }, { to: "/export", label: "Export" }] },
+  { label: "Help", items: [{ to: "/help", label: "Help" }, { to: "/about", label: "About" }] },
 ];
 
 function Shell() {
@@ -63,11 +74,7 @@ function Shell() {
           <p className="note ok" role="status">{notice} <button className="link" onClick={() => setNotice("")}>Dismiss</button></p>
         )}
         {saveError && <p className="note warn">Your browser would not keep a working copy ({saveError}). Export to Excel to keep your changes.</p>}
-        <nav>
-          {TABS.map((t) => (
-            <NavLink key={t.to} to={t.to} end={t.to === "/"}>{t.label}</NavLink>
-          ))}
-        </nav>
+        <MenuBar groups={GROUPS} />
         <main>
           <Routes>
             {TABS.map((t) => <Route key={t.to} path={t.to} element={t.element} />)}
