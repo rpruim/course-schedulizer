@@ -53,6 +53,14 @@ export function AboutPage() {
 
 
       <section className="help-section">
+        <h2>License</h2>
+        <p>
+          Course Schedulizer is open-source software released under the <a href="./LICENSE.txt" {...ext}>MIT license</a>. It is built with open-source libraries; their licenses are in the{" "}
+          <a href="./THIRD-PARTY-NOTICES.txt" {...ext}>third-party notices</a>.
+        </p>
+      </section>
+
+      <section className="help-section">
         <h2>Previous versions</h2>
         <p>
           Course Schedulizer began as a tool written by Professors Randall Pruim and Keith VanderLinden. From 2020 until 2026, 

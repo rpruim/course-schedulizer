@@ -8,7 +8,7 @@ conflicts. Single editor; a schedule is shared by sending its Excel file.
 packages/core   @schedulizer/core — schema, Excel import/export, conflicts, faculty
                 load, section letters, cross-listings, constraints. Pure and tested.
 apps/web        @schedulizer/web  — React 18 + Vite + react-router (hash routes).
-fixtures        real and hand-written sample data with expected results (see its README)
+fixtures        synthetic and hand-written sample data with expected results (see its README)
 design          the design notes and specification (spec.md)   [not tracked by git]
 ```
 
@@ -28,3 +28,10 @@ GitHub Pages or any web server, or open it from a file share.
 Open an Excel file (the app's own export, or a file from the old Course
 Schedulizer — if it has no academic year, type one in first), or load one of the
 built-in synthetic examples.
+
+## License
+
+MIT — see `LICENSE`. The licenses of the libraries this project uses are in
+`THIRD-PARTY-NOTICES.md`; regenerate that file with `pnpm run notices` after
+changing dependencies (it also refreshes the copies the built site serves from
+`apps/web/public/`).
