@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
+import { useEditor } from "../editor/context";
 import { filterRows, sectionRows, termsInUse, yearsOf } from "../model";
 import { useSchedule } from "../state";
 
 export function SchedulePage() {
   const { schedule } = useSchedule();
+  const { openSection, openNew } = useEditor();
   const [year, setYear] = useState("");
   const [term, setTerm] = useState("");
   const [text, setText] = useState("");
@@ -33,6 +35,7 @@ export function SchedulePage() {
           <input value={text} onChange={(e) => setText(e.target.value)} placeholder="course, title, instructor, room" />
         </label>
         <span className="muted">{shown.length} of {rows.length} sections</span>
+        <button className="primary" onClick={() => openNew({ academicYear: year || years[0] || "", ...(term ? { term } : {}) })}>Add section</button>
       </div>
       <div className="table-wrap">
         <table>
@@ -41,7 +44,14 @@ export function SchedulePage() {
           </thead>
           <tbody>
             {shown.map((r) => (
-              <tr key={r.sectionId} className={r.conflict ? "conflict" : undefined}>
+              <tr
+                key={r.sectionId}
+                className={`clickable${r.conflict ? " conflict" : ""}`}
+                tabIndex={0}
+                onClick={() => openSection(r.sectionId)}
+                onKeyDown={(e) => e.key === "Enter" && openSection(r.sectionId)}
+                title="Click to edit"
+              >
                 <td className="nowrap">{r.conflict && <span title="Part of a conflict" aria-label="conflict">⚠ </span>}{r.course}</td>
                 <td>{r.section}</td>
                 <td className="nowrap">{r.term}{r.termPart !== "Full" ? ` · ${r.termPart}` : ""}{schedule.sessions.some((s) => s.academicYear !== r.year) ? ` · ${r.year}` : ""}</td>
@@ -63,10 +73,12 @@ export function SchedulePage() {
 }
 
 export function Empty() {
+  const { openNew } = useEditor();
   return (
     <div className="empty">
       <h2>No schedule yet</h2>
       <p>Open an Excel file above, or try one of the examples. Files from the old Course Schedulizer open too.</p>
+      <p><button onClick={() => openNew()}>Or start a new schedule by adding a section</button></p>
     </div>
   );
 }

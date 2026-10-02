@@ -1,11 +1,13 @@
 import { useMemo } from "react";
 import { displayNames, findConflicts, type Conflict } from "@schedulizer/core";
+import { useEditor } from "../editor/context";
 import { timeRange, yearsOf } from "../model";
 import { useSchedule } from "../state";
 import { Empty } from "./SchedulePage";
 
 export function ConflictsPage() {
   const { schedule } = useSchedule();
+  const { openSection } = useEditor();
   const conflicts = useMemo(() => findConflicts(schedule), [schedule]);
   const names = useMemo(() => displayNames(schedule), [schedule]);
   if (schedule.sessions.length === 0) return <Empty />;
@@ -31,8 +33,8 @@ export function ConflictsPage() {
           {conflicts.map((c, i) => (
             <tr key={i}>
               <td><span className={`tag tag-${c.type.toLowerCase()}`}>{c.type}</span></td>
-              <td>{label(c.sectionIdA)}</td>
-              <td>{label(c.sectionIdB)}</td>
+              <td><button className="link" onClick={() => openSection(c.sectionIdA)} title="Edit this section">{label(c.sectionIdA)}</button></td>
+              <td><button className="link" onClick={() => openSection(c.sectionIdB)} title="Edit this section">{label(c.sectionIdB)}</button></td>
               <td>{c.detail}</td>
               <td className="nowrap">{when(c)}</td>
             </tr>

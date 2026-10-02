@@ -2,6 +2,7 @@ import { useState } from "react";
 import { HashRouter, NavLink, Route, Routes } from "react-router-dom";
 import type { Issue } from "@schedulizer/core";
 import { ImportReport, OpenBar, Toolbar } from "./components";
+import { EditorProvider } from "./editor/context";
 import { ConflictsPage } from "./pages/ConflictsPage";
 import { LoadsPage } from "./pages/LoadsPage";
 import { Placeholder } from "./pages/Placeholder";
@@ -21,7 +22,9 @@ const TABS: { to: string; label: string; element: JSX.Element }[] = [
 function Shell() {
   const { fileName, saveError } = useSchedule();
   const [issues, setIssues] = useState<Issue[] | undefined>();
+  const [notice, setNotice] = useState("");
   return (
+    <EditorProvider onNotice={setNotice}>
     <div className="app">
       <header>
         <h1>Course Schedulizer</h1>
@@ -29,6 +32,9 @@ function Shell() {
       </header>
       <OpenBar onIssues={setIssues} />
       {issues && <ImportReport issues={issues} onDismiss={() => setIssues(undefined)} />}
+      {notice && (
+        <p className="note ok" role="status">{notice} <button className="link" onClick={() => setNotice("")}>Dismiss</button></p>
+      )}
       {saveError && <p className="note warn">Your browser would not keep a working copy ({saveError}). Export to Excel to keep your changes.</p>}
       <Toolbar />
       <nav>
@@ -42,6 +48,7 @@ function Shell() {
         </Routes>
       </main>
     </div>
+    </EditorProvider>
   );
 }
 
