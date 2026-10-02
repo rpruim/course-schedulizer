@@ -37,6 +37,19 @@ and Node 22, and `packageManager` in `package.json` pins the pnpm version. Every
 branch deploys, and every branch or pull request gets a preview URL. Nothing else is needed: no
 redirects, no environment variables. Schedules stay in each visitor's browser.
 
+## Branches and releases
+
+New work happens on `dev`; `main` is the released version that Netlify deploys. To release, fast-forward
+`main` to `dev`:
+
+```bash
+git checkout main && git merge --ff-only dev && git push origin main
+```
+
+Bump `version` in the root `package.json` first if the release should have a new number (the About page
+shows it). In Netlify, turn on branch deploys for `dev` (Site configuration → Build & deploy → Branches and
+deploy contexts) to get a preview of `dev` at its own URL before releasing.
+
 ## Terms and parts of terms
 
 The default terms (Fall, Winter Intensive, Spring, Summer), their parts (full term, halves,

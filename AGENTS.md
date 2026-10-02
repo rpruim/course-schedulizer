@@ -19,3 +19,19 @@
   sentence is fine.
 - Write the subject line in the imperative mood and keep it short (about 70 characters or fewer).
   Use the body to say what changed and why, not how.
+
+## Branches and releases
+
+- Do new work on the **`dev`** branch. Do not commit to `main`, and do not merge into it.
+- `main` is the released version, and Netlify deploys it. The owner releases by fast-forwarding `main` to
+  `dev`:
+
+  ```bash
+  git checkout main && git merge --ff-only dev && git push origin main
+  ```
+
+  So keep `dev` a straight line on top of `main` (no merge commits; if `main` has moved, rebase `dev` on it).
+- A release is a good moment to bump `version` in the root `package.json` (the page title and About page
+  read it). Say so when a change looks like the last one before a release, but leave the bump to the owner.
+- Do not push unless asked.
+
