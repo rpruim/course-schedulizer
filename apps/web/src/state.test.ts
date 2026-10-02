@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { emptySchedule, type Schedule } from "@schedulizer/core";
-import { initialState, reducer, uniqueName, type Action, type Entry, type State } from "./state";
+import { displayEntries, initialState, reducer, type Action, type Entry, type State } from "./state";
 
 /** Schedules are told apart by their meta name. */
 const sched = (label: string): Schedule => ({ ...emptySchedule(), meta: { name: label, nickname: "", saveAs: "schedulizer", timestamp: true, notes: "", version: "" } });
@@ -12,13 +12,24 @@ const ids = (s: State) => s.present.map((e) => e.id);
 
 const two = () => run(initialState(), { type: "add", entry: entry("a", "Draft A") }, { type: "add", entry: entry("b", "Draft B") });
 
-describe("uniqueName", () => {
-  it("keeps a free name and numbers a taken one, case-insensitively", () => {
-    const es = [entry("a", "Draft"), entry("b", "Draft (2)")];
-    expect(uniqueName(es, "Other")).toBe("Other");
-    expect(uniqueName(es, "draft")).toBe("draft (3)");
-    expect(uniqueName(es, "Draft", "a")).toBe("Draft"); // not clashing with itself
-    expect(uniqueName([], "  ")).toBe("Schedule");
+describe("displayEntries", () => {
+  const nick = (e: Entry, nickname: string): Entry => ({ ...e, schedule: { ...e.schedule, meta: { ...e.schedule.meta, nickname } } });
+  it("leaves names that are used once alone", () => {
+    expect(displayEntries([entry("a", "Draft"), entry("b", "Other")]).map((e) => e.name)).toEqual(["Draft", "Other"]);
+  });
+  it("numbers every schedule that shares a name, in workspace order, case-insensitively", () => {
+    const es = [entry("a", "My Schedule"), entry("b", "Other"), entry("c", "my schedule"), entry("d", "My Schedule")];
+    expect(displayEntries(es).map((e) => e.name)).toEqual(["My Schedule (1)", "Other", "my schedule (2)", "My Schedule (3)"]);
+  });
+  it("uses the nickname instead of the file name, and numbers nicknames that clash", () => {
+    const es = [nick(entry("a", "very-long-file-name-1"), "Plan"), nick(entry("b", "very-long-file-name-2"), "Plan"), entry("c", "Plan")];
+    expect(displayEntries(es).map((e) => e.name)).toEqual(["Plan (1)", "Plan (2)", "Plan (3)"]);
+    expect(displayEntries([nick(entry("a", "x"), "Plan"), entry("b", "y")]).map((e) => e.name)).toEqual(["Plan", "y"]);
+  });
+  it("never changes the stored file name", () => {
+    const es = [entry("a", "Same"), entry("b", "Same")];
+    displayEntries(es);
+    expect(es.map((e) => e.name)).toEqual(["Same", "Same"]);
   });
 });
 
@@ -28,9 +39,9 @@ describe("adding schedules", () => {
     expect(ids(s)).toEqual(["a", "b"]);
     expect([s.currentId, s.included]).toEqual(["b", ["a", "b"]]);
   });
-  it("makes names unique", () => {
+  it("keeps the file name as given (the views number duplicates)", () => {
     const s = run(initialState(), { type: "add", entry: entry("a", "Plan") }, { type: "add", entry: entry("b", "Plan") });
-    expect(s.present.map((e) => e.name)).toEqual(["Plan", "Plan (2)"]);
+    expect(s.present.map((e) => e.name)).toEqual(["Plan", "Plan"]);
   });
   it("is undoable, and redo brings the schedule back included", () => {
     let s = run(two(), { type: "setIncluded", ids: ["a"] }, { type: "undo" });
@@ -71,9 +82,9 @@ describe("removing and renaming", () => {
     expect(ids(s)).toEqual(["a", "b"]);
     expect(s.included).toEqual(["a", "b"]);
   });
-  it("renames, keeping names unique, and a rename is undoable", () => {
+  it("renames, and a rename is undoable", () => {
     let s = run(two(), { type: "rename", id: "b", name: "Draft A" });
-    expect(s.present.map((e) => e.name)).toEqual(["Draft A", "Draft A (2)"]);
+    expect(s.present.map((e) => e.name)).toEqual(["Draft A", "Draft A"]);
     s = reducer(s, { type: "undo" });
     expect(s.present.map((e) => e.name)).toEqual(["Draft A", "Draft B"]);
   });

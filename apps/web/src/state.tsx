@@ -48,12 +48,28 @@ export type Action =
 
 export const initialState = (): State => ({ past: [], present: [], future: [], currentId: "", included: [] });
 
-/** `base`, or `base (2)`, `base (3)`, … — the first name no other schedule uses (case-insensitively). */
-export function uniqueName(entries: Entry[], base: string, exceptId?: string): string {
-  const clean = base.trim() || "Schedule";
-  const taken = new Set(entries.filter((e) => e.id !== exceptId).map((e) => e.name.toLowerCase()));
-  if (!taken.has(clean.toLowerCase())) return clean;
-  for (let n = 2; ; n++) if (!taken.has(`${clean} (${n})`.toLowerCase())) return `${clean} (${n})`;
+const cleanName = (name: string) => name.trim() || "Schedule";
+
+/**
+ * Entries as the views show them: a schedule is shown under its nickname when it has one, else its file name; when
+ * several are shown under the same name (case-insensitively), each gets a number in workspace order —
+ * `My Schedule (1)`, `My Schedule (2)` — so they can be told apart. A name used once is left as it is.
+ */
+export function displayEntries(entries: Entry[]): Entry[] {
+  const shown = entries.map((e) => {
+    const nick = e.schedule.meta.nickname?.trim();
+    return nick ? { ...e, name: nick } : e;
+  });
+  const total = new Map<string, number>();
+  for (const e of shown) total.set(e.name.toLowerCase(), (total.get(e.name.toLowerCase()) ?? 0) + 1);
+  const seen = new Map<string, number>();
+  return shown.map((e) => {
+    const key = e.name.toLowerCase();
+    if ((total.get(key) ?? 0) < 2) return e;
+    const n = (seen.get(key) ?? 0) + 1;
+    seen.set(key, n);
+    return { ...e, name: `${e.name} (${n})` };
+  });
 }
 
 /** Make `currentId` and `included` refer to schedules that exist. */
@@ -75,19 +91,19 @@ export function reducer(state: State, action: Action): State {
     case "load":
       return sanitize({ past: [], present: action.snapshot.entries, future: [], currentId: action.snapshot.currentId, included: action.snapshot.included });
     case "add": {
-      const entry = { ...action.entry, name: uniqueName(state.present, action.entry.name) };
+      const entry = { ...action.entry, name: cleanName(action.entry.name) };
       const next = change(state, [...state.present, entry]);
       return { ...next, currentId: entry.id, included: [...state.included, entry.id] };
     }
     case "replace": {
       if (!state.present.some((e) => e.id === action.id)) return state;
-      const next = change(state, state.present.map((e) => (e.id === action.id ? { ...e, name: uniqueName(state.present, action.name, e.id), schedule: action.schedule } : e)));
+      const next = change(state, state.present.map((e) => (e.id === action.id ? { ...e, name: cleanName(action.name), schedule: action.schedule } : e)));
       return state.included.includes(action.id) ? next : sanitize({ ...next, included: [...state.included, action.id] });
     }
     case "remove":
       return change(state, state.present.filter((e) => e.id !== action.id));
     case "rename":
-      return change(state, state.present.map((e) => (e.id === action.id ? { ...e, name: uniqueName(state.present, action.name, e.id) } : e)));
+      return change(state, state.present.map((e) => (e.id === action.id ? { ...e, name: cleanName(action.name) } : e)));
     case "edit": {
       const target = state.present.find((e) => e.id === action.id);
       if (!target) return state;
@@ -216,12 +232,8 @@ export function WorkspaceProvider({ children, store }: { children: ReactNode; st
   }, []);
 
   const api: Workspace = useMemo(() => {
-    // Views see a schedule under its nickname when it has one, else its file name.
-    const labelled = (e: Entry): Entry => {
-      const nick = e.schedule.meta.nickname?.trim();
-      return nick ? { ...e, name: nick } : e;
-    };
-    const entries = state.present.map(labelled);
+    // Views see a schedule under its nickname when it has one, else its file name; same names get numbers.
+    const entries = displayEntries(state.present);
     const byId = (id: string) => entries.find((e) => e.id === id);
     const includedEntries = entries.filter((e) => state.included.includes(e.id));
     const merged = viewAs === "merged" && includedEntries.length > 1 ? mergeSchedules(includedEntries) : undefined;

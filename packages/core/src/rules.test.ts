@@ -401,3 +401,37 @@ describe("back-to-back (consecutive) rule", () => {
     expect(validateRule(build([]), { ...r, count: undefined as never }).map((p) => p.field)).toEqual(["count"]);
   });
 });
+
+describe("the demo schedule with constraint rules (fixtures/cases/rules-*.csv)", () => {
+  const demo = () => {
+    const r = importRecords({ sessions: recordsFromCsv(fixtureText("cases/rules-sessions.csv")), constraints: recordsFromCsv(fixtureText("cases/rules-constraints.csv")) });
+    expect(r.issues).toEqual([]);
+    return r.schedule;
+  };
+  it("has one of each kind of rule, some met and some not", () => {
+    const s = demo();
+    expect(rulesOf(s).map((r) => [r.name, r.type])).toEqual([
+      ["Math major, year 2", "takeable"],
+      ["Data science minor: any two electives", "takeable"],
+      ["Data science minor: some pair of electives", "takeable"],
+      ["Colloquium hour is free", "window"],
+      ["Kim: at most two classes in a row", "consecutive"],
+      ["Lee: at least two classes in a row", "consecutive"],
+      ["Colloquium time", "standard"],
+      ["No 8:00 MWF", "standard"],
+    ]);
+    expect(violations(demo()).map((v) => [v.rule, v.message])).toEqual([
+      ["Data science minor: any two electives", "Not every 2 of the 3 courses can be taken together: DATA 301 + STAT 343"],
+      ["Colloquium hour is free", "MATH 301 A meets during 15:05–15:55 on R"],
+      ["Kim: at most two classes in a row", expect.stringContaining("Kim teaches 3 consecutive classes on M: CS 262 A 13:30–14:35, CS 108 A 14:45–15:50, CS 372 A 16:00–17:00 (at most 2)")],
+      ["Kim: at most two classes in a row", expect.stringContaining("on W")],
+      ["Kim: at most two classes in a row", expect.stringContaining("on F")],
+      ["Lee: at least two classes in a row", "Lee never teaches 2 consecutive classes in FA (the most is 1)"],
+    ]);
+  });
+  it("flags only the standard-time exceptions the rules do not cover", () => {
+    const odd = findRuleViolations(demo()).filter((v) => v.builtin);
+    expect(odd.map((v) => v.sectionIds[0])).toEqual(["R2-FA-CS108-B", "R2-FA-STAT143-C"]);
+    expect(odd[0]!.message).toContain("standard M W F starts for 65 minutes: 9:15, 11:00, 12:15, 13:30, 14:45"); // 8:00 is disallowed, so it is no longer offered
+  });
+});

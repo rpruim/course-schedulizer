@@ -9,14 +9,13 @@ export function MetaPage() {
   const ws = useWorkspace();
   if (ws.entries.length === 0) return <Empty />;
   const many = ws.entries.length > 1;
-  const nicknames = ws.entries.map((e) => e.name.toLowerCase());
   return (
     <>
       <p className="muted small">The nickname is shown in place of the file name everywhere in the app, and is saved in the Excel file’s Metadata sheet.</p>
       {ws.entries.map((e) => (
         <section key={e.id} className="sched-section meta-card">
           {many && <h2 className="sched-heading">{e.name}{e.id === ws.currentId && <span className="badge">current</span>}</h2>}
-          <MetaForm entry={e} fileName={ws.fileNameOf(e.id)} duplicate={nicknames.filter((n) => n === e.name.toLowerCase()).length > 1} />
+          <MetaForm entry={e} fileName={ws.fileNameOf(e.id)} />
         </section>
       ))}
     </>
@@ -25,7 +24,7 @@ export function MetaPage() {
 
 type Field = "nickname" | "saveAs" | "version" | "notes";
 
-function MetaForm({ entry, fileName, duplicate }: { entry: Entry; fileName: string; duplicate: boolean }) {
+function MetaForm({ entry, fileName }: { entry: Entry; fileName: string }) {
   const ws = useWorkspace();
   const meta = entry.schedule.meta;
   const stored = (f: Field) => meta[f] ?? "";
@@ -52,7 +51,6 @@ function MetaForm({ entry, fileName, duplicate }: { entry: Entry; fileName: stri
         <input {...bind("nickname")} placeholder={fileName} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />
         <span className="muted small">Blank shows the file name.</span>
       </label>
-      {duplicate && <p className="note warn">Another schedule is shown under this same name; give one a different nickname so they can be told apart.</p>}
       <label className="field">Save as
         <input {...bind("saveAs")} placeholder={DEFAULT_SAVE_AS} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />
         <span className="muted small">Export downloads as <code>{exportFileName(meta)}</code></span>

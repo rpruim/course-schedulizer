@@ -105,7 +105,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           that is already open.</li>
           <li><strong>Academic year</strong> is used only when the file has no academic year of its own (for example <code>AY25</code>). If a report says some rows have no
             academic year, type one here and open the file again, choosing the schedule to replace.</li>
-          <li><strong>Examples</strong> load small made-up schedules, handy for trying things out.</li>
+          <li><strong>Examples</strong> load small made-up schedules, handy for trying things out. <em>Example with constraint rules</em> shows each kind of rule, some met and some not (a cohort that must be able to take its courses together, “any two” and “some pair” of electives, a time window, back-to-back classes, and changes to the standard times); open the Constraints and Conflicts pages to see them.</li>
         </ul>
         <p>
           A report appears after opening. <em>Errors</em> are rows that could not be read (they are skipped, everything else is opened); <em>warnings</em> are things
@@ -327,7 +327,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <ul>
           <li>The <strong>Schedules</strong> row lists them. The <strong>tick box</strong> chooses which ones the views show. Click a name to make that schedule the <strong>current</strong> one:
             <em> Add section</em>, <em>Add non-teaching load</em>, <em>Re-letter</em> and <em>Export</em> act on the current schedule, while clicking a section edits whichever schedule it belongs to.</li>
-          <li>The <strong>✎</strong> sets a short <strong>nickname</strong> that is shown instead of the file name (also on the Meta tab). <strong>✕</strong> removes a schedule from the workspace; you can undo it.</li>
+          <li>The <strong>✎</strong> sets a short <strong>nickname</strong> that is shown instead of the file name (also on the Meta tab). If two or more schedules would be shown under the same name, each gets a number — <em>My Schedule (1)</em>, <em>My Schedule (2)</em> — so you can tell them apart. <strong>✕</strong> removes a schedule from the workspace; you can undo it.</li>
           <li><strong>View as merged / separate</strong> (it appears when two or more are ticked). <em>Merged</em>, the default, lays the ticked schedules over one another as if they were one, which is
             the way to see how they interleave: conflicts are found between them and the week grids show them together. <em>Separate</em> shows each schedule on its own.
             Compare always keeps schedules separate.</li>

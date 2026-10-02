@@ -1,0 +1,19 @@
+Constraint,Type,Course,Section,Instructor,Count,Choose,Bound,Gap,Action,Duration,Starts,Term,Days,DayRule,From,To,Should,Meets,Comment
+"Math major, year 2",takeable,MATH 231,,,,,,,,,,,,,,,,,A cohort that must be able to take all three courses together. MATH 231 has two sections so this is met.
+"Math major, year 2",takeable,STAT 243,,,,,,,,,,,,,,,,,
+"Math major, year 2",takeable,MATH 250,,,,,,,,,,,,,,,,,
+Data science minor: any two electives,takeable,DATA 301,,,2,any,,,,,,,,,,,,,Any two of the three should fit together. DATA 301 and STAT 343 clash.
+Data science minor: any two electives,takeable,STAT 343,,,,,,,,,,,,,,,,,
+Data science minor: any two electives,takeable,CS 262,,,,,,,,,,,,,,,,,
+Data science minor: some pair of electives,takeable,DATA 301,,,2,some,,,,,,,,,,,,,At least one pair of the three can be taken together.
+Data science minor: some pair of electives,takeable,STAT 343,,,,,,,,,,,,,,,,,
+Data science minor: some pair of electives,takeable,CS 262,,,,,,,,,,,,,,,,,
+Colloquium hour is free,window,MATH 3*,,,,,,,,,,,R,any,15:05,15:55,should not,overlaps,No 300-level class during the colloquium.
+Colloquium hour is free,window,STAT 3*,,,,,,,,,,,,,,,,,
+Colloquium hour is free,window,DATA 3*,,,,,,,,,,,,,,,,,
+Kim: at most two classes in a row,consecutive,,,Kim,2,,atMost,20,,,,,,,,,,,
+Lee: at least two classes in a row,consecutive,,,Lee,2,,atLeast,20,,,,FA,,,,,,,
+Colloquium time,standard,MATH 290,,,,,,,,,,,,,,,,,The colloquium meets at a time that is not standard.
+Colloquium time,standard,,,,,,,,allow,50,15:05,,R,,,,,,
+No 8:00 MWF,standard,*,,,,,,,,,,,,,,,,,This department does not use 8:00 on MWF.
+No 8:00 MWF,standard,,,,,,,,disallow,65,8:00,,MWF,,,,,,
