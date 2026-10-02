@@ -7,15 +7,16 @@ import { ConflictsPage } from "./pages/ConflictsPage";
 import { LoadsPage } from "./pages/LoadsPage";
 import { Placeholder } from "./pages/Placeholder";
 import { SchedulePage } from "./pages/SchedulePage";
+import { WeekPage } from "./pages/WeekPage";
 import { ScheduleProvider, useSchedule } from "./state";
 
 const TABS: { to: string; label: string; element: JSX.Element }[] = [
   { to: "/", label: "Schedule", element: <SchedulePage /> },
   { to: "/loads", label: "Teaching loads", element: <LoadsPage /> },
   { to: "/conflicts", label: "Conflicts", element: <ConflictsPage /> },
-  { to: "/dept", label: "Dept week", element: <Placeholder title="Department week" what="A weekly grid of every section; click a block to edit it." /> },
-  { to: "/faculty", label: "Faculty week", element: <Placeholder title="Faculty week" what="A weekly grid for one or more instructors, with conflicts highlighted." /> },
-  { to: "/rooms", label: "Room week", element: <Placeholder title="Room week" what="A weekly grid for each room." /> },
+  { to: "/dept", label: "Dept week", element: <WeekPage kind="dept" /> },
+  { to: "/faculty", label: "Faculty week", element: <WeekPage kind="faculty" /> },
+  { to: "/rooms", label: "Room week", element: <WeekPage kind="room" /> },
   { to: "/compare", label: "Compare", element: <Placeholder title="Compare schedules" what="Two schedules side by side: sections added, removed and changed." /> },
 ];
 
