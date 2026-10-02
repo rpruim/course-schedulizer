@@ -4,12 +4,36 @@ import type { Constraint, Issue, Schedule, Session } from "./types.js";
 export const normCourse = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 const sameLetter = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
-const globRe = (pattern: string) => new RegExp(`^${pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`, "i");
+/**
+ * A pattern as a regular expression: `*` is any run of characters, `?` any one character, `[234]` any
+ * one of those characters (`[2-4]` a range, `[^5]` anything but); every other character stands for itself.
+ */
+function globRe(pattern: string): RegExp {
+  let re = "";
+  for (let i = 0; i < pattern.length; i++) {
+    const c = pattern[i]!;
+    if (c === "*") re += ".*";
+    else if (c === "?") re += ".";
+    else if (c === "[") {
+      const close = pattern.indexOf("]", i + 2);
+      if (close === -1) re += "\\[";
+      else {
+        let body = pattern.slice(i + 1, close);
+        const negate = body.startsWith("^") || body.startsWith("!");
+        if (negate) body = body.slice(1);
+        re += `[${negate ? "^" : ""}${body.replace(/[\\\]^]/g, "\\$&")}]`;
+        i = close;
+      }
+    } else re += c.replace(/[.+^${}()|\\\]]/g, "\\$&");
+  }
+  return new RegExp(`^${re}$`, "i");
+}
 
 /**
- * Does a course pattern match a course? The pattern is `PREFIX NUMBER` where `*` matches any
- * run of characters: `MATH 231` (exactly), `MATH 3*` (300-level), `MATH *` or just `MATH` (any
- * MATH course), `* 2*`. Matching ignores case and extra spaces.
+ * Does a course pattern match a course? The pattern is `PREFIX NUMBER`, where `*` matches any run of
+ * characters, `?` any one character and `[234]` any one of those: `MATH 231` (exactly), `MATH 3*`
+ * (300-level), `STAT [23]4?` (241, 243, 345, …), `MATH *` or just `MATH` (any MATH course). Matching
+ * ignores case and extra spaces.
  */
 export function courseMatches(pattern: string, prefix: string, courseNumber: string): boolean {
   const [p, ...rest] = normCourse(pattern).split(" ");

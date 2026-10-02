@@ -116,7 +116,7 @@ export function validateRule(schedule: Schedule, rule: Rule, original?: string):
     if (it.course.trim() && !/^\S+(\s+\S+)?$/.test(it.course.trim())) out.push({ field: `items.${i}`, message: "Write a course as PREFIX NUMBER, for example MATH 231 or MATH 3*." });
   });
   if (rule.type === "takeable") {
-    const wild = rule.items.some((it) => /\*/.test(it.course) || !/\s/.test(it.course.trim()));
+    const wild = rule.items.some((it) => /[*?[]/.test(it.course) || !/\s/.test(it.course.trim()));
     if (rule.items.length === 1 && !wild) out.push({ field: "items", message: "A rule about taking courses together needs at least two courses." });
     if (rule.count !== undefined && !wild && rule.count > rule.items.length) out.push({ field: "count", message: `Only ${rule.items.length} courses are listed.` });
   } else {

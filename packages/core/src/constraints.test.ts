@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { constraintsNaming, constraintWarnings } from "./constraints.js";
+import { constraintsNaming, constraintWarnings, courseMatches } from "./constraints.js";
 import { changeLetter } from "./sections.js";
 import { importConstraints, importRecords } from "./import.js";
 
@@ -68,5 +68,28 @@ describe("constraintWarnings", () => {
     const r = changeLetter(s, "Y-FA-MATH231-A", "C");
     if (r.kind !== "changed") throw new Error(r.kind);
     expect(constraintWarnings(r.schedule)[0]!.message).toMatch(/no section matches MATH 231 section A/);
+  });
+});
+
+describe("courseMatches", () => {
+  const stat = (n: string) => courseMatches("STAT [23]4?", "STAT", n);
+  it("matches a number with ? (one character) and [..] (one of those)", () => {
+    for (const n of ["241", "243", "245", "341", "343", "344"]) expect(stat(n), n).toBe(true);
+    for (const n of ["201", "285", "441", "24", "2415", "385"]) expect(stat(n), n).toBe(false);
+    expect(courseMatches("MATH 3??", "MATH", "301")).toBe(true);
+    expect(courseMatches("MATH 3??", "MATH", "3010")).toBe(false);
+  });
+  it("supports ranges and negation inside brackets", () => {
+    expect(courseMatches("MATH [2-4]*", "MATH", "350")).toBe(true);
+    expect(courseMatches("MATH [2-4]*", "MATH", "150")).toBe(false);
+    expect(courseMatches("MATH [^1]*", "MATH", "150")).toBe(false);
+    expect(courseMatches("MATH [!1]*", "MATH", "250")).toBe(true);
+  });
+  it("treats * as before, ignores case and spacing, and takes an unclosed [ literally", () => {
+    expect(courseMatches("math  3*", "MATH", "301L")).toBe(true);
+    expect(courseMatches("MATH", "MATH", "999")).toBe(true);
+    expect(courseMatches("[A-C]ATH 1", "MATH", "1")).toBe(false);
+    expect(courseMatches("M?TH 1", "MATH", "1")).toBe(true);
+    expect(courseMatches("MATH 1[", "MATH", "1[")).toBe(true);
   });
 });

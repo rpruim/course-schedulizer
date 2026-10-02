@@ -85,7 +85,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
   };
   const dialog = useRef<HTMLDialogElement>(null);
   const original = useMemo(() => (name === undefined ? undefined : rulesOf(schedule).find((r) => r.name === name)), []); // eslint-disable-line react-hooks/exhaustive-deps
-  const [form, setForm] = useState<Form>(() => toForm(original ?? { ...emptyRule("takeable"), items: [{ course: "", section: "", instructor: "" }, { course: "", section: "", instructor: "" }] }));
+  const [form, setForm] = useState<Form>(() => toForm(original ?? { ...emptyRule("takeable"), choose: "any", items: [{ course: "", section: "", instructor: "" }, { course: "", section: "", instructor: "" }] }));
   const [attempted, setAttempted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const isNew = original === undefined;
@@ -185,7 +185,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                     <>
                       <label className="f grow">
                         <span>Course</span>
-                        <input value={it.course} list="rule-courses" placeholder="MATH 231 or MATH 3*" onChange={(e) => setItem(i, { course: e.target.value })} />
+                        <input value={it.course} list="rule-courses" placeholder="MATH 231, MATH 3*, STAT [23]4?" onChange={(e) => setItem(i, { course: e.target.value })} />
                       </label>
                       <label className="f">
                         <span>Section</span>
@@ -198,7 +198,9 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                 </div>
               );
             })}
-            <p className="muted small">Use <code>*</code> to match any run of characters: <code>MATH 3*</code> is every 300-level MATH course, <code>MATH *</code> every MATH course. Leave Section blank for every section.</p>
+            <p className="muted small">
+              Patterns: <code>*</code> any run of characters, <code>?</code> any one character, <code>[23]</code> either of those. <code>MATH 3*</code> is every 300-level MATH course, <code>STAT [23]4?</code> is 241, 243, 345 and so on, <code>MATH *</code> every MATH course. Leave Section blank for every section.
+            </p>
             <button type="button" onClick={() => set("items", [...form.items, { course: "", section: "", instructor: "" }])}>+ Add {form.type === "takeable" ? "course" : "line"}</button>
             {err("items")}
           </fieldset>
@@ -207,9 +209,9 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
             <div>
               <div className="row take-row">
                 <span>A student must be able to take</span>
-                <select value={form.choose} disabled={form.count.trim() === ""} onChange={(e) => set("choose", e.target.value as Form["choose"])} aria-label="any or some">
-                  <option value="some">some</option>
+                <select value={form.count.trim() === "" ? "any" : form.choose} disabled={form.count.trim() === ""} onChange={(e) => set("choose", e.target.value as Form["choose"])} aria-label="any or some">
                   <option value="any">any</option>
+                  <option value="some">some</option>
                 </select>
                 <input value={form.count} size={4} inputMode="numeric" placeholder="all" aria-label="how many courses" onChange={(e) => set("count", e.target.value)} />
                 <span>of the listed courses</span>

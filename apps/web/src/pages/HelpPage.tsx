@@ -220,8 +220,10 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li>With the number blank (all courses), <em>any</em> and <em>some</em> mean the same thing.</li>
         </ul>
         <p>
-          A course is <code>MATH 231</code>; add a section letter to mean just that section. Use <code>*</code> for any run of characters: <code>MATH 3*</code> stands for every 300-level MATH course
-          (each one counts as a course), and <code>MATH *</code> for every MATH course. A rule is checked separately in each term; choose a term to limit it to one.
+          A course is <code>MATH 231</code>; add a section letter to mean just that section. To name many courses at once, use a pattern: <code>*</code> matches any run of characters,
+          <code>?</code> any one character, and <code>[23]</code> either of the characters in brackets (<code>[2-4]</code> is a range, <code>[^5]</code> anything but 5). So <code>MATH 3*</code> stands for every
+          300-level MATH course, <code>STAT [23]4?</code> for 241, 243, 245, 341, 343, 344 and so on, and <code>MATH *</code> (or just <code>MATH</code>) for every MATH course. Each matching course counts as its own
+          course. A rule is checked separately in each term; choose a term to limit it to one.
         </p>
         <h3>Time window</h3>
         <p>
