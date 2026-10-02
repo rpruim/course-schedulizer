@@ -33,7 +33,7 @@ export const SESSION_COLUMNS = [
 ] as const;
 export const CROSSLISTING_COLUMNS = ["SectionId", "Prefix", "CourseNumber"] as const;
 export const NONTEACHING_COLUMNS = ["AcademicYear", "Faculty", "Activity", "Term", "Load", "Comment"] as const;
-export const CONSTRAINT_COLUMNS = ["Constraint", "Type", "Course", "Section", "Instructor", "AtLeast", "Term", "Days", "DayRule", "From", "To", "Should", "Meets", "Comment"] as const;
+export const CONSTRAINT_COLUMNS = ["Constraint", "Type", "Course", "Section", "Instructor", "Count", "Choose", "Term", "Days", "DayRule", "From", "To", "Should", "Meets", "Comment"] as const;
 
 const key = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -374,17 +374,19 @@ export function importNonTeaching(records: Rec[], settings: Settings = defaultSe
   return { nonTeaching: out, issues: r.issues };
 }
 
-const RULE_FIELDS = ["Type", "AtLeast", "Term", "Days", "DayRule", "From", "To", "Should", "Meets"] as const;
+/** The first version of this sheet called Count "AtLeast"; still read. */
+const CONSTRAINT_READ_COLUMNS = [...CONSTRAINT_COLUMNS, "AtLeast"] as const;
+const RULE_FIELDS = ["Type", "Count", "AtLeast", "Choose", "Term", "Days", "DayRule", "From", "To", "Should", "Meets"] as const;
 
 /**
- * Constraint rows. Rows with the same `Constraint` name make one rule: its settings (Type, AtLeast,
+ * Constraint rows. Rows with the same `Constraint` name make one rule: its settings (Type, Count, Choose,
  * Term, Days, DayRule, From, To, Should, Meets) may be written on every row or only on one (a blank
  * cell inherits), but two different values are an error. A file with only Constraint, Course, Section
  * and Comment (the first version) is a set of "take at least all" rules.
  */
 export function importConstraints(records: Rec[]): { constraints: Constraint[]; issues: Issue[] } {
   const r = new Reporter("Constraints");
-  const rows = records.map((rec, idx) => ({ row: idx + 2, k: split(rec, CONSTRAINT_COLUMNS).known }));
+  const rows = records.map((rec, idx) => ({ row: idx + 2, k: split(rec, CONSTRAINT_READ_COLUMNS).known }));
 
   // Rule-level settings: the first non-blank value among a rule's rows; a different one later is an error.
   const settings = new Map<string, Rec>();
@@ -449,14 +451,15 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
       if (from === undefined || to === undefined) r.add("error", row, `"${name}" is a window rule, so it needs both From and To times`);
       else if (from >= to) r.add("error", row, `"${name}": From must be earlier than To`);
     }
-    const atLeast = num(r, row, "AtLeast", have.AtLeast);
+    const count = num(r, row, "Count", have.Count ?? have.AtLeast);
     const parsed = constraintSchema.safeParse({
       constraint: name,
       type,
       course: tokens.length >= 3 ? tokens.slice(0, 2).join(" ") : tokens.join(" "),
       section: column || typed,
       instructor: k.Instructor ?? "",
-      ...(atLeast !== undefined ? { atLeast } : {}),
+      ...(count !== undefined ? { count } : {}),
+      choose: oneOf("Choose", have.Choose, { some: "some", any: "any" }, "some"),
       term: have.Term ?? "",
       days,
       dayRule: oneOf("DayRule", have.DayRule, { any: "any", all: "all" }, "any"),

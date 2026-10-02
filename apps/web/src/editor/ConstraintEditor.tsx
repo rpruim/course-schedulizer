@@ -33,7 +33,8 @@ interface Form {
   name: string;
   type: Rule["type"];
   items: RuleItem[];
-  atLeast: string;
+  count: string;
+  choose: Rule["choose"];
   term: string;
   days: string;
   dayRule: Rule["dayRule"];
@@ -45,7 +46,7 @@ interface Form {
 }
 
 const toForm = (r: Rule): Form => ({
-  name: r.name, type: r.type, items: r.items.map((i) => ({ ...i })), atLeast: r.atLeast === undefined ? "" : String(r.atLeast),
+  name: r.name, type: r.type, items: r.items.map((i) => ({ ...i })), count: r.count === undefined ? "" : String(r.count), choose: r.choose,
   term: r.term, days: r.days, dayRule: r.dayRule, from: r.from === undefined ? "" : formatTime(r.from), to: r.to === undefined ? "" : formatTime(r.to),
   should: r.should, meets: r.meets, comment: r.comment,
 });
@@ -59,15 +60,15 @@ function toRule(f: Form): { rule: Rule; problems: { field: string; message: stri
   };
   const from = f.type === "window" ? time("from", f.from) : undefined;
   const to = f.type === "window" ? time("to", f.to) : undefined;
-  let atLeast: number | undefined;
-  if (f.atLeast.trim() !== "") {
-    const n = Number(f.atLeast);
-    if (Number.isInteger(n) && n >= 1) atLeast = n;
-    else problems.push({ field: "atLeast", message: "Use a whole number, 1 or more" });
+  let count: number | undefined;
+  if (f.count.trim() !== "") {
+    const n = Number(f.count);
+    if (Number.isInteger(n) && n >= 1) count = n;
+    else problems.push({ field: "count", message: "Use a whole number, 1 or more" });
   }
   const rule: Rule = {
     name: f.name.trim(), type: f.type, items: f.items.filter((i) => i.course.trim() || i.section.trim() || i.instructor.trim()), term: f.term, days: f.days, dayRule: f.dayRule,
-    should: f.should, meets: f.meets, comment: f.comment, ...(atLeast !== undefined ? { atLeast } : {}),
+    choose: f.choose, should: f.should, meets: f.meets, comment: f.comment, ...(count !== undefined ? { count } : {}),
     ...(from !== undefined ? { from } : {}), ...(to !== undefined ? { to } : {}),
   };
   return { rule, problems };
@@ -155,7 +156,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
 
           <fieldset>
             <legend>What kind of rule</legend>
-            <label className="choice"><input type="radio" checked={form.type === "takeable"} onChange={() => switchType("takeable")} /> <strong>Take together.</strong> A student must be able to take (at least) some number of these courses, one section of each, without a clash.</label>
+            <label className="choice"><input type="radio" checked={form.type === "takeable"} onChange={() => switchType("takeable")} /> <strong>Take together.</strong> A student must be able to take all, some or any set of these courses, one section of each, without a clash.</label>
             <label className="choice"><input type="radio" checked={form.type === "window"} onChange={() => switchType("window")} /> <strong>Time window.</strong> These courses or instructors should (or should not) meet during a time of day.</label>
           </fieldset>
 
@@ -203,13 +204,25 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
           </fieldset>
 
           {form.type === "takeable" ? (
-            <div className="row">
-              <label className="f">
-                <span>A student must be able to take at least</span>
-                <input value={form.atLeast} size={4} inputMode="numeric" placeholder="all" onChange={(e) => set("atLeast", e.target.value)} />
-                {err("atLeast")}
-              </label>
-              <span className="muted small grow">courses of those listed (blank = all of them; with 2, they just cannot all be at the same time).</span>
+            <div>
+              <div className="row take-row">
+                <span>A student must be able to take</span>
+                <select value={form.choose} disabled={form.count.trim() === ""} onChange={(e) => set("choose", e.target.value as Form["choose"])} aria-label="any or some">
+                  <option value="some">some</option>
+                  <option value="any">any</option>
+                </select>
+                <input value={form.count} size={4} inputMode="numeric" placeholder="all" aria-label="how many courses" onChange={(e) => set("count", e.target.value)} />
+                <span>of the listed courses</span>
+                <span className="muted small">(leave the number blank for all of them)</span>
+              </div>
+              {err("count")}
+              <p className="muted small">
+                {form.count.trim() === ""
+                  ? "Every listed course must fit together: some section of each, with no two clashing."
+                  : form.choose === "any"
+                    ? `Any ${form.count} of them: every set of ${form.count} courses must be takeable together (for example, any two 300-level MATH courses).`
+                    : `Some ${form.count} of them: at least one set of ${form.count} courses must be takeable together (for example, some pair from this list).`}
+              </p>
             </div>
           ) : (
             <>
@@ -255,16 +268,16 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
               <div className="row">
                 <label className="f">
                   <span>Applies to</span>
-                  <select value={form.atLeast === "" ? "each" : "some"} onChange={(e) => set("atLeast", e.target.value === "each" ? "" : "1")}>
+                  <select value={form.count === "" ? "each" : "some"} onChange={(e) => set("count", e.target.value === "each" ? "" : "1")}>
                     <option value="each">every section named</option>
                     <option value="some">at least some of the sections</option>
                   </select>
                 </label>
-                {form.atLeast !== "" && (
+                {form.count !== "" && (
                   <label className="f">
                     <span>how many</span>
-                    <input value={form.atLeast} size={4} inputMode="numeric" onChange={(e) => set("atLeast", e.target.value)} />
-                    {err("atLeast")}
+                    <input value={form.count} size={4} inputMode="numeric" onChange={(e) => set("count", e.target.value)} />
+                    {err("count")}
                   </label>
                 )}
               </div>

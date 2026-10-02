@@ -267,3 +267,5 @@ td button.link + button.link { margin-left: 6px; }
 .menu-list a { padding: 7px 14px; border-bottom: 0; white-space: nowrap; }
 .menu-list a:hover, .menu-list a:focus-visible { background: var(--bg); color: var(--fg); outline: none; }
 .menu-list a.active { border-bottom: 0; background: var(--bg); }
+
+.take-row { align-items: center; }

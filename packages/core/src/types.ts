@@ -83,11 +83,12 @@ export type NonTeaching = z.infer<typeof nonTeachingSchema>;
  * the rule-level fields (everything but course, section, instructor and comment) repeat on
  * every row, and a blank cell on a later row inherits the first row's value on import.
  *
- * - `takeable`: a student must be able to take at least `atLeast` (default: all) of the listed
- *   courses, choosing one section of each, with no two overlapping. `course` is a pattern
+ * - `takeable`: a student must be able to take `count` (default: all) of the listed courses,
+ *   choosing one section of each, with no two overlapping. With `choose` "some", some set of
+ *   `count` courses must be takeable together; with "any", every set of `count` courses must be. `course` is a pattern
  *   (`MATH 231`, `MATH 3*`); `section` names one section.
  * - `window`: the sections named (by `course` pattern or `instructor`) should / should not meet
- *   in the interval `from`–`to` on any / all of `days`; with `atLeast`, that many of them must
+ *   in the interval `from`–`to` on any / all of `days`; with `count`, that many of them must
  *   satisfy the rule instead of every one.
  */
 export const constraintSchema = z.object({
@@ -99,8 +100,10 @@ export const constraintSchema = z.object({
   section: str,
   /** Window rules: sections taught by this person. */
   instructor: str,
-  /** `takeable`: at least this many courses; `window`: at least this many sections. Blank = all. */
-  atLeast: z.number().int().positive().optional(),
+  /** `takeable`: how many courses (blank = all of them); `window`: at least this many sections must satisfy it (blank = every one). */
+  count: z.number().int().positive().optional(),
+  /** `takeable` with a `count`: some set of that many courses must work together, or every set must. */
+  choose: z.enum(["some", "any"]).default("some"),
   /** Only this term; blank = every term. */
   term: str,
   /** Window rules: day letters; blank = Monday to Friday. */

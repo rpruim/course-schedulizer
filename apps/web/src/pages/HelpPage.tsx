@@ -210,10 +210,15 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </p>
         <h3>Take together</h3>
         <p>
-          “A student must be able to take at least <em>n</em> of these courses.” A student takes one section of each course, and sections that overlap cannot be taken together. Leave <em>n</em> blank
-          to require all of them: with several sections of a course, one section may clash as long as another does not. With <em>n</em> = 2, the courses just cannot all be at the same time.
-          Use it for a program’s required courses, or to keep courses that one cohort needs from being scheduled against each other.
+          “A student must be able to take <em>any</em> or <em>some</em> <em>n</em> of the listed courses.” A student takes one section of each course, and sections that overlap cannot be taken together.
+          Leave <em>n</em> blank to require all of them: with several sections of a course, one section may clash as long as another does not. Use it for a program’s required courses, or to keep
+          courses that one cohort needs from being scheduled against each other.
         </p>
+        <ul>
+          <li><strong>some <em>n</em></strong>: at least one set of <em>n</em> courses can be taken together. “Some 2 of these courses” is met if there is at least one workable pair.</li>
+          <li><strong>any <em>n</em></strong>: every set of <em>n</em> courses can be taken together. “Any 2 300-level MATH courses” checks every pair, and lists the pairs that clash.</li>
+          <li>With the number blank (all courses), <em>any</em> and <em>some</em> mean the same thing.</li>
+        </ul>
         <p>
           A course is <code>MATH 231</code>; add a section letter to mean just that section. Use <code>*</code> for any run of characters: <code>MATH 3*</code> stands for every 300-level MATH course
           (each one counts as a course), and <code>MATH *</code> for every MATH course. A rule is checked separately in each term; choose a term to limit it to one.
@@ -230,7 +235,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li>Sections with no scheduled time are not checked.</li>
         </ul>
         <p>
-          Rules are saved in the <code>Constraints</code> sheet of the Excel file (one row per course or instructor, with the rule’s settings in columns such as <code>Type</code>, <code>AtLeast</code>,
+          Rules are saved in the <code>Constraints</code> sheet of the Excel file (one row per course or instructor, with the rule’s settings in columns such as <code>Type</code>, <code>Count</code>,
           <code>From</code>, <code>To</code>, <code>Days</code>), and rules from older files, which list courses that must not meet at the same time, still work.
         </p>
       </>

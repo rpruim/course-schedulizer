@@ -16,7 +16,9 @@ export interface Rule {
   name: string;
   type: "takeable" | "window";
   items: RuleItem[];
-  atLeast?: number;
+  count?: number;
+  /** Take together with a `count`: some set of that many courses must work, or every set must. */
+  choose: "some" | "any";
   term: string;
   days: string;
   dayRule: "any" | "all";
@@ -28,7 +30,7 @@ export interface Rule {
 }
 
 export const emptyRule = (type: Rule["type"] = "takeable"): Rule => ({
-  name: "", type, items: [], term: "", days: "", dayRule: "any", should: "should not", meets: "", comment: "",
+  name: "", type, items: [], choose: "some", term: "", days: "", dayRule: "any", should: "should not", meets: "", comment: "",
   ...(type === "window" ? { from: 600, to: 660 } : {}),
 });
 
@@ -46,7 +48,8 @@ export function rulesOf(schedule: Schedule): Rule[] {
       name,
       type: f.type,
       items: rows.map((r) => ({ course: r.course, section: r.section, instructor: r.instructor })),
-      ...(f.atLeast !== undefined ? { atLeast: f.atLeast } : {}),
+      ...(f.count !== undefined ? { count: f.count } : {}),
+      choose: f.choose,
       term: f.term,
       days: f.days,
       dayRule: f.dayRule,
@@ -68,7 +71,8 @@ export function rulesToRows(rule: Rule): Constraint[] {
     course: it.course.trim(),
     section: it.section.trim(),
     instructor: it.instructor.trim(),
-    ...(rule.atLeast !== undefined ? { atLeast: rule.atLeast } : {}),
+    ...(rule.count !== undefined ? { count: rule.count } : {}),
+    choose: rule.choose,
     term: rule.term.trim(),
     days: window ? rule.days : "",
     dayRule: rule.dayRule,
@@ -93,7 +97,7 @@ export function saveRule(schedule: Schedule, original: string | undefined, rule:
 export const deleteRule = (schedule: Schedule, name: string): Schedule => ({ ...schedule, constraints: schedule.constraints.filter((c) => c.constraint !== name) });
 
 export interface RuleProblem {
-  /** Which field, for the editor to mark: `name`, `items`, `atLeast`, `days`, `from`, `to`, … */
+  /** Which field, for the editor to mark: `name`, `items`, `count`, `days`, `from`, `to`, … */
   field: string;
   message: string;
 }
@@ -108,19 +112,19 @@ export function validateRule(schedule: Schedule, rule: Rule, original?: string):
   rule.items.forEach((it, i) => {
     if (!it.course.trim() && !it.instructor.trim()) out.push({ field: `items.${i}`, message: "Name a course or an instructor." });
     if (it.course.trim() && it.instructor.trim()) out.push({ field: `items.${i}`, message: "Use a course or an instructor on a line, not both." });
-    if (rule.type === "takeable" && it.instructor.trim()) out.push({ field: `items.${i}`, message: "A “take at least” rule lists courses." });
+    if (rule.type === "takeable" && it.instructor.trim()) out.push({ field: `items.${i}`, message: "A “take together” rule lists courses." });
     if (it.course.trim() && !/^\S+(\s+\S+)?$/.test(it.course.trim())) out.push({ field: `items.${i}`, message: "Write a course as PREFIX NUMBER, for example MATH 231 or MATH 3*." });
   });
   if (rule.type === "takeable") {
     const wild = rule.items.some((it) => /\*/.test(it.course) || !/\s/.test(it.course.trim()));
     if (rule.items.length === 1 && !wild) out.push({ field: "items", message: "A rule about taking courses together needs at least two courses." });
-    if (rule.atLeast !== undefined && !wild && rule.atLeast > rule.items.length) out.push({ field: "atLeast", message: `Only ${rule.items.length} courses are listed.` });
+    if (rule.count !== undefined && !wild && rule.count > rule.items.length) out.push({ field: "count", message: `Only ${rule.items.length} courses are listed.` });
   } else {
     if (rule.from === undefined) out.push({ field: "from", message: "Give the start of the interval." });
     if (rule.to === undefined) out.push({ field: "to", message: "Give the end of the interval." });
     if (rule.from !== undefined && rule.to !== undefined && rule.from >= rule.to) out.push({ field: "to", message: "The interval must end after it starts." });
   }
-  if (rule.atLeast !== undefined && (!Number.isInteger(rule.atLeast) || rule.atLeast < 1)) out.push({ field: "atLeast", message: "Use a whole number, 1 or more." });
+  if (rule.count !== undefined && (!Number.isInteger(rule.count) || rule.count < 1)) out.push({ field: "count", message: "Use a whole number, 1 or more." });
   return out;
 }
 
@@ -135,10 +139,10 @@ export function describeRule(r: Rule): string {
   const items = r.items.map(itemText).join(", ") || "…";
   const when = r.term ? ` in ${r.term}` : "";
   if (r.type === "takeable") {
-    const n = r.atLeast === undefined ? "all" : `at least ${r.atLeast}`;
+    const n = r.count === undefined ? "all" : `${r.choose} ${r.count}`;
     return `A student must be able to take ${n} of ${items}${when}.`;
   }
-  const which = r.atLeast === undefined ? "Each of" : `At least ${r.atLeast} of`;
+  const which = r.count === undefined ? "Each of" : `At least ${r.count} of`;
   const verb = r.should === "should" ? "should" : "should not";
   const how = meetsMode(r) === "within" ? "meet within" : "meet during";
   const days = ruleDays(r);
@@ -164,16 +168,17 @@ const sameLetter = (a: string, b: string) => a.trim().toLowerCase() === b.trim()
 /**
  * Every constraint rule that is not met, per academic year and term (rules apply within a term).
  *
- * - **take at least**: the rule's course lines are expanded into courses (a pattern such as
+ * - **take together**: the rule's course lines are expanded into courses (a pattern such as
  *   `MATH 3*` stands for each matching course), keeping those offered in the term. Choosing one
- *   section of each of some `n` of them (n = `atLeast`, default all, never more than are offered),
- *   must be possible with no two chosen sections overlapping. Rules with fewer than two courses
+ *   section of each of some `n` of them (n = `count`, default all, never more than are offered),
+ *   must be possible with no two chosen sections overlapping (`choose` "some"). With "any", this
+ *   must hold for every set of n courses, not just for some set. Rules with fewer than two courses
  *   offered in a term are skipped there.
  * - **window**: each section named (by course pattern or instructor, in the term) that has a
  *   scheduled meeting is tested: it "meets in the interval" on a day if one of its meetings that
  *   day overlaps (or lies within) the interval; it holds if that is true on any / all of the rule's
  *   days; it satisfies a *should* rule if it holds and a *should not* rule if it does not. Every
- *   section must satisfy the rule, or, with `atLeast`, that many of them.
+ *   section must satisfy the rule, or, with `count`, that many of them.
  */
 export function findRuleViolations(schedule: Schedule): RuleViolation[] {
   const rules = rulesOf(schedule);
@@ -230,10 +235,66 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
       }
     }
     const list = [...items.values()].sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: "base" }));
-    const need = Math.min(rule.atLeast ?? list.length, list.length);
+    const need = Math.min(rule.count ?? list.length, list.length);
     if (list.length < 2 || need < 2) return;
 
-    // Can `need` courses be taken, one section each, with none overlapping?
+    // "any n": every set of n courses must be takeable together, not just some set.
+    if (rule.choose === "any" && need < list.length) {
+      const failing: number[][] = [];
+      let tried = 0;
+      let failures = 0;
+      const feasible = (idx: number[]): boolean => {
+        const picked: string[] = [];
+        const go = (k: number): boolean => {
+          if (k === idx.length) return true;
+          for (const sid of list[idx[k]!]!.sectionIds) {
+            if (picked.every((c) => !sectionsOverlap(c, sid))) {
+              picked.push(sid);
+              if (go(k + 1)) return true;
+              picked.pop();
+            }
+          }
+          return false;
+        };
+        return go(0);
+      };
+      const combine = (from: number, idx: number[]) => {
+        if (tried >= 20000) return;
+        if (idx.length === need) {
+          tried++;
+          if (!feasible(idx)) {
+            failures++;
+            if (failing.length < 8) failing.push([...idx]);
+          }
+          return;
+        }
+        for (let i = from; i <= list.length - (need - idx.length); i++) combine(i + 1, [...idx, i]);
+      };
+      combine(0, []);
+      if (failures === 0) return;
+      const clashing = new Set<string>();
+      for (const idx of failing) {
+        for (let a = 0; a < idx.length; a++) {
+          for (let b = a + 1; b < idx.length; b++) {
+            for (const x of list[idx[a]!]!.sectionIds) for (const y of list[idx[b]!]!.sectionIds) if (sectionsOverlap(x, y)) (clashing.add(x), clashing.add(y));
+          }
+        }
+      }
+      const sets = failing.slice(0, 4).map((idx) => idx.map((i) => list[i]!.label).join(" + ")).join(", ") + (failures > 4 ? `, and ${failures - 4} more` : "");
+      const involved = [...clashing];
+      out.push({
+        rule: rule.name,
+        type: "takeable",
+        academicYear: g.year,
+        term: g.term,
+        message: `Not every ${need} of the ${list.length} courses can be taken together: ${sets}`,
+        sectionIds: involved.length ? involved : [...new Set(list.flatMap((x) => [...x.sectionIds]))],
+        sessions: involved.flatMap((id) => bySection.get(id)!),
+      });
+      return;
+    }
+
+    // "some n" (or all): can `need` courses be taken, one section each, with none overlapping?
     let best = 0;
     const chosen: string[] = [];
     const search = (i: number) => {
@@ -302,7 +363,7 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
 
     const verb = mode === "within" ? "within" : "during";
     const where = `${interval(rule)} on ${days.length === 1 ? days[0] : `${rule.dayRule} of ${dayList(days.join(""))}`}`;
-    if (rule.atLeast === undefined) {
+    if (rule.count === undefined) {
       for (const p of subject) {
         if (passes(p.sectionId)) continue;
         const message =
@@ -314,7 +375,7 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
       return;
     }
     const ok = subject.filter((p) => passes(p.sectionId)).length;
-    const need = Math.min(rule.atLeast, subject.length);
+    const need = Math.min(rule.count, subject.length);
     if (subject.length === 0 || ok >= need) return;
     out.push({
       rule: rule.name,
