@@ -9,12 +9,15 @@ import {
   meetsMode,
   parseTime,
   rulesOf,
+  termList,
   ruleSubject,
   saveRule,
   validateRule,
   type Rule,
   type RuleItem,
   type Schedule,
+  type StandardChange,
+  DEFAULT_STANDARD_TIMES,
 } from "@schedulizer/core";
 import { useWorkspace } from "../state";
 
@@ -29,6 +32,15 @@ interface Props {
   onNotice: (message: string) => void;
 }
 
+interface ChangeForm {
+  action: StandardChange["action"];
+  days: string;
+  duration: string;
+  starts: string;
+}
+
+const at = (n: number) => formatTime(n).replace(/^0/, "");
+
 /** The rule's inputs as strings (times as `HH:MM`, for the time inputs). */
 interface Form {
   name: string;
@@ -36,6 +48,8 @@ interface Form {
   /** Window rules: are the lines courses or instructors? (One choice for the whole rule.) */
   subject: "courses" | "instructors";
   items: RuleItem[];
+  /** Standard-times rules: the changes, as typed. */
+  changes: ChangeForm[];
   count: string;
   choose: Rule["choose"];
   bound: Rule["bound"];
@@ -51,7 +65,8 @@ interface Form {
 }
 
 const toForm = (r: Rule): Form => ({
-  name: r.name, type: r.type, subject: ruleSubject(r), items: r.items.map((i) => ({ ...i })), count: r.count === undefined ? "" : String(r.count), choose: r.choose, bound: r.bound, gap: String(r.gap),
+  name: r.name, type: r.type, subject: ruleSubject(r), items: r.items.map((i) => ({ ...i })),
+  changes: r.changes.map((c) => ({ action: c.action, days: c.days, duration: c.duration === undefined ? "" : String(c.duration), starts: c.starts.map(at).join(", ") })), count: r.count === undefined ? "" : String(r.count), choose: r.choose, bound: r.bound, gap: String(r.gap),
   term: r.term, days: r.days, dayRule: r.dayRule, from: r.from === undefined ? "" : formatTime(r.from), to: r.to === undefined ? "" : formatTime(r.to),
   should: r.should, meets: r.meets, comment: r.comment,
 });
@@ -77,12 +92,28 @@ function toRule(f: Form): { rule: Rule; problems: { field: string; message: stri
     if (f.gap.trim() !== "" && Number.isInteger(g) && g >= 0 && g <= 240) gap = g;
     else problems.push({ field: "gap", message: "Use a number of minutes from 0 to 240" });
   }
+  const changes: StandardChange[] = [];
+  if (f.type === "standard") {
+    f.changes.forEach((c, i) => {
+      const days = [..."MTWRFSU"].filter((d) => c.days.toUpperCase().replace(/TH/g, "R").includes(d)).join("");
+      const dur = c.duration.trim() === "" ? undefined : Number(c.duration);
+      const starts: number[] = [];
+      for (const text of c.starts.split(/[,;]/).map((x) => x.trim()).filter(Boolean)) {
+        const t = parseTime(text);
+        if (t === null || t === undefined) problems.push({ field: `changes.${i}`, message: `“${text}” is not a time` });
+        else starts.push(t);
+      }
+      if (dur !== undefined && !Number.isInteger(dur)) problems.push({ field: `changes.${i}`, message: "The length is a number of minutes." });
+      if (days === "" && c.days.trim() === "" && c.starts.trim() === "" && c.duration.trim() === "") return; // an empty line
+      changes.push({ action: c.action, days, ...(dur !== undefined && Number.isInteger(dur) ? { duration: dur } : {}), starts });
+    });
+  }
   const people = f.type === "consecutive" || (f.type === "window" && f.subject === "instructors");
   const rule: Rule = {
     name: f.name.trim(), type: f.type, items: f.items
       .map((i) => (people ? { course: "", section: "", instructor: i.instructor } : { ...i, instructor: "" }))
       .filter((i) => i.course.trim() || i.section.trim() || i.instructor.trim()), term: f.term, days: f.days, dayRule: f.dayRule,
-    choose: f.choose, bound: f.bound, gap, should: f.should, meets: f.meets, comment: f.comment, ...(count !== undefined ? { count } : {}),
+    changes, choose: f.choose, bound: f.bound, gap, should: f.should, meets: f.meets, comment: f.comment, ...(count !== undefined ? { count } : {}),
     ...(from !== undefined ? { from } : {}), ...(to !== undefined ? { to } : {}),
   };
   return { rule, problems };
@@ -167,8 +198,10 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
         from: type === "window" && f.from === "" ? "10:00" : f.from,
         to: type === "window" && f.to === "" ? "11:00" : f.to,
         count: type === "consecutive" && f.count.trim() === "" ? "3" : type === "standard" ? "" : f.count,
+        changes: type === "standard" && f.changes.length === 0 ? [{ action: "allow", days: "", duration: "", starts: "" }] : f.changes,
       };
     });
+  const setChange = (i: number, patch: Partial<ChangeForm>) => set("changes", form.changes.map((c, j) => (j === i ? { ...c, ...patch } : c)));
   const switchSubject = (subject: Form["subject"]) => setForm((f) => (f.subject === subject ? f : { ...f, subject, items: [{ course: "", section: "", instructor: "" }] }));
   const toggleDay = (d: string) => set("days", [..."MTWRF"].filter((x) => (x === d ? !form.days.includes(x) : form.days.includes(x))).join(""));
   const allDays = form.days === "" || form.days === "MTWRF";
@@ -323,9 +356,38 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
               </div>
             </>
           ) : form.type === "standard" ? (
-            <p className="muted small">
-              Every section named should meet only at a standard time: the days, start time and length (in minutes) must all be one of the department’s standard patterns. Sections with no meeting time are not checked.
-            </p>
+            <fieldset>
+              <legend>Changes to the standard times</legend>
+              <p className="muted small">
+                Every meeting is checked against the department’s standard times, and those that do not match are flagged in orange. This rule changes the standard times for the courses above: <strong>allow</strong> a time to stop flagging a known exception,
+                or <strong>disallow</strong> one that is normally standard but that you do not want to use. Later lines win.
+              </p>
+              {form.changes.map((c, i) => (
+                <div className="row item-row" key={i}>
+                  <label className="f">
+                    <span>{i === 0 ? "Change" : "\u00a0"}</span>
+                    <select value={c.action} onChange={(e) => setChange(i, { action: e.target.value as ChangeForm["action"] })}>
+                      <option value="allow">allow</option>
+                      <option value="disallow">disallow</option>
+                    </select>
+                  </label>
+                  <label className="f"><span>Days</span><input value={c.days} size={6} placeholder="MWF" aria-label="days" onChange={(e) => setChange(i, { days: e.target.value })} /></label>
+                  <label className="f"><span>Length (min)</span><input value={c.duration} size={6} inputMode="numeric" placeholder={c.action === "allow" ? "65" : "any"} aria-label="length in minutes" onChange={(e) => setChange(i, { duration: e.target.value })} /></label>
+                  <label className="f grow"><span>Starting at</span><input value={c.starts} placeholder={c.action === "allow" ? "9:15, 13:30" : "any time"} aria-label="start times" onChange={(e) => setChange(i, { starts: e.target.value })} /></label>
+                  <button type="button" className="link" onClick={() => set("changes", form.changes.filter((_, j) => j !== i))}>Remove</button>
+                  {err(`changes.${i}`)}
+                </div>
+              ))}
+              {err("changes")}
+              <button type="button" onClick={() => set("changes", [...form.changes, { action: "allow", days: "", duration: "", starts: "" }])}>+ Add change</button>
+              <p className="muted small">Days are letters, for example <code>MWF</code> or <code>TR</code> (R is Thursday). A disallow line may leave the length or the start times blank to mean any.</p>
+              <details>
+                <summary className="muted small">The standard times now</summary>
+                <ul className="standard-list">
+                  {DEFAULT_STANDARD_TIMES.map((t) => <li key={`${t.days}${t.duration}`}><strong>{[...t.days].join(" ")}</strong>, {t.duration} min: {t.starts.map(at).join(", ")}</li>)}
+                </ul>
+              </details>
+            </fieldset>
           ) : (
             <div>
               <div className="row take-row">
@@ -346,21 +408,33 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
               {err("gap")}
               <p className="muted small">
                 {form.bound === "atMost"
-                  ? `No one may teach more than ${form.count || "n"} consecutive classes: a run of more than that on any day is flagged (each term is checked separately).`
-                  : `Each instructor must teach at least ${form.count || "n"} consecutive classes somewhere in the schedule: the rule is met if they have such a run on any day of the academic year (only those terms, if you choose one below).`}
+                  ? `No one may teach more than ${form.count || "n"} consecutive classes: a run of more than that on any day is flagged (each term is checked separately; choose terms below to check only those).`
+                  : `In each term they teach in, each instructor must have at least ${form.count || "n"} consecutive classes somewhere: the rule is met for a term if they have such a run on any day of it. Choose terms below to check only those.`}
               </p>
             </div>
           )}
 
-          <div className="row">
-            <label className="f">
-              <span>Term</span>
-              <select value={form.term} onChange={(e) => set("term", e.target.value)}>
-                <option value="">every term</option>
-                {schedule.settings.terms.map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
-              </select>
-            </label>
-          </div>
+          <fieldset className="terms-field">
+            <legend>Terms</legend>
+            <div className="row">
+              {schedule.settings.terms.map((t) => {
+                const chosen = termList(form.term).map((x) => x.toLowerCase());
+                const on = chosen.includes(t.code.toLowerCase());
+                return (
+                  <label key={t.code} className="choice">
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={() => set("term", schedule.settings.terms.map((x) => x.code).filter((c) => (c === t.code ? !on : chosen.includes(c.toLowerCase()))).join(", "))}
+                    />{" "}
+                    {t.name}
+                  </label>
+                );
+              })}
+              <span className="muted small grow">{termList(form.term).length === 0 ? "Applies in every term." : `Applies only in ${termList(form.term).join(", ")}.`}</span>
+            </div>
+            {err("term")}
+          </fieldset>
           <label className="f"><span>Comment</span><textarea rows={2} value={form.comment} onChange={(e) => set("comment", e.target.value)} /></label>
 
           <div className="preview-box" role="status">

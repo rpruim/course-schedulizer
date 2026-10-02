@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { conflictedSessions, nonStandardSessions } from "./conflicts.js";
 import { recordsFromCsv } from "./csv.js";
 import { importConstraints, importRecords } from "./import.js";
-import { deleteRule, describeRule, emptyRule, findRuleViolations, rulesOf, ruleSubject, saveRule, validateRule, type Rule } from "./rules.js";
+import { deleteRule, describeRule, emptyRule, findRuleViolations, rulesOf, rulesToRows, ruleSubject, saveRule, validateRule, type Rule } from "./rules.js";
 import { fixtureText } from "./testutil.js";
 import { readWorkbook, writeWorkbook } from "./xlsx.js";
 
@@ -15,7 +15,10 @@ const build = (sessions: Rec[], constraints: Rec[] = []) => {
   expect(r.issues.filter((i) => i.severity === "error")).toEqual([]);
   return r.schedule;
 };
-const msgs = (s: ReturnType<typeof build>) => findRuleViolations(s).map((v) => v.message);
+/** The violations of the schedule's own rules (the built-in standard-times check, which flags most test meetings, is left out). */
+const violations = (s: ReturnType<typeof build>) => findRuleViolations(s).filter((v) => !v.builtin);
+const msgs = (s: ReturnType<typeof build>) => violations(s).map((v) => v.message);
+const allMsgs = (s: ReturnType<typeof build>) => findRuleViolations(s).map((v) => v.message);
 
 describe("legacy cohort constraints (fixtures T17, T18)", () => {
   const s = importRecords({
@@ -23,14 +26,14 @@ describe("legacy cohort constraints (fixtures T17, T18)", () => {
     constraints: recordsFromCsv(fixtureText("cases/constraints.csv")),
   }).schedule;
   it("breaks the rule when the courses cannot all be taken", () => {
-    const v = findRuleViolations(s);
+    const v = violations(s);
     expect(v.map((x) => [x.rule, x.academicYear])).toEqual([["Math major year 2", "T17"], ["Cohort 2", "T18"]]);
     expect(v[0]!.message).toBe("Only 2 of the 3 courses can be taken together (needs all 3): MATH 231 A × STAT 243 A");
     expect(v[1]!.message).toContain("MATH 270 A × STAT 280 A"); // names one section, so MATH 270 B is not involved
     expect(v[1]!.sectionIds).toHaveLength(2);
   });
   it("highlights the meetings involved", () => {
-    expect(conflictedSessions([], findRuleViolations(s)).size).toBe(4);
+    expect(conflictedSessions([], violations(s)).size).toBe(4);
   });
 });
 
@@ -55,7 +58,7 @@ describe("take together: some n / any n", () => {
     );
     // 301 vs 304 overlap (the only sections), so that pair fails; 301 + 302 works through 302 B
     expect(msgs(s)).toEqual(["Not every 2 of the 4 courses can be taken together: MATH 301 + MATH 304"]);
-    expect(findRuleViolations(s)[0]!.sectionIds.sort()).toEqual(["Y-FA-MATH301-A", "Y-FA-MATH304-A"]);
+    expect(violations(s)[0]!.sectionIds.sort()).toEqual(["Y-FA-MATH301-A", "Y-FA-MATH304-A"]);
   });
   it("is satisfied when enough can be taken", () => {
     expect(msgs(build(three, rule({ Count: "2" })))).toEqual([]);
@@ -89,7 +92,7 @@ describe("take together: some n / any n", () => {
   it("can be limited to one term", () => {
     const sessions = [sec("MATH", "1", "A", "MWF", "9:00"), sec("MATH", "2", "A", "MWF", "9:00"), sec("MATH", "1", "A", "MWF", "9:00", { Term: "SP" }), sec("MATH", "2", "A", "MWF", "9:00", { Term: "SP" })];
     const s = build(sessions, ["MATH 1", "MATH 2"].map((c) => ({ Constraint: "R", Course: c, Term: "SP" })));
-    expect(findRuleViolations(s).map((v) => v.term)).toEqual(["SP"]);
+    expect(violations(s).map((v) => v.term)).toEqual(["SP"]);
   });
   it("sees a course by any of its listings", () => {
     const r = importRecords({
@@ -97,7 +100,7 @@ describe("take together: some n / any n", () => {
       crossListings: [{ SectionId: "Y-FA-DATA385-A", Prefix: "STAT", CourseNumber: "385" }],
       constraints: [{ Constraint: "R", Course: "stat  385" }, { Constraint: "R", Course: "MATH 250" }],
     });
-    expect(findRuleViolations(r.schedule)).toHaveLength(1);
+    expect(violations(r.schedule)).toHaveLength(1);
   });
 });
 
@@ -141,7 +144,7 @@ describe("window rules", () => {
   });
   it("highlights the section's meetings", () => {
     const s = build([sec("MATH", "1", "A", "MWF", "10:00")], rule({ From: "10:00", To: "10:50" }));
-    expect(conflictedSessions([], findRuleViolations(s)).size).toBe(1);
+    expect(conflictedSessions([], violations(s)).size).toBe(1);
   });
 });
 
@@ -240,34 +243,97 @@ describe("editing rules", () => {
   });
 });
 
-describe("standard times rule", () => {
-  const rule = (extra: Rec = {}) => [{ Constraint: "Std", Type: "standard", Course: "*", ...extra }];
-  it("accepts the standard patterns and flags the others, saying what would be standard", () => {
-    const s = build(
-      [sec("MATH", "1", "A", "MWF", "9:15", { MeetingDuration: "65" }), sec("MATH", "2", "A", "MWF", "9:30", { MeetingDuration: "65" }), sec("MATH", "3", "A", "MWF", "9:15", { MeetingDuration: "50" }), sec("MATH", "4", "A", "TR", "10:20", { MeetingDuration: "100" }), sec("MATH", "5", "A", "MTWR", "10:20", { MeetingDuration: "100" })],
-      rule(),
-    );
-    expect(msgs(s)).toEqual([
+describe("standard times (built in) and the rules that change them", () => {
+  const meet = (n: string, days: string, start: string, dur: string, extra: Rec = {}) => sec("MATH", n, "A", days, start, { MeetingDuration: dur, ...extra });
+  const allow = (extra: Rec) => ({ Constraint: "Allow", Type: "standard", Action: "allow", ...extra });
+
+  it("always flags meetings outside the standard patterns, saying what would be standard", () => {
+    const s = build([meet("1", "MWF", "9:15", "65"), meet("2", "MWF", "9:30", "65"), meet("3", "MWF", "9:15", "50"), meet("4", "TR", "10:20", "100"), meet("5", "MTWR", "10:20", "100")]);
+    expect(allMsgs(s)).toEqual([
       "MATH 2 A meets M W F 09:30–10:35 (65 min), which is not a standard time (standard M W F starts for 65 minutes: 8:00, 9:15, 11:00, 12:15, 13:30, 14:45)",
       "MATH 3 A meets M W F 09:15–10:05 (50 min), which is not a standard time (standard M W F lengths: 65, 120, 60 minutes)",
       "MATH 5 A meets M T W R 10:20–12:00 (100 min), which is not a standard time (no standard time uses the days M T W R)",
     ]);
+    const v = findRuleViolations(s)[0]!;
+    expect(v).toMatchObject({ rule: "Standard times", builtin: true, type: "standard" });
   });
   it("is orange, not red: its meetings are not counted as conflicts", () => {
-    const s = build([sec("MATH", "2", "A", "MWF", "9:30", { MeetingDuration: "65" })], rule());
-    const v = findRuleViolations(s);
-    expect(v[0]!.type).toBe("standard");
+    const v = findRuleViolations(build([meet("2", "MWF", "9:30", "65")]));
     expect(conflictedSessions([], v).size).toBe(0);
     expect(nonStandardSessions(v).size).toBe(1);
   });
-  it("can be limited to some courses, or a term, and ignores sections with no time", () => {
-    const sessions = [sec("MATH", "2", "A", "MWF", "9:30", { MeetingDuration: "65" }), sec("STAT", "2", "A", "MWF", "9:30", { MeetingDuration: "65" }), sec("MATH", "3", "A", "MWF", "9:30", { MeetingDuration: "65", Term: "SP" })];
-    expect(msgs(build(sessions, rule({ Course: "MATH *", Term: "FA" })))).toHaveLength(1);
-    expect(msgs(build([{ AcademicYear: "Y", Term: "FA", Prefix: "MATH", CourseNumber: "9", Section: "A" }], rule()))).toEqual([]);
+  it("ignores sections with no time, and checks each meeting of a section", () => {
+    expect(allMsgs(build([{ AcademicYear: "Y", Term: "FA", Prefix: "MATH", CourseNumber: "9", Section: "A" }]))).toEqual([]);
+    const s = build([meet("1", "MW", "9:15", "50", { SectionId: "x" }), meet("1", "F", "9:15", "50", { SectionId: "x" })]);
+    expect(allMsgs(s)).toEqual(["MATH 1 A meets F 09:15–10:05 (50 min), which is not a standard time (standard F lengths: 170, 80 minutes)"]);
   });
-  it("checks each meeting of a section", () => {
-    const s = build([sec("MATH", "1", "A", "MW", "9:15", { SectionId: "x", MeetingDuration: "50" }), { ...sec("MATH", "1", "A", "F", "9:15", { SectionId: "x", MeetingDuration: "50" }) }], rule());
-    expect(msgs(s)).toEqual(["MATH 1 A meets F 09:15–10:05 (50 min), which is not a standard time (standard F lengths: 170, 80 minutes)"]);
+  it("a rule can allow a time (a known exception), for some courses", () => {
+    const sessions = [meet("391", "R", "15:05", "50"), sec("STAT", "391", "A", "R", "15:05", { MeetingDuration: "50" })];
+    expect(allMsgs(build(sessions))).toHaveLength(2);
+    const rows = [{ Constraint: "Allow", Type: "standard", Course: "MATH 391" }, allow({ Days: "R", Duration: "50", Starts: "15:05" })];
+    expect(allMsgs(build(sessions, rows))).toEqual([expect.stringContaining("STAT 391 A")]);
+    expect(allMsgs(build(sessions, [{ ...rows[0]!, Course: "*" }, rows[1]!]))).toEqual([]);
+  });
+  it("a rule can disallow a time that is standard elsewhere", () => {
+    const sessions = [meet("1", "MWF", "8:00", "65"), meet("2", "MWF", "9:15", "65")];
+    const rows = [{ Constraint: "No early", Type: "standard", Course: "*" }, { Constraint: "No early", Type: "standard", Action: "disallow", Days: "MWF", Duration: "65", Starts: "8:00" }];
+    expect(allMsgs(build(sessions, rows))).toEqual([expect.stringContaining("MATH 1 A meets M W F 08:00–09:05 (65 min), which is not a standard time (standard M W F starts for 65 minutes: 9:15, 11:00, 12:15, 13:30, 14:45)")]);
+  });
+  it("a disallow with no length or starts removes every pattern on those days", () => {
+    const rows = [{ Constraint: "No MWF", Type: "standard", Course: "*" }, { Constraint: "No MWF", Action: "disallow", Days: "MWF" }];
+    expect(allMsgs(build([meet("1", "MWF", "9:15", "65")], rows))).toEqual([expect.stringContaining("no standard time uses the days M W F")]);
+    expect(allMsgs(build([meet("1", "TR", "10:20", "100")], rows))).toEqual([]);
+  });
+  it("later changes win, and a rule can be limited to some terms", () => {
+    const rows = [
+      { Constraint: "Both", Type: "standard", Course: "*", Term: "SP" },
+      { Constraint: "Both", Action: "allow", Days: "R", Duration: "50", Starts: "15:05" },
+      { Constraint: "Both", Action: "disallow", Days: "R", Duration: "50", Starts: "15:05, 16:00" },
+    ];
+    expect(allMsgs(build([meet("1", "R", "15:05", "50", { Term: "SP" })], rows))).toHaveLength(1); // allowed, then disallowed
+    const allowed = [{ Constraint: "A", Type: "standard", Course: "*", Term: "SP" }, allow({ Constraint: "A", Days: "R", Duration: "50", Starts: "15:05" })];
+    expect(allMsgs(build([meet("1", "R", "15:05", "50", { Term: "SP" })], allowed))).toEqual([]);
+    expect(allMsgs(build([meet("1", "R", "15:05", "50", { Term: "FA" })], allowed))).toHaveLength(1); // the rule is for SP only
+  });
+  it("reads, writes and describes standard-time rules", async () => {
+    const rows = [
+      { Constraint: "Colloquium", Type: "standard", Course: "MATH 391", Term: "FA, SP", Comment: "weekly" },
+      { Constraint: "Colloquium", Action: "allow", Days: "R", Duration: "50", Starts: "15:05, 16:00" },
+      { Constraint: "Colloquium", Action: "disallow", Days: "MWF", Duration: "65", Starts: "8:00" },
+      { Constraint: "Colloquium", Action: "disallow", Days: "TR" },
+    ];
+    const s = build([meet("1", "MWF", "9:15", "65")], rows);
+    const [rule] = rulesOf(s);
+    expect(rule!.items).toEqual([{ course: "MATH 391", section: "", instructor: "" }]);
+    expect(rule!.changes).toEqual([
+      { action: "allow", days: "R", duration: 50, starts: [905, 960] },
+      { action: "disallow", days: "MWF", duration: 65, starts: [480] },
+      { action: "disallow", days: "TR", starts: [] },
+    ]);
+    expect(describeRule(rule!)).toBe("Standard times for MATH 391: also allow R for 50 minutes starting 15:05, 16:00; stop allowing M W F for 65 minutes starting 8:00; stop allowing T R in FA, SP.");
+    const back = await readWorkbook(await writeWorkbook(s));
+    expect(back.issues.filter((i) => i.severity === "error")).toEqual([]);
+    expect(back.schedule.constraints).toEqual(s.constraints);
+    expect(rulesToRows(rule!)).toEqual(s.constraints.map((c) => ({ ...c, comment: c.comment })));
+  });
+  it("validates the changes", () => {
+    const base = { ...emptyRule("standard"), name: "S", items: [{ course: "*", section: "", instructor: "" }], changes: [{ action: "allow" as const, days: "R", duration: 50, starts: [905] }] };
+    expect(validateRule(build([]), base)).toEqual([]);
+    expect(validateRule(build([]), { ...base, changes: [] }).map((p) => p.field)).toEqual(["changes"]);
+    expect(validateRule(build([]), { ...base, changes: [{ action: "allow", days: "R", starts: [] }] }).map((p) => p.field)).toEqual(["changes.0"]);
+    expect(validateRule(build([]), { ...base, changes: [{ action: "disallow", days: "", starts: [] }] }).map((p) => p.field)).toEqual(["changes.0"]);
+    expect(validateRule(build([]), { ...base, changes: [{ action: "disallow", days: "MWF", starts: [] }] })).toEqual([]);
+  });
+});
+
+describe("rules apply to the terms listed", () => {
+  it("takes several terms, separated by commas or spaces, and rejects unknown ones", () => {
+    const base = { ...emptyRule("window"), name: "W", items: [{ course: "MATH *", section: "", instructor: "" }] };
+    expect(validateRule(build([]), { ...base, term: "FA, SP" })).toEqual([]);
+    expect(validateRule(build([]), { ...base, term: "FA XX" }).map((p) => p.message)).toEqual(["“XX” is not a term of this schedule."]);
+    const rows = [{ Constraint: "W", Type: "window", Course: "MATH *", From: "9:00", To: "10:00", Term: "FA, SP" }];
+    const s = build([sec("MATH", "1", "A", "MWF", "9:15"), sec("MATH", "2", "A", "MWF", "9:15", { Term: "SP" }), sec("MATH", "3", "A", "MWF", "9:15", { Term: "SU" })], rows);
+    expect(violations(s).map((v) => v.term)).toEqual(["FA", "SP"]);
   });
 });
 
@@ -300,27 +366,36 @@ describe("back-to-back (consecutive) rule", () => {
     const halves = [sec("MATH", "1", "A", "M", "9:00", { ...fac("Kim"), TermPart: "First" }), sec("MATH", "2", "A", "M", "10:00", { ...fac("Kim"), TermPart: "Second" })];
     expect(msgs(build(halves, most("1")))).toEqual([]);
   });
-  it("at least n: met when somewhere there is a run of that many, else flagged once per academic year", () => {
-    const least = (n: string, who = "Kim") => [{ Constraint: "Run", Type: "consecutive", Instructor: who, Count: n, Bound: "atLeast" }];
+  it("at least n: met when the term has a run of that many, else flagged for that term", () => {
+    const least = (n: string, who = "Kim", extra: Rec = {}) => [{ Constraint: "Run", Type: "consecutive", Instructor: who, Count: n, Bound: "atLeast", ...extra }];
     expect(msgs(build(day, least("3")))).toEqual([]);
-    expect(msgs(build(day, least("4")))).toEqual(["Kim never teaches 4 consecutive classes (the most is 3, on M in FA)"]);
-    expect(msgs(build(day, least("2", "Lee")))).toEqual(["Lee never teaches 2 consecutive classes (the most is 1)"]);
+    expect(msgs(build(day, least("4")))).toEqual(["Kim never teaches 4 consecutive classes in FA (the most is 3, on M)"]);
+    expect(msgs(build(day, least("2", "Lee")))).toEqual(["Lee never teaches 2 consecutive classes in FA (the most is 1)"]);
     expect(msgs(build(day, least("2", "Nobody")))).toEqual([]); // not teaching at all: nothing to check
+  });
+  it("at least n is checked in each term, and only in the terms the rule lists", () => {
+    const fall = day.slice(0, 3);
+    const spring = [sec("MATH", "7", "A", "MWF", "9:00", { ...fac("Kim"), Term: "SP" }), sec("MATH", "8", "A", "MWF", "13:00", { ...fac("Kim"), Term: "SP" })];
+    const least = (extra: Rec = {}) => [{ Constraint: "Run", Type: "consecutive", Instructor: "Kim", Count: "2", Bound: "atLeast", ...extra }];
+    expect(violations(build([...fall, ...spring], least())).map((v) => v.term)).toEqual(["SP"]); // fine in fall, not in spring
+    expect(msgs(build([...fall, ...spring], least({ Term: "FA" })))).toEqual([]); // the rule is for fall only
+    expect(violations(build([...fall, ...spring], least({ Term: "FA, SP" }))).map((v) => v.term)).toEqual(["SP"]);
+    expect(violations(build([...fall, ...spring], least({ Term: "SP" }))).map((v) => v.term)).toEqual(["SP"]);
   });
   it("covers several instructors in one rule, and counts a section's own back-to-back meetings once", () => {
     const rows = [{ Constraint: "Run", Type: "consecutive", Instructor: "Kim", Count: "1", Bound: "atMost" }, { Constraint: "Run", Instructor: "Lee" }];
     const s = build([sec("MATH", "1", "A", "M", "9:00", fac("Kim")), sec("MATH", "2", "A", "M", "10:00", fac("Kim")), sec("MATH", "5", "A", "T", "9:00", fac("Lee")), sec("MATH", "6", "A", "T", "10:00", fac("Lee"))], rows);
-    expect(findRuleViolations(s).map((v) => v.message.split(" teaches")[0])).toEqual(["Kim", "Lee"]);
+    expect(violations(s).map((v) => v.message.split(" teaches")[0])).toEqual(["Kim", "Lee"]);
     const lab = build([sec("MATH", "1", "A", "M", "9:00", { ...fac("Kim"), SectionId: "x" }), sec("MATH", "1", "A", "M", "9:50", { ...fac("Kim"), SectionId: "x" })], most("1"));
     expect(msgs(lab)).toEqual([]);
   });
   it("highlights the classes in a too-long run", () => {
-    expect(conflictedSessions([], findRuleViolations(build(day.slice(0, 3), most("2")))).size).toBe(3);
+    expect(conflictedSessions([], violations(build(day.slice(0, 3), most("2")))).size).toBe(3);
   });
   it("describes itself and validates", () => {
     const r = { ...emptyRule("consecutive"), name: "x", items: [{ course: "", section: "", instructor: "Kim" }, { course: "", section: "", instructor: "Lee" }], count: 2 };
     expect(describeRule(r)).toBe("Each of Kim, Lee should teach at most 2 consecutive classes (a class follows another when it starts within 20 minutes of the other's end).");
-    expect(describeRule({ ...r, bound: "atLeast", items: [r.items[0]!] })).toBe("Kim should teach at least 2 consecutive classes somewhere in the schedule (a class follows another when it starts within 20 minutes of the other's end).");
+    expect(describeRule({ ...r, bound: "atLeast", items: [r.items[0]!] })).toBe("Kim should teach at least 2 consecutive classes in each term (a class follows another when it starts within 20 minutes of the other's end).");
     expect(validateRule(build([]), r)).toEqual([]);
     expect(validateRule(build([]), { ...r, items: [{ course: "MATH 1", section: "", instructor: "" }] }).map((p) => p.field)).toEqual(["items.0"]);
     expect(validateRule(build([]), { ...r, count: undefined as never }).map((p) => p.field)).toEqual(["count"]);

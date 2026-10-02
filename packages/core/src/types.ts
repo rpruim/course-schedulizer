@@ -88,8 +88,9 @@ export type NonTeaching = z.infer<typeof nonTeachingSchema>;
  *   choosing one section of each, with no two overlapping. With `choose` "some", some set of
  *   `count` courses must be takeable together; with "any", every set of `count` courses must be. `course` is a pattern
  *   (`MATH 231`, `MATH 3*`); `section` names one section.
- * - `standard`: the sections named by `course` patterns (`*` = every course) should meet only at the
- *   department's standard days, start times and lengths (`DEFAULT_STANDARD_TIMES`).
+ * - `standard`: changes to the department's standard days, start times and lengths
+ *   (`DEFAULT_STANDARD_TIMES`, which every section is always checked against) for the sections named by
+ *   `course` patterns (`*` = every course). Rows with an `action` are the changes; the rest name the courses.
  * - `consecutive`: each instructor named should teach at most (or at least) `count` consecutive
  *   classes; one class follows another when it starts 0 to `gap` minutes after the other ends.
  * - `window`: the sections named (by `course` pattern or `instructor`) should / should not meet
@@ -107,13 +108,19 @@ export const constraintSchema = z.object({
   instructor: str,
   /** `takeable`: how many courses (blank = all of them); `window`: at least this many sections must satisfy it (blank = every one). */
   count: z.number().int().positive().optional(),
+  /** `standard`: this row allows or disallows a meeting pattern (days, `duration`, `starts`) for the courses the rule names. */
+  action: z.enum(["", "allow", "disallow"]).default(""),
+  /** `standard` change rows: the length in minutes; blank on a "disallow" row = any length. */
+  duration: z.number().int().positive().optional(),
+  /** `standard` change rows: start times, minutes since midnight; empty on a "disallow" row = any start. */
+  starts: z.array(z.number().int().min(0).max(1439)).default([]),
   /** `consecutive`: the rule is about at most / at least `count` consecutive classes. */
   bound: z.enum(["atMost", "atLeast"]).default("atMost"),
   /** `consecutive`: classes are consecutive when one starts no more than this many minutes after the other ends. */
   gap: z.number().int().min(0).max(240).default(20),
   /** `takeable` with a `count`: some set of that many courses must work together, or every set must. */
   choose: z.enum(["some", "any"]).default("some"),
-  /** Only this term; blank = every term. */
+  /** Only these terms (codes separated by commas or spaces); blank = every term. */
   term: str,
   /** Window rules: day letters; blank = Monday to Friday. */
   days: z.string().regex(/^[MTWRFSU]*$/).default(""),

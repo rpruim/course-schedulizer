@@ -33,7 +33,7 @@ export const SESSION_COLUMNS = [
 ] as const;
 export const CROSSLISTING_COLUMNS = ["SectionId", "Prefix", "CourseNumber"] as const;
 export const NONTEACHING_COLUMNS = ["AcademicYear", "Faculty", "Activity", "Term", "Load", "Comment"] as const;
-export const CONSTRAINT_COLUMNS = ["Constraint", "Type", "Course", "Section", "Instructor", "Count", "Choose", "Bound", "Gap", "Term", "Days", "DayRule", "From", "To", "Should", "Meets", "Comment"] as const;
+export const CONSTRAINT_COLUMNS = ["Constraint", "Type", "Course", "Section", "Instructor", "Count", "Choose", "Bound", "Gap", "Action", "Duration", "Starts", "Term", "Days", "DayRule", "From", "To", "Should", "Meets", "Comment"] as const;
 
 const key = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -388,12 +388,18 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
   const r = new Reporter("Constraints");
   const rows = records.map((rec, idx) => ({ row: idx + 2, k: split(rec, CONSTRAINT_READ_COLUMNS).known }));
 
+  // Standard-times rules: their rows are changes (Action, Days, Duration, Starts) or the courses they apply to,
+  // so Days belongs to the row, not the rule.
+  const isStandard = (k: Rec) => /^standard/i.test((k.Type ?? "").trim());
+  const standardNames = new Set(rows.filter(({ k }) => (k.Action ?? "").trim() !== "" || isStandard(k)).map(({ k }) => (k.Constraint ?? "").trim()));
+
   // Rule-level settings: the first non-blank value among a rule's rows; a different one later is an error.
   const settings = new Map<string, Rec>();
   for (const { row, k } of rows) {
     const name = (k.Constraint ?? "").trim();
     const have = settings.get(name) ?? {};
     for (const f of RULE_FIELDS) {
+      if (f === "Days" && standardNames.has(name)) continue;
       const v = (k[f] ?? "").trim();
       if (v === "") continue;
       if (have[f] === undefined) have[f] = v;
@@ -434,23 +440,34 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
       }
       return t;
     };
+    const standard = standardNames.has(name);
+    const daysText = standard ? (k.Days ?? "").trim() : have.Days;
     let days = "";
-    if (have.Days) {
-      const d = parseDays(have.Days);
+    if (daysText) {
+      const d = parseDays(daysText);
       if (d === null) {
-        if (!reported.has(`${name}|Days`)) r.add("error", row, `Days: "${have.Days}" is not a set of days (use M T W R F)`);
+        if (!reported.has(`${name}|Days`)) r.add("error", row, `Days: "${daysText}" is not a set of days (use M T W R F)`);
         reported.add(`${name}|Days`);
       } else days = d;
     }
     const looksConsecutive = have.Bound !== undefined || have.Gap !== undefined;
-    const looksWindow = have.From !== undefined || have.To !== undefined || have.Days !== undefined || have.Should !== undefined || (k.Instructor ?? "").trim() !== "";
-    const type = oneOf("Type", have.Type, { takeable: "takeable", cohort: "takeable", window: "window", time: "window", standard: "standard", "standard times": "standard", standardtimes: "standard", consecutive: "consecutive", "back-to-back": "consecutive" } as Record<string, "takeable" | "window" | "standard" | "consecutive">, looksConsecutive ? "consecutive" : looksWindow ? "window" : "takeable");
+    const looksWindow = !standard && (have.From !== undefined || have.To !== undefined || have.Days !== undefined || have.Should !== undefined || (k.Instructor ?? "").trim() !== "");
+    const type = oneOf("Type", have.Type, { takeable: "takeable", cohort: "takeable", window: "window", time: "window", standard: "standard", "standard times": "standard", standardtimes: "standard", consecutive: "consecutive", "back-to-back": "consecutive" } as Record<string, "takeable" | "window" | "standard" | "consecutive">, standard ? "standard" : looksConsecutive ? "consecutive" : looksWindow ? "window" : "takeable");
     const from = time("From", have.From);
     const to = time("To", have.To);
     if (type === "window" && !reported.has(`${name}|window`)) {
       reported.add(`${name}|window`);
       if (from === undefined || to === undefined) r.add("error", row, `"${name}" is a window rule, so it needs both From and To times`);
       else if (from >= to) r.add("error", row, `"${name}": From must be earlier than To`);
+    }
+    // a change to the standard times: allow or disallow this pattern
+    const action = oneOf("Action", k.Action, { allow: "allow", add: "allow", disallow: "disallow", remove: "disallow", forbid: "disallow" } as Record<string, "allow" | "disallow">, "" as never) as "" | "allow" | "disallow";
+    const duration = num(r, row, "Duration", k.Duration);
+    const starts: number[] = [];
+    for (const text of (k.Starts ?? "").split(/[,;\n]/).map((x) => x.trim()).filter(Boolean)) {
+      const t = parseTime(text);
+      if (t === null || t === undefined) r.add("error", row, `Starts: "${text}" is not a time`);
+      else starts.push(t);
     }
     const count = num(r, row, "Count", have.Count ?? have.AtLeast);
     const gap = num(r, row, "Gap", have.Gap);
@@ -464,6 +481,9 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
       choose: oneOf("Choose", have.Choose, { some: "some", any: "any" }, "some"),
       bound: oneOf("Bound", have.Bound, { atmost: "atMost", "at most": "atMost", max: "atMost", atleast: "atLeast", "at least": "atLeast", min: "atLeast" }, "atMost"),
       ...(gap !== undefined ? { gap } : {}),
+      action,
+      ...(duration !== undefined ? { duration } : {}),
+      starts,
       term: have.Term ?? "",
       days,
       dayRule: oneOf("DayRule", have.DayRule, { any: "any", all: "all" }, "any"),

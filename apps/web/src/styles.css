@@ -288,3 +288,6 @@ td button.link + button.link { margin-left: 6px; }
 .nonstandard-mark { color: #e08a1e; }
 .tag-standard { background: #e08a1e; color: #1c2024; }
 .warn-orange { color: #e08a1e; }
+
+.standard-list { margin: 4px 0 0; padding-left: 20px; columns: 2; font-size: .85rem; }
+.terms-field .row { margin-top: 0; }

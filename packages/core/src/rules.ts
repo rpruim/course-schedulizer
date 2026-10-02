@@ -11,11 +11,33 @@ export interface RuleItem {
   instructor: string;
 }
 
+/** One change to the standard times: allow, or stop allowing, meetings on these days (of this length, starting at these times). */
+export interface StandardChange {
+  action: "allow" | "disallow";
+  days: string;
+  /** Minutes; blank on a disallow = any length. */
+  duration?: number;
+  /** Minutes since midnight; empty on a disallow = any start. */
+  starts: number[];
+}
+
+/** The name the built-in standard-times check goes by in reports. */
+export const STANDARD_TIMES_RULE = "Standard times";
+
+/** Does a rule's `term` setting (codes separated by commas or spaces; blank = every term) include this term? */
+export const termMatches = (setting: string, term: string): boolean => {
+  const terms = setting.split(/[,;\s]+/).filter(Boolean);
+  return terms.length === 0 || terms.some((t) => t.toLowerCase() === term.toLowerCase());
+};
+export const termList = (setting: string): string[] => setting.split(/[,;\s]+/).filter(Boolean);
+
 /** A constraint as the editor sees it: the rows that share a name, gathered into one object. */
 export interface Rule {
   name: string;
   type: "takeable" | "window" | "standard" | "consecutive";
   items: RuleItem[];
+  /** `standard` rules: the changes to the standard times. */
+  changes: StandardChange[];
   count?: number;
   /** Take together with a `count`: some set of that many courses must work, or every set must. */
   choose: "some" | "any";
@@ -34,7 +56,7 @@ export interface Rule {
 }
 
 export const emptyRule = (type: Rule["type"] = "takeable"): Rule => ({
-  name: "", type, items: [], choose: "some", bound: "atMost", gap: 20, term: "", days: "", dayRule: "any", should: "should not", meets: "", comment: "",
+  name: "", type, items: [], changes: [], choose: "some", bound: "atMost", gap: 20, term: "", days: "", dayRule: "any", should: "should not", meets: "", comment: "",
   ...(type === "window" ? { from: 600, to: 660 } : {}),
   ...(type === "consecutive" ? { count: 3 } : {}),
 });
@@ -56,7 +78,8 @@ export function rulesOf(schedule: Schedule): Rule[] {
     return {
       name,
       type: f.type,
-      items: rows.map((r) => ({ course: r.course, section: r.section, instructor: r.instructor })),
+      items: rows.filter((r) => r.action === "").map((r) => ({ course: r.course, section: r.section, instructor: r.instructor })),
+      changes: rows.filter((r) => r.action !== "").map((r) => ({ action: r.action as "allow" | "disallow", days: r.days, ...(r.duration !== undefined ? { duration: r.duration } : {}), starts: r.starts })),
       ...(f.count !== undefined ? { count: f.count } : {}),
       choose: f.choose,
       bound: f.bound,
@@ -76,25 +99,42 @@ export function rulesOf(schedule: Schedule): Rule[] {
 /** A rule as constraint rows: the rule's settings repeat on every row; the comment goes on the first. */
 export function rulesToRows(rule: Rule): Constraint[] {
   const window = rule.type === "window";
-  return rule.items.map((it, i) => ({
+  const common = {
     constraint: rule.name,
     type: rule.type,
-    course: it.course.trim(),
-    section: it.section.trim(),
-    instructor: it.instructor.trim(),
     ...(rule.count !== undefined ? { count: rule.count } : {}),
     choose: rule.choose,
     bound: rule.bound,
     gap: rule.gap,
     term: rule.term.trim(),
-    days: window ? rule.days : "",
     dayRule: rule.dayRule,
     ...(window && rule.from !== undefined ? { from: rule.from } : {}),
     ...(window && rule.to !== undefined ? { to: rule.to } : {}),
     should: rule.should,
     meets: window ? rule.meets : "",
+  };
+  const items = rule.items.map((it, i) => ({
+    ...common,
+    course: it.course.trim(),
+    section: it.section.trim(),
+    instructor: it.instructor.trim(),
+    action: "" as const,
+    starts: [] as number[],
+    days: window ? rule.days : "",
     comment: i === 0 ? rule.comment.trim() : "",
   }));
+  const changes = (rule.type === "standard" ? rule.changes : []).map((c) => ({
+    ...common,
+    course: "",
+    section: "",
+    instructor: "",
+    action: c.action,
+    ...(c.duration !== undefined ? { duration: c.duration } : {}),
+    starts: [...c.starts],
+    days: c.days,
+    comment: "",
+  }));
+  return [...items, ...changes];
 }
 
 /** Replace the rule called `original` (or add a new one at the end) — returns a new schedule. */
@@ -146,6 +186,17 @@ export function validateRule(schedule: Schedule, rule: Rule, original?: string):
     if (rule.from !== undefined && rule.to !== undefined && rule.from >= rule.to) out.push({ field: "to", message: "The interval must end after it starts." });
   }
   if (rule.count !== undefined && (!Number.isInteger(rule.count) || rule.count < 1)) out.push({ field: "count", message: "Use a whole number, 1 or more." });
+  for (const t of termList(rule.term)) {
+    if (!schedule.settings.terms.some((x) => x.code.toLowerCase() === t.toLowerCase())) out.push({ field: "term", message: `“${t}” is not a term of this schedule.` });
+  }
+  if (rule.type === "standard") {
+    if (rule.changes.length === 0) out.push({ field: "changes", message: "Add at least one change to the standard times." });
+    rule.changes.forEach((c, i) => {
+      if (!/^[MTWRFSU]+$/.test(c.days)) out.push({ field: `changes.${i}`, message: "Give the days as letters, for example MWF or TR (R is Thursday)." });
+      if (c.duration !== undefined && (!Number.isInteger(c.duration) || c.duration < 1)) out.push({ field: `changes.${i}`, message: "The length is a number of minutes." });
+      if (c.action === "allow" && (c.duration === undefined || c.starts.length === 0)) out.push({ field: `changes.${i}`, message: "To allow a time, give its length and at least one start time." });
+    });
+  }
   return out;
 }
 
@@ -158,19 +209,24 @@ export const meetsMode = (r: Pick<Rule, "meets" | "should">) => r.meets || (r.sh
 /** A rule in a sentence, for lists. */
 export function describeRule(r: Rule): string {
   const items = r.items.map(itemText).join(", ") || "…";
-  const when = r.term ? ` in ${r.term}` : "";
+  const when = r.term.trim() ? ` in ${termList(r.term).join(", ")}` : "";
   if (r.type === "takeable") {
     const n = r.count === undefined ? "all" : `${r.choose} ${r.count}`;
     return `A student must be able to take ${n} of ${items}${when}.`;
   }
   if (r.type === "standard") {
     const everything = r.items.length > 0 && r.items.every((it) => it.course.trim() === "*");
-    return `Every section ${everything ? "" : `of ${items} `}should meet only at a standard time (days, start and length)${when}.`;
+    const at = (n: number) => formatTime(n).replace(/^0/, "");
+    const change = (c: StandardChange) => {
+      const times = `${c.duration !== undefined ? ` for ${c.duration} minutes` : ""}${c.starts.length ? ` starting ${c.starts.map(at).join(", ")}` : ""}`;
+      return c.action === "allow" ? `also allow ${dayList(c.days)}${times}` : `stop allowing ${dayList(c.days)}${times}`;
+    };
+    return `Standard times for ${everything ? "every course" : items}: ${r.changes.map(change).join("; ") || "no changes yet"}${when}.`;
   }
   if (r.type === "consecutive") {
     const who = r.items.length > 1 ? `Each of ${items}` : items;
     const how = r.bound === "atMost" ? "at most" : "at least";
-    const where = r.bound === "atLeast" ? `somewhere in the schedule${r.term ? ` in ${r.term}` : ""}` : r.term ? `in ${r.term}` : "";
+    const where = r.bound === "atLeast" ? `in each term${r.term.trim() ? ` of ${termList(r.term).join(", ")}` : ""}` : r.term.trim() ? `in ${termList(r.term).join(", ")}` : "";
     return `${who} should teach ${how} ${r.count ?? "…"} consecutive ${r.count === 1 ? "class" : "classes"}${where ? ` ${where}` : ""} (a class follows another when it starts within ${r.gap} minutes of the other's end).`;
   }
   const people = ruleSubject(r) === "instructors";
@@ -198,8 +254,35 @@ export function standardAdvice(m: Pick<Session, "days" | "start" | "duration">, 
   return `no standard time uses the days ${dayList(m.days)}`;
 }
 
+/** The standard times after allowing and disallowing the given patterns (later changes win). */
+export function applyChanges(times: StandardTime[], changes: StandardChange[]): StandardTime[] {
+  if (changes.length === 0) return times;
+  const atoms = new Map<string, { days: string; duration: number; start: number }>();
+  const key = (days: string, duration: number, start: number) => `${days}|${duration}|${start}`;
+  for (const t of times) for (const s of t.starts) atoms.set(key(t.days, t.duration, s), { days: t.days, duration: t.duration, start: s });
+  for (const c of changes) {
+    const days = [...DAY_ORDER].filter((d) => c.days.includes(d)).join("");
+    if (c.action === "allow") {
+      if (c.duration !== undefined) for (const s of c.starts) atoms.set(key(days, c.duration, s), { days, duration: c.duration, start: s });
+    } else {
+      for (const [k, a] of atoms) {
+        if (a.days === days && (c.duration === undefined || a.duration === c.duration) && (c.starts.length === 0 || c.starts.includes(a.start))) atoms.delete(k);
+      }
+    }
+  }
+  const grouped = new Map<string, StandardTime>();
+  for (const a of atoms.values()) {
+    const g = grouped.get(`${a.days}|${a.duration}`) ?? { days: a.days, duration: a.duration, starts: [] };
+    g.starts.push(a.start);
+    grouped.set(`${a.days}|${a.duration}`, g);
+  }
+  return [...grouped.values()].map((g) => ({ ...g, starts: g.starts.sort((x, y) => x - y) }));
+}
+
 export interface RuleViolation {
   rule: string;
+  /** From the built-in standard-times check rather than from a rule in the schedule. */
+  builtin?: boolean;
   type: Rule["type"];
   academicYear: string;
   term: string;
@@ -229,8 +312,6 @@ const sameLetter = (a: string, b: string) => a.trim().toLowerCase() === b.trim()
  *   section must satisfy the rule, or, with `count`, that many of them.
  */
 export function findRuleViolations(schedule: Schedule): RuleViolation[] {
-  const rules = rulesOf(schedule);
-  if (rules.length === 0) return [];
   const names = displayNames(schedule);
   const bySection = new Map<string, Session[]>();
   for (const s of schedule.sessions) bySection.set(s.sectionId, [...(bySection.get(s.sectionId) ?? []), s]);
@@ -257,18 +338,20 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
   }
 
   const out: RuleViolation[] = [];
-  for (const rule of rulesOf(schedule)) {
+  const rules = rulesOf(schedule);
+  for (const rule of rules) {
     if (rule.type === "consecutive") {
       consecutive(rule);
       continue;
     }
+    if (rule.type === "standard") continue; // they change the standard times, checked below
     for (const g of groups.values()) {
-      if (rule.term && rule.term.toLowerCase() !== g.term.toLowerCase()) continue;
+      if (!termMatches(rule.term, g.term)) continue;
       if (rule.type === "takeable") takeable(rule, g);
-      else if (rule.type === "standard") standard(rule, g);
       else window(rule, g);
     }
   }
+  for (const g of groups.values()) standardTimes(g);
   return out;
 
   /** Sections of the group that a rule's course lines name. */
@@ -276,14 +359,28 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
     return g.sections.filter((p) => rule.items.some((it) => constraintNames({ course: it.course, section: it.section } as Constraint, listingKeys(schedule, p), p.section)));
   }
 
-  function standard(rule: Rule, g: { year: string; term: string; sections: Session[] }) {
-    for (const p of named(rule, g)) {
-      const odd = bySection.get(p.sectionId)!.filter((m) => scheduled(m) && !isStandardTime(m));
+  /**
+   * The built-in standard-times check (always on): every scheduled meeting must be one of the department's standard
+   * patterns, as changed by the `standard` rules that name its section (in the order they are listed).
+   */
+  function standardTimes(g: { year: string; term: string; sections: Session[] }) {
+    const changing = rules.filter((r) => r.type === "standard" && termMatches(r.term, g.term));
+    const effective = new Map<string, StandardTime[]>();
+    for (const p of g.sections) {
+      const mine = changing.filter((r) => named(r, { sections: [p] }).length > 0);
+      const key = mine.map((r) => r.name).join("\u0000");
+      let times = effective.get(key);
+      if (!times) {
+        times = mine.reduce((t, r) => applyChanges(t, r.changes), DEFAULT_STANDARD_TIMES);
+        effective.set(key, times);
+      }
+      const odd = bySection.get(p.sectionId)!.filter((m) => scheduled(m) && !isStandardTime(m, times));
       if (odd.length === 0) continue;
       const what = odd.map((m) => `${dayList(m.days)} ${formatTime(m.start!)}–${formatTime((m.start! + m.duration!) % 1440)} (${m.duration} min)`);
-      const why = [...new Set(odd.map((m) => standardAdvice(m)))].join("; ");
+      const why = [...new Set(odd.map((m) => standardAdvice(m, times!)))].join("; ");
       out.push({
-        rule: rule.name,
+        rule: STANDARD_TIMES_RULE,
+        builtin: true,
         type: "standard",
         academicYear: g.year,
         term: g.term,
@@ -294,7 +391,7 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
     }
   }
 
-  /** Back-to-back classes of each instructor named: at most n in a row (per term), or at least n somewhere (per academic year). */
+  /** Back-to-back classes of each instructor named: at most n in a row (per term), or at least n somewhere in each term. */
   function consecutive(rule: Rule) {
     const n = rule.count;
     if (n === undefined) return;
@@ -302,7 +399,7 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
     const people = [...new Set(rule.items.map((it) => it.instructor.trim()).filter(Boolean))];
     for (const person of people) {
       const key = normCourse(person);
-      const mine = schedule.sessions.filter((s) => scheduled(s) && s.faculty.some((f) => normCourse(f.name) === key) && (!rule.term || rule.term.toLowerCase() === s.term.toLowerCase()));
+      const mine = schedule.sessions.filter((s) => scheduled(s) && s.faculty.some((f) => normCourse(f.name) === key) && termMatches(rule.term, s.term));
       const years = [...new Set(mine.map((s) => s.academicYear))];
       for (const year of years) {
         // runs of consecutive classes: per term and day, in start order
@@ -342,17 +439,21 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
             });
           }
         } else {
-          const best = runs.reduce((a, b) => (b.sections.length > a.sections.length ? b : a));
-          if (best.sections.length < n) {
-            out.push({
-              rule: rule.name,
-              type: "consecutive",
-              academicYear: year,
-              term: rule.term,
-              message: `${person} never teaches ${n} consecutive classes (the most is ${best.sections.length}${best.sections.length > 1 ? `, on ${best.day} in ${best.term}` : ""})`,
-              sectionIds: best.sections,
-              sessions: [],
-            });
+          // at least n somewhere in the term: checked for each term the instructor teaches in
+          for (const term of terms) {
+            const here = runs.filter((r) => r.term === term);
+            const best = here.reduce((a, b) => (b.sections.length > a.sections.length ? b : a));
+            if (best.sections.length < n) {
+              out.push({
+                rule: rule.name,
+                type: "consecutive",
+                academicYear: year,
+                term,
+                message: `${person} never teaches ${n} consecutive classes in ${term} (the most is ${best.sections.length}${best.sections.length > 1 ? `, on ${best.day}` : ""})`,
+                sectionIds: best.sections,
+                sessions: [],
+              });
+            }
           }
         }
       }
