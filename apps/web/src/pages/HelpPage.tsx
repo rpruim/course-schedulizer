@@ -8,14 +8,16 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     body: () => (
       <>
         <p>
-          Course Schedulizer helps a department build its schedule for an academic year: which sections run, when and where they meet, who teaches them and
+          Course Schedulizer helps a department build its schedule for an academic year: 
+          which sections run, when and where they meet, who teaches them and
           for how much load. 
           It warns you about conflicts, tallies faculty load (including non-teaching load) and 
-          lets you compare schedules (this year's to last year's; the one you submitted to the one that was re-entered in the registrar's office).
+          lets you compare schedules (this year's to last year's; the one you submitted to the 
+          one that was re-entered in the registrar's office).
         </p>
         <p>A typical session looks like this:</p>
         <ol>
-          <li><Link to="/import">Import</Link> one or more schedules.
+          <li><a href="#import" onClick={jump("import")}>Import</a> one or more schedules.
           <ol type="a">
             <li> The starting point for a new schedule is often a previous 
               schedule.
@@ -31,15 +33,26 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
             </li>
           </ol>
           </li>
-          <li> Look over your schedule in the 
-            <Link to="/">Schedule</Link>, week or <Link to="/conflicts">Conflicts</Link> tabs.
+          <li> Look over your schedule using one of 
+            the <a href="#caldendar-views" onClick={jump("calendar-views")}>calendar views</a>.
           </li>
-          <li>Change what needs changing: 
-              <a href="#edit" onClick={jump("edit")}>edit and add sections</a>, 
-              add <a href="#nonteaching" onClick={jump("nonteaching")}>non-teaching load</a>.
+          <li>Change what needs changing: <a href="#edit" onClick={jump("edit")}>edit, add, and delete sections</a>, 
+              add <a href="#loads" onClick={jump("loads")}>non-teaching load</a>.
           </li>
-          <li>Check <Link to="/loads">Teaching loads</Link> and conflicts again.</li>
-          <li><Link to="/export">Export</Link> to Excel to save your work and to send to the registrar.
+          <li>Check your schedule by 
+            examining <a href="#loads" onClick={jump("loads")}> teaching (and non-teaching) loads</a>,
+              investigating <a href="#conflicts" onClick={jump("conflicts")}>conflicts</a>,
+              or <a href="#compare" onClick={jump("compare")}>comparing schedules</a>.
+          </li>
+          <li>
+            You may want to set up <a href="#constraints" onClick={jump("constraints")}>custom constraints</a> 
+            to make sure you don't forget some important constraints on your schedule.
+            Violated constraints appear just like conflicts.
+          </li>
+          <li>
+              <a href="#export" onClick={jump("export")}>Export</a> to Excel to save your work 
+          for next time or so you can send it to someone else 
+          (including the registrar's office, when it's ready).
           </li>
         </ol>
 
@@ -103,26 +116,34 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     ),
   },
   {
-    id: "views",
-    title: "Looking at your schedule",
+    id: "navigation",
+    title: "Navigating",
     body: () => (
       <>
-        <p>The bar under the Schedules row groups the pages: <strong>Schedule</strong>, then menus for <strong>Loads</strong>, <strong>View</strong> (the week grids), <strong>Check</strong> (conflicts, constraints, comparison), <strong>File</strong> (meta, import, export) and <strong>Help</strong>. Click a menu to open it; the menu you are in is underlined. Each page shows the schedule in a different way. Click a column heading to sort a table; click again to reverse the sort.</p>
+        <p>The menu bar under the schedules allows you to navigate: <strong>Schedule</strong>, 
+        then menus for <strong>Loads</strong>, <strong>View</strong> (the week grids), 
+        <strong>Check</strong> (conflicts, constraints, comparison), 
+        <strong>File</strong> (meta, import, export) and  
+        <strong>Help</strong>.  
+        Click a menu option to open it; the menu you are in is underlined. 
+        In any tabular view, click a column heading to sort the table; click again to reverse the sort.</p>
         <dl>
           <dt><Link to="/">Schedule</Link></dt>
-          <dd>One row per section: course, section letter, term, title, instructor, load and meeting times. Filter by year, term or text. Click a row to edit it. A ⚠ marks a section in a conflict.</dd>
+          <dd>A tabular view of the schedule with one row per section listing 
+            course, section letter, term, title, instructor, load and meeting times. 
+            Filter by year, term or text. Click a row to edit it. A ⚠ marks a section in a conflict.</dd>
           <dt><Link to="/loads">Teaching loads</Link></dt>
           <dd>Load per person per term, with non-teaching load in smaller type. Hover over a number to see which courses or activities add up to it; click a name to see that person’s week.</dd>
-          <dt><Link to="/nonteaching">Non-teaching</Link></dt>
+          <dt><Link to="/nonteaching">Non-teaching loads</Link></dt>
           <dd>Load for things other than teaching: chair duties, release time, sabbaticals, etc.</dd>
           <dt><Link to="/conflicts">Conflicts</Link></dt>
           <dd>Pairs of sections that clash, and rules that are not met. See <a href="#conflicts" onClick={jump("conflicts")}>Conflicts</a> below.</dd>
           <dt><Link to="/constraints">Constraints</Link></dt>
-          <dd>Rules the schedule should meet, such as courses a student must be able to take together. See <a href="#rules" onClick={jump("rules")}>Constraint rules</a>.</dd>
-          <dt><Link to="/dept">Dept week</Link>, <Link to="/faculty">Faculty week</Link>, <Link to="/rooms">Room week</Link></dt>
-          <dd>Sections as blocks on a Monday–Friday grid. See <a href="#week" onClick={jump("week")}>The week views</a>.</dd>
+          <dd>Rules the schedule should meet, such as courses a student must be able to take together. See <a href="#rules" onClick={jump("rules")}>Custom constraints</a>.</dd>
           <dt><Link to="/compare">Compare</Link></dt>
           <dd>Side-by-side comparison of schedules. See <a href="#compare" onClick={jump("compare")}>Comparing schedules</a>.</dd>
+          <dt>Calendar views: <Link to="/dept">Dept week</Link>, <Link to="/faculty">Faculty week</Link>, <Link to="/rooms">Room week</Link></dt>
+          <dd>Sections as blocks on a Monday–Friday grid. See <a href="#week" onClick={jump("week")}>The week views</a>.</dd>
           <dt><Link to="/meta">Meta</Link></dt>
           <dd>View and edit information about the schedule as a whole.  Give your schedule a nickname. Specify the file name 
             used when exporting. Label your schedule with a version and provide some notes about the schedule.</dd>
@@ -132,7 +153,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
   },
   {
     id: "edit",
-    title: "Adding and editing sections",
+    title: "Editing sections",
     body: () => (
       <>
         <ul>
@@ -164,8 +185,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     ),
   },
   {
-    id: "nonteaching",
-    title: "Non-teaching load",
+    id: "loads",
+    title: "Teaching and non-teaching load",
     body: () => (
       <>
         <p>
@@ -199,14 +220,17 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     ),
   },
   {
-    id: "rules",
-    title: "Constraint rules",
+    id: "constraints",
+    title: "Custom constraints",
     body: () => (
       <>
         <p>
-          Rules say what the schedule should look like beyond plain clashes. They are warnings only: a rule that is not met is listed on the <Link to="/conflicts">Conflicts</Link> tab (and its
-          sections are outlined in red), and the <Link to="/constraints">Constraints</Link> tab shows each rule and whether it is met. Click a rule, or <em>Add rule</em>, to edit it; the editor
+          You can construct rules that say what the schedule should look like beyond plain clashes. 
+          They are warnings only: a rule that is not met is listed on the <Link to="/conflicts">Conflicts</Link> tab 
+          (and its sections are outlined in red), and the <Link to="/constraints">Constraints</Link> tab shows each rule 
+          and whether it is met. Click a rule, or <em>Add rule</em>, to edit it; the editor
           says the rule in words and checks it against your schedule as you type.
+          There are two types of constraint rules.
         </p>
         <h3>Take together</h3>
         <p>
@@ -244,8 +268,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     ),
   },
   {
-    id: "week",
-    title: "The week views",
+    id: "calendar-views",
+    title: "The calendar views",
     body: () => (
       <>
         <p>
@@ -253,14 +277,15 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           year and term, and pick one subject, person or room if you only want one. Click any block to edit its section; hover over it for the full details.
         </p>
         <ul>
-          <li><strong>Weeks</strong> chooses a part of the term. Choosing <em>First half</em> shows everything meeting in the first half: full-term, first-half, and A and B quarter courses.</li>
+          <li><strong>Weeks</strong> chooses a part of the term. Choosing <em>First half</em> shows everything meeting in the first half: full-term, first-half, and A and B intensive 
+          courses, for example.</li>
           <li><strong>Colour by</strong> subject, course level or instructor.</li>
           <li>The four <strong>dots</strong> at the left of each block are the four quarters of the term, top to bottom. A filled dot means the section meets then: a full-term
             course is <Dots on={[true, true, true, true]} />, a first-half course <Dots on={[true, true, false, false]} />, a second-half course <Dots on={[false, false, true, true]} />.</li>
-          <li>Where several sections overlap, blocks sit side by side and shrink their text to fit: full details, then the short course name, then the name turned on its side. Hover for the rest.
+          <li>Where <strong>sections overlap</strong>, blocks sit side by side and shrink their text to fit: full details, then the short course name, then the name turned on its side. Hover for the rest.
             Blocks that start together are ordered full term, first half, A, B, second half, C, D.</li>
-          <li>Sections with no meeting time are listed under the grid as <em>No scheduled time</em>.</li>
-          <li>Room grids leave out meetings with no room, or with a non-room such as <em>Online</em>.</li>
+          <li><strong>Sections with no meeting time</strong> are listed under the grid as <em>No scheduled time</em>.</li>
+          <li>Room grids leave out <strong>meetings with no room</strong>, or with a non-room such as <em>Online</em>.</li>
         </ul>
       </>
     ),
