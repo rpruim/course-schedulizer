@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { nonTeachingShown, nonTeachingWarnings } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
 import { yearsAcross, yearsOf } from "../model";
+import { SortTh, useSort, type SortValue } from "../sort";
 import { useWorkspace, type Entry } from "../state";
 import { Empty, NoneShown } from "./SchedulePage";
 
@@ -59,6 +60,17 @@ function NonTeachingTable({ entry, year, text }: { entry: Entry; year: string; t
       .sort((a, b) => natural(a.n.faculty, b.n.faculty) || (termRank.get(a.n.term) ?? 50) - (termRank.get(b.n.term) ?? 50) || natural(a.n.activity, b.n.activity));
   }, [schedule, year, text]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const sorting = useSort(rows, ({ n }: { n: Entry["schedule"]["nonTeaching"][number] }, key: string): SortValue => {
+    switch (key) {
+      case "faculty": return n.faculty;
+      case "activity": return n.activity;
+      case "term": return termRank.get(n.term) ?? 50;
+      case "load": return n.load;
+      case "comment": return n.comment;
+      default: return "";
+    }
+  });
+
   if (schedule.nonTeaching.length === 0) {
     return (
       <div className="empty">
@@ -71,9 +83,18 @@ function NonTeachingTable({ entry, year, text }: { entry: Entry; year: string; t
   return (
     <div className="table-wrap">
       <table>
-        <thead><tr><th>Faculty</th><th>Activity</th><th>Term</th><th className="num">Load</th><th>Shown as</th><th>Comment</th></tr></thead>
+        <thead>
+          <tr>
+            <SortTh sorting={sorting} sortKey="faculty">Faculty</SortTh>
+            <SortTh sorting={sorting} sortKey="activity">Activity</SortTh>
+            <SortTh sorting={sorting} sortKey="term">Term</SortTh>
+            <SortTh sorting={sorting} sortKey="load" className="num">Load</SortTh>
+            <th>Shown as</th>
+            <SortTh sorting={sorting} sortKey="comment">Comment</SortTh>
+          </tr>
+        </thead>
         <tbody>
-          {rows.map(({ n, index }) => {
+          {sorting.sorted.map(({ n, index }) => {
             const shown = nonTeachingShown(schedule, n);
             return (
               <tr key={index} className={`clickable${duplicate.has(index) ? " conflict" : ""}`} tabIndex={0} onClick={() => openNonTeaching(index, undefined, entry.id)} onKeyDown={(e) => e.key === "Enter" && openNonTeaching(index, undefined, entry.id)} title="Click to edit">

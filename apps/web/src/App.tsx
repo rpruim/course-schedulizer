@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { HashRouter, NavLink, Route, Routes } from "react-router-dom";
 import { ImportReport, OpenBar, Toolbar, type OpenReport } from "./components";
 import { EditorProvider } from "./editor/context";
+import { ComparePage } from "./pages/ComparePage";
 import { ConflictsPage } from "./pages/ConflictsPage";
 import { LoadsPage } from "./pages/LoadsPage";
 import { NonTeachingPage } from "./pages/NonTeachingPage";
-import { Placeholder } from "./pages/Placeholder";
 import { SchedulePage } from "./pages/SchedulePage";
 import { WeekPage } from "./pages/WeekPage";
 import { SchedulePicker } from "./schedules";
@@ -19,7 +19,7 @@ const TABS: { to: string; label: string; element: JSX.Element }[] = [
   { to: "/dept", label: "Dept week", element: <WeekPage kind="dept" /> },
   { to: "/faculty", label: "Faculty week", element: <WeekPage kind="faculty" /> },
   { to: "/rooms", label: "Room week", element: <WeekPage kind="room" /> },
-  { to: "/compare", label: "Compare", element: <Placeholder title="Compare schedules" what="Two or more of the open schedules side by side: sections added, removed and changed." /> },
+  { to: "/compare", label: "Compare", element: <ComparePage /> },
 ];
 
 function Shell() {

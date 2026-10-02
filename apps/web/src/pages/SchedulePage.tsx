@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useEditor } from "../editor/context";
-import { filterRows, multiSectionRows, termsInUseAcross, yearsAcross } from "../model";
+import { filterRows, multiSectionRows, termsAcross, termsInUseAcross, yearsAcross, type MultiRow } from "../model";
+import { SortTh, useSort, type SortValue } from "../sort";
 import { useWorkspace } from "../state";
 
 export function SchedulePage() {
@@ -13,6 +14,20 @@ export function SchedulePage() {
   const shown = useMemo(() => filterRows(rows, { year, term, text }), [rows, year, term, text]);
   const years = yearsAcross(ws.includedEntries);
   const several = ws.includedEntries.length > 1;
+  const termRank = useMemo(() => new Map(termsAcross(ws.includedEntries).map((t, i) => [t.code, i])), [ws.includedEntries]);
+  const sorting = useSort(shown, (r: MultiRow, key: string): SortValue => {
+    switch (key) {
+      case "schedule": return r.scheduleName;
+      case "course": return `${r.prefix} ${r.courseNumber}`;
+      case "section": return r.section;
+      case "term": return termRank.get(r.term) ?? 99;
+      case "title": return r.title;
+      case "faculty": return r.faculty.join(", ");
+      case "load": return r.load;
+      case "meets": return r.meetings[0] ? `${r.meetings[0].days} ${r.meetings[0].time}` : "";
+      default: return "";
+    }
+  });
 
   if (ws.entries.length === 0) return <Empty />;
   if (ws.includedEntries.length === 0) return <NoneShown />;
@@ -44,10 +59,19 @@ export function SchedulePage() {
       <div className="table-wrap">
         <table>
           <thead>
-            <tr>{several && <th>Schedule</th>}<th>Course</th><th>Sec</th><th>Term</th><th>Title</th><th>Instructor</th><th className="num">Load</th><th>Meets</th></tr>
+            <tr>
+              {several && <SortTh sorting={sorting} sortKey="schedule">Schedule</SortTh>}
+              <SortTh sorting={sorting} sortKey="course">Course</SortTh>
+              <SortTh sorting={sorting} sortKey="section">Sec</SortTh>
+              <SortTh sorting={sorting} sortKey="term">Term</SortTh>
+              <SortTh sorting={sorting} sortKey="title">Title</SortTh>
+              <SortTh sorting={sorting} sortKey="faculty">Instructor</SortTh>
+              <SortTh sorting={sorting} sortKey="load" className="num">Load</SortTh>
+              <SortTh sorting={sorting} sortKey="meets">Meets</SortTh>
+            </tr>
           </thead>
           <tbody>
-            {shown.map((r) => (
+            {sorting.sorted.map((r) => (
               <tr
                 key={`${r.scheduleId}:${r.sectionId}`}
                 className={`clickable${r.conflict ? " conflict" : ""}`}

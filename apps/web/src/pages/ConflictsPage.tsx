@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { displayNames, findConflicts, type Conflict } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
 import { timeRange, yearsOf } from "../model";
+import { SortTh, useSort, type SortValue } from "../sort";
 import { useWorkspace, type Entry } from "../state";
 import { Empty, NoneShown } from "./SchedulePage";
 
@@ -28,7 +29,6 @@ function ConflictsTable({ entry }: { entry: Entry }) {
   const schedule = entry.schedule;
   const conflicts = useMemo(() => findConflicts(schedule), [schedule]);
   const names = useMemo(() => displayNames(schedule), [schedule]);
-  if (schedule.sessions.length === 0) return <p className="muted">No sections in this schedule.</p>;
 
   const manyYears = yearsOf(schedule).length > 1;
   const label = (id: string) => {
@@ -41,14 +41,33 @@ function ConflictsTable({ entry }: { entry: Entry }) {
     const [a, b] = c.meetings[0]!;
     return `${a.days} ${timeRange(a)} / ${b.days} ${timeRange(b)}`;
   };
+  const sorting = useSort(conflicts, (c: Conflict, key: string): SortValue => {
+    switch (key) {
+      case "type": return c.type;
+      case "a": return label(c.sectionIdA);
+      case "b": return label(c.sectionIdB);
+      case "shared": return c.detail;
+      case "when": return when(c);
+      default: return "";
+    }
+  });
 
+  if (schedule.sessions.length === 0) return <p className="muted">No sections in this schedule.</p>;
   if (conflicts.length === 0) return <p className="note ok">No conflicts found.</p>;
   return (
     <div className="table-wrap">
       <table>
-        <thead><tr><th>Type</th><th>Section</th><th>Section</th><th>Shared</th><th>When</th></tr></thead>
+        <thead>
+          <tr>
+            <SortTh sorting={sorting} sortKey="type">Type</SortTh>
+            <SortTh sorting={sorting} sortKey="a">Section</SortTh>
+            <SortTh sorting={sorting} sortKey="b">Section</SortTh>
+            <SortTh sorting={sorting} sortKey="shared">Shared</SortTh>
+            <SortTh sorting={sorting} sortKey="when">When</SortTh>
+          </tr>
+        </thead>
         <tbody>
-          {conflicts.map((c, i) => (
+          {sorting.sorted.map((c, i) => (
             <tr key={i}>
               <td><span className={`tag tag-${c.type.toLowerCase()}`}>{c.type}</span></td>
               <td><button className="link" onClick={() => openSection(c.sectionIdA, entry.id)} title="Edit this section">{label(c.sectionIdA)}</button></td>

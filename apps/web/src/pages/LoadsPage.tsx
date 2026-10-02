@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { loadTable, type LoadTableRow } from "@schedulizer/core";
 import { yearsAcross, yearsOf } from "../model";
+import { SortTh, useSort, type SortValue } from "../sort";
 import { useWorkspace, type Entry } from "../state";
 import { Empty, NoneShown } from "./SchedulePage";
 
@@ -43,8 +44,15 @@ export function LoadsPage() {
 function LoadTableView({ entry, year }: { entry: Entry; year: string }) {
   const schedule = entry.schedule;
   if (!yearsOf(schedule).includes(year)) return <p className="muted">Nothing for {year} in this schedule.</p>;
+  return <LoadTableInner schedule={schedule} year={year} />;
+}
+
+function LoadTableInner({ schedule, year }: { schedule: Entry["schedule"]; year: string }) {
   const table = loadTable(schedule, year);
   const name = (code: string) => (code === "AY" ? "Full year" : (schedule.settings.terms.find((t) => t.code === code)?.name ?? code));
+  const sorting = useSort(table.rows, (r: LoadTableRow, key: string): SortValue =>
+    key === "faculty" ? r.faculty : key === "total" ? r.total : (r.teaching[key.slice(5)] ?? 0) + (r.nonteaching[key.slice(5)] ?? 0),
+  );
 
   const cells = (r: LoadTableRow) =>
     table.terms.map((t) => (
@@ -62,10 +70,14 @@ function LoadTableView({ entry, year }: { entry: Entry; year: string }) {
       <div className="table-wrap">
         <table>
           <thead>
-            <tr><th>Faculty</th>{table.terms.map((t) => <th key={t} className="num">{name(t)}</th>)}<th className="num">Total</th></tr>
+            <tr>
+              <SortTh sorting={sorting} sortKey="faculty">Faculty</SortTh>
+              {table.terms.map((t) => <SortTh key={t} sorting={sorting} sortKey={`term:${t}`} className="num">{name(t)}</SortTh>)}
+              <SortTh sorting={sorting} sortKey="total" className="num">Total</SortTh>
+            </tr>
           </thead>
           <tbody>
-            {table.rows.map((r) => (
+            {sorting.sorted.map((r) => (
               <tr key={r.faculty}><td>{r.faculty}</td>{cells(r)}<td className="num strong">{fmt(r.total)}</td></tr>
             ))}
             {table.unassigned && (

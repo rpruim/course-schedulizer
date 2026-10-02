@@ -14,3 +14,4 @@ export * from "./registrar.js";
 export * from "./crosslistings.js";
 export * from "./editing.js";
 export * from "./nonteaching.js";
+export * from "./compare.js";
