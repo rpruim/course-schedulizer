@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { partsFor } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
@@ -142,11 +142,25 @@ function WeekGrid({ grid, onOpen }: { grid: Grid; onOpen: (sectionId: string) =>
   for (let m = grid.startMin; m <= grid.endMin; m += 60) hours.push(m);
   const px = (minutes: number) => ((minutes - grid.startMin) / 60) * HOUR_PX;
   const height = px(grid.endMin);
-  // A day column grows with the most blocks that sit side by side in it, so crowded slots stay readable.
-  const crowd = Math.max(1, ...grid.blocks.map((b) => b.lanes));
-  const colMin = Math.max(110, Math.min(crowd, 9) * 76);
+  // The days share the width of the page. A block shrinks its text to fit its width: full text, then the
+  // short course name, then that name turned on its side; the hover text always has everything.
+  const ref = useRef<HTMLDivElement>(null);
+  const [colWidth, setColWidth] = useState(150);
+  useEffect(() => {
+    const body = ref.current?.querySelector(".week-col");
+    if (!body || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setColWidth(body.clientWidth));
+    ro.observe(body);
+    setColWidth(body.clientWidth);
+    return () => ro.disconnect();
+  }, [grid.days.length]);
+  const level = (lanes: number) => {
+    const w = colWidth / lanes;
+    return w >= 100 ? 0 : w >= 74 ? 1 : 2;
+  };
+  const size = (lanes: number) => ["", " small", " tiny"][level(lanes)]!;
   return (
-    <div className="week" style={{ ["--days" as string]: grid.days.length, ["--hour" as string]: `${HOUR_PX}px`, ["--colw" as string]: `${colMin}px` }}>
+    <div className="week" ref={ref} style={{ ["--days" as string]: grid.days.length, ["--hour" as string]: `${HOUR_PX}px` }}>
       <div className="week-head">
         <div />
         {grid.days.map((d) => <div key={d}>{DAY_NAMES[d]}</div>)}
@@ -160,7 +174,7 @@ function WeekGrid({ grid, onOpen }: { grid: Grid; onOpen: (sectionId: string) =>
             {grid.blocks.filter((b) => b.day === d).map((b) => (
               <button
                 key={b.key}
-                className={`block${b.conflict ? " conflict" : ""}`}
+                className={`block${size(b.lanes)}${b.conflict ? " conflict" : ""}`}
                 title={b.detail}
                 onClick={() => onOpen(b.sectionId)}
                 style={{
@@ -171,8 +185,8 @@ function WeekGrid({ grid, onOpen }: { grid: Grid; onOpen: (sectionId: string) =>
                   ["--hue" as string]: b.hue,
                 }}
               >
-                <strong>{b.title}</strong>
-                {b.sub && <span>{b.sub}</span>}
+                <strong>{level(b.lanes) > 0 ? b.short : b.title}</strong>
+                {b.sub && level(b.lanes) === 0 && <span>{b.sub}</span>}
               </button>
             ))}
           </div>

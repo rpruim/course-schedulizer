@@ -25,6 +25,8 @@ export interface Block {
   end: number;
   /** `MATH 102 A`, with the part of term when it is not the full term. */
   title: string;
+  /** `MATH 102A` — the primary listing only, for crowded blocks. */
+  short: string;
   /** A second line: who or where, depending on the grid. */
   sub: string;
   /** Everything, for the hover text. */
@@ -154,6 +156,7 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
     start: s.start!,
     end: Math.min(1440, s.start! + s.duration!),
     title: `${label(s)}${partTag(s)}`,
+    short: `${s.prefix} ${s.courseNumber}${s.section}`,
     sub,
     detail: [`${label(s)}${partTag(s)}`, s.shortTitle, s.faculty.map((f) => f.name).join(", "), `${[...s.days].join("")} ${timeRange(s)}`, s.room].filter(Boolean).join("\n"),
     conflict: flagged.has(s),
