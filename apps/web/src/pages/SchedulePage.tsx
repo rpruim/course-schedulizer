@@ -10,11 +10,11 @@ export function SchedulePage() {
   const [year, setYear] = useState("");
   const [term, setTerm] = useState("");
   const [text, setText] = useState("");
-  const rows = useMemo(() => multiSectionRows(ws.includedEntries), [ws.includedEntries]);
+  const rows = useMemo(() => multiSectionRows(ws.viewEntries), [ws.viewEntries]);
   const shown = useMemo(() => filterRows(rows, { year, term, text }), [rows, year, term, text]);
-  const years = yearsAcross(ws.includedEntries);
-  const several = ws.includedEntries.length > 1;
-  const termRank = useMemo(() => new Map(termsAcross(ws.includedEntries).map((t, i) => [t.code, i])), [ws.includedEntries]);
+  const years = yearsAcross(ws.viewEntries);
+  const several = ws.viewEntries.length > 1;
+  const termRank = useMemo(() => new Map(termsAcross(ws.viewEntries).map((t, i) => [t.code, i])), [ws.viewEntries]);
   const sorting = useSort(shown, (r: MultiRow, key: string): SortValue => {
     switch (key) {
       case "schedule": return r.scheduleName;
@@ -30,7 +30,7 @@ export function SchedulePage() {
   });
 
   if (ws.entries.length === 0) return <Empty />;
-  if (ws.includedEntries.length === 0) return <NoneShown />;
+  if (ws.viewEntries.length === 0) return <NoneShown />;
   return (
     <>
       <div className="bar filters">
@@ -45,7 +45,7 @@ export function SchedulePage() {
         <label className="field">Term
           <select value={term} onChange={(e) => setTerm(e.target.value)}>
             <option value="">All</option>
-            {termsInUseAcross(ws.includedEntries).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
+            {termsInUseAcross(ws.viewEntries).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
           </select>
         </label>
         <label className="field grow">Search
@@ -53,7 +53,7 @@ export function SchedulePage() {
         </label>
         <span className="muted">{shown.length} of {rows.length} sections</span>
         <button className="primary" onClick={() => openNew({ academicYear: year || years[0] || "", ...(term ? { term } : {}) })} title={ws.current ? `Adds to “${ws.current.name}”` : ""}>
-          Add section{several && ws.current ? ` to “${ws.current.name}”` : ""}
+          Add section{ws.entries.length > 1 && ws.current ? ` to “${ws.current.name}”` : ""}
         </button>
       </div>
       <div className="table-wrap">

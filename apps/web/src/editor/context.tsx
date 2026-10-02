@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { newNonTeachingDraft, newSectionDraft, nonTeachingToDraft, sectionToDraft, emptySchedule, type NonTeachingDraft, type SectionDraft } from "@schedulizer/core";
-import { useWorkspace } from "../state";
+import { MERGED_ID, useWorkspace } from "../state";
 import { NonTeachingEditor } from "./NonTeachingEditor";
 import { SectionEditor } from "./SectionEditor";
 
@@ -26,8 +26,11 @@ export function EditorProvider({ children, onNotice }: { children: ReactNode; on
 
   const openSection = useCallback(
     (id: string, scheduleId?: string) => {
-      const sid = target(scheduleId);
-      const draft = sid ? sectionToDraft(ws.get(sid)!.schedule, id) : undefined;
+      // A section of the merged view is edited in the schedule it came from.
+      const from = scheduleId === MERGED_ID ? ws.mergedOrigin?.sections.get(id) : undefined;
+      if (scheduleId === MERGED_ID && !from) return;
+      const sid = target(from?.scheduleId ?? scheduleId);
+      const draft = sid ? sectionToDraft(ws.get(sid)!.schedule, from?.sectionId ?? id) : undefined;
       if (draft) setActive((a) => ({ draft, scheduleId: sid, key: (a?.key ?? 0) + 1 }));
     },
     [ws, target],
@@ -42,8 +45,11 @@ export function EditorProvider({ children, onNotice }: { children: ReactNode; on
   );
   const openNonTeaching = useCallback(
     (index?: number, defaults: Partial<NonTeachingDraft> = {}, scheduleId?: string) => {
-      const sid = target(scheduleId);
+      const from = scheduleId === MERGED_ID && index !== undefined ? ws.mergedOrigin?.nonTeaching[index] : undefined;
+      if (scheduleId === MERGED_ID && index !== undefined && !from) return;
+      const sid = target(from?.scheduleId ?? scheduleId);
       const schedule = sid ? ws.get(sid)!.schedule : EMPTY;
+      if (from) index = from.index;
       const draft = index === undefined ? newNonTeachingDraft(schedule, defaults) : nonTeachingToDraft(schedule, index);
       if (draft) setActiveNt((a) => ({ draft, index, scheduleId: sid, key: (a?.key ?? 0) + 1 }));
     },

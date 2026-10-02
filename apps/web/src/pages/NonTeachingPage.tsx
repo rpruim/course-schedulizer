@@ -14,11 +14,11 @@ export function NonTeachingPage() {
   const { openNonTeaching } = useEditor();
   const [pickedYear, setPickedYear] = useState("");
   const [text, setText] = useState("");
-  const years = yearsAcross(ws.includedEntries);
+  const years = yearsAcross(ws.viewEntries);
   const year = years.includes(pickedYear) ? pickedYear : (years[0] ?? "");
   if (ws.entries.length === 0) return <Empty />;
-  if (ws.includedEntries.length === 0) return <NoneShown />;
-  const several = ws.includedEntries.length > 1;
+  if (ws.viewEntries.length === 0) return <NoneShown />;
+  const several = ws.viewEntries.length > 1;
 
   return (
     <>
@@ -36,7 +36,7 @@ export function NonTeachingPage() {
         </button>
       </div>
       <p className="muted small">Load that is not a course: chair releases, sabbaticals, advising and so on. It counts in the Teaching loads table next to each person's teaching load.</p>
-      {ws.includedEntries.map((e) => (
+      {ws.viewEntries.map((e) => (
         <section key={e.id} className="sched-section">
           {several && <h2 className="sched-heading">{e.name}</h2>}
           <NonTeachingTable entry={e} year={year} text={text} />

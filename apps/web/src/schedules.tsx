@@ -62,6 +62,13 @@ export function SchedulePicker() {
           <button className="link" onClick={() => ws.setIncluded(ws.entries.map((e) => e.id))}>show all</button>
         </span>
       )}
+      {ws.included.length > 1 && (
+        <span className="viewas" role="radiogroup" aria-label="View several schedules as" title="Not used by the Compare tab">
+          <span className="muted">View as</span>
+          <label><input type="radio" name="viewas" checked={ws.viewAs === "merged"} onChange={() => ws.setViewAs("merged")} /> merged</label>
+          <label><input type="radio" name="viewas" checked={ws.viewAs === "separate"} onChange={() => ws.setViewAs("separate")} /> separate</label>
+        </span>
+      )}
     </div>
   );
 }

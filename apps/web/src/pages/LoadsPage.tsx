@@ -10,12 +10,12 @@ const fmt = (n: number | undefined) => (n === undefined || n === 0 ? "" : String
 
 export function LoadsPage() {
   const ws = useWorkspace();
-  const years = yearsAcross(ws.includedEntries);
+  const years = yearsAcross(ws.viewEntries);
   const [picked, setPicked] = useState("");
   if (ws.entries.length === 0) return <Empty />;
-  if (ws.includedEntries.length === 0) return <NoneShown />;
+  if (ws.viewEntries.length === 0) return <NoneShown />;
   const year = years.includes(picked) ? picked : (years[0] ?? "");
-  const several = ws.includedEntries.length > 1;
+  const several = ws.viewEntries.length > 1;
 
   return (
     <>
@@ -31,7 +31,7 @@ export function LoadsPage() {
         <span className="spacer" />
         <Link to="/nonteaching">Edit non-teaching load</Link>
       </div>
-      {ws.includedEntries.map((e) => (
+      {ws.viewEntries.map((e) => (
         <section key={e.id} className="sched-section">
           {several && <h2 className="sched-heading">{e.name}</h2>}
           <LoadTableView entry={e} year={year} />

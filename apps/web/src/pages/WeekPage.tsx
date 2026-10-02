@@ -25,7 +25,7 @@ export function WeekPage({ kind }: { kind: GridKind }) {
   const [colorBy, setColorBy] = useState<ColorBy>("prefix");
   const [only, setOnly] = useState("");
 
-  const entries = ws.includedEntries;
+  const entries = ws.viewEntries;
   const years = yearsAcross(entries);
   const year = years.includes(pickedYear) ? pickedYear : (years[0] ?? "");
   const terms = termsAcross(entries).filter((t) => entries.some((e) => termsFor(e.schedule, year).some((x) => x.code === t.code)));

@@ -1,10 +1,24 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
-import { emptySchedule, type Schedule } from "@schedulizer/core";
+import { emptySchedule, mergeSchedules, type MergeOrigin, type Schedule } from "@schedulizer/core";
 import { LocalWorkspaceStore, type WorkspaceEntry, type WorkspaceSnapshot, type WorkspaceStore } from "./store";
 
 const MAX_HISTORY = 100;
 
 export type Entry = WorkspaceEntry;
+
+/** How the views show several schedules: laid over one another as one, or each on its own. */
+export type ViewAs = "merged" | "separate";
+/** Id of the stand-in entry that stands for several merged schedules. */
+export const MERGED_ID = "merged";
+const VIEW_AS_KEY = "schedulizer:viewAs";
+
+function loadViewAs(): ViewAs {
+  try {
+    return window.localStorage.getItem(VIEW_AS_KEY) === "separate" ? "separate" : "merged";
+  } catch {
+    return "merged";
+  }
+}
 
 /**
  * The workspace: schedules that are open side by side. History is a stack of
@@ -109,6 +123,16 @@ export interface Workspace {
   included: string[];
   /** The schedules shown in the views, in workspace order. */
   includedEntries: Entry[];
+  /** Several included schedules are shown merged into one, or each on its own. */
+  viewAs: ViewAs;
+  setViewAs(v: ViewAs): void;
+  /**
+   * What every view but Compare shows: the included schedules, or when several are included
+   * and `viewAs` is "merged", one stand-in entry (id `MERGED_ID`) holding all of them.
+   */
+  viewEntries: Entry[];
+  /** For the merged entry: where its sections and non-teaching rows came from. */
+  mergedOrigin: MergeOrigin | undefined;
   current: Entry | undefined;
   get(id: string): Entry | undefined;
   canUndo: boolean;
@@ -140,6 +164,15 @@ export function WorkspaceProvider({ children, store }: { children: ReactNode; st
   const [saveError, setSaveError] = useState("");
   const backing = useMemo(() => store ?? new LocalWorkspaceStore(window.localStorage), [store]);
   const loaded = useRef(false);
+  const [viewAs, setViewAsState] = useState<ViewAs>(loadViewAs);
+  const setViewAs = useCallback((v: ViewAs) => {
+    setViewAsState(v);
+    try {
+      window.localStorage.setItem(VIEW_AS_KEY, v);
+    } catch {
+      /* a preference only */
+    }
+  }, []);
 
   // Restore the workspace once, then autosave every change. Never save before the restore finishes.
   useEffect(() => {
@@ -177,11 +210,17 @@ export function WorkspaceProvider({ children, store }: { children: ReactNode; st
 
   const api: Workspace = useMemo(() => {
     const byId = (id: string) => state.present.find((e) => e.id === id);
+    const includedEntries = state.present.filter((e) => state.included.includes(e.id));
+    const merged = viewAs === "merged" && includedEntries.length > 1 ? mergeSchedules(includedEntries) : undefined;
     return {
       entries: state.present,
       currentId: state.currentId,
       included: state.included,
-      includedEntries: state.present.filter((e) => state.included.includes(e.id)),
+      includedEntries,
+      viewAs,
+      setViewAs,
+      viewEntries: merged ? [{ id: MERGED_ID, name: merged.schedule.meta.name, schedule: merged.schedule }] : includedEntries,
+      mergedOrigin: merged?.origin,
       current: byId(state.currentId),
       get: byId,
       canUndo: state.past.length > 0,
@@ -198,7 +237,7 @@ export function WorkspaceProvider({ children, store }: { children: ReactNode; st
       toggleIncluded: (id) => dispatch({ type: "setIncluded", ids: state.included.includes(id) ? state.included.filter((x) => x !== id) : [...state.included, id] }),
       saveError,
     };
-  }, [state, addSchedule, saveError]);
+  }, [state, addSchedule, saveError, viewAs, setViewAs]);
 
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }

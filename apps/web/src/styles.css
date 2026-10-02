@@ -140,6 +140,8 @@ dialog.editor.narrow { width: min(520px, calc(100vw - 24px)); }
 
 /* open schedules */
 .picker { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 4px 0 8px; }
+.viewas { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+.viewas label { display: inline-flex; align-items: center; gap: 3px; cursor: pointer; }
 .sched { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
 .sched.current { border-color: var(--accent); }
 .sched.hidden .name { opacity: .55; text-decoration: line-through; text-decoration-color: var(--line); }

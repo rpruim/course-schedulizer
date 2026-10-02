@@ -3,18 +3,19 @@ import { displayNames, findConflicts, type Conflict } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
 import { timeRange, yearsOf } from "../model";
 import { SortTh, useSort, type SortValue } from "../sort";
-import { useWorkspace, type Entry } from "../state";
+import { MERGED_ID, useWorkspace, type Entry } from "../state";
 import { Empty, NoneShown } from "./SchedulePage";
 
 export function ConflictsPage() {
   const ws = useWorkspace();
   if (ws.entries.length === 0) return <Empty />;
-  if (ws.includedEntries.length === 0) return <NoneShown />;
-  const several = ws.includedEntries.length > 1;
+  if (ws.viewEntries.length === 0) return <NoneShown />;
+  const several = ws.viewEntries.length > 1;
   return (
     <>
+      {ws.viewEntries[0]?.id === MERGED_ID && <p className="muted small">Showing {ws.includedEntries.length} schedules merged, so conflicts between them are included.</p>}
       {several && <p className="muted small">Conflicts are found within each schedule, never between schedules.</p>}
-      {ws.includedEntries.map((e) => (
+      {ws.viewEntries.map((e) => (
         <section key={e.id} className="sched-section">
           {several && <h2 className="sched-heading">{e.name}</h2>}
           <ConflictsTable entry={e} />
