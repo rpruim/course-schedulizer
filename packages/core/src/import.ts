@@ -4,6 +4,7 @@ import { partsFor } from "./terms.js";
 import {
   AY,
   DEFAULT_PARTS,
+  DEFAULT_TERM_PARTS,
   constraintSchema,
   crossListingSchema,
   defaultSettings,
@@ -339,8 +340,13 @@ export function importSettings(recs: Rec[]): { settings: Settings; issues: Issue
   return {
     settings: {
       terms: terms.length ? terms : base.terms,
-      // The semester defaults stay unless the file defines its own term-less parts.
-      parts: parts.some((p) => !p.term) ? parts : [...DEFAULT_PARTS.map((p) => ({ ...p })), ...parts],
+      // Defaults stay unless the file defines its own: the semester grid unless it has term-less
+      // parts, and a term's built-in parts (WI) unless it has parts for that term.
+      parts: [
+        ...(parts.some((p) => !p.term) ? [] : DEFAULT_PARTS),
+        ...DEFAULT_TERM_PARTS.filter((d) => !parts.some((p) => p.term === d.term)),
+        ...parts,
+      ].map((p) => ({ ...p })),
       spreadTerms: spread.length ? spread : base.spreadTerms,
       nonRooms: nonRooms.length ? nonRooms : base.nonRooms,
     },

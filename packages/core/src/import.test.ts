@@ -48,19 +48,26 @@ describe("importSessions: multi-row form", () => {
 });
 
 describe("term parts", () => {
-  const summer: Settings = {
+  const custom: Settings = {
     ...defaultSettings(),
-    parts: [...defaultSettings().parts, { term: "SU", code: "Full", name: "Summer", startWeek: 1, endWeek: 10 }, { term: "SU", code: "S1", name: "Session 1", startWeek: 1, endWeek: 5 }],
+    terms: [...defaultSettings().terms, { code: "XT", name: "Made-up" }],
+    parts: [...defaultSettings().parts, { term: "XT", code: "Full", name: "Made-up", startWeek: 1, endWeek: 10 }, { term: "XT", code: "S1", name: "Session 1", startWeek: 1, endWeek: 5 }],
   };
-  const part = (o: Record<string, string>, s = summer) => importSessions([rec(o)], s);
-  it("uses the term's own parts when it has them", () => {
-    expect(part({ Term: "SU", TermPart: "s1" }).sessions[0]!.termPart).toBe("S1");
-    expect(part({ Term: "SU", TermPart: "First" }).issues[0]!.message).toMatch(/not defined for term SU \(Full, S1\)/);
+  const part = (o: Record<string, string>, s = custom) => importSessions([rec(o)], s);
+  it("uses a term's own parts when it has them", () => {
+    expect(part({ Term: "XT", TermPart: "s1" }).sessions[0]!.termPart).toBe("S1");
+    expect(part({ Term: "XT", TermPart: "First" }).issues[0]!.message).toMatch(/not defined for term XT \(Full, S1\)/);
   });
-  it("falls back to the semester parts for other terms, e.g. Interim", () => {
-    expect(part({ Term: "FA", TermPart: "second" }).sessions[0]!.termPart).toBe("Second");
-    expect(part({ Term: "IN" }).issues).toEqual([]);
+  it("FA, SP and SU all use the semester grid: full, half and quarter terms", () => {
+    for (const term of ["FA", "SP", "SU"]) {
+      for (const p of ["Full", "First", "second", "A", "b", "C", "d"]) expect(part({ Term: term, TermPart: p }).issues).toEqual([]);
+    }
+    expect(part({ Term: "SU", TermPart: "second" }).sessions[0]!.termPart).toBe("Second");
     expect(part({ Term: "FA", TermPart: "S1" }).issues[0]!.severity).toBe("error");
+  });
+  it("WI is a 2-week term with only a full part", () => {
+    expect(part({ Term: "WI" }).issues).toEqual([]);
+    expect(part({ Term: "WI", TermPart: "First" }).issues[0]!.severity).toBe("error");
   });
 });
 

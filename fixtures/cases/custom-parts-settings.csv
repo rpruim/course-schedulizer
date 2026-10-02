@@ -1,0 +1,7 @@
+Kind,Code,Name,Term,StartWeek,EndWeek
+Term,FA,Fall,,,
+Term,SP,Spring,,,
+Term,XT,Made-up term,,,
+Part,Full,Made-up term,XT,1,10
+Part,S1,Session 1,XT,1,5
+Part,S2,Session 2,XT,6,10

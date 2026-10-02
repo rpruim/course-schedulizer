@@ -40,8 +40,8 @@ describe("workbook round trips", () => {
       constraints: recordsFromCsv(fixtureText("cases/constraints.csv")),
       settings: {
         ...defaultSettings(),
-        terms: [{ code: "FA", name: "Fall" }, { code: "IN", name: "Interim" }, { code: "SP", name: "Spring" }, { code: "SU", name: "Summer" }, { code: "J", name: "January" }],
-        parts: [...defaultSettings().parts, { term: "SU", code: "Full", name: "Summer", startWeek: 1, endWeek: 10 }, { term: "SU", code: "S1", name: "Session 1", startWeek: 1, endWeek: 5 }],
+        terms: [{ code: "FA", name: "Fall" }, { code: "WI", name: "Winter Intensive" }, { code: "SP", name: "Spring" }, { code: "SU", name: "Summer" }, { code: "J", name: "January" }],
+        parts: [...defaultSettings().parts, { term: "J", code: "Full", name: "January", startWeek: 1, endWeek: 4 }, { term: "J", code: "W1", name: "Week 1-2", startWeek: 1, endWeek: 2 }],
       },
       meta: { name: "Test", notes: "line1\nline2", version: "3" },
     });

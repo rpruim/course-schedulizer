@@ -126,7 +126,7 @@ export interface Schedule {
 
 export const DEFAULT_TERMS: TermDef[] = [
   { code: "FA", name: "Fall" },
-  { code: "IN", name: "Interim" },
+  { code: "WI", name: "Winter Intensive" },
   { code: "SP", name: "Spring" },
   { code: "SU", name: "Summer" },
 ];
@@ -142,9 +142,12 @@ export const DEFAULT_PARTS: PartDef[] = [
   { code: "D", name: "Intensive D", startWeek: 13, endWeek: 16 },
 ];
 
+/** Parts of terms that do not follow the semester grid: the 2-week winter intensive. */
+export const DEFAULT_TERM_PARTS: PartDef[] = [{ term: "WI", code: "Full", name: "Winter intensive", startWeek: 1, endWeek: 2 }];
+
 export const defaultSettings = (): Settings => ({
   terms: DEFAULT_TERMS.map((t) => ({ ...t })),
-  parts: DEFAULT_PARTS.map((p) => ({ ...p })),
+  parts: [...DEFAULT_PARTS, ...DEFAULT_TERM_PARTS].map((p) => ({ ...p })),
   spreadTerms: ["FA", "SP"],
   nonRooms: ["Off Campus", "Online", "TBD"],
 });

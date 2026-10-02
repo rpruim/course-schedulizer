@@ -53,23 +53,44 @@ describe("fixtures: conflicts", () => {
   });
 });
 
-describe("fixtures: per-term parts (summer)", () => {
+describe("fixtures: per-term parts", () => {
   const settings = () => {
-    const s = importSettings(recordsFromCsv(fixtureText("cases/summer-settings.csv")));
+    const s = importSettings(recordsFromCsv(fixtureText("cases/custom-parts-settings.csv")));
     expect(s.issues).toEqual([]);
     return s.settings;
   };
-  it("matches expected/conflicts-summer.csv", () => {
-    const r = importRecords({ sessions: recordsFromCsv(fixtureText("cases/summer.csv")), settings: settings() });
+  it("matches expected/conflicts-custom-parts.csv", () => {
+    const r = importRecords({ sessions: recordsFromCsv(fixtureText("cases/custom-parts.csv")), settings: settings() });
     expect(r.issues).toEqual([]);
-    expect(keys(findConflicts(r.schedule))).toEqual(expected("expected/conflicts-summer.csv"));
+    expect(keys(findConflicts(r.schedule))).toEqual(expected("expected/conflicts-custom-parts.csv"));
   });
-  it("rejects a semester part in summer", () => {
+  it("rejects a semester part in a term that defines its own", () => {
     const r = importRecords({
-      sessions: [{ AcademicYear: "Y", Term: "SU", TermPart: "First", Prefix: "M", CourseNumber: "1", Section: "A" }],
+      sessions: [{ AcademicYear: "Y", Term: "XT", TermPart: "First", Prefix: "M", CourseNumber: "1", Section: "A" }],
       settings: settings(),
     });
     expect(r.ok).toBe(false);
+  });
+});
+
+describe("terms on the standard grid", () => {
+  const sec = (term: string, part: string, n: string) => ({
+    AcademicYear: "Y", Term: term, TermPart: part, Prefix: "M", CourseNumber: n, Section: "A",
+    Faculty: "Smith", MeetingDays: "MWF", StartTime: "9:00", MeetingDuration: "50",
+  });
+  const run = (...s: Record<string, string>[]) => {
+    const r = importRecords({ sessions: s });
+    expect(r.issues).toEqual([]);
+    return findConflicts(r.schedule).map((c) => `${c.sectionIdA}|${c.sectionIdB}`);
+  };
+  it("summer works like fall and spring: half and quarter terms", () => {
+    expect(run(sec("SU", "First", "1"), sec("SU", "Second", "2"))).toEqual([]);
+    expect(run(sec("SU", "Full", "1"), sec("SU", "Second", "2"))).toEqual(["Y-SU-M1-A|Y-SU-M2-A"]);
+    expect(run(sec("SU", "A", "1"), sec("SU", "B", "2"), sec("SU", "First", "3"))).toEqual(["Y-SU-M1-A|Y-SU-M3-A", "Y-SU-M2-A|Y-SU-M3-A"]);
+  });
+  it("winter intensive sections overlap each other but never a semester", () => {
+    expect(run(sec("WI", "Full", "1"), sec("WI", "Full", "2"))).toEqual(["Y-WI-M1-A|Y-WI-M2-A"]);
+    expect(run(sec("WI", "Full", "1"), sec("SP", "Full", "2"))).toEqual([]);
   });
 });
 

@@ -1,0 +1,4 @@
+AcademicYear,Term,TermPart,Prefix,CourseNumber,Section,Faculty,FacultyLoad,MeetingDays,StartTime,MeetingDuration,Classroom,Comment
+U1,XT,S1,MATH,101,A,Smith,4,MWF,09:15,65,NH 101,SYNTHETIC made-up term XT with its own parts (cases/custom-parts-settings.csv): S1 weeks 1-5 and S2 weeks 6-10 do not overlap
+U1,XT,S2,MATH,102,A,Smith,4,MWF,09:15,65,NH 102,
+U1,XT,Full,MATH,103,A,Smith,4,MWF,09:15,65,NH 103,Full (weeks 1-10) overlaps both sessions

@@ -2,8 +2,8 @@ import type { PartDef, Settings } from "./types.js";
 
 /**
  * The term parts valid for a term: the parts that name the term, or, if it has
- * none, the default (term-less) parts. Interim needs no parts of its own;
- * Summer typically does.
+ * none, the default (term-less) semester parts. FA, SP and SU all use the
+ * default grid (full, half and quarter terms); WI (2 weeks) has its own.
  */
 export function partsFor(settings: Settings, term: string): PartDef[] {
   const own = settings.parts.filter((p) => p.term?.toUpperCase() === term.toUpperCase());

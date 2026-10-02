@@ -89,12 +89,12 @@ describe("loadWarnings", () => {
 describe("loadTable", () => {
   it("builds the wide table with totals and a separate unassigned row", () => {
     const t = loadTable(schedule("cases/load-sessions.csv", "cases/load-nonteaching.csv"), "L1");
-    expect(t.terms).toEqual(["FA", "IN", "SP", "SU", "AY"]);
+    expect(t.terms).toEqual(["FA", "WI", "SP", "SU", "AY"]);
     expect(t.rows.map((r) => [r.faculty, r.total])).toEqual([["Ada Example", 19], ["Ben Sample", 15]]);
     expect(t.rows[0]).toMatchObject({ teaching: { FA: 10, SP: 4, AY: 2 }, nonteaching: { FA: 1.5, SP: 1.5 } });
     expect(t.unassigned).toMatchObject({ faculty: UNASSIGNED, total: 4, teaching: { SP: 4 } });
     expect(t.totals.total).toBe(34);
-    expect(t.totals.teaching).toEqual({ FA: 18, SP: 4, SU: 2, IN: 1, AY: 2 });
+    expect(t.totals.teaching).toEqual({ FA: 18, SP: 4, SU: 2, WI: 1, AY: 2 });
   });
   it("sorts the old-app data by total load, descending", () => {
     const t = loadTable(schedule("sessions.csv"), "AY24");
