@@ -310,7 +310,7 @@ describe("standard times (built in) and the rules that change them", () => {
       { action: "disallow", days: "MWF", duration: 65, starts: [480] },
       { action: "disallow", days: "TR", starts: [] },
     ]);
-    expect(describeRule(rule!)).toBe("Standard times for MATH 391: also allow R for 50 minutes starting 15:05, 16:00; stop allowing M W F for 65 minutes starting 8:00; stop allowing T R in FA, SP.");
+    expect(describeRule(rule!)).toBe("Modified standard times for MATH 391: also allow R for 50 minutes starting 15:05, 16:00; stop allowing M W F for 65 minutes starting 8:00; stop allowing T R in FA, SP.");
     const back = await readWorkbook(await writeWorkbook(s));
     expect(back.issues.filter((i) => i.severity === "error")).toEqual([]);
     expect(back.schedule.constraints).toEqual(s.constraints);

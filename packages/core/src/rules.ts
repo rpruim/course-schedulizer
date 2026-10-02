@@ -221,7 +221,7 @@ export function describeRule(r: Rule): string {
       const times = `${c.duration !== undefined ? ` for ${c.duration} minutes` : ""}${c.starts.length ? ` starting ${c.starts.map(at).join(", ")}` : ""}`;
       return c.action === "allow" ? `also allow ${dayList(c.days)}${times}` : `stop allowing ${dayList(c.days)}${times}`;
     };
-    return `Standard times for ${everything ? "every course" : items}: ${r.changes.map(change).join("; ") || "no changes yet"}${when}.`;
+    return `Modified standard times for ${everything ? "every course" : items}: ${r.changes.map(change).join("; ") || "no changes yet"}${when}.`;
   }
   if (r.type === "consecutive") {
     const who = r.items.length > 1 ? `Each of ${items}` : items;
