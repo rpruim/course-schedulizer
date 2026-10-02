@@ -40,3 +40,42 @@ spreadTerms: [FA, SP]
 
 # Values of the Room column that are not rooms. They never conflict with each other.
 nonRooms: [Off Campus, Online, TBD]
+
+# The department's standard meeting patterns (from the old Course Schedulizer). A meeting is "standard" when its
+# days, start time and length (in minutes) are all listed here; "Standard times" rules flag the others.
+# Days use M T W R F (R = Thursday); start times are 24-hour.
+standardTimes:
+  - { days: MWF, duration: 65, starts: ["8:00", "9:15", "11:00", "12:15", "13:30", "14:45"] }
+  - { days: MTR, duration: 65, starts: ["18:30", "19:45"] }
+  - { days: TR, duration: 100, starts: ["8:00", "10:20", "12:15", "14:10", "18:30"] }
+  - { days: MR, duration: 100, starts: ["18:30"] }
+  - { days: M, duration: 210, starts: ["18:30"] }
+  - { days: T, duration: 210, starts: ["18:30"] }
+  - { days: R, duration: 210, starts: ["18:30"] }
+  - { days: M, duration: 100, starts: ["18:30", "20:20"] }
+  - { days: T, duration: 100, starts: ["18:30", "20:20"] }
+  - { days: R, duration: 100, starts: ["18:30", "20:20"] }
+  - { days: MW, duration: 50, starts: ["8:00", "9:15", "11:00", "12:15", "13:30", "14:45"] }
+  - { days: TR, duration: 50, starts: ["8:00", "8:55", "10:20", "11:15", "12:15", "13:10", "14:10", "15:05", "18:30", "19:30", "20:30"] }
+  - { days: MR, duration: 50, starts: ["18:30", "19:30", "20:30"] }
+  - { days: MWF, duration: 120, starts: ["8:20", "11:00", "13:30", "18:30"] }
+  - { days: MW, duration: 180, starts: ["8:00", "12:30", "18:30"] }
+  - { days: TR, duration: 180, starts: ["8:00", "12:30", "18:30"] }
+  - { days: M, duration: 170, starts: ["8:00", "11:15", "14:30", "18:30"] }
+  - { days: T, duration: 170, starts: ["8:00", "11:15", "14:30", "18:30"] }
+  - { days: W, duration: 170, starts: ["8:00", "11:15", "14:30", "18:30"] }
+  - { days: R, duration: 170, starts: ["8:00", "11:15", "14:30", "18:30"] }
+  - { days: F, duration: 170, starts: ["8:00", "11:15", "14:30"] }
+  - { days: M, duration: 80, starts: ["8:00", "9:30", "11:00", "13:00", "14:30", "16:00"] }
+  - { days: T, duration: 80, starts: ["8:00", "9:30", "11:00", "13:00", "14:30", "16:00"] }
+  - { days: W, duration: 80, starts: ["8:00", "9:30", "11:00", "13:00", "14:30", "16:00"] }
+  - { days: R, duration: 80, starts: ["8:00", "9:30", "11:00", "13:00", "14:30", "16:00"] }
+  - { days: F, duration: 80, starts: ["8:00", "9:30", "11:00", "13:00", "14:30", "16:00"] }
+  - { days: TWR, duration: 65, starts: ["16:00"] }
+  - { days: MWF, duration: 60, starts: ["16:00"] }
+  - { days: TWR, duration: 75, starts: ["17:15"] }
+  - { days: MW, duration: 60, starts: ["17:15", "19:00"] }
+  - { days: R, duration: 60, starts: ["17:30"] }
+  - { days: TR, duration: 60, starts: ["17:30"] }
+  - { days: R, duration: 120, starts: ["19:00"] }
+  - { days: M, duration: 120, starts: ["19:30"] }

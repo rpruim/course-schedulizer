@@ -38,6 +38,8 @@ interface Form {
   items: RuleItem[];
   count: string;
   choose: Rule["choose"];
+  bound: Rule["bound"];
+  gap: string;
   term: string;
   days: string;
   dayRule: Rule["dayRule"];
@@ -49,7 +51,7 @@ interface Form {
 }
 
 const toForm = (r: Rule): Form => ({
-  name: r.name, type: r.type, subject: ruleSubject(r), items: r.items.map((i) => ({ ...i })), count: r.count === undefined ? "" : String(r.count), choose: r.choose,
+  name: r.name, type: r.type, subject: ruleSubject(r), items: r.items.map((i) => ({ ...i })), count: r.count === undefined ? "" : String(r.count), choose: r.choose, bound: r.bound, gap: String(r.gap),
   term: r.term, days: r.days, dayRule: r.dayRule, from: r.from === undefined ? "" : formatTime(r.from), to: r.to === undefined ? "" : formatTime(r.to),
   should: r.should, meets: r.meets, comment: r.comment,
 });
@@ -69,11 +71,18 @@ function toRule(f: Form): { rule: Rule; problems: { field: string; message: stri
     if (Number.isInteger(n) && n >= 1) count = n;
     else problems.push({ field: "count", message: "Use a whole number, 1 or more" });
   }
+  let gap = 20;
+  if (f.type === "consecutive") {
+    const g = Number(f.gap);
+    if (f.gap.trim() !== "" && Number.isInteger(g) && g >= 0 && g <= 240) gap = g;
+    else problems.push({ field: "gap", message: "Use a number of minutes from 0 to 240" });
+  }
+  const people = f.type === "consecutive" || (f.type === "window" && f.subject === "instructors");
   const rule: Rule = {
     name: f.name.trim(), type: f.type, items: f.items
-      .map((i) => (f.type === "window" && f.subject === "instructors" ? { course: "", section: "", instructor: i.instructor } : { ...i, instructor: "" }))
+      .map((i) => (people ? { course: "", section: "", instructor: i.instructor } : { ...i, instructor: "" }))
       .filter((i) => i.course.trim() || i.section.trim() || i.instructor.trim()), term: f.term, days: f.days, dayRule: f.dayRule,
-    choose: f.choose, should: f.should, meets: f.meets, comment: f.comment, ...(count !== undefined ? { count } : {}),
+    choose: f.choose, bound: f.bound, gap, should: f.should, meets: f.meets, comment: f.comment, ...(count !== undefined ? { count } : {}),
     ...(from !== undefined ? { from } : {}), ...(to !== undefined ? { to } : {}),
   };
   return { rule, problems };
@@ -132,14 +141,34 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
     onClose();
   }
 
+  const blankLine = (): RuleItem => ({ course: "", section: "", instructor: "" });
   const switchType = (type: Rule["type"]) =>
-    setForm((f) => ({
-      ...f,
-      type,
-      from: type === "window" && f.from === "" ? "10:00" : f.from,
-      to: type === "window" && f.to === "" ? "11:00" : f.to,
-      subject: type === "takeable" ? "courses" : f.subject,
-    }));
+    setForm((f) => {
+      const blank = f.items.every((i) => !i.course.trim() && !i.section.trim() && !i.instructor.trim());
+      const hasPeople = f.items.some((i) => i.instructor.trim());
+      let items = f.items;
+      let subject = f.subject;
+      if (type === "consecutive") {
+        subject = "instructors";
+        items = hasPeople ? f.items.map((i) => ({ ...blankLine(), instructor: i.instructor })) : [blankLine()];
+      } else if (type === "window") {
+        subject = hasPeople ? "instructors" : f.subject;
+      } else {
+        subject = "courses";
+        if (hasPeople) items = [];
+        if (items.length === 0 || blank) items = type === "standard" ? [{ ...blankLine(), course: "*" }] : [blankLine(), blankLine()];
+        if (type === "takeable" && items.length === 1 && items[0]!.course === "*") items = [blankLine(), blankLine()];
+      }
+      return {
+        ...f,
+        type,
+        subject,
+        items,
+        from: type === "window" && f.from === "" ? "10:00" : f.from,
+        to: type === "window" && f.to === "" ? "11:00" : f.to,
+        count: type === "consecutive" && f.count.trim() === "" ? "3" : type === "standard" ? "" : f.count,
+      };
+    });
   const switchSubject = (subject: Form["subject"]) => setForm((f) => (f.subject === subject ? f : { ...f, subject, items: [{ course: "", section: "", instructor: "" }] }));
   const toggleDay = (d: string) => set("days", [..."MTWRF"].filter((x) => (x === d ? !form.days.includes(x) : form.days.includes(x))).join(""));
   const allDays = form.days === "" || form.days === "MTWRF";
@@ -164,10 +193,12 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
             <legend>What kind of rule</legend>
             <label className="choice"><input type="radio" checked={form.type === "takeable"} onChange={() => switchType("takeable")} /> <strong>Take together.</strong> A student must be able to take all, some or any set of these courses, one section of each, without a clash.</label>
             <label className="choice"><input type="radio" checked={form.type === "window"} onChange={() => switchType("window")} /> <strong>Time window.</strong> These courses or instructors should (or should not) meet during a time of day.</label>
+            <label className="choice"><input type="radio" checked={form.type === "standard"} onChange={() => switchType("standard")} /> <strong>Standard times.</strong> These courses should meet only at the department’s standard days, start times and lengths. Others are flagged in orange.</label>
+            <label className="choice"><input type="radio" checked={form.type === "consecutive"} onChange={() => switchType("consecutive")} /> <strong>Back-to-back classes.</strong> These instructors should teach at most (or at least) some number of consecutive classes.</label>
           </fieldset>
 
           <fieldset>
-            <legend>{form.type === "takeable" ? "Courses" : "What the rule is about"}</legend>
+            <legend>{form.type === "window" ? "What the rule is about" : form.type === "consecutive" ? "Instructors" : "Courses"}</legend>
             {form.type === "window" && (
               <div className="row subject-row">
                 <label className="choice"><input type="radio" checked={form.subject === "courses"} onChange={() => switchSubject("courses")} /> Courses</label>
@@ -175,7 +206,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
               </div>
             )}
             {form.items.map((it, i) => {
-              const person = form.type === "window" && form.subject === "instructors";
+              const person = form.type === "consecutive" || (form.type === "window" && form.subject === "instructors");
               return (
                 <div className="row item-row" key={i}>
                   {person ? (
@@ -200,14 +231,15 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                 </div>
               );
             })}
-            {form.subject === "courses" || form.type === "takeable" ? (
+            {!(form.type === "consecutive" || (form.type === "window" && form.subject === "instructors")) ? (
               <p className="muted small">
+                {form.type === "standard" && <>Use <code>*</code> alone for every course. </>}
                 Patterns: <code>*</code> any run of characters, <code>?</code> any one character, <code>[23]</code> either of those. <code>MATH 3*</code> is every 300-level MATH course, <code>STAT [23]4?</code> is 241, 243, 345 and so on, <code>MATH *</code> every MATH course. Leave Section blank for every section.
               </p>
             ) : (
-              <p className="muted small">The rule is about the sections each of these instructors teaches.</p>
+              <p className="muted small">{form.type === "consecutive" ? "Each instructor is checked separately." : "The rule is about the sections each of these instructors teaches."}</p>
             )}
-            <button type="button" onClick={() => set("items", [...form.items, { course: "", section: "", instructor: "" }])}>+ Add {form.type === "takeable" || form.subject === "courses" ? "course" : "instructor"}</button>
+            <button type="button" onClick={() => set("items", [...form.items, { course: "", section: "", instructor: "" }])}>+ Add {form.type === "consecutive" || (form.type === "window" && form.subject === "instructors") ? "instructor" : "course"}</button>
             {err("items")}
           </fieldset>
 
@@ -232,7 +264,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                     : `Some ${form.count} of them: at least one set of ${form.count} courses must be takeable together (for example, some pair from this list).`}
               </p>
             </div>
-          ) : (
+          ) : form.type === "window" ? (
             <>
               <fieldset>
                 <legend>The time window</legend>
@@ -290,6 +322,34 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                 )}
               </div>
             </>
+          ) : form.type === "standard" ? (
+            <p className="muted small">
+              Every section named should meet only at a standard time: the days, start time and length (in minutes) must all be one of the department’s standard patterns. Sections with no meeting time are not checked.
+            </p>
+          ) : (
+            <div>
+              <div className="row take-row">
+                <span>Each instructor should teach</span>
+                <select value={form.bound} onChange={(e) => set("bound", e.target.value as Form["bound"])} aria-label="at most or at least">
+                  <option value="atMost">at most</option>
+                  <option value="atLeast">at least</option>
+                </select>
+                <input value={form.count} size={4} inputMode="numeric" aria-label="how many consecutive classes" onChange={(e) => set("count", e.target.value)} />
+                <span>consecutive classes</span>
+              </div>
+              {err("count")}
+              <div className="row take-row">
+                <span>A class follows another when it starts within</span>
+                <input value={form.gap} size={4} inputMode="numeric" aria-label="minutes" onChange={(e) => set("gap", e.target.value)} />
+                <span>minutes of the other’s end.</span>
+              </div>
+              {err("gap")}
+              <p className="muted small">
+                {form.bound === "atMost"
+                  ? `No one may teach more than ${form.count || "n"} consecutive classes: a run of more than that on any day is flagged (each term is checked separately).`
+                  : `Each instructor must teach at least ${form.count || "n"} consecutive classes somewhere in the schedule: the rule is met if they have such a run on any day of the academic year (only those terms, if you choose one below).`}
+              </p>
+            </div>
           )}
 
           <div className="row">

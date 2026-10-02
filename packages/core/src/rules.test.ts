@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { conflictedSessions } from "./conflicts.js";
+import { conflictedSessions, nonStandardSessions } from "./conflicts.js";
 import { recordsFromCsv } from "./csv.js";
 import { importConstraints, importRecords } from "./import.js";
 import { deleteRule, describeRule, emptyRule, findRuleViolations, rulesOf, ruleSubject, saveRule, validateRule, type Rule } from "./rules.js";
@@ -181,6 +181,9 @@ describe("importing constraint rows", () => {
       { Constraint: "W", Instructor: "Kim" },
       { Constraint: "T", Course: "MATH 1" },
       { Constraint: "T", Course: "MATH 2", Section: "B" },
+      { Constraint: "S", Type: "standard", Course: "MATH *", Term: "FA" },
+      { Constraint: "C", Type: "consecutive", Instructor: "Kim", Count: "3", Bound: "atLeast", Gap: "30" },
+      { Constraint: "C", Instructor: "Lee" },
     ]);
     const back = await readWorkbook(await writeWorkbook(s));
     expect(back.issues.filter((i) => i.severity === "error")).toEqual([]);
@@ -234,5 +237,92 @@ describe("editing rules", () => {
     expect(describeRule({ ...emptyRule("takeable"), name: "x", items: [item("MATH 3*")] })).toBe("A student must be able to take all of MATH 3*.");
     expect(describeRule({ ...emptyRule("window"), name: "x", items: [item("MATH 231")], from: 600, to: 650, days: "MWF" })).toBe("Every section of MATH 231 should not meet during 10:00–10:50 on any of M W F.");
     expect(describeRule({ ...emptyRule("window"), name: "x", items: [item("CORE 100")], from: 1020, to: 1320, should: "should", count: 1, term: "FA" })).toBe("At least 1 of the sections of CORE 100 should meet within 17:00–22:00 on any of M T W R F in FA.");
+  });
+});
+
+describe("standard times rule", () => {
+  const rule = (extra: Rec = {}) => [{ Constraint: "Std", Type: "standard", Course: "*", ...extra }];
+  it("accepts the standard patterns and flags the others, saying what would be standard", () => {
+    const s = build(
+      [sec("MATH", "1", "A", "MWF", "9:15", { MeetingDuration: "65" }), sec("MATH", "2", "A", "MWF", "9:30", { MeetingDuration: "65" }), sec("MATH", "3", "A", "MWF", "9:15", { MeetingDuration: "50" }), sec("MATH", "4", "A", "TR", "10:20", { MeetingDuration: "100" }), sec("MATH", "5", "A", "MTWR", "10:20", { MeetingDuration: "100" })],
+      rule(),
+    );
+    expect(msgs(s)).toEqual([
+      "MATH 2 A meets M W F 09:30–10:35 (65 min), which is not a standard time (standard M W F starts for 65 minutes: 8:00, 9:15, 11:00, 12:15, 13:30, 14:45)",
+      "MATH 3 A meets M W F 09:15–10:05 (50 min), which is not a standard time (standard M W F lengths: 65, 120, 60 minutes)",
+      "MATH 5 A meets M T W R 10:20–12:00 (100 min), which is not a standard time (no standard time uses the days M T W R)",
+    ]);
+  });
+  it("is orange, not red: its meetings are not counted as conflicts", () => {
+    const s = build([sec("MATH", "2", "A", "MWF", "9:30", { MeetingDuration: "65" })], rule());
+    const v = findRuleViolations(s);
+    expect(v[0]!.type).toBe("standard");
+    expect(conflictedSessions([], v).size).toBe(0);
+    expect(nonStandardSessions(v).size).toBe(1);
+  });
+  it("can be limited to some courses, or a term, and ignores sections with no time", () => {
+    const sessions = [sec("MATH", "2", "A", "MWF", "9:30", { MeetingDuration: "65" }), sec("STAT", "2", "A", "MWF", "9:30", { MeetingDuration: "65" }), sec("MATH", "3", "A", "MWF", "9:30", { MeetingDuration: "65", Term: "SP" })];
+    expect(msgs(build(sessions, rule({ Course: "MATH *", Term: "FA" })))).toHaveLength(1);
+    expect(msgs(build([{ AcademicYear: "Y", Term: "FA", Prefix: "MATH", CourseNumber: "9", Section: "A" }], rule()))).toEqual([]);
+  });
+  it("checks each meeting of a section", () => {
+    const s = build([sec("MATH", "1", "A", "MW", "9:15", { SectionId: "x", MeetingDuration: "50" }), { ...sec("MATH", "1", "A", "F", "9:15", { SectionId: "x", MeetingDuration: "50" }) }], rule());
+    expect(msgs(s)).toEqual(["MATH 1 A meets F 09:15–10:05 (50 min), which is not a standard time (standard F lengths: 170, 80 minutes)"]);
+  });
+});
+
+describe("back-to-back (consecutive) rule", () => {
+  const fac = (name: string) => ({ Faculty: name, MeetingDuration: "50" });
+  const day = [
+    sec("MATH", "1", "A", "MWF", "9:00", fac("Kim")),
+    sec("MATH", "2", "A", "MWF", "10:00", fac("Kim")), // starts 10 min after the first ends
+    sec("MATH", "3", "A", "MWF", "11:05", fac("Kim")), // 15 min after
+    sec("MATH", "4", "A", "MWF", "13:00", fac("Kim")), // a long gap
+    sec("MATH", "5", "A", "TR", "9:00", fac("Lee")),
+  ];
+  const most = (n: string, who = "Kim", extra: Rec = {}) => [{ Constraint: "Run", Type: "consecutive", Instructor: who, Count: n, Bound: "atMost", ...extra }];
+  it("at most n: flags a run longer than n, naming the classes", () => {
+    expect(msgs(build(day, most("2")))).toEqual(
+      ["Kim teaches 3 consecutive classes on M: MATH 1 A 09:00–09:50, MATH 2 A 10:00–10:50, MATH 3 A 11:05–11:55 (at most 2)", "Kim teaches 3 consecutive classes on W: MATH 1 A 09:00–09:50, MATH 2 A 10:00–10:50, MATH 3 A 11:05–11:55 (at most 2)", "Kim teaches 3 consecutive classes on F: MATH 1 A 09:00–09:50, MATH 2 A 10:00–10:50, MATH 3 A 11:05–11:55 (at most 2)"],
+    );
+    expect(msgs(build(day, most("3")))).toEqual([]);
+  });
+  it("uses the gap: 20 minutes by default, or the rule's own", () => {
+    const wide = [sec("MATH", "1", "A", "M", "9:00", fac("Kim")), sec("MATH", "2", "A", "M", "10:20", fac("Kim"))]; // 30 min between
+    expect(msgs(build(wide, most("1")))).toEqual([]);
+    expect(msgs(build(wide, most("1", "Kim", { Gap: "30" })))).toHaveLength(1);
+    const touching = [sec("MATH", "1", "A", "M", "9:00", fac("Kim")), sec("MATH", "2", "A", "M", "9:50", fac("Kim"))];
+    expect(msgs(build(touching, most("1")))).toHaveLength(1); // back to back counts
+    const overlapping = [sec("MATH", "1", "A", "M", "9:00", fac("Kim")), sec("MATH", "2", "A", "M", "9:40", fac("Kim"))];
+    expect(msgs(build(overlapping, most("1")))).toEqual([]); // that is a conflict, not back to back
+  });
+  it("classes in different weeks of the term are not consecutive", () => {
+    const halves = [sec("MATH", "1", "A", "M", "9:00", { ...fac("Kim"), TermPart: "First" }), sec("MATH", "2", "A", "M", "10:00", { ...fac("Kim"), TermPart: "Second" })];
+    expect(msgs(build(halves, most("1")))).toEqual([]);
+  });
+  it("at least n: met when somewhere there is a run of that many, else flagged once per academic year", () => {
+    const least = (n: string, who = "Kim") => [{ Constraint: "Run", Type: "consecutive", Instructor: who, Count: n, Bound: "atLeast" }];
+    expect(msgs(build(day, least("3")))).toEqual([]);
+    expect(msgs(build(day, least("4")))).toEqual(["Kim never teaches 4 consecutive classes (the most is 3, on M in FA)"]);
+    expect(msgs(build(day, least("2", "Lee")))).toEqual(["Lee never teaches 2 consecutive classes (the most is 1)"]);
+    expect(msgs(build(day, least("2", "Nobody")))).toEqual([]); // not teaching at all: nothing to check
+  });
+  it("covers several instructors in one rule, and counts a section's own back-to-back meetings once", () => {
+    const rows = [{ Constraint: "Run", Type: "consecutive", Instructor: "Kim", Count: "1", Bound: "atMost" }, { Constraint: "Run", Instructor: "Lee" }];
+    const s = build([sec("MATH", "1", "A", "M", "9:00", fac("Kim")), sec("MATH", "2", "A", "M", "10:00", fac("Kim")), sec("MATH", "5", "A", "T", "9:00", fac("Lee")), sec("MATH", "6", "A", "T", "10:00", fac("Lee"))], rows);
+    expect(findRuleViolations(s).map((v) => v.message.split(" teaches")[0])).toEqual(["Kim", "Lee"]);
+    const lab = build([sec("MATH", "1", "A", "M", "9:00", { ...fac("Kim"), SectionId: "x" }), sec("MATH", "1", "A", "M", "9:50", { ...fac("Kim"), SectionId: "x" })], most("1"));
+    expect(msgs(lab)).toEqual([]);
+  });
+  it("highlights the classes in a too-long run", () => {
+    expect(conflictedSessions([], findRuleViolations(build(day.slice(0, 3), most("2")))).size).toBe(3);
+  });
+  it("describes itself and validates", () => {
+    const r = { ...emptyRule("consecutive"), name: "x", items: [{ course: "", section: "", instructor: "Kim" }, { course: "", section: "", instructor: "Lee" }], count: 2 };
+    expect(describeRule(r)).toBe("Each of Kim, Lee should teach at most 2 consecutive classes (a class follows another when it starts within 20 minutes of the other's end).");
+    expect(describeRule({ ...r, bound: "atLeast", items: [r.items[0]!] })).toBe("Kim should teach at least 2 consecutive classes somewhere in the schedule (a class follows another when it starts within 20 minutes of the other's end).");
+    expect(validateRule(build([]), r)).toEqual([]);
+    expect(validateRule(build([]), { ...r, items: [{ course: "MATH 1", section: "", instructor: "" }] }).map((p) => p.field)).toEqual(["items.0"]);
+    expect(validateRule(build([]), { ...r, count: undefined as never }).map((p) => p.field)).toEqual(["count"]);
   });
 });

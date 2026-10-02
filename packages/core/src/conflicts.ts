@@ -74,10 +74,21 @@ export function findConflicts(schedule: Schedule): Conflict[] {
   );
 }
 
-/** Sessions that take part in any conflict, or in a broken constraint rule (for highlighting in views). */
-export function conflictedSessions(conflicts: Conflict[], violations: { sessions: Session[] }[] = []): Set<Session> {
+/**
+ * Sessions that take part in any conflict, or in a broken constraint rule (for highlighting in views).
+ * Meetings that only break a "standard times" rule are not included: they are shown differently
+ * (`nonStandardSessions`), since a non-standard time is not a clash.
+ */
+export function conflictedSessions(conflicts: Conflict[], violations: { type?: string; sessions: Session[] }[] = []): Set<Session> {
   const out = new Set<Session>();
   for (const c of conflicts) for (const [a, b] of c.meetings) out.add(a).add(b);
-  for (const v of violations) for (const s of v.sessions) out.add(s);
+  for (const v of violations) if (v.type !== "standard") for (const s of v.sessions) out.add(s);
+  return out;
+}
+
+/** Meetings that break a "standard times" rule (shown in a different colour from conflicts). */
+export function nonStandardSessions(violations: { type?: string; sessions: Session[] }[]): Set<Session> {
+  const out = new Set<Session>();
+  for (const v of violations) if (v.type === "standard") for (const s of v.sessions) out.add(s);
   return out;
 }

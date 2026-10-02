@@ -281,3 +281,10 @@ td button.link + button.link { margin-left: 6px; }
 .teams .team { display: flex; gap: 14px; }
 .teams dt { width: 3rem; flex: none; font-weight: 600; color: var(--muted); margin: 0; }
 .teams dd { margin: 0; }
+
+/* a time that is not one of the standard times: orange, not the red of a conflict */
+.block.nonstandard { border: 2px solid #e08a1e; box-shadow: 0 0 0 1px #e08a1e inset; }
+.nonstandard-swatch { border: 2px solid #e08a1e; }
+.nonstandard-mark { color: #e08a1e; }
+.tag-standard { background: #e08a1e; color: #1c2024; }
+.warn-orange { color: #e08a1e; }

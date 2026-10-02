@@ -1,5 +1,6 @@
 import {
   conflictedSessions,
+  nonStandardSessions,
   courseDisplayName,
   findConflicts,
   findRuleViolations,
@@ -40,6 +41,8 @@ export interface Block {
   /** Everything, for the hover text. */
   detail: string;
   conflict: boolean;
+  /** At a time that is not a standard time (shown in orange, unless it is also in a conflict). */
+  nonStandard: boolean;
   hue: number;
   /** Position among side-by-side blocks that overlap in time, and how many share the space. */
   lane: number;
@@ -136,7 +139,9 @@ export function layoutLanes<T extends { start: number; end: number; lane: number
  * grid per instructor, or one per room (or just the one named in `only`).
  */
 export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
-  const flagged = conflictedSessions(findConflicts(schedule), findRuleViolations(schedule));
+  const violations = findRuleViolations(schedule);
+  const flagged = conflictedSessions(findConflicts(schedule), violations);
+  const odd = nonStandardSessions(violations);
   const nonRooms = new Set(schedule.settings.nonRooms.map(norm));
   const termAll = schedule.sessions.filter((s) => s.academicYear === o.year && s.term === o.term);
   const parts = partsFor(schedule.settings, o.term);
@@ -186,6 +191,7 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
     sub,
     detail: [`${label(s)}${partTag(s)}`, s.shortTitle, s.faculty.map((f) => f.name).join(", "), `${[...s.days].join("")} ${timeRange(s)}`, s.room].filter(Boolean).join("\n"),
     conflict: flagged.has(s),
+    nonStandard: odd.has(s),
     hue: hueFor(s),
     lane: 0,
     lanes: 1,

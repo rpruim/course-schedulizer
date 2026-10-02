@@ -88,13 +88,17 @@ export type NonTeaching = z.infer<typeof nonTeachingSchema>;
  *   choosing one section of each, with no two overlapping. With `choose` "some", some set of
  *   `count` courses must be takeable together; with "any", every set of `count` courses must be. `course` is a pattern
  *   (`MATH 231`, `MATH 3*`); `section` names one section.
+ * - `standard`: the sections named by `course` patterns (`*` = every course) should meet only at the
+ *   department's standard days, start times and lengths (`DEFAULT_STANDARD_TIMES`).
+ * - `consecutive`: each instructor named should teach at most (or at least) `count` consecutive
+ *   classes; one class follows another when it starts 0 to `gap` minutes after the other ends.
  * - `window`: the sections named (by `course` pattern or `instructor`) should / should not meet
  *   in the interval `from`–`to` on any / all of `days`; with `count`, that many of them must
  *   satisfy the rule instead of every one.
  */
 export const constraintSchema = z.object({
   constraint: z.string().min(1),
-  type: z.enum(["takeable", "window"]).default("takeable"),
+  type: z.enum(["takeable", "window", "standard", "consecutive"]).default("takeable"),
   /** `Prefix CourseNumber` pattern, where `*` matches anything: `MATH 231`, `MATH 3*`, `MATH *`. */
   course: str,
   /** A section letter to name one section of the course; blank = every section. */
@@ -103,6 +107,10 @@ export const constraintSchema = z.object({
   instructor: str,
   /** `takeable`: how many courses (blank = all of them); `window`: at least this many sections must satisfy it (blank = every one). */
   count: z.number().int().positive().optional(),
+  /** `consecutive`: the rule is about at most / at least `count` consecutive classes. */
+  bound: z.enum(["atMost", "atLeast"]).default("atMost"),
+  /** `consecutive`: classes are consecutive when one starts no more than this many minutes after the other ends. */
+  gap: z.number().int().min(0).max(240).default(20),
   /** `takeable` with a `count`: some set of that many courses must work together, or every set must. */
   choose: z.enum(["some", "any"]).default("some"),
   /** Only this term; blank = every term. */
@@ -134,6 +142,13 @@ export interface PartDef {
   name: string;
   startWeek: number;
   endWeek: number;
+}
+
+/** One standard meeting pattern: these days, this long, starting at any of these times (minutes since midnight). */
+export interface StandardTime {
+  days: string;
+  duration: number;
+  starts: number[];
 }
 
 export interface Settings {
@@ -169,7 +184,7 @@ export interface Schedule {
 }
 
 // The default terms and parts live in config/settings.yaml; tools/gen-settings.mjs generates this module from it.
-export { DEFAULT_PARTS, DEFAULT_TERM_PARTS, DEFAULT_TERMS } from "./settings.defaults.generated.js";
+export { DEFAULT_PARTS, DEFAULT_STANDARD_TIMES, DEFAULT_TERM_PARTS, DEFAULT_TERMS } from "./settings.defaults.generated.js";
 
 export const defaultSettings = (): Settings => ({
   terms: DEFAULT_TERMS.map((t) => ({ ...t })),

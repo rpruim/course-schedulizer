@@ -103,6 +103,7 @@ export function WeekPage({ kind }: { kind: GridKind }) {
           </select>
         </label>
         <span className="muted legend"><span className="swatch conflict-swatch" /> conflict</span>
+        {groups.some((g) => g.items.some((i) => i.grid?.blocks.some((b) => b.nonStandard))) && <span className="muted legend"><span className="swatch nonstandard-swatch" /> non-standard time</span>}
         <span className="spacer" />
         <button
           className="primary"
@@ -192,7 +193,7 @@ function WeekGrid({ grid, onOpen }: { grid: Grid; onOpen: (sectionId: string) =>
             {grid.blocks.filter((b) => b.day === d).map((b) => (
               <button
                 key={b.key}
-                className={`block${size(b.lanes)}${b.conflict ? " conflict" : ""}`}
+                className={`block${size(b.lanes)}${b.conflict ? " conflict" : b.nonStandard ? " nonstandard" : ""}`}
                 title={b.detail}
                 onClick={() => onOpen(b.sectionId)}
                 style={{

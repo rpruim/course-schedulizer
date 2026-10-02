@@ -33,7 +33,7 @@ export const SESSION_COLUMNS = [
 ] as const;
 export const CROSSLISTING_COLUMNS = ["SectionId", "Prefix", "CourseNumber"] as const;
 export const NONTEACHING_COLUMNS = ["AcademicYear", "Faculty", "Activity", "Term", "Load", "Comment"] as const;
-export const CONSTRAINT_COLUMNS = ["Constraint", "Type", "Course", "Section", "Instructor", "Count", "Choose", "Term", "Days", "DayRule", "From", "To", "Should", "Meets", "Comment"] as const;
+export const CONSTRAINT_COLUMNS = ["Constraint", "Type", "Course", "Section", "Instructor", "Count", "Choose", "Bound", "Gap", "Term", "Days", "DayRule", "From", "To", "Should", "Meets", "Comment"] as const;
 
 const key = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -376,7 +376,7 @@ export function importNonTeaching(records: Rec[], settings: Settings = defaultSe
 
 /** The first version of this sheet called Count "AtLeast"; still read. */
 const CONSTRAINT_READ_COLUMNS = [...CONSTRAINT_COLUMNS, "AtLeast"] as const;
-const RULE_FIELDS = ["Type", "Count", "AtLeast", "Choose", "Term", "Days", "DayRule", "From", "To", "Should", "Meets"] as const;
+const RULE_FIELDS = ["Type", "Count", "AtLeast", "Choose", "Bound", "Gap", "Term", "Days", "DayRule", "From", "To", "Should", "Meets"] as const;
 
 /**
  * Constraint rows. Rows with the same `Constraint` name make one rule: its settings (Type, Count, Choose,
@@ -442,8 +442,9 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
         reported.add(`${name}|Days`);
       } else days = d;
     }
+    const looksConsecutive = have.Bound !== undefined || have.Gap !== undefined;
     const looksWindow = have.From !== undefined || have.To !== undefined || have.Days !== undefined || have.Should !== undefined || (k.Instructor ?? "").trim() !== "";
-    const type = oneOf("Type", have.Type, { takeable: "takeable", cohort: "takeable", window: "window", time: "window" } as Record<string, "takeable" | "window">, looksWindow ? "window" : "takeable");
+    const type = oneOf("Type", have.Type, { takeable: "takeable", cohort: "takeable", window: "window", time: "window", standard: "standard", "standard times": "standard", standardtimes: "standard", consecutive: "consecutive", "back-to-back": "consecutive" } as Record<string, "takeable" | "window" | "standard" | "consecutive">, looksConsecutive ? "consecutive" : looksWindow ? "window" : "takeable");
     const from = time("From", have.From);
     const to = time("To", have.To);
     if (type === "window" && !reported.has(`${name}|window`)) {
@@ -452,6 +453,7 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
       else if (from >= to) r.add("error", row, `"${name}": From must be earlier than To`);
     }
     const count = num(r, row, "Count", have.Count ?? have.AtLeast);
+    const gap = num(r, row, "Gap", have.Gap);
     const parsed = constraintSchema.safeParse({
       constraint: name,
       type,
@@ -460,6 +462,8 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
       instructor: k.Instructor ?? "",
       ...(count !== undefined ? { count } : {}),
       choose: oneOf("Choose", have.Choose, { some: "some", any: "any" }, "some"),
+      bound: oneOf("Bound", have.Bound, { atmost: "atMost", "at most": "atMost", max: "atMost", atleast: "atLeast", "at least": "atLeast", min: "atLeast" }, "atMost"),
+      ...(gap !== undefined ? { gap } : {}),
       term: have.Term ?? "",
       days,
       dayRule: oneOf("DayRule", have.DayRule, { any: "any", all: "all" }, "any"),

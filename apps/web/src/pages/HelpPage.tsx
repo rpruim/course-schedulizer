@@ -260,9 +260,26 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li><strong>Every section, or at least some</strong>: by default every section of those courses (or taught by those instructors) must satisfy the rule. Choose <em>at least some</em> for rules such as “at least one section of Core 100 should meet between 5pm and 10pm”, so a day-time section is fine as long as an evening one exists.</li>
           <li>Sections with no scheduled time are not checked.</li>
         </ul>
+        <h3>Standard times</h3>
+        <p>
+          “These courses should meet only at the department’s standard times.” A meeting is standard when its days, start time and length (in minutes) are all one of the department’s standard patterns,
+          for example MWF at 9:15 for 65 minutes or TR at 10:20 for 100 minutes (the list comes from the earlier Course Schedulizer and is kept in <code>config/settings.yaml</code>). Use <code>*</code> alone for every course,
+          or name courses with patterns as above. Meetings that are not standard are shown in <strong>orange</strong>, not the red of a conflict: an orange outline on the week grids, an orange ⚠ on the Schedule tab,
+          and a <em>Non-standard meeting times</em> list on the Conflicts tab that says what would be standard. Sections with no meeting time are not checked. If you have a good reason for a non-standard time, say so in the section’s comment.
+        </p>
+        <h3>Back-to-back classes</h3>
+        <p>
+          “Each of these instructors should teach <em>at most</em> (or <em>at least</em>) <em>n</em> consecutive classes.” One class follows another when it starts within 20 minutes of the other’s end
+          (you can change the 20), on the same day and in overlapping weeks of the term; a class that overlaps another is a conflict, not a back-to-back pair. Several instructors can share one rule, and each is checked on their own.
+        </p>
+        <ul>
+          <li><strong>At most <em>n</em></strong>: any run of more than <em>n</em> classes in a row, on any day, is flagged (each term separately), and the classes in the run are named.</li>
+          <li><strong>At least <em>n</em></strong>: met if the instructor has such a run <em>somewhere</em> in the academic year; flagged once if they never do (with the longest run they do have). Instructors who teach nothing are not checked.</li>
+          <li>Two meetings of the same section on one day count as one class.</li>
+        </ul>
         <p>
           Rules are saved in the <code>Constraints</code> sheet of the Excel file (one row per course or instructor, with the rule’s settings in columns such as <code>Type</code>, <code>Count</code>,
-          <code>From</code>, <code>To</code>, <code>Days</code>), and rules from older files, which list courses that must not meet at the same time, still work.
+          <code>From</code>, <code>To</code>, <code>Days</code>, <code>Bound</code>, <code>Gap</code>), and rules from older files, which list courses that must not meet at the same time, still work.
         </p>
       </>
     ),

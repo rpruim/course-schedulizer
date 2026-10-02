@@ -1,5 +1,6 @@
 import {
   conflictedSessions,
+  nonStandardSessions,
   displayNames,
   findConflicts,
   findRuleViolations,
@@ -31,6 +32,8 @@ export interface SectionRow {
   deliveryMode: string;
   meetings: MeetingView[];
   conflict: boolean;
+  /** Meets at a time that is not a standard time (a "standard times" rule is broken). */
+  nonStandard: boolean;
 }
 
 const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
@@ -44,7 +47,9 @@ export function timeRange(s: Pick<Session, "start" | "duration">): string {
 /** One row per section, in natural course order (prefix, number, section letter, term). */
 export function sectionRows(schedule: Schedule): SectionRow[] {
   const names = displayNames(schedule);
-  const flagged = conflictedSessions(findConflicts(schedule), findRuleViolations(schedule));
+  const violations = findRuleViolations(schedule);
+  const flagged = conflictedSessions(findConflicts(schedule), violations);
+  const odd = nonStandardSessions(violations);
   const termRank = new Map(schedule.settings.terms.map((t, i) => [t.code, i]));
   const bySection = new Map<string, SectionRow>();
   for (const s of schedule.sessions) {
@@ -65,11 +70,13 @@ export function sectionRows(schedule: Schedule): SectionRow[] {
         deliveryMode: s.deliveryMode,
         meetings: [],
         conflict: false,
+        nonStandard: false,
       };
       bySection.set(s.sectionId, row);
     }
     if (s.days !== "" || s.room !== "") row.meetings.push({ days: s.days, time: timeRange(s), room: s.room });
     if (flagged.has(s)) row.conflict = true;
+    if (odd.has(s)) row.nonStandard = true;
   }
   return [...bySection.values()].sort(
     (a, b) =>

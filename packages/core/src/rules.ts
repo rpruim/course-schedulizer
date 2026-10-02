@@ -1,8 +1,8 @@
 import { constraintNames, constraintNamesInstructor, courseMatches, listingKeys, normCourse } from "./constraints.js";
 import { displayNames, listingsOf } from "./names.js";
 import { formatTime } from "./format.js";
-import { meetingsOverlap, scheduled } from "./overlap.js";
-import { DAY_ORDER, type Constraint, type Schedule, type Session } from "./types.js";
+import { meetingsOverlap, scheduled, weeksConcurrent } from "./overlap.js";
+import { DAY_ORDER, DEFAULT_STANDARD_TIMES, type Constraint, type Schedule, type Session, type StandardTime } from "./types.js";
 
 /** One line of a rule: a course pattern (with an optional section letter), or an instructor. */
 export interface RuleItem {
@@ -14,11 +14,15 @@ export interface RuleItem {
 /** A constraint as the editor sees it: the rows that share a name, gathered into one object. */
 export interface Rule {
   name: string;
-  type: "takeable" | "window";
+  type: "takeable" | "window" | "standard" | "consecutive";
   items: RuleItem[];
   count?: number;
   /** Take together with a `count`: some set of that many courses must work, or every set must. */
   choose: "some" | "any";
+  /** Back-to-back rules: at most / at least `count` consecutive classes. */
+  bound: "atMost" | "atLeast";
+  /** Back-to-back rules: minutes between one class ending and the next starting for them to be consecutive. */
+  gap: number;
   term: string;
   days: string;
   dayRule: "any" | "all";
@@ -30,8 +34,9 @@ export interface Rule {
 }
 
 export const emptyRule = (type: Rule["type"] = "takeable"): Rule => ({
-  name: "", type, items: [], choose: "some", term: "", days: "", dayRule: "any", should: "should not", meets: "", comment: "",
+  name: "", type, items: [], choose: "some", bound: "atMost", gap: 20, term: "", days: "", dayRule: "any", should: "should not", meets: "", comment: "",
   ...(type === "window" ? { from: 600, to: 660 } : {}),
+  ...(type === "consecutive" ? { count: 3 } : {}),
 });
 
 /** What a window rule is about: sections of courses, or sections taught by instructors (all lines of a rule are one or the other). */
@@ -54,6 +59,8 @@ export function rulesOf(schedule: Schedule): Rule[] {
       items: rows.map((r) => ({ course: r.course, section: r.section, instructor: r.instructor })),
       ...(f.count !== undefined ? { count: f.count } : {}),
       choose: f.choose,
+      bound: f.bound,
+      gap: f.gap,
       term: f.term,
       days: f.days,
       dayRule: f.dayRule,
@@ -77,6 +84,8 @@ export function rulesToRows(rule: Rule): Constraint[] {
     instructor: it.instructor.trim(),
     ...(rule.count !== undefined ? { count: rule.count } : {}),
     choose: rule.choose,
+    bound: rule.bound,
+    gap: rule.gap,
     term: rule.term.trim(),
     days: window ? rule.days : "",
     dayRule: rule.dayRule,
@@ -112,19 +121,26 @@ export function validateRule(schedule: Schedule, rule: Rule, original?: string):
   const name = rule.name.trim();
   if (!name) out.push({ field: "name", message: "Give the rule a name." });
   else if (schedule.constraints.some((c) => c.constraint.toLowerCase() === name.toLowerCase() && c.constraint !== original)) out.push({ field: "name", message: `Another rule is already called “${name}”.` });
-  if (rule.items.length === 0) out.push({ field: "items", message: rule.type === "takeable" ? "List at least two courses." : "Say which courses or instructors the rule is about." });
+  if (rule.items.length === 0) {
+    const message = { takeable: "List at least two courses.", window: "Say which courses or instructors the rule is about.", standard: "Say which courses it applies to (* means every course).", consecutive: "List at least one instructor." }[rule.type];
+    out.push({ field: "items", message });
+  }
   rule.items.forEach((it, i) => {
     if (!it.course.trim() && !it.instructor.trim()) out.push({ field: `items.${i}`, message: "Name a course or an instructor." });
     if (it.course.trim() && it.instructor.trim()) out.push({ field: `items.${i}`, message: "Use a course or an instructor on a line, not both." });
     if (rule.type === "window" && ruleSubject(rule) === "courses" && it.instructor.trim() && !it.course.trim()) out.push({ field: `items.${i}`, message: "A rule is about courses or about instructors, not both." });
-    if (rule.type === "takeable" && it.instructor.trim()) out.push({ field: `items.${i}`, message: "A “take together” rule lists courses." });
-    if (it.course.trim() && !/^\S+(\s+\S+)?$/.test(it.course.trim())) out.push({ field: `items.${i}`, message: "Write a course as PREFIX NUMBER, for example MATH 231 or MATH 3*." });
+    if ((rule.type === "takeable" || rule.type === "standard") && it.instructor.trim()) out.push({ field: `items.${i}`, message: `A “${rule.type === "standard" ? "standard times" : "take together"}” rule lists courses.` });
+    if (rule.type === "consecutive" && it.course.trim()) out.push({ field: `items.${i}`, message: "A back-to-back rule lists instructors." });
+    if (rule.type !== "consecutive" && it.course.trim() && !/^\S+(\s+\S+)?$/.test(it.course.trim())) out.push({ field: `items.${i}`, message: "Write a course as PREFIX NUMBER, for example MATH 231 or MATH 3*." });
   });
   if (rule.type === "takeable") {
     const wild = rule.items.some((it) => /[*?[]/.test(it.course) || !/\s/.test(it.course.trim()));
     if (rule.items.length === 1 && !wild) out.push({ field: "items", message: "A rule about taking courses together needs at least two courses." });
     if (rule.count !== undefined && !wild && rule.count > rule.items.length) out.push({ field: "count", message: `Only ${rule.items.length} courses are listed.` });
-  } else {
+  } else if (rule.type === "consecutive") {
+    if (rule.count === undefined) out.push({ field: "count", message: "Say how many consecutive classes." });
+    if (!Number.isInteger(rule.gap) || rule.gap < 0 || rule.gap > 240) out.push({ field: "gap", message: "Use a number of minutes from 0 to 240." });
+  } else if (rule.type === "window") {
     if (rule.from === undefined) out.push({ field: "from", message: "Give the start of the interval." });
     if (rule.to === undefined) out.push({ field: "to", message: "Give the end of the interval." });
     if (rule.from !== undefined && rule.to !== undefined && rule.from >= rule.to) out.push({ field: "to", message: "The interval must end after it starts." });
@@ -147,6 +163,16 @@ export function describeRule(r: Rule): string {
     const n = r.count === undefined ? "all" : `${r.choose} ${r.count}`;
     return `A student must be able to take ${n} of ${items}${when}.`;
   }
+  if (r.type === "standard") {
+    const everything = r.items.length > 0 && r.items.every((it) => it.course.trim() === "*");
+    return `Every section ${everything ? "" : `of ${items} `}should meet only at a standard time (days, start and length)${when}.`;
+  }
+  if (r.type === "consecutive") {
+    const who = r.items.length > 1 ? `Each of ${items}` : items;
+    const how = r.bound === "atMost" ? "at most" : "at least";
+    const where = r.bound === "atLeast" ? `somewhere in the schedule${r.term ? ` in ${r.term}` : ""}` : r.term ? `in ${r.term}` : "";
+    return `${who} should teach ${how} ${r.count ?? "…"} consecutive ${r.count === 1 ? "class" : "classes"}${where ? ` ${where}` : ""} (a class follows another when it starts within ${r.gap} minutes of the other's end).`;
+  }
   const people = ruleSubject(r) === "instructors";
   const of = people ? "sections taught by" : "sections of";
   const which = r.count === undefined ? `Every section ${people ? "taught by" : "of"}` : `At least ${r.count} of the ${of}`;
@@ -155,6 +181,21 @@ export function describeRule(r: Rule): string {
   const days = ruleDays(r);
   const dayText = days.length === 1 ? `on ${days}` : `on ${r.dayRule} of ${dayList(days)}`;
   return `${which} ${items} ${verb} ${how} ${interval(r)} ${dayText}${when}.`;
+}
+
+/** Is this meeting at a standard time: exactly these days, this start, this length? */
+export function isStandardTime(m: Pick<Session, "days" | "start" | "duration">, times: StandardTime[] = DEFAULT_STANDARD_TIMES): boolean {
+  return times.some((t) => t.days === m.days && t.duration === m.duration && m.start !== undefined && t.starts.includes(m.start));
+}
+
+/** Why a meeting is not at a standard time, and what would be: the standard starts for its days and length, else the lengths or days that exist. */
+export function standardAdvice(m: Pick<Session, "days" | "start" | "duration">, times: StandardTime[] = DEFAULT_STANDARD_TIMES): string {
+  const at = (n: number) => formatTime(n).replace(/^0/, "");
+  const same = times.find((t) => t.days === m.days && t.duration === m.duration);
+  if (same) return `standard ${dayList(m.days)} starts for ${m.duration} minutes: ${same.starts.map(at).join(", ")}`;
+  const lengths = times.filter((t) => t.days === m.days);
+  if (lengths.length) return `standard ${dayList(m.days)} lengths: ${lengths.map((t) => t.duration).join(", ")} minutes`;
+  return `no standard time uses the days ${dayList(m.days)}`;
 }
 
 export interface RuleViolation {
@@ -217,13 +258,106 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
 
   const out: RuleViolation[] = [];
   for (const rule of rulesOf(schedule)) {
+    if (rule.type === "consecutive") {
+      consecutive(rule);
+      continue;
+    }
     for (const g of groups.values()) {
       if (rule.term && rule.term.toLowerCase() !== g.term.toLowerCase()) continue;
       if (rule.type === "takeable") takeable(rule, g);
+      else if (rule.type === "standard") standard(rule, g);
       else window(rule, g);
     }
   }
   return out;
+
+  /** Sections of the group that a rule's course lines name. */
+  function named(rule: Rule, g: { sections: Session[] }) {
+    return g.sections.filter((p) => rule.items.some((it) => constraintNames({ course: it.course, section: it.section } as Constraint, listingKeys(schedule, p), p.section)));
+  }
+
+  function standard(rule: Rule, g: { year: string; term: string; sections: Session[] }) {
+    for (const p of named(rule, g)) {
+      const odd = bySection.get(p.sectionId)!.filter((m) => scheduled(m) && !isStandardTime(m));
+      if (odd.length === 0) continue;
+      const what = odd.map((m) => `${dayList(m.days)} ${formatTime(m.start!)}–${formatTime((m.start! + m.duration!) % 1440)} (${m.duration} min)`);
+      const why = [...new Set(odd.map((m) => standardAdvice(m)))].join("; ");
+      out.push({
+        rule: rule.name,
+        type: "standard",
+        academicYear: g.year,
+        term: g.term,
+        message: `${label(p.sectionId)} meets ${[...new Set(what)].join(" and ")}, which is not a standard time (${why})`,
+        sectionIds: [p.sectionId],
+        sessions: odd,
+      });
+    }
+  }
+
+  /** Back-to-back classes of each instructor named: at most n in a row (per term), or at least n somewhere (per academic year). */
+  function consecutive(rule: Rule) {
+    const n = rule.count;
+    if (n === undefined) return;
+    const classLabel = (m: Session) => `${label(m.sectionId)} ${formatTime(m.start!)}–${formatTime((m.start! + m.duration!) % 1440)}`;
+    const people = [...new Set(rule.items.map((it) => it.instructor.trim()).filter(Boolean))];
+    for (const person of people) {
+      const key = normCourse(person);
+      const mine = schedule.sessions.filter((s) => scheduled(s) && s.faculty.some((f) => normCourse(f.name) === key) && (!rule.term || rule.term.toLowerCase() === s.term.toLowerCase()));
+      const years = [...new Set(mine.map((s) => s.academicYear))];
+      for (const year of years) {
+        // runs of consecutive classes: per term and day, in start order
+        const runs: { term: string; day: string; classes: Session[]; sections: string[] }[] = [];
+        const terms = [...new Set(mine.filter((s) => s.academicYear === year).map((s) => s.term))];
+        for (const term of terms) {
+          for (const day of "MTWRFSU") {
+            const todays = mine.filter((s) => s.academicYear === year && s.term === term && s.days.includes(day)).sort((a, b) => a.start! - b.start!);
+            let chain: Session[] = [];
+            const flush = () => {
+              if (chain.length) runs.push({ term, day, classes: chain, sections: [...new Set(chain.map((c) => c.sectionId))] });
+              chain = [];
+            };
+            for (const m of todays) {
+              const last = chain[chain.length - 1];
+              const between = last ? m.start! - (last.start! + last.duration!) : 0;
+              if (last && between >= 0 && between <= rule.gap && weeksConcurrent(schedule, last, m)) chain.push(m);
+              else {
+                flush();
+                chain.push(m);
+              }
+            }
+            flush();
+          }
+        }
+        if (runs.length === 0) continue;
+        if (rule.bound === "atMost") {
+          for (const run of runs.filter((r) => r.sections.length > n)) {
+            out.push({
+              rule: rule.name,
+              type: "consecutive",
+              academicYear: year,
+              term: run.term,
+              message: `${person} teaches ${run.sections.length} consecutive classes on ${run.day}: ${run.classes.map(classLabel).join(", ")} (at most ${n})`,
+              sectionIds: run.sections,
+              sessions: run.classes,
+            });
+          }
+        } else {
+          const best = runs.reduce((a, b) => (b.sections.length > a.sections.length ? b : a));
+          if (best.sections.length < n) {
+            out.push({
+              rule: rule.name,
+              type: "consecutive",
+              academicYear: year,
+              term: rule.term,
+              message: `${person} never teaches ${n} consecutive classes (the most is ${best.sections.length}${best.sections.length > 1 ? `, on ${best.day} in ${best.term}` : ""})`,
+              sectionIds: best.sections,
+              sessions: [],
+            });
+          }
+        }
+      }
+    }
+  }
 
   function takeable(rule: Rule, g: { year: string; term: string; sections: Session[] }) {
     const items = new Map<string, { label: string; sectionIds: Set<string> }>();

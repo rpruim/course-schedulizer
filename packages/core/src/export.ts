@@ -105,6 +105,8 @@ export function constraintsTable(schedule: Schedule): Table {
         Instructor: c.instructor,
         Count: c.count === undefined ? "" : String(c.count),
         Choose: c.type === "takeable" && c.count !== undefined ? c.choose : "",
+        Bound: c.type === "consecutive" ? c.bound : "",
+        Gap: c.type === "consecutive" ? String(c.gap) : "",
         Term: c.term,
         Days: window ? c.days : "",
         DayRule: window ? c.dayRule : "",

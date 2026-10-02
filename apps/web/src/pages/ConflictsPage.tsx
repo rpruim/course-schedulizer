@@ -59,7 +59,8 @@ function ConflictsTable({ entry }: { entry: Entry }) {
     <>
       <h3 className="rule-heading first">Conflicts</h3>
       {conflicts.length === 0 ? <p className="note ok">No conflicts found.</p> : pairTable()}
-      {violations.length > 0 && <RuleTable entry={entry} violations={violations} label={label} />}
+      {violations.some((v) => v.type !== "standard") && <RuleTable entry={entry} violations={violations.filter((v) => v.type !== "standard")} label={label} title="Constraint rules not met" />}
+      {violations.some((v) => v.type === "standard") && <RuleTable entry={entry} violations={violations.filter((v) => v.type === "standard")} label={label} title="Non-standard meeting times" orange />}
     </>
   );
 
@@ -94,11 +95,11 @@ function ConflictsTable({ entry }: { entry: Entry }) {
 }
 
 /** Constraint rules that are not met (a different kind of problem from two sections clashing). */
-function RuleTable({ entry, violations, label }: { entry: Entry; violations: RuleViolation[]; label: (id: string) => string }) {
+function RuleTable({ entry, violations, label, title, orange }: { entry: Entry; violations: RuleViolation[]; label: (id: string) => string; title: string; orange?: boolean }) {
   const { openSection, openConstraint } = useEditor();
   return (
     <>
-      <h3 className="rule-heading">Constraint rules not met</h3>
+      <h3 className={`rule-heading${orange ? " warn-orange" : ""}`}>{title}</h3>
       <div className="table-wrap">
         <table>
           <thead>
@@ -109,7 +110,7 @@ function RuleTable({ entry, violations, label }: { entry: Entry; violations: Rul
               <tr key={i}>
                 <td><button className="link" onClick={() => openConstraint(v.rule, entry.id)} title="Edit this rule">{v.rule}</button></td>
                 <td className="nowrap">{v.academicYear} {v.term}</td>
-                <td>{v.message}</td>
+                <td>{orange && <span className="tag tag-standard">standard time</span>} {v.message}</td>
                 <td>
                   {v.sectionIds.slice(0, 6).map((id) => (
                     <button key={id} className="link" onClick={() => openSection(id, entry.id)} title="Edit this section">{label(id)}</button>

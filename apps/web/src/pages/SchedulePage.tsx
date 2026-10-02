@@ -82,7 +82,7 @@ export function SchedulePage() {
                 title="Click to edit"
               >
                 {several && <td className="nowrap muted">{r.scheduleName}</td>}
-                <td className="nowrap">{r.conflict && <span title="Part of a conflict" aria-label="conflict">⚠ </span>}{r.course}</td>
+                <td className="nowrap">{r.conflict && <span title="Part of a conflict" aria-label="conflict">⚠ </span>}{r.nonStandard && !r.conflict && <span className="nonstandard-mark" title="Meets at a time that is not a standard time" aria-label="non-standard time">⚠ </span>}{r.course}</td>
                 <td>{r.section}</td>
                 <td className="nowrap">{r.term}{r.termPart !== "Full" ? ` · ${r.termPart}` : ""}{years.length > 1 ? ` · ${r.year}` : ""}</td>
                 <td>{r.title}</td>

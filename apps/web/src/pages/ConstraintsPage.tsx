@@ -53,7 +53,7 @@ function RuleList({ entry }: { entry: Entry }) {
               <tr key={r.name} className="clickable" tabIndex={0} onClick={() => openConstraint(r.name, entry.id)} onKeyDown={(e) => e.key === "Enter" && openConstraint(r.name, entry.id)} title="Click to edit">
                 <td><strong>{r.name}</strong></td>
                 <td>{describeRule(r)}{r.comment && <div className="muted small">{r.comment}</div>}</td>
-                <td className="nowrap">{n === 0 ? <span className="ok-text">✓ met</span> : <span className="err">⚠ not met ({n})</span>}</td>
+                <td className="nowrap">{n === 0 ? <span className="ok-text">✓ met</span> : <span className={r.type === "standard" ? "warn-orange" : "err"}>⚠ not met ({n})</span>}</td>
               </tr>
             );
           })}
