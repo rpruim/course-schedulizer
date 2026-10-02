@@ -96,7 +96,10 @@ describe("department grid", () => {
   });
   it("tags a part of term and colours by the chosen field", () => {
     const part = make([sec("MATH", "1", "A", { TermPart: "First", CourseLevel: "100", Faculty: "Ada", ...mt("M", "9:00", "50") })]);
-    expect(weekGrids(part, opts()).grids[0]!.blocks[0]!.title).toBe("MATH 1 A · First");
+    const b = weekGrids(part, opts()).grids[0]!.blocks[0]!;
+    expect(b.title).toBe("MATH 1 A");
+    expect(b.detail).toContain("MATH 1 A · First");
+    expect(b.quarters).toEqual([true, true, false, false]);
     expect(weekGrids(part, opts({ colorBy: "level" })).grids[0]!.blocks[0]!.hue).toBe(hueOf("100"));
     expect(weekGrids(part, opts({ colorBy: "instructor" })).grids[0]!.blocks[0]!.hue).toBe(hueOf("Ada"));
   });
@@ -209,7 +212,7 @@ describe("filtering by part of the term", () => {
         parts: [{ term: "XT", code: "Full", name: "Full", startWeek: 1, endWeek: 10 }, { term: "XT", code: "S1", name: "Session 1", startWeek: 1, endWeek: 5 }, { term: "XT", code: "S2", name: "Session 2", startWeek: 6, endWeek: 10 }],
       },
     });
-    expect(weekGrids(custom, opts({ term: "XT", part: "S1" })).grids[0]!.blocks.map((b) => b.title)).toEqual(["X 1 A · S1"]);
+    expect(weekGrids(custom, opts({ term: "XT", part: "S1" })).grids[0]!.blocks.map((b) => [b.title, b.quarters])).toEqual([["X 1 A", [true, true, false, false]]]);
   });
 });
 
@@ -240,5 +243,16 @@ describe("groupGrids", () => {
     expect(groupGrids([results("faculty")[0]!], "faculty").map((x) => x.title)).toEqual(["Ada", "Ben"]);
     expect(groupGrids([], "faculty")).toEqual([]);
     expect(groupGrids([], "dept")[0]!.items).toEqual([]);
+  });
+});
+
+describe("quarter dots", () => {
+  const quarters = (part: string) => weekGrids(make([sec("MATH", "1", "A", { TermPart: part, ...mt("M", "9:00", "50") })]), opts()).grids[0]!.blocks[0]!.quarters;
+  it("fills the quarters a section meets in", () => {
+    expect(quarters("Full")).toEqual([true, true, true, true]);
+    expect(quarters("First")).toEqual([true, true, false, false]);
+    expect(quarters("Second")).toEqual([false, false, true, true]);
+    expect(quarters("A")).toEqual([true, false, false, false]);
+    expect(quarters("D")).toEqual([false, false, false, true]);
   });
 });

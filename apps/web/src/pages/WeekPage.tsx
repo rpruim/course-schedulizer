@@ -185,8 +185,11 @@ function WeekGrid({ grid, onOpen }: { grid: Grid; onOpen: (sectionId: string) =>
                   ["--hue" as string]: b.hue,
                 }}
               >
-                <strong>{level(b.lanes) > 0 ? b.short : b.title}</strong>
-                {b.sub && level(b.lanes) === 0 && <span>{b.sub}</span>}
+                <em className="dots" aria-hidden="true">{b.quarters.map((on, i) => <i key={i} className={on ? "on" : ""} />)}</em>
+                <span className="txt">
+                  <strong>{level(b.lanes) > 0 ? b.short : b.title}</strong>
+                  {b.sub && level(b.lanes) === 0 && <span>{b.sub}</span>}
+                </span>
               </button>
             ))}
           </div>

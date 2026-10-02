@@ -120,11 +120,16 @@ details summary { cursor: pointer; color: var(--muted); }
 .week-axis span { position: absolute; right: 6px; transform: translateY(-50%); font-size: .7rem; color: var(--muted); }
 .week-axis span:first-child { transform: none; }
 .week-col { position: relative; border-left: 1px solid var(--line); background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hour) - 1px), var(--line) calc(var(--hour) - 1px), var(--line) var(--hour)); }
-.block { --bl: 86%; --blfg: #1c2024; --bb: 68%; position: absolute; display: flex; flex-direction: column; align-items: flex-start; gap: 0; overflow: hidden; padding: 2px 5px; text-align: left; font-size: .72rem; line-height: 1.2; border-radius: 4px; cursor: pointer; background: hsl(var(--hue) 60% var(--bl)); color: var(--blfg); border: 1px solid hsl(var(--hue) 45% var(--bb)); }
+.block { --bl: 86%; --blfg: #1c2024; --bb: 68%; position: absolute; display: flex; flex-direction: row; align-items: stretch; gap: 3px; overflow: hidden; padding: 2px 4px; text-align: left; font-size: .72rem; line-height: 1.2; border-radius: 4px; cursor: pointer; background: hsl(var(--hue) 60% var(--bl)); color: var(--blfg); border: 1px solid hsl(var(--hue) 45% var(--bb)); }
 .block strong { font-weight: 600; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .block span { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .85; }
-.block.small { padding: 1px 3px; font-size: .64rem; }
-.block.tiny { padding: 2px 0; font-size: .58rem; align-items: center; }
+.block .txt { width: auto; flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; opacity: 1; }
+.block .dots { display: flex; flex-direction: column; justify-content: flex-start; gap: 1px; flex: none; font-style: normal; padding-top: 1px; }
+.block .dots i { width: 5px; height: 5px; border-radius: 50%; border: 1px solid currentColor; box-sizing: border-box; }
+.block .dots i.on { background: currentColor; }
+.block.small { padding: 1px 2px; font-size: .64rem; gap: 2px; }
+.block.tiny { padding: 2px 1px; font-size: .58rem; gap: 1px; }
+.block.tiny .txt { align-items: center; }
 .block.tiny strong { writing-mode: vertical-rl; width: auto; height: 100%; text-overflow: clip; }
 .block:hover, .block:focus-visible { filter: brightness(.95); outline: 2px solid var(--accent); z-index: 2; }
 .block.conflict { border: 2px solid #c0392b; box-shadow: 0 0 0 1px #c0392b inset; }

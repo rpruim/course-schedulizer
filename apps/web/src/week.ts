@@ -25,6 +25,11 @@ export interface Block {
   end: number;
   /** `MATH 102 A`, with the part of term when it is not the full term. */
   title: string;
+  /**
+   * Which quarters of the term the section meets, for the four dots: the term's full weeks are
+   * split into four equal parts (a half term fills two dots, a full term all four).
+   */
+  quarters: boolean[];
   /** `MATH 102A` — the primary listing only, for crowded blocks. */
   short: string;
   /** A second line: who or where, depending on the grid. */
@@ -147,6 +152,17 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
 
   const hueFor = (s: Session) => hueOf(o.colorBy === "level" ? (s.courseLevel || s.courseNumber.slice(0, 1)) : o.colorBy === "instructor" ? (s.faculty[0]?.name ?? "") : s.prefix);
   const label = (s: Session) => `${courseName(s)} ${s.section}`;
+  const quartersOf = (s: Session): boolean[] => {
+    const full = weeksOf(schedule.settings, s.term, "Full") ?? [1, 16];
+    const mine = weeksOf(schedule.settings, s.term, s.termPart);
+    if (!mine) return [true, true, true, true];
+    const len = full[1] - full[0] + 1;
+    return [0, 1, 2, 3].map((i) => {
+      const from = full[0] + Math.floor((i * len) / 4);
+      const to = full[0] + Math.floor(((i + 1) * len) / 4) - 1;
+      return mine[0] <= Math.max(to, from) && from <= mine[1];
+    });
+  };
   const partTag = (s: Session) => (s.termPart !== "Full" ? ` · ${s.termPart}` : "");
 
   const blockFor = (s: Session, day: string, sub: string): Block => ({
@@ -155,7 +171,8 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
     day,
     start: s.start!,
     end: Math.min(1440, s.start! + s.duration!),
-    title: `${label(s)}${partTag(s)}`,
+    title: label(s),
+    quarters: quartersOf(s),
     short: `${s.prefix} ${s.courseNumber}${s.section}`,
     sub,
     detail: [`${label(s)}${partTag(s)}`, s.shortTitle, s.faculty.map((f) => f.name).join(", "), `${[...s.days].join("")} ${timeRange(s)}`, s.room].filter(Boolean).join("\n"),
