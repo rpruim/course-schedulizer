@@ -107,7 +107,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     title: "Looking at your schedule",
     body: () => (
       <>
-        <p>Each view tab shows the schedule in a different way. Click a column heading to sort a table; click again to reverse the sort.</p>
+        <p>The bar under the Schedules row groups the pages: <strong>Schedule</strong>, then menus for <strong>Loads</strong>, <strong>View</strong> (the week grids), <strong>Check</strong> (conflicts, constraints, comparison), <strong>File</strong> (meta, import, export) and <strong>Help</strong>. Click a menu to open it; the menu you are in is underlined. Each page shows the schedule in a different way. Click a column heading to sort a table; click again to reverse the sort.</p>
         <dl>
           <dt><Link to="/">Schedule</Link></dt>
           <dd>One row per section: course, section letter, term, title, instructor, load and meeting times. Filter by year, term or text. Click a row to edit it. A ⚠ marks a section in a conflict.</dd>
