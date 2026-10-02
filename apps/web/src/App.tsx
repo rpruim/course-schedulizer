@@ -7,6 +7,7 @@ import { ConflictsPage } from "./pages/ConflictsPage";
 import { MetaPage } from "./pages/MetaPage";
 import { ExportPage } from "./pages/ExportPage";
 import { ImportPage } from "./pages/ImportPage";
+import { HelpPage } from "./pages/HelpPage";
 import { LoadsPage } from "./pages/LoadsPage";
 import { NonTeachingPage } from "./pages/NonTeachingPage";
 import { SchedulePage } from "./pages/SchedulePage";
@@ -26,6 +27,7 @@ const tabs = (reports: OpenReport[] | undefined, setReports: (r: OpenReport[] | 
   { to: "/meta", label: "Meta", element: <MetaPage /> },
   { to: "/import", label: "Import", element: <ImportPage reports={reports} onReports={setReports} onDismiss={() => setReports(undefined)} /> },
   { to: "/export", label: "Export", element: <ExportPage /> },
+  { to: "/help", label: "Help", element: <HelpPage /> },
 ];
 
 function Shell() {

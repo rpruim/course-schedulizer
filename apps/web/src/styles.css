@@ -233,3 +233,16 @@ table.mini th:nth-child(9) { width: 10%; }
 
 header { align-items: center; }
 .toolbar { display: flex; gap: 6px; margin-left: auto; }
+
+.help { max-width: 760px; }
+.help h2 { margin: 0 0 8px; }
+.help h3 { font-size: 1rem; margin: 16px 0 4px; }
+.help-section { margin: 28px 0 0; scroll-margin-top: 8px; }
+.help-section h2 { padding-top: 12px; border-top: 1px solid var(--line); }
+.help ul, .help ol { padding-left: 22px; }
+.help li { margin: 4px 0; }
+.help dt { font-weight: 600; margin-top: 8px; }
+.help dd { margin: 0 0 0 16px; }
+.help code { font-size: .85em; padding: 0 3px; border-radius: 3px; background: var(--panel); border: 1px solid var(--line); }
+.help-toc { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 8px; padding: 8px 0; border-bottom: 0; }
+.help-toc a { padding: 0; border: 0; color: var(--accent); }
