@@ -3,6 +3,10 @@ import {
   courseDisplayName,
   findConflicts,
   listingsOf,
+  partsFor,
+  weeksOf,
+  weeksOverlap,
+  type PartDef,
   type Schedule,
   type Session,
 } from "@schedulizer/core";
@@ -55,6 +59,12 @@ export interface WeekOptions {
   term: string;
   kind: GridKind;
   colorBy: ColorBy;
+  /**
+   * Show only sections that meet during this part of the term (a part code such as `First` or
+   * `C`): those whose weeks overlap the part's weeks, so `First` shows Full, First, A and B.
+   * Absent, or the full term, shows everything.
+   */
+  part?: string;
   /** Show only this grid: an instructor's or a room's name (faculty and room grids). */
   only?: string;
   /** Department grid: only this prefix. */
@@ -63,6 +73,8 @@ export interface WeekOptions {
 
 export interface WeekResult {
   grids: Grid[];
+  /** The parts this term offers, for the part selector (hide it when there is only one). */
+  parts: PartDef[];
   /** Choices for the instructor / room selector, for the grid kind asked for. */
   choices: string[];
   /** Room grids: meetings left out because they name no room (or a non-room such as "Online"). */
@@ -115,7 +127,18 @@ export function layoutLanes<T extends { start: number; end: number; lane: number
 export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
   const flagged = conflictedSessions(findConflicts(schedule));
   const nonRooms = new Set(schedule.settings.nonRooms.map(norm));
-  const inTerm = schedule.sessions.filter((s) => s.academicYear === o.year && s.term === o.term);
+  const termAll = schedule.sessions.filter((s) => s.academicYear === o.year && s.term === o.term);
+  const parts = partsFor(schedule.settings, o.term);
+
+  // Sections that meet during the chosen part of the term (unknown parts are kept: an import error elsewhere).
+  const wanted = o.part ? weeksOf(schedule.settings, o.term, o.part) : undefined;
+  const inTerm = wanted
+    ? termAll.filter((s) => {
+        const w = weeksOf(schedule.settings, s.term, s.termPart);
+        return !w || weeksOverlap(w, wanted);
+      })
+    : termAll;
+
   const firstOf = new Map<string, Session>();
   for (const s of inTerm) if (!firstOf.has(s.sectionId)) firstOf.set(s.sectionId, s);
   const courseName = (s: Session) => courseDisplayName(listingsOf(s, schedule.crossListings));
@@ -162,37 +185,36 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
   if (o.kind === "dept") {
     const sessions = inTerm.filter((s) => !o.prefix || s.prefix === o.prefix);
     const ids = [...new Set(sessions.map((s) => s.sectionId))];
-    return { grids: [gridOf("dept", "Department", sessions, instructors, ids)], choices: [...new Set(inTerm.map((s) => s.prefix))].sort(natural), withoutRoom: 0 };
+    return { grids: [gridOf("dept", "Department", sessions, instructors, ids)], parts, choices: [...new Set(termAll.map((s) => s.prefix))].sort(natural), withoutRoom: 0 };
   }
 
   if (o.kind === "faculty") {
+    // The choices come from the whole term, so a part filter never removes the selected person.
     const people = new Map<string, string>(); // key → display name
-    for (const s of inTerm) for (const f of s.faculty) if (f.name !== "*" && !people.has(norm(f.name))) people.set(norm(f.name), f.name.trim());
+    for (const s of termAll) for (const f of s.faculty) if (f.name !== "*" && !people.has(norm(f.name))) people.set(norm(f.name), f.name.trim());
     const choices = [...people.values()].sort(natural);
-    const pick = o.only ? [o.only] : choices;
-    const grids = pick.map((name) => {
-      const mine = inTerm.filter((s) => s.faculty.some((f) => norm(f.name) === norm(name)));
-      return gridOf(`f:${norm(name)}`, name, mine, (s) => s.room, [...new Set(mine.map((s) => s.sectionId))]);
-    });
-    return { grids, choices, withoutRoom: 0 };
+    const grids = (o.only ? [o.only] : choices)
+      .map((name) => {
+        const mine = inTerm.filter((s) => s.faculty.some((f) => norm(f.name) === norm(name)));
+        return gridOf(`f:${norm(name)}`, name, mine, (s) => s.room, [...new Set(mine.map((s) => s.sectionId))]);
+      })
+      .filter((g) => o.only || g.blocks.length > 0 || g.unscheduled.length > 0);
+    return { grids, parts, choices, withoutRoom: 0 };
   }
 
   // rooms
   const rooms = new Map<string, string>();
-  let withoutRoom = 0;
-  for (const s of inTerm) {
+  for (const s of termAll) {
     if (!scheduled(s)) continue;
     const k = norm(s.room);
-    if (k === "" || nonRooms.has(k)) withoutRoom++;
-    else if (!rooms.has(k)) rooms.set(k, s.room.trim());
+    if (k !== "" && !nonRooms.has(k) && !rooms.has(k)) rooms.set(k, s.room.trim());
   }
+  const withoutRoom = inTerm.filter((s) => scheduled(s) && (norm(s.room) === "" || nonRooms.has(norm(s.room)))).length;
   const choices = [...rooms.values()].sort(natural);
-  const pick = o.only ? [o.only] : choices;
-  const grids = pick.map((name) => {
-    const here = inTerm.filter((s) => norm(s.room) === norm(name));
-    return gridOf(`r:${norm(name)}`, name, here, instructors, []);
-  });
-  return { grids, choices, withoutRoom };
+  const grids = (o.only ? [o.only] : choices)
+    .map((name) => gridOf(`r:${norm(name)}`, name, inTerm.filter((s) => norm(s.room) === norm(name)), instructors, []))
+    .filter((g) => o.only || g.blocks.length > 0);
+  return { grids, parts, choices, withoutRoom };
 }
 
 /** `8 AM`, `1 PM`: a label for a whole-hour mark on the time axis. */

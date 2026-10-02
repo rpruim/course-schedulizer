@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { partsFor } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
 import { yearsOf } from "../model";
 import { useSchedule } from "../state";
@@ -20,6 +21,7 @@ export function WeekPage({ kind }: { kind: GridKind }) {
   const { openSection } = useEditor();
   const [pickedYear, setPickedYear] = useState("");
   const [pickedTerm, setPickedTerm] = useState("");
+  const [pickedPart, setPickedPart] = useState("Full");
   const [colorBy, setColorBy] = useState<ColorBy>("prefix");
   const [only, setOnly] = useState("");
 
@@ -28,13 +30,17 @@ export function WeekPage({ kind }: { kind: GridKind }) {
   const terms = termsFor(schedule, year);
   const term = terms.some((t) => t.code === pickedTerm) ? pickedTerm : (terms[0]?.code ?? "");
 
+  // The part of the term to show; a part this term does not have means the whole term.
+  const termParts = partsFor(schedule.settings, term);
+  const part = termParts.some((p) => p.code === pickedPart) ? pickedPart : "Full";
+
   const result = useMemo(
-    () => weekGrids(schedule, { year, term, kind, colorBy, ...(only ? { only } : {}), ...(kind === "dept" && only ? { prefix: only } : {}) }),
-    [schedule, year, term, kind, colorBy, only],
+    () => weekGrids(schedule, { year, term, kind, colorBy, part, ...(only ? { only } : {}), ...(kind === "dept" && only ? { prefix: only } : {}) }),
+    [schedule, year, term, kind, colorBy, part, only],
   );
   // A choice that no longer exists (a different file or term) means "all".
   const effectiveOnly = result.choices.includes(only) ? only : "";
-  const shown = effectiveOnly === only ? result : weekGrids(schedule, { year, term, kind, colorBy });
+  const shown = effectiveOnly === only ? result : weekGrids(schedule, { year, term, kind, colorBy, part });
 
   if (schedule.sessions.length === 0) return <Empty />;
   const k = KIND[kind];
@@ -52,6 +58,15 @@ export function WeekPage({ kind }: { kind: GridKind }) {
             {terms.map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
           </select>
         </label>
+        {termParts.length > 1 && (
+          <label className="field" title="Show the sections that meet during these weeks">Weeks
+            <select value={part} onChange={(e) => setPickedPart(e.target.value)}>
+              {termParts.map((p) => (
+                <option key={p.code} value={p.code}>{p.code === "Full" ? "Full term (all sections)" : `${p.name} (weeks ${p.startWeek}–${p.endWeek})`}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="field">{k.label}
           <select value={effectiveOnly} onChange={(e) => setOnly(e.target.value)}>
             <option value="">{k.all}</option>

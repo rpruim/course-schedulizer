@@ -158,3 +158,57 @@ describe("hourLabel", () => {
     expect([480, 720, 780, 1020, 1320].map(hourLabel)).toEqual(["8 AM", "12 PM", "1 PM", "5 PM", "10 PM"]);
   });
 });
+
+describe("filtering by part of the term", () => {
+  // one course per part, all meeting at the same time, so lanes show how crowded the slot is
+  const parts = ["Full", "First", "Second", "A", "B", "C", "D"];
+  const s = make(parts.map((p, i) => sec("MATH", String(100 + i), "A", { TermPart: p, Faculty: `Prof ${p}`, ...mt("MWF", "09:00", "50", `NH ${i}`) })));
+  const shown = (part?: string) =>
+    [...new Set(weekGrids(s, opts(part ? { part } : {})).grids[0]!.blocks.map((b) => b.title.replace(/ A.*$/, "").replace("MATH ", "")))]
+      .map((n) => parts[Number(n) - 100]!)
+      .sort();
+
+  it("shows every section for the full term, or when no part is chosen", () => {
+    expect(shown()).toEqual([...parts].sort());
+    expect(shown("Full")).toEqual([...parts].sort());
+  });
+  it("shows the sections whose weeks overlap the chosen part", () => {
+    expect(shown("First")).toEqual(["A", "B", "First", "Full"]);
+    expect(shown("Second")).toEqual(["C", "D", "Full", "Second"]);
+    expect(shown("A")).toEqual(["A", "First", "Full"]);
+    expect(shown("B")).toEqual(["B", "First", "Full"]);
+    expect(shown("C")).toEqual(["C", "Full", "Second"]);
+    expect(shown("D")).toEqual(["D", "Full", "Second"]);
+  });
+  it("needs fewer side-by-side lanes once the part is chosen", () => {
+    const lanes = (part?: string) => Math.max(...weekGrids(s, opts(part ? { part } : {})).grids[0]!.blocks.map((b) => b.lanes));
+    expect(lanes()).toBe(7);
+    expect(lanes("First")).toBe(4);
+    expect(lanes("A")).toBe(3);
+  });
+  it("offers the parts of the term", () => {
+    expect(weekGrids(s, opts()).parts.map((p) => p.code)).toEqual(parts);
+    expect(weekGrids(s, opts({ term: "WI" })).parts.map((p) => p.code)).toEqual(["Full"]);
+  });
+  it("applies to faculty and room grids and their unscheduled lists, but never changes the choices", () => {
+    const fac = weekGrids(s, opts({ kind: "faculty", part: "D" }));
+    expect(fac.choices).toHaveLength(7); // everyone stays selectable
+    expect(fac.grids.map((g) => g.title)).toEqual(["Prof D", "Prof Full", "Prof Second"]);
+    expect(weekGrids(s, opts({ kind: "faculty", part: "D", only: "Prof A" })).grids[0]!.blocks).toEqual([]);
+    const room = weekGrids(s, opts({ kind: "room", part: "A" }));
+    expect(room.choices).toHaveLength(7);
+    expect(room.grids).toHaveLength(3);
+    const un = make([sec("MATH", "1", "A", { TermPart: "C" }), sec("MATH", "2", "A", { TermPart: "A" })]);
+    expect(weekGrids(un, opts({ part: "A" })).grids[0]!.unscheduled.map((u) => u.label)).toEqual(["MATH 2 A"]);
+  });
+  it("uses each term's own parts", () => {
+    const custom = make([sec("X", "1", "A", { Term: "XT", TermPart: "S1", ...mt("M", "9:00", "50") }), sec("X", "2", "A", { Term: "XT", TermPart: "S2", ...mt("M", "9:00", "50") })], {
+      settings: {
+        ...importRecords({ sessions: [] }).schedule.settings,
+        terms: [{ code: "XT", name: "Made-up" }],
+        parts: [{ term: "XT", code: "Full", name: "Full", startWeek: 1, endWeek: 10 }, { term: "XT", code: "S1", name: "Session 1", startWeek: 1, endWeek: 5 }, { term: "XT", code: "S2", name: "Session 2", startWeek: 6, endWeek: 10 }],
+      },
+    });
+    expect(weekGrids(custom, opts({ term: "XT", part: "S1" })).grids[0]!.blocks.map((b) => b.title)).toEqual(["X 1 A · S1"]);
+  });
+});
