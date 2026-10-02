@@ -19,7 +19,7 @@ const KIND = {
 /** Department, faculty or room week: sections as blocks on a Monday–Friday grid; click a block to edit it. */
 export function WeekPage({ kind }: { kind: GridKind }) {
   const ws = useWorkspace();
-  const { openSection } = useEditor();
+  const { openSection, openNew } = useEditor();
   // Arriving from a link (the loads table) can name the person, year and term to show.
   const [params] = useSearchParams();
   const [pickedYear, setPickedYear] = useState(params.get("year") ?? "");
@@ -103,6 +103,24 @@ export function WeekPage({ kind }: { kind: GridKind }) {
           </select>
         </label>
         <span className="muted legend"><span className="swatch conflict-swatch" /> conflict</span>
+        <span className="spacer" />
+        <button
+          className="primary"
+          title={ws.current ? `Adds to “${ws.current.name}”${effectiveOnly ? `, starting from ${effectiveOnly}` : ""}` : ""}
+          onClick={() =>
+            openNew({
+              academicYear: year,
+              ...(term ? { term } : {}),
+              ...(part !== "Full" ? { termPart: part } : {}),
+              // a grid for one subject, person or room starts the new section there
+              ...(effectiveOnly && kind === "dept" ? { prefix: effectiveOnly } : {}),
+              ...(effectiveOnly && kind === "faculty" ? { faculty: [{ name: effectiveOnly }] } : {}),
+              ...(effectiveOnly && kind === "room" ? { meetings: [{ days: "", room: effectiveOnly }] } : {}),
+            })
+          }
+        >
+          Add section{ws.entries.length > 1 && ws.current ? ` to “${ws.current.name}”` : ""}
+        </button>
       </div>
       {kind === "room" && withoutRoom > 0 && (
         <p className="note">{withoutRoom} meeting{withoutRoom === 1 ? " has" : "s have"} no room (or a room such as “Online”), so they are not on a room grid.</p>

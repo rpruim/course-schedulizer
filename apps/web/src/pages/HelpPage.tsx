@@ -157,7 +157,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     body: () => (
       <>
         <ul>
-          <li><strong>Add a section</strong> with the <em>Add section</em> button on the Schedule tab. It goes into the <em>current</em> schedule (see <a href="#several" onClick={jump("several")}>Several schedules</a>).</li>
+          <li><strong>Add a section</strong> with the <em>Add section</em> button on the Schedule tab or on any of the week tabs. On a week tab it starts from what you are looking at: the year and term, the part of the term, and the subject, instructor or room if you have picked one. It goes into the <em>current</em> schedule (see <a href="#several" onClick={jump("several")}>Several schedules</a>).</li>
           <li><strong>Edit a section</strong> by clicking it: a row on the Schedule tab, a block on a week grid, or a section named in the Conflicts list.</li>
           <li><strong>Make several similar sections</strong> by editing one and choosing <em>Add another section of this course</em>: it opens a copy with the next free letter. Change what differs and save.</li>
           <li><strong>Several meetings</strong> (for example MW at one time and F at another) are separate meetings in the same section: use <em>+ Add meeting</em> in the editor.</li>
