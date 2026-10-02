@@ -1,0 +1,42 @@
+# Default terms and parts of terms for Course Schedulizer.
+#
+# This is the only place these are defined. Edit it, then run
+#
+#     pnpm run settings
+#
+# (the build, test and dev commands do this for you). That regenerates
+# packages/core/src/settings.defaults.generated.ts, which the app uses for any schedule that does
+# not bring its own Settings sheet. A schedule's own Settings sheet, when it has one, wins.
+
+# The terms of an academic year, in the order they are listed and tabulated.
+# `code` is what appears in the Term column of schedules.
+terms:
+  - code: FA
+    name: Fall
+  - code: WI
+    name: Winter Intensive
+    # A term that does not follow the semester grid lists its own parts here.
+    # Every term needs a "Full" part (the default for a section with no part given).
+    parts:
+      - { code: Full, name: Winter intensive, weeks: [1, 2] }
+  - code: SP
+    name: Spring
+  - code: SU
+    name: Summer
+
+# Parts of a term, used by every term that does not list its own `parts` above.
+# `weeks` is the first and last week of the term the part covers, inclusive.
+defaultParts:
+  - { code: Full,   name: Full term,    weeks: [1, 16] }
+  - { code: First,  name: First half,   weeks: [1, 8] }
+  - { code: Second, name: Second half,  weeks: [9, 16] }
+  - { code: A,      name: Intensive A,  weeks: [1, 4] }
+  - { code: B,      name: Intensive B,  weeks: [5, 8] }
+  - { code: C,      name: Intensive C,  weeks: [9, 12] }
+  - { code: D,      name: Intensive D,  weeks: [13, 16] }
+
+# Terms over which year-long (AY) non-teaching load is split evenly in the load tables.
+spreadTerms: [FA, SP]
+
+# Values of the Room column that are not rooms. They never conflict with each other.
+nonRooms: [Off Campus, Online, TBD]

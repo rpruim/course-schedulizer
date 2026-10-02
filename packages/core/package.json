@@ -13,9 +13,9 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "build": "node ../../tools/gen-settings.mjs && tsc -p tsconfig.json",
+    "typecheck": "node ../../tools/gen-settings.mjs && tsc -p tsconfig.json --noEmit",
+    "test": "node ../../tools/gen-settings.mjs && vitest run"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

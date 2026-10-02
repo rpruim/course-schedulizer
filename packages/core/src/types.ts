@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_NON_ROOMS, DEFAULT_PARTS, DEFAULT_SPREAD_TERMS, DEFAULT_TERM_PARTS, DEFAULT_TERMS } from "./settings.defaults.generated.js";
 
 /** Day letters in canonical order. `R` is Thursday, `U` Sunday. */
 export const DAY_ORDER = "MTWRFSU";
@@ -167,32 +168,14 @@ export interface Schedule {
   constraints: Constraint[];
 }
 
-export const DEFAULT_TERMS: TermDef[] = [
-  { code: "FA", name: "Fall" },
-  { code: "WI", name: "Winter Intensive" },
-  { code: "SP", name: "Spring" },
-  { code: "SU", name: "Summer" },
-];
-
-/** Semester parts, used by every term that does not define its own (spec §2.1). */
-export const DEFAULT_PARTS: PartDef[] = [
-  { code: "Full", name: "Full term", startWeek: 1, endWeek: 16 },
-  { code: "First", name: "First half", startWeek: 1, endWeek: 8 },
-  { code: "Second", name: "Second half", startWeek: 9, endWeek: 16 },
-  { code: "A", name: "Intensive A", startWeek: 1, endWeek: 4 },
-  { code: "B", name: "Intensive B", startWeek: 5, endWeek: 8 },
-  { code: "C", name: "Intensive C", startWeek: 9, endWeek: 12 },
-  { code: "D", name: "Intensive D", startWeek: 13, endWeek: 16 },
-];
-
-/** Parts of terms that do not follow the semester grid: the 2-week winter intensive. */
-export const DEFAULT_TERM_PARTS: PartDef[] = [{ term: "WI", code: "Full", name: "Winter intensive", startWeek: 1, endWeek: 2 }];
+// The default terms and parts live in config/settings.yaml; tools/gen-settings.mjs generates this module from it.
+export { DEFAULT_PARTS, DEFAULT_TERM_PARTS, DEFAULT_TERMS } from "./settings.defaults.generated.js";
 
 export const defaultSettings = (): Settings => ({
   terms: DEFAULT_TERMS.map((t) => ({ ...t })),
   parts: [...DEFAULT_PARTS, ...DEFAULT_TERM_PARTS].map((p) => ({ ...p })),
-  spreadTerms: ["FA", "SP"],
-  nonRooms: ["Off Campus", "Online", "TBD"],
+  spreadTerms: [...DEFAULT_SPREAD_TERMS],
+  nonRooms: [...DEFAULT_NON_ROOMS],
 });
 export const emptyMeta = (): Meta => ({ name: "", nickname: "", saveAs: DEFAULT_SAVE_AS, timestamp: true, notes: "", version: "" });
 export const emptySchedule = (): Schedule => ({

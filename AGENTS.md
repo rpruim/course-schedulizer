@@ -19,4 +19,3 @@
   sentence is fine.
 - Write the subject line in the imperative mood and keep it short (about 70 characters or fewer).
   Use the body to say what changed and why, not how.
-- Commit only when asked.

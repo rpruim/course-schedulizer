@@ -29,6 +29,14 @@ Open an Excel file (the app's own export, or a file from the old Course
 Schedulizer — if it has no academic year, type one in first), or load one of the
 built-in synthetic examples.
 
+## Terms and parts of terms
+
+The default terms (Fall, Winter Intensive, Spring, Summer), their parts (full term, halves,
+quarters) and a few related defaults are defined in `config/settings.yaml`. Edit that file and
+run `pnpm run settings` (the build, test and dev commands also do it); that regenerates
+`packages/core/src/settings.defaults.generated.ts`. A schedule's own Settings sheet overrides
+these defaults. A Settings screen is planned for later.
+
 ## License
 
 MIT — see `LICENSE`. The licenses of the libraries this project uses are in
