@@ -1,6 +1,7 @@
-# Course Schedulizer 2.0
+# Course Schedulizer 
 
-A from-scratch rewrite of the Course Schedulizer: build and check academic course
+A from-scratch rewrite of [this Course Schedulizer](https://github.com/senior-knights/course-schedulizer):
+Build and check academic course
 schedules, import and export them as Excel files, and see faculty load and
 conflicts. Single editor; a schedule is shared by sending its Excel file.
 
