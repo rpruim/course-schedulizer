@@ -153,8 +153,13 @@ describe("importSessions: validation", () => {
     const r = importSessions([rec({ Term: "J" })], { ...defaultSettings(), terms: [{ code: "J", name: "January" }] });
     expect(r.issues).toEqual([]);
   });
-  it("requires identifying fields", () => {
-    expect(importSessions([{ Term: "FA" }]).issues.some((i) => i.severity === "error")).toBe(true);
+  it("requires identifying fields, and says which are blank, once per row", () => {
+    const issues = importSessions([{ Term: "FA", Prefix: "MATH", MeetingDays: "M\nW", StartTime: "9:00", MeetingDuration: "50" }]).issues;
+    expect(issues.map((i) => i.message)).toEqual([
+      "AcademicYear is blank; give a default academic year when opening the file",
+      "CourseNumber is blank",
+      "Section is blank",
+    ]);
   });
   it("rejects bad numbers, times, days and half-specified meetings", () => {
     expect(errors({ FacultyLoad: "lots" })[0]).toMatch(/not a number/);

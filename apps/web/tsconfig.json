@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "moduleResolution": "Bundler",
+    "types": ["vite/client", "node"],
+    "baseUrl": ".",
+    "paths": { "@schedulizer/core": ["../../packages/core/src/index.ts"] }
+  },
+  "include": ["src"]
+}

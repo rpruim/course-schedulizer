@@ -192,6 +192,7 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
       const people = parseFaculty(k.Faculty ?? "");
       const before = r.issues.length;
       const who = `${k.Faculty || "no faculty"}: ${k.InstructionalMethod || "no activity"}`;
+      if (!k.AcademicYear) r.add("error", row, `AcademicYear is blank (${who}); give a default academic year when opening the file`);
       if (!t) r.add("error", row, `a non-teaching row needs a Term (${who})`);
       else if (!terms.has(t) && t !== AY) r.add("error", row, `Term: "${k.Term}" is not a configured term (${[...terms].join(", ")}) (${who})`);
       if (!people.length) r.add("error", row, "a non-teaching row (no Prefix, CourseNumber or Section) needs a Faculty");
@@ -240,6 +241,16 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
       courseNumber: primary.courseNumber,
       section: k.Section ?? "",
     };
+    // Say plainly which required cells are blank, once per row (not once per meeting).
+    const blank = ([["AcademicYear", base.academicYear], ["Term", term], ["Prefix", base.prefix], ["CourseNumber", base.courseNumber], ["Section", base.section]] as const)
+      .filter(([, v]) => !v)
+      .map(([name]) => name);
+    if (blank.length) {
+      for (const name of blank) {
+        r.add("error", row, name === "AcademicYear" ? "AcademicYear is blank; give a default academic year when opening the file" : `${name} is blank`);
+      }
+      return;
+    }
     const sectionId = k.SectionId || (base.academicYear && term && base.prefix && base.courseNumber && base.section ? deriveSectionId(base) : "");
 
     const section = {
