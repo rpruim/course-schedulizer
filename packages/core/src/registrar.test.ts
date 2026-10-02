@@ -30,6 +30,14 @@ describe("registrar tab", () => {
     expect(t.rows.map((r) => Object.fromEntries(t.header.map((h, i) => [h, r[i]])))).toEqual(expected);
   });
 
+  it("can leave non-teaching rows out for a teaching-only export", () => {
+    const all = registrarTable(schedule());
+    const teaching = registrarTable(schedule(), { includeNonTeaching: false });
+    expect(all.rows.length - teaching.rows.length).toBe(3);
+    expect(teaching.rows.every((r) => r[teaching.header.indexOf("Prefix")] !== "")).toBe(true);
+    expect(teaching.rows).toEqual(all.rows.slice(3));
+  });
+
   it("puts every meeting in the compact cells, aligned (the old app kept only the first meeting's time)", () => {
     const t = registrarTable(schedule());
     const col = (n: string) => t.header.indexOf(n);

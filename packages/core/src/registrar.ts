@@ -36,13 +36,14 @@ const compact = (values: string[]) => values.join("\n");
  * - Non-teaching load follows the old app and is listed inline first, as rows
  *   with no course: the activity in InstructionalMethod, `0` StudentCredits. A
  *   year-long (`AY`) row appears once per spread term with the load divided.
+ *   `includeNonTeaching: false` leaves those rows out (a teaching-only export).
  */
-export function registrarTable(schedule: Schedule): Table {
+export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: boolean } = {}): Table {
   const rows: string[][] = [];
   const row = (c: Record<(typeof REGISTRAR_COLUMNS)[number], string>) => REGISTRAR_COLUMNS.map((h) => c[h]);
 
   const spread = schedule.settings.spreadTerms;
-  for (const n of schedule.nonTeaching) {
+  for (const n of opts.includeNonTeaching === false ? [] : schedule.nonTeaching) {
     const terms = n.term === AY && spread.length ? spread : [n.term];
     for (const term of terms) {
       rows.push(row({

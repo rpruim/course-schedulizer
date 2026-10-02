@@ -79,6 +79,20 @@ describe("workbook layout", () => {
     ]);
   });
 
+  it("a teaching-only export carries no non-teaching load anywhere, and still imports", async () => {
+    const s = sample();
+    const bytes = await writeWorkbook(s, { includeNonTeaching: false });
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(bytes as unknown as ArrayBuffer);
+    expect(wb.worksheets.map((w) => w.name)).not.toContain("NonTeaching");
+    const text = JSON.stringify(wb.worksheets.map((w) => w.getSheetValues()));
+    expect(text).not.toMatch(/Chair release|Sabbatical/);
+    const back = await readWorkbook(bytes);
+    expect(back.issues).toEqual([]);
+    expect(back.schedule.nonTeaching).toEqual([]);
+    expect(back.schedule.sessions).toEqual(s.sessions);
+  });
+
   it("round-trips mixed scheduled and unscheduled meetings in the compact form", async () => {
     const s = sample();
     const back = await readWorkbook(await writeWorkbook(s, { packed: true }));

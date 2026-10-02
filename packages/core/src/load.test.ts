@@ -102,6 +102,12 @@ describe("loadTable", () => {
     expect(t.totals.total).toBe(32);
     expect(t.totals.teaching).toEqual({ FA: 18, SP: 4, SU: 2, WI: 1 });
   });
+  it("says when there is no non-teaching load, so a view can flag incomplete totals", () => {
+    expect(loadTable(schedule("cases/load-sessions.csv", "cases/load-nonteaching.csv"), "L1").hasNonTeaching).toBe(true);
+    const teachingOnly = loadTable(schedule("cases/load-sessions.csv"), "L1");
+    expect(teachingOnly.hasNonTeaching).toBe(false);
+    expect(teachingOnly.rows.map((r) => r.total)).toEqual([14, 11]); // teaching load only
+  });
   it("sorts the old-app data by total load, descending", () => {
     const t = loadTable(schedule("sessions.csv"), "AY24");
     expect(t.terms).toEqual(["FA", "SP"]);

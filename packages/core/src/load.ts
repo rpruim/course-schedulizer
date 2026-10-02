@@ -103,6 +103,11 @@ export interface LoadTable {
   /** Load on sections with no instructor; not part of `totals`. */
   unassigned?: LoadTableRow;
   totals: { teaching: Record<string, number>; nonteaching: Record<string, number>; total: number };
+  /**
+   * False when the schedule has no non-teaching load at all (e.g. a file shared without it, or an
+   * archived first tab), so totals cover teaching load only. A view should say so.
+   */
+  hasNonTeaching: boolean;
 }
 
 /** The wide faculty-load table (faculty × terms, teaching and non-teaching separately) for one academic year. */
@@ -127,5 +132,6 @@ export function loadTable(schedule: Schedule, academicYear: string): LoadTable {
     }
     totals.total = round(totals.total + p.total);
   }
-  return { terms, rows: list, ...(unassigned ? { unassigned } : {}), totals };
+  const hasNonTeaching = schedule.nonTeaching.some((n) => n.academicYear === academicYear);
+  return { terms, rows: list, ...(unassigned ? { unassigned } : {}), totals, hasNonTeaching };
 }

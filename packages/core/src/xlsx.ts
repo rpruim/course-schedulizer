@@ -100,6 +100,13 @@ function addTable(wb: ExcelJS.Workbook, name: string, t: Table, numeric: Set<str
 }
 
 export interface WriteOptions extends ExportOptions {
+  /**
+   * `false` writes a teaching-only workbook: no `NonTeaching` sheet and no
+   * non-teaching rows in the registrar tab, so the file can be shared without
+   * that load. (Deleting the `NonTeaching` tab by hand is not enough: the
+   * registrar tab lists those rows too.) Default `true`.
+   */
+  includeNonTeaching?: boolean;
   /** The export time shown on the Metadata sheet (default: now). */
   now?: Date;
 }
@@ -114,10 +121,11 @@ const two = (n: number) => String(n).padStart(2, "0");
 export async function writeWorkbook(schedule: import("./types.js").Schedule, opts: WriteOptions = {}): Promise<Uint8Array> {
   const wb = new ExcelJS.Workbook();
   // The registrar tab keeps FacultyLoad and StudentCredits as text, as the old app did; only Duration is numeric.
-  addTable(wb, REGISTRAR_SHEET, registrarTable(schedule), new Set(["Duration"]));
+  const withNonTeaching = opts.includeNonTeaching !== false;
+  addTable(wb, REGISTRAR_SHEET, registrarTable(schedule, { includeNonTeaching: withNonTeaching }), new Set(["Duration"]));
   addTable(wb, "Sessions", sessionsTable(schedule, opts));
   addTable(wb, "CrossListings", crossListingsTable(schedule, opts));
-  addTable(wb, "NonTeaching", nonTeachingTable(schedule));
+  if (withNonTeaching) addTable(wb, "NonTeaching", nonTeachingTable(schedule));
   addTable(wb, "Constraints", constraintsTable(schedule));
   addTable(wb, "Settings", {
     header: ["Kind", "Code", "Name", "Term", "StartWeek", "EndWeek"],
