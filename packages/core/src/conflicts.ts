@@ -1,4 +1,4 @@
-import { listingsOf } from "./names.js";
+import { constraintNames, listingKeys } from "./constraints.js";
 import { weeksOf, weeksOverlap } from "./terms.js";
 import type { Schedule, Session } from "./types.js";
 
@@ -44,7 +44,7 @@ export function findConflicts(schedule: Schedule): Conflict[] {
   const people = new Map<string, Set<string>>();
   const display = new Map<string, string>();
   const wildcard = new Set<string>();
-  const courses = new Map<string, Set<string>>();
+  const memberOf = new Map<string, Set<string>>();
   for (const [id, s] of first) {
     const names = new Set<string>();
     for (const f of s.faculty) {
@@ -55,13 +55,8 @@ export function findConflicts(schedule: Schedule): Conflict[] {
       }
     }
     people.set(id, names);
-    courses.set(id, new Set(listingsOf(s, schedule.crossListings).map((l) => norm(`${l.prefix} ${l.courseNumber}`))));
-  }
-  const groups = new Map<string, { courses: Set<string> }>();
-  for (const c of schedule.constraints) {
-    const g = groups.get(c.constraint) ?? { courses: new Set<string>() };
-    g.courses.add(norm(c.course));
-    groups.set(c.constraint, g);
+    const keys = listingKeys(schedule, s);
+    memberOf.set(id, new Set(schedule.constraints.filter((c) => constraintNames(c, keys, s.section)).map((c) => c.constraint)));
   }
 
   const found = new Map<string, Conflict>();
@@ -92,11 +87,8 @@ export function findConflicts(schedule: Schedule): Conflict[] {
 
       if (wildcard.has(a.sectionId) || wildcard.has(b.sectionId)) record("Wildcard", a, b, "*");
 
-      const ca = courses.get(a.sectionId)!;
-      const cb = courses.get(b.sectionId)!;
-      for (const [name, g] of groups) {
-        if ([...ca].some((c) => g.courses.has(c)) && [...cb].some((c) => g.courses.has(c))) record("Constraint", a, b, name);
-      }
+      const ma = memberOf.get(a.sectionId)!;
+      for (const name of memberOf.get(b.sectionId)!) if (ma.has(name)) record("Constraint", a, b, name);
     }
   }
   return [...found.values()].sort(

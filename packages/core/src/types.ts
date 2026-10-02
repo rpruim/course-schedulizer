@@ -80,8 +80,10 @@ export type NonTeaching = z.infer<typeof nonTeachingSchema>;
 /** One course in a cohort constraint group (spec §2.6). */
 export const constraintSchema = z.object({
   constraint: z.string().min(1),
-  /** `Prefix CourseNumber`, e.g. `MATH 231`. */
+  /** `Prefix CourseNumber`, e.g. `MATH 231`; matches any listing of a section. */
   course: z.string().min(1),
+  /** A section letter to name one section of the course; blank = every section. */
+  section: str,
   comment: str,
 });
 export type Constraint = z.infer<typeof constraintSchema>;

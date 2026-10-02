@@ -38,3 +38,6 @@ T17,FA,Full,MATH,231,A,Smith,4,MWF,09:15,65,NH 101,cohort constraint: MATH 231 a
 T17,FA,Full,STAT,243,A,Jones,4,MWF,09:15,65,NH 102,
 T17,FA,Full,MATH,250,A,Lee,4,TR,09:15,65,NH 103,same group but meets at a different time: no violation
 T17,FA,Full,MATH,260,A,Kim,4,MWF,09:15,65,NH 104,not in any group: no violation despite same time
+T18,FA,Full,MATH,270,A,Smith,4,MWF,09:15,65,NH 101,constraint naming ONE section (MATH 270 A) conflicts with STAT 280 (cases/constraints.csv)
+T18,FA,Full,MATH,270,B,Jones,4,MWF,09:15,65,NH 102,same course and time but section B is not named: no violation
+T18,FA,Full,STAT,280,A,Lee,4,MWF,09:15,65,NH 103,

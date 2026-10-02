@@ -94,6 +94,6 @@ export function nonTeachingTable(schedule: Schedule): Table {
 export function constraintsTable(schedule: Schedule): Table {
   return table(
     CONSTRAINT_COLUMNS,
-    schedule.constraints.map((c) => ({ Constraint: c.constraint, Course: c.course, Comment: c.comment })),
+    schedule.constraints.map((c) => ({ Constraint: c.constraint, Course: c.course, Section: c.section, Comment: c.comment })),
   );
 }

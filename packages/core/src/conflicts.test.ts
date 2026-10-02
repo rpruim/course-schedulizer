@@ -17,7 +17,7 @@ describe("fixtures: conflicts", () => {
     return r.schedule;
   };
 
-  it("finds exactly the conflicts in expected/conflicts.csv (cases T01–T17)", () => {
+  it("finds exactly the conflicts in expected/conflicts.csv (cases T01–T18)", () => {
     expect(keys(findConflicts(load()))).toEqual(expected("expected/conflicts.csv"));
   });
 
@@ -37,6 +37,11 @@ describe("fixtures: conflicts", () => {
     expect(conflictedSessions(cs).size).toBeGreaterThan(20);
     // T05: a section never conflicts with itself even though its own rows overlap
     expect(cs.some((c) => c.sectionIdA.startsWith("T05"))).toBe(false);
+  });
+
+  it("a constraint can name a single section", () => {
+    const cs = findConflicts(load()).filter((c) => c.type === "Constraint" && c.sectionIdA.startsWith("T18"));
+    expect(cs.map((c) => [c.sectionIdA, c.sectionIdB, c.detail])).toEqual([["T18-FA-MATH270-A", "T18-FA-STAT280-A", "Cohort 2"]]);
   });
 
   it("applies constraints to any listing of a section", () => {

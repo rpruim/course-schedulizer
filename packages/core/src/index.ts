@@ -9,3 +9,4 @@ export * from "./terms.js";
 export * from "./names.js";
 export * from "./load.js";
 export * from "./conflicts.js";
+export * from "./constraints.js";

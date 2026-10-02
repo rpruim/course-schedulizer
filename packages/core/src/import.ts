@@ -32,7 +32,7 @@ export const SESSION_COLUMNS = [
 ] as const;
 export const CROSSLISTING_COLUMNS = ["SectionId", "Prefix", "CourseNumber"] as const;
 export const NONTEACHING_COLUMNS = ["AcademicYear", "Faculty", "Activity", "Term", "Load", "Comment"] as const;
-export const CONSTRAINT_COLUMNS = ["Constraint", "Course", "Comment"] as const;
+export const CONSTRAINT_COLUMNS = ["Constraint", "Course", "Section", "Comment"] as const;
 
 const key = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -295,8 +295,19 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
   const r = new Reporter("Constraints");
   const out: Constraint[] = [];
   records.forEach((rec, idx) => {
+    const row = idx + 2;
     const { known: k } = split(rec, CONSTRAINT_COLUMNS);
-    const parsed = constraintSchema.safeParse({ constraint: k.Constraint ?? "", course: (k.Course ?? "").replace(/\s+/g, " "), comment: k.Comment ?? "" });
+    // "MATH 231" names every section; "MATH 231 A" (or a Section column) names one.
+    const tokens = (k.Course ?? "").split(/\s+/).filter(Boolean);
+    const typed = tokens.length >= 3 ? tokens.slice(2).join(" ") : "";
+    const column = (k.Section ?? "").trim();
+    if (typed && column && typed.toLowerCase() !== column.toLowerCase()) r.add("error", row, `Course says section "${typed}" but Section says "${column}"`);
+    const parsed = constraintSchema.safeParse({
+      constraint: k.Constraint ?? "",
+      course: tokens.length >= 3 ? tokens.slice(0, 2).join(" ") : tokens.join(" "),
+      section: column || typed,
+      comment: k.Comment ?? "",
+    });
     if (parsed.success) out.push(parsed.data);
     else r.zod(idx + 2, parsed.error);
   });
