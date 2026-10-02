@@ -15,7 +15,7 @@ export function AboutPage() {
         and comparisons between drafts. It is a rewrite of the earlier Course Schedulizer, and it opens files from that version.
       </p>
       <p>
-        Your schedules are kept in this browser while you work and are never sent anywhere; use <Link to="/export">Export</Link> to save them as Excel files. See the <Link to="/help">Help</Link> tab for how to do things.
+        Your schedules are kept in this browser while you work and are never sent anywhere; use <Link to="/export">Export</Link> to save them as Excel files. See the <Link to="/help">User guide</Link> for how to do things.
       </p>
     </div>
   );

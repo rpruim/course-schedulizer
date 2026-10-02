@@ -31,7 +31,7 @@ const tabs = (reports: OpenReport[] | undefined, setReports: (r: OpenReport[] | 
   { to: "/meta", label: "Meta", element: <MetaPage /> },
   { to: "/import", label: "Import", element: <ImportPage reports={reports} onReports={setReports} onDismiss={() => setReports(undefined)} /> },
   { to: "/export", label: "Export", element: <ExportPage /> },
-  { to: "/help", label: "Help", element: <HelpPage /> },
+  { to: "/help", label: "User guide", element: <HelpPage /> },
   { to: "/about", label: "About", element: <AboutPage /> },
 ];
 
@@ -42,7 +42,7 @@ const GROUPS: MenuGroup[] = [
   { label: "View", items: [{ to: "/dept", label: "Dept week" }, { to: "/faculty", label: "Faculty week" }, { to: "/rooms", label: "Room week" }] },
   { label: "Check", items: [{ to: "/conflicts", label: "Conflicts" }, { to: "/constraints", label: "Constraints" }, { to: "/compare", label: "Compare" }] },
   { label: "File", items: [{ to: "/meta", label: "Meta" }, { to: "/import", label: "Import" }, { to: "/export", label: "Export" }] },
-  { label: "Help", items: [{ to: "/help", label: "Help" }, { to: "/about", label: "About" }] },
+  { label: "Help", items: [{ to: "/help", label: "User guide" }, { to: "/about", label: "About" }] },
 ];
 
 function Shell() {
