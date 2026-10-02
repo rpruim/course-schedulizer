@@ -119,7 +119,7 @@ describe("loadTable", () => {
 
 describe("loadItems / summarizeItems", () => {
   it("lists distinct items with counts for repeats, sorted, joined by semicolons", () => {
-    expect(summarizeItems(["MATH 271", "MATH 171", "MATH 171"])).toBe("MATH 171 (2); MATH 271");
+    expect(summarizeItems(["MATH 271", "MATH 171", "MATH 171"])).toBe("MATH 171 (2) · MATH 271");
     expect(summarizeItems([])).toBe("");
   });
 
@@ -136,7 +136,7 @@ describe("loadItems / summarizeItems", () => {
     expect(items("Kim", "FA", "teaching")).toBe("MATH 171 (2)");
     expect(items("Kim", "SP", "teaching")).toBe("MATH 271");
     expect(items("Kim", "FA", "nonteaching")).toBe("Chair");
-    expect(items("Kim")).toBe("Chair; MATH 171 (2); MATH 271");
+    expect(items("Kim")).toBe("Chair · MATH 171 (2) · MATH 271");
     expect(items("Nobody", "FA")).toBe("");
   });
 });

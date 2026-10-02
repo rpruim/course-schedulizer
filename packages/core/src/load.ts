@@ -91,14 +91,14 @@ function collectLoad(schedule: Schedule): Collected {
   return { rows, items };
 }
 
-/** `Math 171 (2); Math 271` — each distinct item once, with the number of instances in parentheses when repeated. */
+/** `MATH 171 (2) · MATH 271` — each distinct item once, with the number of instances in parentheses when repeated. */
 export function summarizeItems(items: string[]): string {
   const counts = new Map<string, number>();
   for (const i of items) counts.set(i, (counts.get(i) ?? 0) + 1);
   return [...counts]
     .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }))
     .map(([i, n]) => (n > 1 ? `${i} (${n})` : i))
-    .join("; ");
+    .join(" · ");
 }
 
 /**
