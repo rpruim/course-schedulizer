@@ -272,3 +272,7 @@ td button.link + button.link { margin-left: 6px; }
 
 .subject-row { gap: 6px 18px; margin: 0 0 4px; }
 .rule-heading.first { margin-top: 4px; }
+/* label/value lists (About, Meta): same baseline, no extra margins from the Help styles */
+.facts { align-items: baseline; }
+.help .facts dt { margin: 0; }
+.help .facts dd { margin: 0; }
