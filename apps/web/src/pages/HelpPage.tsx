@@ -262,12 +262,12 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </ul>
         <h3>Standard times</h3>
         <p>
-          Every meeting is checked against the department’s <strong>standard times</strong>: its days, start time and length (in minutes) must all be one of the standard patterns, for example MWF at 9:15 for 65 minutes
+          Every meeting is checked against the university’s <strong>standard times</strong>: its days, start time and length (in minutes) must all be one of the standard patterns, for example MWF at 9:15 for 65 minutes
           or TR at 10:20 for 100 minutes. (The list comes from the earlier Course Schedulizer and is kept in <code>config/settings.yaml</code>.) Meetings that are not standard are shown in <strong>orange</strong>, not the red of a conflict:
           an orange outline on the week grids, an orange ⚠ on the Schedule tab, and a <em>Non-standard meeting times</em> list on the Conflicts tab that says what would be standard. Sections with no meeting time are not checked.
         </p>
         <p>
-          A <em>Standard times</em> rule changes that list for the courses it names (<code>*</code> alone for every course):
+          A <em>Modify standard times</em> rule changes that list for the courses it names (<code>*</code> alone for every course):
         </p>
         <ul>
           <li><strong>Allow</strong> a pattern to stop flagging a known exception, for example R, 50 minutes, starting 15:05 for the colloquium.</li>

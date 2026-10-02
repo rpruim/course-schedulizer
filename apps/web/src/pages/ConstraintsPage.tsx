@@ -50,9 +50,9 @@ function RuleList({ entry }: { entry: Entry }) {
           <tr><th>Rule</th><th>What it says</th><th>Status</th></tr>
         </thead>
         <tbody>
-          <tr title="Built in: always checked. Add a Standard times rule to allow exceptions or to disallow times.">
+          <tr title="Built in: always checked. Add a Modify standard times rule to allow exceptions or to disallow times.">
             <td><strong>Standard times</strong> <span className="muted small">(built in)</span></td>
-            <td>Every meeting should be at one of the department’s standard days, start times and lengths. Rules of the kind “Standard times” below change the list.</td>
+            <td>Normally every meeting should be at one of the university’s standard days, start times and durations. Add a “Modify standard times” rule below to change the list for some or all courses.</td>
             <td className="nowrap">{nonStandard === 0 ? <span className="ok-text">✓ met</span> : <span className="warn-orange">⚠ {nonStandard} non-standard</span>}</td>
           </tr>
           {rules.map((r) => {

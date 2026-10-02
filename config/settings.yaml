@@ -41,7 +41,7 @@ spreadTerms: [FA, SP]
 # Values of the Room column that are not rooms. They never conflict with each other.
 nonRooms: [Off Campus, Online, TBD]
 
-# The department's standard meeting patterns (from the old Course Schedulizer). A meeting is "standard" when its
+# The university's standard meeting patterns (from the old Course Schedulizer). A meeting is "standard" when its
 # days, start time and length (in minutes) are all listed here; "Standard times" rules flag the others.
 # Days use M T W R F (R = Thursday); start times are 24-hour.
 standardTimes:

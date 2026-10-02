@@ -226,7 +226,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
             <legend>What kind of rule</legend>
             <label className="choice"><input type="radio" checked={form.type === "takeable"} onChange={() => switchType("takeable")} /> <strong>Take together.</strong> A student must be able to take all, some or any set of these courses, one section of each, without a clash.</label>
             <label className="choice"><input type="radio" checked={form.type === "window"} onChange={() => switchType("window")} /> <strong>Time window.</strong> These courses or instructors should (or should not) meet during a time of day.</label>
-            <label className="choice"><input type="radio" checked={form.type === "standard"} onChange={() => switchType("standard")} /> <strong>Standard times.</strong> These courses should meet only at the department’s standard days, start times and lengths. Others are flagged in orange.</label>
+            <label className="choice"><input type="radio" checked={form.type === "standard"} onChange={() => switchType("standard")} /> <strong>Modify standard times.</strong> Normally courses should meet only at standard days, start times and durations, as defined by the university. Add a custom rule to modify the list for some or all courses.</label>
             <label className="choice"><input type="radio" checked={form.type === "consecutive"} onChange={() => switchType("consecutive")} /> <strong>Back-to-back classes.</strong> These instructors should teach at most (or at least) some number of consecutive classes.</label>
           </fieldset>
 
@@ -359,7 +359,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
             <fieldset>
               <legend>Changes to the standard times</legend>
               <p className="muted small">
-                Every meeting is checked against the department’s standard times, and those that do not match are flagged in orange. This rule changes the standard times for the courses above: <strong>allow</strong> a time to stop flagging a known exception,
+                Every meeting is checked against the university’s standard times, and those that do not match are flagged in orange. This rule changes the standard times for the courses above: <strong>allow</strong> a time to stop flagging a known exception,
                 or <strong>disallow</strong> one that is normally standard but that you do not want to use. Later lines win.
               </p>
               {form.changes.map((c, i) => (
