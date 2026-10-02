@@ -95,6 +95,24 @@ export function nonTeachingTable(schedule: Schedule): Table {
 export function constraintsTable(schedule: Schedule): Table {
   return table(
     CONSTRAINT_COLUMNS,
-    schedule.constraints.map((c) => ({ Constraint: c.constraint, Course: c.course, Section: c.section, Comment: c.comment })),
+    schedule.constraints.map((c) => {
+      const window = c.type === "window";
+      return {
+        Constraint: c.constraint,
+        Type: c.type,
+        Course: c.course,
+        Section: c.section,
+        Instructor: c.instructor,
+        AtLeast: c.atLeast === undefined ? "" : String(c.atLeast),
+        Term: c.term,
+        Days: window ? c.days : "",
+        DayRule: window ? c.dayRule : "",
+        From: window && c.from !== undefined ? formatTime(c.from) : "",
+        To: window && c.to !== undefined ? formatTime(c.to) : "",
+        Should: window ? c.should : "",
+        Meets: window ? c.meets : "",
+        Comment: c.comment,
+      };
+    }),
   );
 }

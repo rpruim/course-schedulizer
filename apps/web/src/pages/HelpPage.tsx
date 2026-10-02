@@ -116,7 +116,9 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dt><Link to="/nonteaching">Non-teaching</Link></dt>
           <dd>Load for things other than teaching: chair duties, release time, sabbaticals, etc.</dd>
           <dt><Link to="/conflicts">Conflicts</Link></dt>
-          <dd>Pairs of sections that clash. See <a href="#conflicts" onClick={jump("conflicts")}>Conflicts</a> below.</dd>
+          <dd>Pairs of sections that clash, and rules that are not met. See <a href="#conflicts" onClick={jump("conflicts")}>Conflicts</a> below.</dd>
+          <dt><Link to="/constraints">Constraints</Link></dt>
+          <dd>Rules the schedule should meet, such as courses a student must be able to take together. See <a href="#rules" onClick={jump("rules")}>Constraint rules</a>.</dd>
           <dt><Link to="/dept">Dept week</Link>, <Link to="/faculty">Faculty week</Link>, <Link to="/rooms">Room week</Link></dt>
           <dd>Sections as blocks on a Monday–Friday grid. See <a href="#week" onClick={jump("week")}>The week views</a>.</dd>
           <dt><Link to="/compare">Compare</Link></dt>
@@ -184,12 +186,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     title: "Conflicts",
     body: () => (
       <>
-        <p>Two sections conflict when they overlap in time (same year, term, overlapping weeks of the term, a shared day) and also share:</p>
-        <ul>
-          <li>an <strong>instructor</strong>,</li>
-          <li>a <strong>room</strong>, or</li>
-          <li>a <strong>cohort</strong>: courses that one group of students must take together and that should not meet at the same time.</li>
-        </ul>
+        <p>Two sections conflict when they overlap in time (same year, term, overlapping weeks of the term, a shared day) and also share an <strong>instructor</strong> or a <strong>room</strong>.</p>
         <p>
           A class that ends as the next begins is not a conflict. Half-term and quarter-term sections only conflict when their weeks overlap. An instructor named <code>*</code> means
           “everyone” (for example a department meeting) and clashes with every section at that time.
@@ -197,11 +194,44 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <p>
           Conflicting sections are outlined in red in the week views and marked ⚠ on the Schedule tab. Click a section in the <Link to="/conflicts">Conflicts</Link> list to fix it.
         </p>
-        <h3>Cohort constraints</h3>
+        <p>Below the clashes, the Conflicts tab also lists any <a href="#rules" onClick={jump("rules")}>constraint rules</a> the schedule does not meet.</p>
+      </>
+    ),
+  },
+  {
+    id: "rules",
+    title: "Constraint rules",
+    body: () => (
+      <>
         <p>
-          To be warned when two courses are scheduled together, list them in a <code>Constraints</code> sheet of the Excel file, with the columns <code>Constraint</code> (a name for the
-          group), <code>Course</code> (for example <code>MATH 231</code>), <code>Section</code> (optional; a letter to name one section) and <code>Comment</code>. All rows with the same constraint
-          name must not meet at the same time. There is not yet a screen for editing these inside the app, but they are kept when you export and import.
+          Rules say what the schedule should look like beyond plain clashes. They are warnings only: a rule that is not met is listed on the <Link to="/conflicts">Conflicts</Link> tab (and its
+          sections are outlined in red), and the <Link to="/constraints">Constraints</Link> tab shows each rule and whether it is met. Click a rule, or <em>Add rule</em>, to edit it; the editor
+          says the rule in words and checks it against your schedule as you type.
+        </p>
+        <h3>Take together</h3>
+        <p>
+          “A student must be able to take at least <em>n</em> of these courses.” A student takes one section of each course, and sections that overlap cannot be taken together. Leave <em>n</em> blank
+          to require all of them: with several sections of a course, one section may clash as long as another does not. With <em>n</em> = 2, the courses just cannot all be at the same time.
+          Use it for a program’s required courses, or to keep courses that one cohort needs from being scheduled against each other.
+        </p>
+        <p>
+          A course is <code>MATH 231</code>; add a section letter to mean just that section. Use <code>*</code> for any run of characters: <code>MATH 3*</code> stands for every 300-level MATH course
+          (each one counts as a course), and <code>MATH *</code> for every MATH course. A rule is checked separately in each term; choose a term to limit it to one.
+        </p>
+        <h3>Time window</h3>
+        <p>
+          “These courses or instructors <em>should</em> (or <em>should not</em>) meet between two times on some days.” For example, no 300-level course during the 10:00–10:50 slot on M/W/F, or
+          Kim not teaching before 9:00.
+        </p>
+        <ul>
+          <li><strong>Counts as meeting</strong>: <em>any overlap</em> (the default for “should not”: a class 9:30–10:20 breaks a 10:00–10:50 rule) or <em>entirely within</em> (the default for “should”). A class that ends exactly when the window starts does not overlap it.</li>
+          <li><strong>Any or all of the days</strong>: with “any of M W F”, one meeting in the window is enough to count; with “all of”, the section must meet in the window on each of those days.</li>
+          <li><strong>Every section, or at least some</strong>: by default every section named must satisfy the rule. Choose <em>at least some</em> for rules such as “at least one section of Core 100 should meet between 5pm and 10pm”, so a day-time section is fine as long as an evening one exists.</li>
+          <li>Sections with no scheduled time are not checked.</li>
+        </ul>
+        <p>
+          Rules are saved in the <code>Constraints</code> sheet of the Excel file (one row per course or instructor, with the rule’s settings in columns such as <code>Type</code>, <code>AtLeast</code>,
+          <code>From</code>, <code>To</code>, <code>Days</code>), and rules from older files, which list courses that must not meet at the same time, still work.
         </p>
       </>
     ),
@@ -219,7 +249,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li><strong>Weeks</strong> chooses a part of the term. Choosing <em>First half</em> shows everything meeting in the first half: full-term, first-half, and A and B quarter courses.</li>
           <li><strong>Colour by</strong> subject, course level or instructor.</li>
           <li>The four <strong>dots</strong> at the left of each block are the four quarters of the term, top to bottom. A filled dot means the section meets then: a full-term
-            course is ●●●●, a first-half course ●●○○, a second-half course ○○●●.</li>
+            course is <Dots on={[true, true, true, true]} />, a first-half course <Dots on={[true, true, false, false]} />, a second-half course <Dots on={[false, false, true, true]} />.</li>
           <li>Where several sections overlap, blocks sit side by side and shrink their text to fit: full details, then the short course name, then the name turned on its side. Hover for the rest.
             Blocks that start together are ordered full term, first half, A, B, second half, C, D.</li>
           <li>Sections with no meeting time are listed under the grid as <em>No scheduled time</em>.</li>
@@ -303,6 +333,15 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     ),
   },
 ];
+
+/** The quarter-of-term dots as they appear on the week grids: stacked, filled when the section meets. */
+function Dots({ on }: { on: boolean[] }) {
+  return (
+    <em className="dots help-dots" aria-hidden="true">
+      {on.map((x, i) => <i key={i} className={x ? "on" : ""} />)}
+    </em>
+  );
+}
 
 /** Click handler for a link that scrolls to a section of this page (a `#…` link would change the app's route). */
 function jump(id: string) {

@@ -39,3 +39,14 @@ describe("mergeSchedules", () => {
     expect(m.origin.nonTeaching).toEqual([{ scheduleId: "1", index: 0 }, { scheduleId: "1", index: 1 }, { scheduleId: "2", index: 0 }]);
   });
 });
+
+describe("mergeSchedules rules", () => {
+  it("keeps same-named rules of different schedules apart", () => {
+    const row = { constraint: "Cohort", type: "takeable" as const, course: "MATH 1", section: "", instructor: "", term: "", days: "", dayRule: "any" as const, should: "should not" as const, meets: "" as const, comment: "" };
+    const a = { ...emptySchedule(), constraints: [row, { ...row, course: "MATH 2" }] };
+    const b = { ...emptySchedule(), constraints: [row] };
+    const m = mergeSchedules([{ id: "1", name: "A", schedule: a }, { id: "2", name: "B", schedule: b }]);
+    expect(m.schedule.constraints.map((c) => c.constraint)).toEqual(["Cohort", "Cohort", "Cohort (2)"]);
+    expect(m.origin.rules.get("Cohort (2)")).toEqual({ scheduleId: "2", name: "Cohort" });
+  });
+});

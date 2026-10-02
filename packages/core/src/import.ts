@@ -33,7 +33,7 @@ export const SESSION_COLUMNS = [
 ] as const;
 export const CROSSLISTING_COLUMNS = ["SectionId", "Prefix", "CourseNumber"] as const;
 export const NONTEACHING_COLUMNS = ["AcademicYear", "Faculty", "Activity", "Term", "Load", "Comment"] as const;
-export const CONSTRAINT_COLUMNS = ["Constraint", "Course", "Section", "Comment"] as const;
+export const CONSTRAINT_COLUMNS = ["Constraint", "Type", "Course", "Section", "Instructor", "AtLeast", "Term", "Days", "DayRule", "From", "To", "Should", "Meets", "Comment"] as const;
 
 const key = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -374,26 +374,101 @@ export function importNonTeaching(records: Rec[], settings: Settings = defaultSe
   return { nonTeaching: out, issues: r.issues };
 }
 
+const RULE_FIELDS = ["Type", "AtLeast", "Term", "Days", "DayRule", "From", "To", "Should", "Meets"] as const;
+
+/**
+ * Constraint rows. Rows with the same `Constraint` name make one rule: its settings (Type, AtLeast,
+ * Term, Days, DayRule, From, To, Should, Meets) may be written on every row or only on one (a blank
+ * cell inherits), but two different values are an error. A file with only Constraint, Course, Section
+ * and Comment (the first version) is a set of "take at least all" rules.
+ */
 export function importConstraints(records: Rec[]): { constraints: Constraint[]; issues: Issue[] } {
   const r = new Reporter("Constraints");
+  const rows = records.map((rec, idx) => ({ row: idx + 2, k: split(rec, CONSTRAINT_COLUMNS).known }));
+
+  // Rule-level settings: the first non-blank value among a rule's rows; a different one later is an error.
+  const settings = new Map<string, Rec>();
+  for (const { row, k } of rows) {
+    const name = (k.Constraint ?? "").trim();
+    const have = settings.get(name) ?? {};
+    for (const f of RULE_FIELDS) {
+      const v = (k[f] ?? "").trim();
+      if (v === "") continue;
+      if (have[f] === undefined) have[f] = v;
+      else if (have[f]!.toLowerCase() !== v.toLowerCase()) r.add("error", row, `${f} "${v}" differs from "${have[f]}" on another row of "${name}"`);
+    }
+    settings.set(name, have);
+  }
+
   const out: Constraint[] = [];
-  records.forEach((rec, idx) => {
-    const row = idx + 2;
-    const { known: k } = split(rec, CONSTRAINT_COLUMNS);
+  const reported = new Set<string>();
+  for (const { row, k } of rows) {
+    const name = (k.Constraint ?? "").trim();
+    const have = settings.get(name) ?? {};
     // "MATH 231" names every section; "MATH 231 A" (or a Section column) names one.
     const tokens = (k.Course ?? "").split(/\s+/).filter(Boolean);
     const typed = tokens.length >= 3 ? tokens.slice(2).join(" ") : "";
     const column = (k.Section ?? "").trim();
     if (typed && column && typed.toLowerCase() !== column.toLowerCase()) r.add("error", row, `Course says section "${typed}" but Section says "${column}"`);
+
+    const oneOf = <T extends string>(label: string, text: string | undefined, allowed: Record<string, T>, blank: T): T => {
+      const t = (text ?? "").trim().toLowerCase();
+      if (t === "") return blank;
+      const v = allowed[t];
+      if (v === undefined) {
+        if (!reported.has(`${name}|${label}`)) r.add("error", row, `${label}: "${text}" is not one of ${[...new Set(Object.values(allowed))].join(", ")}`);
+        reported.add(`${name}|${label}`);
+        return blank;
+      }
+      return v;
+    };
+    const time = (label: string, text: string | undefined) => {
+      if (!text) return undefined;
+      const t = parseTime(text);
+      if (t === null) {
+        if (!reported.has(`${name}|${label}`)) r.add("error", row, `${label}: "${text}" is not a time`);
+        reported.add(`${name}|${label}`);
+        return undefined;
+      }
+      return t;
+    };
+    let days = "";
+    if (have.Days) {
+      const d = parseDays(have.Days);
+      if (d === null) {
+        if (!reported.has(`${name}|Days`)) r.add("error", row, `Days: "${have.Days}" is not a set of days (use M T W R F)`);
+        reported.add(`${name}|Days`);
+      } else days = d;
+    }
+    const looksWindow = have.From !== undefined || have.To !== undefined || have.Days !== undefined || have.Should !== undefined || (k.Instructor ?? "").trim() !== "";
+    const type = oneOf("Type", have.Type, { takeable: "takeable", cohort: "takeable", window: "window", time: "window" } as Record<string, "takeable" | "window">, looksWindow ? "window" : "takeable");
+    const from = time("From", have.From);
+    const to = time("To", have.To);
+    if (type === "window" && !reported.has(`${name}|window`)) {
+      reported.add(`${name}|window`);
+      if (from === undefined || to === undefined) r.add("error", row, `"${name}" is a window rule, so it needs both From and To times`);
+      else if (from >= to) r.add("error", row, `"${name}": From must be earlier than To`);
+    }
+    const atLeast = num(r, row, "AtLeast", have.AtLeast);
     const parsed = constraintSchema.safeParse({
-      constraint: k.Constraint ?? "",
+      constraint: name,
+      type,
       course: tokens.length >= 3 ? tokens.slice(0, 2).join(" ") : tokens.join(" "),
       section: column || typed,
+      instructor: k.Instructor ?? "",
+      ...(atLeast !== undefined ? { atLeast } : {}),
+      term: have.Term ?? "",
+      days,
+      dayRule: oneOf("DayRule", have.DayRule, { any: "any", all: "all" }, "any"),
+      ...(from !== undefined ? { from } : {}),
+      ...(to !== undefined ? { to } : {}),
+      should: oneOf("Should", have.Should, { should: "should", "should not": "should not", "should not meet": "should not", not: "should not", "must not": "should not", must: "should" }, "should not"),
+      meets: oneOf("Meets", have.Meets, { overlaps: "overlaps", overlap: "overlaps", during: "overlaps", within: "within", inside: "within" }, ""),
       comment: k.Comment ?? "",
     });
     if (parsed.success) out.push(parsed.data);
-    else r.zod(idx + 2, parsed.error);
-  });
+    else r.zod(row, parsed.error);
+  }
   return { constraints: out, issues: r.issues };
 }
 

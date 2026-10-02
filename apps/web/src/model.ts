@@ -2,6 +2,7 @@ import {
   conflictedSessions,
   displayNames,
   findConflicts,
+  findRuleViolations,
   formatTime,
   type Schedule,
   type Session,
@@ -43,7 +44,7 @@ export function timeRange(s: Pick<Session, "start" | "duration">): string {
 /** One row per section, in natural course order (prefix, number, section letter, term). */
 export function sectionRows(schedule: Schedule): SectionRow[] {
   const names = displayNames(schedule);
-  const flagged = conflictedSessions(findConflicts(schedule));
+  const flagged = conflictedSessions(findConflicts(schedule), findRuleViolations(schedule));
   const termRank = new Map(schedule.settings.terms.map((t, i) => [t.code, i]));
   const bySection = new Map<string, SectionRow>();
   for (const s of schedule.sessions) {

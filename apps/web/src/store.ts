@@ -1,4 +1,4 @@
-import type { Schedule } from "@schedulizer/core";
+import { upgradeSchedule, type Schedule } from "@schedulizer/core";
 
 /**
  * Where the user's work lives. v1 is browser storage; a hosted service would
@@ -69,12 +69,12 @@ export class LocalWorkspaceStore implements WorkspaceStore {
 
   async load(): Promise<StoredWorkspace | undefined> {
     const ws = this.parse<StoredWorkspace>(WORKSPACE_KEY);
-    if (ws && Array.isArray(ws.entries)) return ws;
+    if (ws && Array.isArray(ws.entries)) return { ...ws, entries: ws.entries.map((e) => ({ ...e, schedule: upgradeSchedule(e.schedule) })) };
     // Migrate a working copy saved before schedules could be opened side by side.
     const legacy = this.parse<{ name?: string; schedule?: Schedule; version?: number; savedAt?: string }>(LEGACY_KEY);
     if (legacy?.schedule) {
       const id = this.newId();
-      return { entries: [{ id, name: legacy.name && legacy.name !== "current" ? legacy.name : "Schedule", schedule: legacy.schedule }], currentId: id, included: [id], version: 0, savedAt: legacy.savedAt ?? "" };
+      return { entries: [{ id, name: legacy.name && legacy.name !== "current" ? legacy.name : "Schedule", schedule: upgradeSchedule(legacy.schedule) }], currentId: id, included: [id], version: 0, savedAt: legacy.savedAt ?? "" };
     }
     return undefined;
   }

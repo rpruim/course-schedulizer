@@ -3,6 +3,7 @@ import { HashRouter, NavLink, Route, Routes, useNavigate } from "react-router-do
 import { Toolbar, type OpenReport } from "./components";
 import { EditorProvider } from "./editor/context";
 import { ComparePage } from "./pages/ComparePage";
+import { ConstraintsPage } from "./pages/ConstraintsPage";
 import { ConflictsPage } from "./pages/ConflictsPage";
 import { MetaPage } from "./pages/MetaPage";
 import { ExportPage } from "./pages/ExportPage";
@@ -20,6 +21,7 @@ const tabs = (reports: OpenReport[] | undefined, setReports: (r: OpenReport[] | 
   { to: "/loads", label: "Teaching loads", element: <LoadsPage /> },
   { to: "/nonteaching", label: "Non-teaching", element: <NonTeachingPage /> },
   { to: "/conflicts", label: "Conflicts", element: <ConflictsPage /> },
+  { to: "/constraints", label: "Constraints", element: <ConstraintsPage /> },
   { to: "/dept", label: "Dept week", element: <WeekPage kind="dept" /> },
   { to: "/faculty", label: "Faculty week", element: <WeekPage kind="faculty" /> },
   { to: "/rooms", label: "Room week", element: <WeekPage kind="room" /> },

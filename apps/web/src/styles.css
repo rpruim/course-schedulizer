@@ -124,9 +124,9 @@ details summary { cursor: pointer; color: var(--muted); }
 .block strong { font-weight: 600; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .block span { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .85; }
 .block .txt { width: auto; flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; opacity: 1; }
-.block .dots { display: flex; flex-direction: column; justify-content: flex-start; gap: 1px; flex: none; font-style: normal; padding-top: 1px; }
-.block .dots i { width: 5px; height: 5px; border-radius: 50%; border: 1px solid currentColor; box-sizing: border-box; }
-.block .dots i.on { background: currentColor; }
+.dots { display: flex; flex-direction: column; justify-content: flex-start; gap: 1px; flex: none; font-style: normal; padding-top: 1px; }
+.dots i { width: 5px; height: 5px; border-radius: 50%; border: 1px solid currentColor; box-sizing: border-box; }
+.dots i.on { background: currentColor; }
 .block.small { padding: 1px 2px; font-size: .64rem; gap: 2px; }
 .block.tiny { padding: 2px 1px; font-size: .58rem; gap: 1px; }
 .block.tiny .txt { align-items: center; }
@@ -246,3 +246,13 @@ header { align-items: center; }
 .help code { font-size: .85em; padding: 0 3px; border-radius: 3px; background: var(--panel); border: 1px solid var(--line); }
 .help-toc { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 8px; padding: 8px 0; border-bottom: 0; }
 .help-toc a { padding: 0; border: 0; color: var(--accent); }
+
+.choice { display: block; margin: 4px 0; }
+.item-row { align-items: flex-end; }
+.ok-text { color: #2e8b57; }
+.preview-list { margin: 4px 0 0; padding-left: 20px; }
+.rule-heading { margin: 18px 0 6px; }
+td button.link + button.link { margin-left: 6px; }
+
+.help-dots { display: inline-flex; vertical-align: middle; margin: 0 3px; }
+.help-dots i { width: 6px; height: 6px; }

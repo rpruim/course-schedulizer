@@ -17,3 +17,6 @@ export * from "./nonteaching.js";
 export * from "./compare.js";
 export * from "./merge.js";
 export * from "./exportName.js";
+export * from "./overlap.js";
+export * from "./rules.js";
+export * from "./upgrade.js";

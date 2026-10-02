@@ -78,13 +78,42 @@ export const nonTeachingSchema = z.object({
 });
 export type NonTeaching = z.infer<typeof nonTeachingSchema>;
 
-/** One course in a cohort constraint group (spec §2.6). */
+/**
+ * One row of a constraint (spec §2.6). Rows with the same `constraint` name make one rule;
+ * the rule-level fields (everything but course, section, instructor and comment) repeat on
+ * every row, and a blank cell on a later row inherits the first row's value on import.
+ *
+ * - `takeable`: a student must be able to take at least `atLeast` (default: all) of the listed
+ *   courses, choosing one section of each, with no two overlapping. `course` is a pattern
+ *   (`MATH 231`, `MATH 3*`); `section` names one section.
+ * - `window`: the sections named (by `course` pattern or `instructor`) should / should not meet
+ *   in the interval `from`–`to` on any / all of `days`; with `atLeast`, that many of them must
+ *   satisfy the rule instead of every one.
+ */
 export const constraintSchema = z.object({
   constraint: z.string().min(1),
-  /** `Prefix CourseNumber`, e.g. `MATH 231`; matches any listing of a section. */
-  course: z.string().min(1),
+  type: z.enum(["takeable", "window"]).default("takeable"),
+  /** `Prefix CourseNumber` pattern, where `*` matches anything: `MATH 231`, `MATH 3*`, `MATH *`. */
+  course: str,
   /** A section letter to name one section of the course; blank = every section. */
   section: str,
+  /** Window rules: sections taught by this person. */
+  instructor: str,
+  /** `takeable`: at least this many courses; `window`: at least this many sections. Blank = all. */
+  atLeast: z.number().int().positive().optional(),
+  /** Only this term; blank = every term. */
+  term: str,
+  /** Window rules: day letters; blank = Monday to Friday. */
+  days: z.string().regex(/^[MTWRFSU]*$/).default(""),
+  /** Window rules: the rule is about any / all of `days`. */
+  dayRule: z.enum(["any", "all"]).default("any"),
+  /** Window rules: the interval, in minutes since midnight. */
+  from: z.number().int().min(0).max(1440).optional(),
+  to: z.number().int().min(0).max(1440).optional(),
+  /** Window rules: should meet in the interval, or should not. */
+  should: z.enum(["should", "should not"]).default("should not"),
+  /** Window rules: "meets in the interval" means overlapping it, or lying entirely within it. Blank: overlapping for "should not", within for "should". */
+  meets: z.enum(["", "overlaps", "within"]).default(""),
   comment: str,
 });
 export type Constraint = z.infer<typeof constraintSchema>;

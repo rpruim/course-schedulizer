@@ -12,6 +12,8 @@ export interface MergeOrigin {
   sections: Map<string, { scheduleId: string; sectionId: string }>;
   /** Index in the merged `nonTeaching` list → the schedule and index it came from. */
   nonTeaching: { scheduleId: string; index: number }[];
+  /** Merged rule name → the schedule and name it came from. */
+  rules: Map<string, { scheduleId: string; name: string }>;
 }
 
 export interface Merged {
@@ -27,7 +29,7 @@ export interface Merged {
  */
 export function mergeSchedules(inputs: MergeInput[]): Merged {
   const out = emptySchedule();
-  const origin: MergeOrigin = { sections: new Map(), nonTeaching: [] };
+  const origin: MergeOrigin = { sections: new Map(), nonTeaching: [], rules: new Map() };
   const names = inputs.map((i) => i.name).filter(Boolean);
   out.meta = { name: names.join(" + "), nickname: "", saveAs: "", timestamp: true, notes: "", version: "" };
   const first = inputs[0];
@@ -54,7 +56,18 @@ export function mergeSchedules(inputs: MergeInput[]): Merged {
       out.nonTeaching.push(n);
       origin.nonTeaching.push({ scheduleId: id, index });
     });
-    out.constraints.push(...schedule.constraints);
+    // Rows of one rule share a name, so a name another schedule already used becomes `name (2)`.
+    const ruleNames = new Map<string, string>();
+    for (const c of schedule.constraints) {
+      let merged = ruleNames.get(c.constraint);
+      if (merged === undefined) {
+        merged = c.constraint;
+        for (let n = 2; origin.rules.has(merged); n++) merged = `${c.constraint} (${n})`;
+        ruleNames.set(c.constraint, merged);
+        origin.rules.set(merged, { scheduleId: id, name: c.constraint });
+      }
+      out.constraints.push({ ...c, constraint: merged });
+    }
   }
   return { schedule: out, origin };
 }

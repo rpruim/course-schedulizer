@@ -2,6 +2,7 @@ import {
   conflictedSessions,
   courseDisplayName,
   findConflicts,
+  findRuleViolations,
   listingsOf,
   partsFor,
   weeksOf,
@@ -135,7 +136,7 @@ export function layoutLanes<T extends { start: number; end: number; lane: number
  * grid per instructor, or one per room (or just the one named in `only`).
  */
 export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
-  const flagged = conflictedSessions(findConflicts(schedule));
+  const flagged = conflictedSessions(findConflicts(schedule), findRuleViolations(schedule));
   const nonRooms = new Set(schedule.settings.nonRooms.map(norm));
   const termAll = schedule.sessions.filter((s) => s.academicYear === o.year && s.term === o.term);
   const parts = partsFor(schedule.settings, o.term);

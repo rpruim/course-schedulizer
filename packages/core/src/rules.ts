@@ -1,0 +1,329 @@
+import { constraintNames, constraintNamesInstructor, courseMatches, listingKeys, normCourse } from "./constraints.js";
+import { displayNames, listingsOf } from "./names.js";
+import { formatTime } from "./format.js";
+import { meetingsOverlap, scheduled } from "./overlap.js";
+import { DAY_ORDER, type Constraint, type Schedule, type Session } from "./types.js";
+
+/** One line of a rule: a course pattern (with an optional section letter), or an instructor. */
+export interface RuleItem {
+  course: string;
+  section: string;
+  instructor: string;
+}
+
+/** A constraint as the editor sees it: the rows that share a name, gathered into one object. */
+export interface Rule {
+  name: string;
+  type: "takeable" | "window";
+  items: RuleItem[];
+  atLeast?: number;
+  term: string;
+  days: string;
+  dayRule: "any" | "all";
+  from?: number;
+  to?: number;
+  should: "should" | "should not";
+  meets: "" | "overlaps" | "within";
+  comment: string;
+}
+
+export const emptyRule = (type: Rule["type"] = "takeable"): Rule => ({
+  name: "", type, items: [], term: "", days: "", dayRule: "any", should: "should not", meets: "", comment: "",
+  ...(type === "window" ? { from: 600, to: 660 } : {}),
+});
+
+/** The days a window rule looks at: its own, or Monday to Friday. */
+export const ruleDays = (r: Pick<Rule, "days">) => r.days || "MTWRF";
+
+/** The constraint rows, gathered by name (in order of first appearance) into rules. */
+export function rulesOf(schedule: Schedule): Rule[] {
+  const byName = new Map<string, Constraint[]>();
+  for (const c of schedule.constraints) byName.set(c.constraint, [...(byName.get(c.constraint) ?? []), c]);
+  return [...byName].map(([name, rows]) => {
+    const f = rows[0]!;
+    const comments = [...new Set(rows.map((r) => r.comment.trim()).filter(Boolean))];
+    return {
+      name,
+      type: f.type,
+      items: rows.map((r) => ({ course: r.course, section: r.section, instructor: r.instructor })),
+      ...(f.atLeast !== undefined ? { atLeast: f.atLeast } : {}),
+      term: f.term,
+      days: f.days,
+      dayRule: f.dayRule,
+      ...(f.from !== undefined ? { from: f.from } : {}),
+      ...(f.to !== undefined ? { to: f.to } : {}),
+      should: f.should,
+      meets: f.meets,
+      comment: comments.join("; "),
+    };
+  });
+}
+
+/** A rule as constraint rows: the rule's settings repeat on every row; the comment goes on the first. */
+export function rulesToRows(rule: Rule): Constraint[] {
+  const window = rule.type === "window";
+  return rule.items.map((it, i) => ({
+    constraint: rule.name,
+    type: rule.type,
+    course: it.course.trim(),
+    section: it.section.trim(),
+    instructor: it.instructor.trim(),
+    ...(rule.atLeast !== undefined ? { atLeast: rule.atLeast } : {}),
+    term: rule.term.trim(),
+    days: window ? rule.days : "",
+    dayRule: rule.dayRule,
+    ...(window && rule.from !== undefined ? { from: rule.from } : {}),
+    ...(window && rule.to !== undefined ? { to: rule.to } : {}),
+    should: rule.should,
+    meets: window ? rule.meets : "",
+    comment: i === 0 ? rule.comment.trim() : "",
+  }));
+}
+
+/** Replace the rule called `original` (or add a new one at the end) — returns a new schedule. */
+export function saveRule(schedule: Schedule, original: string | undefined, rule: Rule): Schedule {
+  const rows = rulesToRows(rule);
+  if (original === undefined || !schedule.constraints.some((c) => c.constraint === original)) return { ...schedule, constraints: [...schedule.constraints, ...rows] };
+  const at = schedule.constraints.findIndex((c) => c.constraint === original);
+  const rest = schedule.constraints.filter((c) => c.constraint !== original);
+  rest.splice(at, 0, ...rows);
+  return { ...schedule, constraints: rest };
+}
+
+export const deleteRule = (schedule: Schedule, name: string): Schedule => ({ ...schedule, constraints: schedule.constraints.filter((c) => c.constraint !== name) });
+
+export interface RuleProblem {
+  /** Which field, for the editor to mark: `name`, `items`, `atLeast`, `days`, `from`, `to`, … */
+  field: string;
+  message: string;
+}
+
+/** What is wrong with a rule that is about to be saved; empty when it is fine. `original` is the name it had when opened. */
+export function validateRule(schedule: Schedule, rule: Rule, original?: string): RuleProblem[] {
+  const out: RuleProblem[] = [];
+  const name = rule.name.trim();
+  if (!name) out.push({ field: "name", message: "Give the rule a name." });
+  else if (schedule.constraints.some((c) => c.constraint.toLowerCase() === name.toLowerCase() && c.constraint !== original)) out.push({ field: "name", message: `Another rule is already called “${name}”.` });
+  if (rule.items.length === 0) out.push({ field: "items", message: rule.type === "takeable" ? "List at least two courses." : "Say which courses or instructors the rule is about." });
+  rule.items.forEach((it, i) => {
+    if (!it.course.trim() && !it.instructor.trim()) out.push({ field: `items.${i}`, message: "Name a course or an instructor." });
+    if (it.course.trim() && it.instructor.trim()) out.push({ field: `items.${i}`, message: "Use a course or an instructor on a line, not both." });
+    if (rule.type === "takeable" && it.instructor.trim()) out.push({ field: `items.${i}`, message: "A “take at least” rule lists courses." });
+    if (it.course.trim() && !/^\S+(\s+\S+)?$/.test(it.course.trim())) out.push({ field: `items.${i}`, message: "Write a course as PREFIX NUMBER, for example MATH 231 or MATH 3*." });
+  });
+  if (rule.type === "takeable") {
+    const wild = rule.items.some((it) => /\*/.test(it.course) || !/\s/.test(it.course.trim()));
+    if (rule.items.length === 1 && !wild) out.push({ field: "items", message: "A rule about taking courses together needs at least two courses." });
+    if (rule.atLeast !== undefined && !wild && rule.atLeast > rule.items.length) out.push({ field: "atLeast", message: `Only ${rule.items.length} courses are listed.` });
+  } else {
+    if (rule.from === undefined) out.push({ field: "from", message: "Give the start of the interval." });
+    if (rule.to === undefined) out.push({ field: "to", message: "Give the end of the interval." });
+    if (rule.from !== undefined && rule.to !== undefined && rule.from >= rule.to) out.push({ field: "to", message: "The interval must end after it starts." });
+  }
+  if (rule.atLeast !== undefined && (!Number.isInteger(rule.atLeast) || rule.atLeast < 1)) out.push({ field: "atLeast", message: "Use a whole number, 1 or more." });
+  return out;
+}
+
+const dayList = (days: string) => [...days].join(" ");
+const interval = (r: Pick<Rule, "from" | "to">) => `${formatTime(r.from ?? 0)}–${formatTime(r.to ?? 0)}`;
+const itemText = (it: RuleItem) => (it.instructor ? it.instructor : `${it.course}${it.section ? ` ${it.section}` : ""}`);
+/** `overlaps` or `within`, resolving the blank default. */
+export const meetsMode = (r: Pick<Rule, "meets" | "should">) => r.meets || (r.should === "should" ? "within" : "overlaps");
+
+/** A rule in a sentence, for lists. */
+export function describeRule(r: Rule): string {
+  const items = r.items.map(itemText).join(", ") || "…";
+  const when = r.term ? ` in ${r.term}` : "";
+  if (r.type === "takeable") {
+    const n = r.atLeast === undefined ? "all" : `at least ${r.atLeast}`;
+    return `A student must be able to take ${n} of ${items}${when}.`;
+  }
+  const which = r.atLeast === undefined ? "Each of" : `At least ${r.atLeast} of`;
+  const verb = r.should === "should" ? "should" : "should not";
+  const how = meetsMode(r) === "within" ? "meet within" : "meet during";
+  const days = ruleDays(r);
+  const dayText = days.length === 1 ? `on ${days}` : `on ${r.dayRule} of ${dayList(days)}`;
+  return `${which} ${items} ${verb} ${how} ${interval(r)} ${dayText}${when}.`;
+}
+
+export interface RuleViolation {
+  rule: string;
+  type: Rule["type"];
+  academicYear: string;
+  term: string;
+  /** What is wrong, in a sentence. */
+  message: string;
+  /** The sections involved. */
+  sectionIds: string[];
+  /** The meetings to highlight in views. */
+  sessions: Session[];
+}
+
+const sameLetter = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/**
+ * Every constraint rule that is not met, per academic year and term (rules apply within a term).
+ *
+ * - **take at least**: the rule's course lines are expanded into courses (a pattern such as
+ *   `MATH 3*` stands for each matching course), keeping those offered in the term. Choosing one
+ *   section of each of some `n` of them (n = `atLeast`, default all, never more than are offered),
+ *   must be possible with no two chosen sections overlapping. Rules with fewer than two courses
+ *   offered in a term are skipped there.
+ * - **window**: each section named (by course pattern or instructor, in the term) that has a
+ *   scheduled meeting is tested: it "meets in the interval" on a day if one of its meetings that
+ *   day overlaps (or lies within) the interval; it holds if that is true on any / all of the rule's
+ *   days; it satisfies a *should* rule if it holds and a *should not* rule if it does not. Every
+ *   section must satisfy the rule, or, with `atLeast`, that many of them.
+ */
+export function findRuleViolations(schedule: Schedule): RuleViolation[] {
+  const rules = rulesOf(schedule);
+  if (rules.length === 0) return [];
+  const names = displayNames(schedule);
+  const bySection = new Map<string, Session[]>();
+  for (const s of schedule.sessions) bySection.set(s.sectionId, [...(bySection.get(s.sectionId) ?? []), s]);
+  const primaries = [...bySection.values()].map((rows) => rows[0]!);
+  const label = (sectionId: string) => `${names.get(sectionId) ?? sectionId} ${bySection.get(sectionId)![0]!.section}`;
+
+  const overlapCache = new Map<string, boolean>();
+  const sectionsOverlap = (a: string, b: string): boolean => {
+    if (a === b) return true; // one section cannot stand for two courses
+    const k = a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`;
+    let v = overlapCache.get(k);
+    if (v === undefined) {
+      v = bySection.get(a)!.some((x) => bySection.get(b)!.some((y) => meetingsOverlap(schedule, x, y)));
+      overlapCache.set(k, v);
+    }
+    return v;
+  };
+
+  const groups = new Map<string, { year: string; term: string; sections: Session[] }>();
+  for (const p of primaries) {
+    const g = groups.get(`${p.academicYear}\u0000${p.term}`) ?? { year: p.academicYear, term: p.term, sections: [] };
+    g.sections.push(p);
+    groups.set(`${p.academicYear}\u0000${p.term}`, g);
+  }
+
+  const out: RuleViolation[] = [];
+  for (const rule of rulesOf(schedule)) {
+    for (const g of groups.values()) {
+      if (rule.term && rule.term.toLowerCase() !== g.term.toLowerCase()) continue;
+      if (rule.type === "takeable") takeable(rule, g);
+      else window(rule, g);
+    }
+  }
+  return out;
+
+  function takeable(rule: Rule, g: { year: string; term: string; sections: Session[] }) {
+    const items = new Map<string, { label: string; sectionIds: Set<string> }>();
+    for (const it of rule.items) {
+      if (!it.course.trim()) continue;
+      for (const s of g.sections) {
+        if (it.section.trim() && !sameLetter(it.section, s.section)) continue;
+        for (const l of listingsOf(s, schedule.crossListings)) {
+          if (!courseMatches(it.course, l.prefix, l.courseNumber)) continue;
+          const course = `${l.prefix} ${l.courseNumber}`;
+          const key = normCourse(course) + (it.section.trim() ? `|${it.section.trim().toLowerCase()}` : "");
+          const item = items.get(key) ?? { label: it.section.trim() ? `${course} ${s.section}` : course, sectionIds: new Set<string>() };
+          item.sectionIds.add(s.sectionId);
+          items.set(key, item);
+        }
+      }
+    }
+    const list = [...items.values()].sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: "base" }));
+    const need = Math.min(rule.atLeast ?? list.length, list.length);
+    if (list.length < 2 || need < 2) return;
+
+    // Can `need` courses be taken, one section each, with none overlapping?
+    let best = 0;
+    const chosen: string[] = [];
+    const search = (i: number) => {
+      if (chosen.length > best) best = chosen.length;
+      if (best >= need || i === list.length || chosen.length + (list.length - i) <= best) return;
+      for (const sid of list[i]!.sectionIds) {
+        if (chosen.every((c) => !sectionsOverlap(c, sid))) {
+          chosen.push(sid);
+          search(i + 1);
+          chosen.pop();
+          if (best >= need) return;
+        }
+      }
+      search(i + 1);
+    };
+    search(0);
+    if (best >= need) return;
+
+    // Which sections of different courses overlap? They explain the problem.
+    const pairs: [string, string][] = [];
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        for (const a of list[i]!.sectionIds) for (const b of list[j]!.sectionIds) if (sectionsOverlap(a, b)) pairs.push([a, b]);
+      }
+    }
+    const involved = [...new Set(pairs.flat())];
+    const sample = pairs.slice(0, 4).map(([a, b]) => `${label(a)} × ${label(b)}`).join(", ") + (pairs.length > 4 ? `, and ${pairs.length - 4} more` : "");
+    const needs = need === list.length ? `all ${need}` : String(need);
+    out.push({
+      rule: rule.name,
+      type: "takeable",
+      academicYear: g.year,
+      term: g.term,
+      message: `Only ${best} of the ${list.length} courses can be taken together (needs ${needs})${sample ? `: ${sample}` : ""}`,
+      sectionIds: involved.length ? involved : [...new Set(list.flatMap((x) => [...x.sectionIds]))],
+      sessions: involved.flatMap((id) => bySection.get(id)!),
+    });
+  }
+
+  function window(rule: Rule, g: { year: string; term: string; sections: Session[] }) {
+    if (rule.from === undefined || rule.to === undefined) return;
+    const from = rule.from;
+    const to = rule.to;
+    const days = [...ruleDays(rule)].filter((d) => DAY_ORDER.includes(d));
+    const mode = meetsMode(rule);
+    const subject = g.sections.filter((p) =>
+      rule.items.some((it) => {
+        const row = { course: it.course, section: it.section, instructor: it.instructor } as Constraint;
+        return constraintNames(row, listingKeys(schedule, p), p.section) || constraintNamesInstructor(row, p);
+      }),
+    ).filter((p) => bySection.get(p.sectionId)!.some(scheduled));
+
+    const hitDays = (id: string) =>
+      days.filter((d) =>
+        bySection.get(id)!.some((m) => {
+          if (!scheduled(m) || !m.days.includes(d)) return false;
+          const end = m.start + m.duration;
+          return mode === "within" ? m.start >= from && end <= to : m.start < to && from < end;
+        }),
+      );
+    const holds = (id: string) => {
+      const hit = hitDays(id);
+      return rule.dayRule === "all" ? hit.length === days.length : hit.length > 0;
+    };
+    const passes = (id: string) => (rule.should === "should" ? holds(id) : !holds(id));
+
+    const verb = mode === "within" ? "within" : "during";
+    const where = `${interval(rule)} on ${days.length === 1 ? days[0] : `${rule.dayRule} of ${dayList(days.join(""))}`}`;
+    if (rule.atLeast === undefined) {
+      for (const p of subject) {
+        if (passes(p.sectionId)) continue;
+        const message =
+          rule.should === "should"
+            ? `${label(p.sectionId)} does not meet ${verb} ${where}`
+            : `${label(p.sectionId)} meets ${verb} ${interval(rule)} on ${dayList(hitDays(p.sectionId).join(""))}`;
+        out.push({ rule: rule.name, type: "window", academicYear: g.year, term: g.term, message, sectionIds: [p.sectionId], sessions: bySection.get(p.sectionId)!.filter(scheduled) });
+      }
+      return;
+    }
+    const ok = subject.filter((p) => passes(p.sectionId)).length;
+    const need = Math.min(rule.atLeast, subject.length);
+    if (subject.length === 0 || ok >= need) return;
+    out.push({
+      rule: rule.name,
+      type: "window",
+      academicYear: g.year,
+      term: g.term,
+      message: `Only ${ok} of ${subject.length} section${subject.length === 1 ? "" : "s"} ${rule.should === "should" ? "meet" : "avoid meeting"} ${verb} ${where} (needs ${need})`,
+      sectionIds: subject.map((p) => p.sectionId),
+      sessions: [],
+    });
+  }
+}

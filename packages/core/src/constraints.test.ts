@@ -50,7 +50,7 @@ describe("constraintWarnings", () => {
   it("is quiet for a sound constraint", () => {
     expect(constraintWarnings(build([{ Constraint: "C", Course: "MATH 231", Section: "A" }, { Constraint: "C", Course: "MATH 250" }]))).toEqual([]);
   });
-  it("flags rows that match nothing and groups with one row", () => {
+  it("flags rows that match nothing and rules that name fewer than two courses", () => {
     const w = constraintWarnings(build([
       { Constraint: "C", Course: "MATH 999" },
       { Constraint: "C", Course: "MATH 231", Section: "Z" },
@@ -59,7 +59,8 @@ describe("constraintWarnings", () => {
     expect(w.map((x) => [x.row, x.message])).toEqual([
       [2, '"C": no section matches MATH 999'],
       [3, '"C": no section matches MATH 231 section Z'],
-      [undefined, '"Solo" has only one row, so it cannot conflict with anything'],
+      [undefined, '"C" names fewer than two courses that exist in the schedule, so it cannot conflict with anything'],
+      [undefined, '"Solo" names fewer than two courses that exist in the schedule, so it cannot conflict with anything'],
     ]);
   });
   it("shows a stale constraint after a letter change", () => {

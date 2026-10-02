@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { displayNames, findConflicts, type Conflict } from "@schedulizer/core";
+import { displayNames, findConflicts, findRuleViolations, type Conflict, type RuleViolation } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
 import { timeRange, yearsOf } from "../model";
 import { SortTh, useSort, type SortValue } from "../sort";
@@ -42,6 +42,7 @@ function ConflictsTable({ entry }: { entry: Entry }) {
     const [a, b] = c.meetings[0]!;
     return `${a.days} ${timeRange(a)} / ${b.days} ${timeRange(b)}`;
   };
+  const violations = useMemo(() => findRuleViolations(schedule), [schedule]);
   const sorting = useSort(conflicts, (c: Conflict, key: string): SortValue => {
     switch (key) {
       case "type": return c.type;
@@ -54,8 +55,15 @@ function ConflictsTable({ entry }: { entry: Entry }) {
   });
 
   if (schedule.sessions.length === 0) return <p className="muted">No sections in this schedule.</p>;
-  if (conflicts.length === 0) return <p className="note ok">No conflicts found.</p>;
   return (
+    <>
+      {conflicts.length === 0 ? <p className="note ok">No conflicts found.</p> : pairTable()}
+      {violations.length > 0 && <RuleTable entry={entry} violations={violations} label={label} />}
+    </>
+  );
+
+  function pairTable() {
+    return (
     <div className="table-wrap">
       <table>
         <thead>
@@ -80,5 +88,38 @@ function ConflictsTable({ entry }: { entry: Entry }) {
         </tbody>
       </table>
     </div>
+    );
+  }
+}
+
+/** Constraint rules that are not met (a different kind of problem from two sections clashing). */
+function RuleTable({ entry, violations, label }: { entry: Entry; violations: RuleViolation[]; label: (id: string) => string }) {
+  const { openSection, openConstraint } = useEditor();
+  return (
+    <>
+      <h3 className="rule-heading">Constraint rules not met</h3>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Rule</th><th>When</th><th>Problem</th><th>Sections</th></tr>
+          </thead>
+          <tbody>
+            {violations.map((v, i) => (
+              <tr key={i}>
+                <td><button className="link" onClick={() => openConstraint(v.rule, entry.id)} title="Edit this rule">{v.rule}</button></td>
+                <td className="nowrap">{v.academicYear} {v.term}</td>
+                <td>{v.message}</td>
+                <td>
+                  {v.sectionIds.slice(0, 6).map((id) => (
+                    <button key={id} className="link" onClick={() => openSection(id, entry.id)} title="Edit this section">{label(id)}</button>
+                  ))}
+                  {v.sectionIds.length > 6 && <span className="muted"> and {v.sectionIds.length - 6} more</span>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
