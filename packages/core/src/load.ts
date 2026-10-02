@@ -29,7 +29,7 @@ export function sectionShares(load: number, instructors: Instructor[]): { name: 
 
 /**
  * Tidy faculty load: one row per (year, faculty, term, kind). Teaching load is
- * credited to the section's term (`AY` stays `AY`); `AY` non-teaching load is
+ * credited to the section's term; `AY` non-teaching load is
  * split evenly across `settings.spreadTerms`. Faculty names match
  * case-insensitively; the first spelling seen is displayed. Zero rows are kept
  * (someone who teaches a zero-load section still appears).
@@ -96,7 +96,7 @@ export interface LoadTableRow {
 }
 
 export interface LoadTable {
-  /** Columns: configured terms that have load in this year, then `AY` if used. */
+  /** Columns: configured terms that have load in this year, then `AY` if non-teaching load is not spread. */
   terms: string[];
   /** People, by total load descending (then name). */
   rows: LoadTableRow[];

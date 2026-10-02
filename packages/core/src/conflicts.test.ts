@@ -17,7 +17,7 @@ describe("fixtures: conflicts", () => {
     return r.schedule;
   };
 
-  it("finds exactly the conflicts in expected/conflicts.csv (cases T01–T18)", () => {
+  it("finds exactly the conflicts in expected/conflicts.csv (cases T01–T17)", () => {
     expect(keys(findConflicts(load()))).toEqual(expected("expected/conflicts.csv"));
   });
 
@@ -25,7 +25,7 @@ describe("fixtures: conflicts", () => {
     const by = (id: string, type: string) => findConflicts(load()).find((c) => c.sectionIdA.startsWith(id) && c.type === type);
     expect(by("T10", "Instructor")!.detail).toBe("Jones");
     expect(by("T04", "Room")!.detail).toBe("NH 101");
-    expect(by("T18", "Constraint")!.detail).toBe("Math major year 2");
+    expect(by("T17", "Constraint")!.detail).toBe("Math major year 2");
     expect(by("T14", "Instructor")!.detail).toBe("Smith");
   });
 

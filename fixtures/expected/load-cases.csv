@@ -1,7 +1,6 @@
 Faculty,Term,Kind,Load
 Ada Example,FA,teaching,10
 Ada Example,SP,teaching,4
-Ada Example,AY,teaching,2
 Ada Example,FA,nonteaching,1.5
 Ada Example,SP,nonteaching,1.5
 Ben Sample,FA,teaching,8

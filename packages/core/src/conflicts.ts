@@ -1,6 +1,6 @@
 import { listingsOf } from "./names.js";
 import { weeksOf, weeksOverlap } from "./terms.js";
-import { AY, type Schedule, type Session } from "./types.js";
+import type { Schedule, Session } from "./types.js";
 
 export type ConflictType = "Instructor" | "Room" | "Wildcard" | "Constraint";
 
@@ -20,10 +20,9 @@ const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 const scheduled = (s: Session): s is Session & { start: number; duration: number } =>
   s.days !== "" && s.start !== undefined && s.duration !== undefined;
 
-/** Do the two sections run in overlapping weeks of the same academic year? */
+/** Do the two sections run in overlapping weeks of the same term of the same academic year? */
 function weeksConcurrent(schedule: Schedule, a: Session, b: Session): boolean {
   if (a.academicYear !== b.academicYear) return false;
-  if (a.term === AY || b.term === AY) return true;
   if (a.term !== b.term) return false;
   const wa = weeksOf(schedule.settings, a.term, a.termPart);
   const wb = weeksOf(schedule.settings, b.term, b.termPart);

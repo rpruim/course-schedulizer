@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { recordsFromCsv } from "./csv.js";
-import { importCrossListings, importRecords, importSessions } from "./import.js";
+import { importCrossListings, importNonTeaching, importRecords, importSessions } from "./import.js";
 import { fixtureText } from "./testutil.js";
 import { defaultSettings, type Settings } from "./types.js";
 
@@ -74,9 +74,9 @@ describe("term parts", () => {
 describe("importSessions: validation", () => {
   const errors = (o: Record<string, string>, extra = {}) =>
     importSessions([rec({ ...o, ...extra })]).issues.filter((i) => i.severity === "error").map((i) => i.message);
-  it("rejects unknown terms but accepts AY and configured terms", () => {
+  it("rejects unknown terms and AY, but accepts configured terms", () => {
     expect(errors({ Term: "XX" })[0]).toMatch(/not a configured term/);
-    expect(errors({ Term: "AY" })).toEqual([]);
+    expect(errors({ Term: "AY" })[0]).toMatch(/only for non-teaching load/);
     expect(errors({ Term: "fa" })).toEqual([]);
     const r = importSessions([rec({ Term: "J" })], { ...defaultSettings(), terms: [{ code: "J", name: "January" }] });
     expect(r.issues).toEqual([]);
@@ -106,6 +106,15 @@ describe("importSessions: validation", () => {
   it("matches headers loosely", () => {
     const r = importSessions([{ "academic year": "AY1", TERM: "FA", prefix: "MATH", "Course Number": "101", section: "A", "meeting days": "MW", "start time": "9:00", "meeting duration": "50" }]);
     expect(r.sessions[0]).toMatchObject({ academicYear: "AY1", days: "MW" });
+  });
+});
+
+describe("importNonTeaching", () => {
+  it("accepts AY and configured terms, rejects others", () => {
+    const row = (term: string) => ({ AcademicYear: "Y", Faculty: "Ada", Activity: "Chair", Term: term, Load: "3" });
+    expect(importNonTeaching([row("AY"), row("fa")]).issues).toEqual([]);
+    expect(importNonTeaching([row("XX")]).issues[0]!.message).toMatch(/not a configured term/);
+    expect(importNonTeaching([{ ...row("FA"), Load: "lots" }]).issues[0]!.message).toMatch(/not a number/);
   });
 });
 

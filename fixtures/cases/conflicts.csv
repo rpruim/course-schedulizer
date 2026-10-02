@@ -34,10 +34,7 @@ T15,FA,Full,MATH,101,A,Smith,4,MWF,09:15,65,Off Campus,Off Campus / Online / TBD
 T15,FA,Full,MATH,102,A,Jones,4,MWF,09:15,65,Off Campus,
 T16,FA,Full,MATH,101,A,"Smith (3), Jones (1)",4,MWF,09:15,65,NH 101,"per-instructor load ""(n)"" is not part of the name"
 T16,FA,Full,MATH,102,A,Jones,4,MWF,09:15,65,NH 102,
-T17,AY,Full,MATH,101,A,Smith,4,MWF,09:15,65,NH 101,"AY (full academic year) overlaps every term of the same year"
-T17,FA,Full,MATH,102,A,Smith,4,MWF,09:15,65,NH 102,
-T17,SP,Full,MATH,103,A,Smith,4,TR,09:15,65,NH 103,(different days: no conflict)
-T18,FA,Full,MATH,231,A,Smith,4,MWF,09:15,65,NH 101,cohort constraint: MATH 231 and STAT 243 are in the same group (cases/constraints.csv)
-T18,FA,Full,STAT,243,A,Jones,4,MWF,09:15,65,NH 102,
-T18,FA,Full,MATH,250,A,Lee,4,TR,09:15,65,NH 103,same group but meets at a different time: no violation
-T18,FA,Full,MATH,260,A,Kim,4,MWF,09:15,65,NH 104,not in any group: no violation despite same time
+T17,FA,Full,MATH,231,A,Smith,4,MWF,09:15,65,NH 101,cohort constraint: MATH 231 and STAT 243 are in the same group (cases/constraints.csv)
+T17,FA,Full,STAT,243,A,Jones,4,MWF,09:15,65,NH 102,
+T17,FA,Full,MATH,250,A,Lee,4,TR,09:15,65,NH 103,same group but meets at a different time: no violation
+T17,FA,Full,MATH,260,A,Kim,4,MWF,09:15,65,NH 104,not in any group: no violation despite same time

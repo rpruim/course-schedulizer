@@ -3,7 +3,7 @@ import { z } from "zod";
 /** Day letters in canonical order. `R` is Thursday, `U` Sunday. */
 export const DAY_ORDER = "MTWRFSU";
 
-/** Reserved pseudo-term: the full academic year; overlaps every term. */
+/** Reserved pseudo-term: the full academic year. Valid only for non-teaching load (spec §2.3). */
 export const AY = "AY";
 
 export const instructorSchema = z.object({

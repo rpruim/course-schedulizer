@@ -146,7 +146,7 @@ export interface SessionsImport {
 /** Sessions sheet records (multi-row or packed form) → sessions + cross-listings. */
 export function importSessions(records: Rec[], settings: Settings = defaultSettings()): SessionsImport {
   const r = new Reporter("Sessions");
-  const terms = new Set([AY, ...settings.terms.map((t) => t.code)]);
+  const terms = new Set(settings.terms.map((t) => t.code));
   const sessions: Session[] = [];
   const crossListings: CrossListing[] = [];
   const items: { row: number; section: Record<string, unknown>; ms: Meeting[] }[] = [];
@@ -158,7 +158,8 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
     const ls = listings(r, row, k);
     const primary = ls[0] ?? { prefix: k.Prefix ?? "", courseNumber: k.CourseNumber ?? "" };
     const term = (k.Term ?? "").toUpperCase();
-    if (term && !terms.has(term)) r.add("error", row, `Term: "${k.Term}" is not a configured term (${[...terms].join(", ")})`);
+    if (term === AY) r.add("error", row, `Term: AY (full academic year) is only for non-teaching load; enter a year-long course as separate sections in each semester`);
+    else if (term && !terms.has(term)) r.add("error", row, `Term: "${k.Term}" is not a configured term (${[...terms].join(", ")})`);
     const partCodes = partsFor(settings, term).map((p) => p.code);
     let part = "Full";
     if (k.TermPart) {
