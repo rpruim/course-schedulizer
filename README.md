@@ -29,6 +29,14 @@ Open an Excel file (the app's own export, or a file from the old Course
 Schedulizer — if it has no academic year, type one in first), or load one of the
 built-in synthetic examples.
 
+## Hosting
+
+The site is static, so any static host works. On Netlify: add the GitHub repository as a new site;
+`netlify.toml` already sets the build command (`pnpm build`), the publish folder (`apps/web/dist`)
+and Node 22, and `packageManager` in `package.json` pins the pnpm version. Every push to the main
+branch deploys, and every branch or pull request gets a preview URL. Nothing else is needed: no
+redirects, no environment variables. Schedules stay in each visitor's browser.
+
 ## Terms and parts of terms
 
 The default terms (Fall, Winter Intensive, Spring, Summer), their parts (full term, halves,

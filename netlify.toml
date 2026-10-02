@@ -1,0 +1,20 @@
+# Netlify: build the static site and publish it. No server, redirects or functions are needed
+# (the app uses hash routes and relative asset paths).
+[build]
+  command = "pnpm build"
+  publish = "apps/web/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Built asset files have content-hashed names, so they can be cached for good.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
