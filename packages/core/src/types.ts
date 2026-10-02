@@ -105,6 +105,8 @@ export interface Settings {
   parts: PartDef[];
   /** Terms across which `AY` non-teaching load is shown, split evenly (spec §2.3). */
   spreadTerms: string[];
+  /** Room-column values that are not rooms and never conflict (compared case-insensitively). */
+  nonRooms: string[];
 }
 
 export interface Meta {
@@ -144,6 +146,7 @@ export const defaultSettings = (): Settings => ({
   terms: DEFAULT_TERMS.map((t) => ({ ...t })),
   parts: DEFAULT_PARTS.map((p) => ({ ...p })),
   spreadTerms: ["FA", "SP"],
+  nonRooms: ["Off Campus", "Online", "TBD"],
 });
 export const emptyMeta = (): Meta => ({ name: "", notes: "", version: "" });
 export const emptySchedule = (): Schedule => ({

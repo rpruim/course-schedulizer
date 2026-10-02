@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import { constraintsTable, crossListingsTable, nonTeachingTable, sessionsTable, type ExportOptions, type Table } from "./export.js";
-import { importRecords, type ImportResult } from "./import.js";
-import { DEFAULT_PARTS, defaultSettings, emptyMeta, type Issue, type PartDef, type Rec, type Settings } from "./types.js";
+import { importRecords, importSettings, type ImportResult } from "./import.js";
+import { emptyMeta, type Issue, type Rec } from "./types.js";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -47,40 +47,6 @@ function sheetRecords(ws: ExcelJS.Worksheet | undefined): Rec[] {
 const sheetByName = (wb: ExcelJS.Workbook, name: string) =>
   wb.worksheets.find((w) => w.name.trim().toLowerCase() === name.toLowerCase());
 
-function readSettings(recs: Rec[], issues: Issue[]): Settings {
-  const warn = (message: string) => issues.push({ severity: "warning", sheet: "Settings", message });
-  const terms = recs
-    .filter((r) => (r.Kind ?? "").toLowerCase() === "term")
-    .map((r) => ({ code: (r.Code ?? "").trim().toUpperCase(), name: (r.Name ?? "").trim() }))
-    .filter((t) => t.code);
-  const parts: PartDef[] = [];
-  const spread: string[] = [];
-  for (const r of recs) {
-    const kind = (r.Kind ?? "").toLowerCase();
-    if (kind === "part") {
-      const start = Number(r.StartWeek);
-      const end = Number(r.EndWeek);
-      if (!r.Code?.trim() || !Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < start) {
-        warn(`part "${r.Code ?? ""}": needs a code and StartWeek <= EndWeek (positive whole weeks); ignored`);
-        continue;
-      }
-      const term = (r.Term ?? "").trim().toUpperCase();
-      parts.push({ ...(term ? { term } : {}), code: r.Code.trim(), name: (r.Name ?? "").trim() || r.Code.trim(), startWeek: start, endWeek: end });
-    } else if (kind === "spreadterm") {
-      if (r.Code?.trim()) spread.push(r.Code.trim().toUpperCase());
-    } else if (kind && kind !== "term") warn(`unknown setting kind "${r.Kind}" ignored`);
-  }
-  const base = defaultSettings();
-  const known = new Set((terms.length ? terms.map((t) => t.code) : base.terms.map((t) => t.code)));
-  for (const c of spread) if (!known.has(c)) warn(`SpreadTerm "${c}" is not a configured term`);
-  return {
-    spreadTerms: spread.length ? spread : base.spreadTerms,
-    terms: terms.length ? terms.map((t) => ({ ...t, name: t.name || t.code })) : base.terms,
-    // File parts win; the semester defaults remain unless the file defines its own term-less parts.
-    parts: parts.some((p) => !p.term) ? parts : [...DEFAULT_PARTS.map((p) => ({ ...p })), ...parts],
-  };
-}
-
 /**
  * Read a workbook: the new multi-sheet form, or the legacy single-sheet packed
  * form (first sheet when there is no `Sessions` sheet).
@@ -89,7 +55,8 @@ export async function readWorkbook(data: ArrayBuffer | Uint8Array): Promise<Impo
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load((data instanceof Uint8Array ? data : new Uint8Array(data)) as unknown as ArrayBuffer);
   const issues: Issue[] = [];
-  const settings = readSettings(sheetRecords(sheetByName(wb, "Settings")), issues);
+  const { settings, issues: settingsIssues } = importSettings(sheetRecords(sheetByName(wb, "Settings")));
+  issues.push(...settingsIssues);
   const meta = emptyMeta();
   for (const r of sheetRecords(sheetByName(wb, "Meta"))) {
     const k = (r.Key ?? "").toLowerCase();
@@ -135,6 +102,7 @@ export async function writeWorkbook(schedule: import("./types.js").Schedule, opt
     header: ["Kind", "Code", "Name", "Term", "StartWeek", "EndWeek"],
     rows: [
       ...schedule.settings.spreadTerms.map((c) => ["SpreadTerm", c, "", "", "", ""]),
+      ...schedule.settings.nonRooms.map((c) => ["NonRoom", c, "", "", "", ""]),
       ...schedule.settings.terms.map((t) => ["Term", t.code, t.name, "", "", ""]),
       ...schedule.settings.parts.map((p) => ["Part", p.code, p.name, p.term ?? "", String(p.startWeek), String(p.endWeek)]),
     ],

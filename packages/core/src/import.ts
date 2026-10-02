@@ -3,6 +3,7 @@ import { parseDays, parseFaculty, parseTime } from "./format.js";
 import { partsFor } from "./terms.js";
 import {
   AY,
+  DEFAULT_PARTS,
   constraintSchema,
   crossListingSchema,
   defaultSettings,
@@ -14,6 +15,7 @@ import {
   type Issue,
   type Meta,
   type NonTeaching,
+  type PartDef,
   type Rec,
   type Schedule,
   type Session,
@@ -297,6 +299,53 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
     else r.zod(idx + 2, parsed.error);
   });
   return { constraints: out, issues: r.issues };
+}
+
+/**
+ * Settings sheet records (`Kind,Code,Name,Term,StartWeek,EndWeek`) → settings.
+ * Kinds: `Term`, `Part`, `SpreadTerm`, `NonRoom`. Anything absent keeps its default.
+ */
+export function importSettings(recs: Rec[]): { settings: Settings; issues: Issue[] } {
+  const issues: Issue[] = [];
+  const warn = (message: string) => issues.push({ severity: "warning", sheet: "Settings", message });
+  const base = defaultSettings();
+  const terms: { code: string; name: string }[] = [];
+  const parts: PartDef[] = [];
+  const spread: string[] = [];
+  const nonRooms: string[] = [];
+  for (const rec of recs) {
+    const kind = (rec.Kind ?? "").trim().toLowerCase();
+    const code = (rec.Code ?? "").trim();
+    if (kind === "term") {
+      if (code) terms.push({ code: code.toUpperCase(), name: (rec.Name ?? "").trim() || code });
+    } else if (kind === "part") {
+      const start = Number(rec.StartWeek);
+      const end = Number(rec.EndWeek);
+      if (!code || !Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < start) {
+        warn(`part "${code}": needs a code and StartWeek <= EndWeek (positive whole weeks); ignored`);
+        continue;
+      }
+      const term = (rec.Term ?? "").trim().toUpperCase();
+      parts.push({ ...(term ? { term } : {}), code, name: (rec.Name ?? "").trim() || code, startWeek: start, endWeek: end });
+    } else if (kind === "spreadterm") {
+      if (code) spread.push(code.toUpperCase());
+    } else if (kind === "nonroom") {
+      if (code) nonRooms.push(code);
+    } else if (kind) warn(`unknown setting kind "${rec.Kind}" ignored`);
+  }
+  const known = new Set((terms.length ? terms : base.terms).map((t) => t.code));
+  for (const c of spread) if (!known.has(c)) warn(`SpreadTerm "${c}" is not a configured term`);
+  for (const p of parts) if (p.term && !known.has(p.term)) warn(`part ${p.code}: term "${p.term}" is not a configured term`);
+  return {
+    settings: {
+      terms: terms.length ? terms : base.terms,
+      // The semester defaults stay unless the file defines its own term-less parts.
+      parts: parts.some((p) => !p.term) ? parts : [...DEFAULT_PARTS.map((p) => ({ ...p })), ...parts],
+      spreadTerms: spread.length ? spread : base.spreadTerms,
+      nonRooms: nonRooms.length ? nonRooms : base.nonRooms,
+    },
+    issues,
+  };
 }
 
 export interface ImportInput {
