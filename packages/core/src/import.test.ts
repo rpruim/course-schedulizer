@@ -65,6 +65,17 @@ describe("term parts", () => {
     expect(part({ Term: "SU", TermPart: "second" }).sessions[0]!.termPart).toBe("Second");
     expect(part({ Term: "FA", TermPart: "S1" }).issues[0]!.severity).toBe("error");
   });
+  it("splits a combined code like FA1 into term and part when TermPart is blank", () => {
+    const fill = (term: string, termPart?: string) => part({ Term: term, ...(termPart ? { TermPart: termPart } : {}) });
+    expect(fill("FA1").sessions[0]).toMatchObject({ term: "FA", termPart: "First", sectionId: "AY1-FA-MATH101-A" });
+    expect(fill("sp2").sessions[0]).toMatchObject({ term: "SP", termPart: "Second" });
+    expect(fill("SU1", "first").issues).toEqual([]);
+  });
+  it("does not guess when the combined code is inconsistent or unknown", () => {
+    expect(part({ Term: "FA1", TermPart: "Second" }).issues[0]!.message).toMatch(/means FA First, but TermPart says "Second"/);
+    expect(part({ Term: "FA3" }).issues[0]!.message).toMatch(/not a configured term/);
+    expect(part({ Term: "WI1" }).issues[0]!.message).toMatch(/not a configured term/);
+  });
   it("WI is a 2-week term with only a full part", () => {
     expect(part({ Term: "WI" }).issues).toEqual([]);
     expect(part({ Term: "WI", TermPart: "First" }).issues[0]!.severity).toBe("error");

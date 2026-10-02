@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { parseDays, parseFaculty, parseTime } from "./format.js";
-import { partsFor } from "./terms.js";
+import { partsFor, splitTermCode } from "./terms.js";
 import {
   AY,
   DEFAULT_PARTS,
@@ -157,11 +157,22 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
     const { known: k, extra } = split(rec, SESSION_COLUMNS);
     const ls = listings(r, row, k);
     const primary = ls[0] ?? { prefix: k.Prefix ?? "", courseNumber: k.CourseNumber ?? "" };
-    const term = (k.Term ?? "").toUpperCase();
+    // A combined code like FA1 fills both columns when TermPart is blank (or agrees).
+    let term = (k.Term ?? "").toUpperCase();
+    let impliedPart: string | undefined;
+    if (term && !terms.has(term) && term !== AY) {
+      const split = splitTermCode(settings, term);
+      if (split) {
+        if (!k.TermPart || k.TermPart.toLowerCase() === split.part.toLowerCase()) {
+          term = split.term;
+          impliedPart = split.part;
+        } else r.add("error", row, `Term: "${k.Term}" means ${split.term} ${split.part}, but TermPart says "${k.TermPart}"`);
+      }
+    }
     if (term === AY) r.add("error", row, `Term: AY (full academic year) is only for non-teaching load; enter a year-long course as separate sections in each semester`);
     else if (term && !terms.has(term)) r.add("error", row, `Term: "${k.Term}" is not a configured term (${[...terms].join(", ")})`);
     const partCodes = partsFor(settings, term).map((p) => p.code);
-    let part = "Full";
+    let part = impliedPart ?? "Full";
     if (k.TermPart) {
       const hit = partCodes.find((c) => c.toLowerCase() === k.TermPart!.toLowerCase());
       if (hit) part = hit;

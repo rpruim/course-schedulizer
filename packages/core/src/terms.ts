@@ -18,3 +18,21 @@ export function weeksOf(settings: Settings, term: string, part: string): [number
 
 /** Do two week ranges share a week? */
 export const weeksOverlap = (a: [number, number], b: [number, number]) => a[0] <= b[1] && b[0] <= a[1];
+
+/** Suffix digits that registrars append to a term code, and the part each means. */
+const SUFFIX_PARTS: Record<string, string> = { "1": "First", "2": "Second" };
+
+/**
+ * Split a combined code such as `FA1` / `SP2` / `SU1` (the 8-week accelerated
+ * terms) into a configured term and a part: `FA` + `First`. Returns `undefined`
+ * unless the prefix is a configured term and the part exists for that term.
+ */
+export function splitTermCode(settings: Settings, text: string): { term: string; part: string } | undefined {
+  const code = text.trim().toUpperCase();
+  for (const t of settings.terms) {
+    const rest = code.startsWith(t.code) ? code.slice(t.code.length) : "";
+    const part = SUFFIX_PARTS[rest];
+    if (part && partsFor(settings, t.code).some((p) => p.code === part)) return { term: t.code, part };
+  }
+  return undefined;
+}
