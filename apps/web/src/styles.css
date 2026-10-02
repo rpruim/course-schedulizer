@@ -133,3 +133,7 @@ details summary { cursor: pointer; color: var(--muted); }
 .legend { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; }
 .swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
 .conflict-swatch { border: 2px solid #c0392b; }
+
+/* non-teaching editor */
+dialog.editor.narrow { width: min(520px, calc(100vw - 24px)); }
+.preview-box { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--panel); display: flex; flex-direction: column; gap: 2px; font-size: .9rem; }

@@ -1,8 +1,8 @@
-import { constraintWarnings, crossListingWarnings, loadWarnings, type Issue, type Schedule } from "@schedulizer/core";
+import { constraintWarnings, crossListingWarnings, loadWarnings, nonTeachingWarnings, type Issue, type Schedule } from "@schedulizer/core";
 
 /** Everything worth telling the user about a schedule: import problems plus the checks that need the whole schedule. */
 export function allIssues(schedule: Schedule, importIssues: Issue[]): Issue[] {
-  return [...importIssues, ...loadWarnings(schedule), ...crossListingWarnings(schedule), ...constraintWarnings(schedule)];
+  return [...importIssues, ...loadWarnings(schedule), ...crossListingWarnings(schedule), ...constraintWarnings(schedule), ...nonTeachingWarnings(schedule)];
 }
 
 export const errorsOf = (issues: Issue[]) => issues.filter((i) => i.severity === "error");

@@ -13,3 +13,4 @@ export * from "./constraints.js";
 export * from "./registrar.js";
 export * from "./crosslistings.js";
 export * from "./editing.js";
+export * from "./nonteaching.js";

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { loadTable, type LoadTableRow } from "@schedulizer/core";
 import { yearsOf } from "../model";
 import { useSchedule } from "../state";
@@ -34,9 +35,11 @@ export function LoadsPage() {
           </label>
         )}
         <span className="muted">Teaching load per term; <span className="sub">+small</span> is non-teaching load.</span>
+        <span className="spacer" />
+        <Link to="/nonteaching">Edit non-teaching load</Link>
       </div>
       {!table.hasNonTeaching && (
-        <p className="note">This schedule has no non-teaching load, so these totals cover teaching load only.</p>
+        <p className="note">This schedule has no non-teaching load, so these totals cover teaching load only. <Link to="/nonteaching">Add non-teaching load</Link></p>
       )}
       <div className="table-wrap">
         <table>
