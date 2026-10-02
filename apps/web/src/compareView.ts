@@ -313,3 +313,106 @@ export function memberOf(r: CompareRow): Member {
     source: rowSource(r),
   };
 }
+
+/** The fields shown for each line of the detail view, so a difference can be marked in the right cell. */
+export type MemberField = "course" | "section" | "term" | "title" | "instructor" | "load" | "meets" | "room";
+
+/** Which displayed field each comparison column feeds (columns not listed are shown under "also differs"). */
+function fieldOfColumn(column: string, teaching: boolean): MemberField | undefined {
+  switch (column) {
+    case "Prefix": case "CourseNumber": case "CrossListings": return "course";
+    case "Section": return "section";
+    case "Term": case "TermPart": return "term";
+    case "ShortTitle": return teaching ? "title" : undefined;
+    case "InstructionalMethod": return teaching ? undefined : "title";
+    case "Faculty": return "instructor";
+    case "FacultyLoad": return "load";
+    case "MeetingDays": case "StartTime": case "MeetingDuration": return "meets";
+    case "Classroom": return "room";
+    default: return undefined;
+  }
+}
+
+/** A line of the detail view with its differences from the same section in the other schedules marked. */
+export interface MemberView {
+  member: Member;
+  /** Displayed fields whose value is not the same in every schedule that has this section. */
+  differs: ReadonlySet<MemberField>;
+  /** Differences in columns that are not displayed, as `Label: value` for this line. */
+  others: string[];
+  /** The section has no counterpart in another schedule that has rows in this group. */
+  solo: boolean;
+}
+
+const text = (r: CompareRow, k: string) => String(r[k] ?? "");
+
+/** What makes two rows "the same section" across schedules (an instructor row is also that instructor). */
+function pairKey(r: CompareRow, rowKind: RowKind): string {
+  const teaching = text(r, "Prefix") !== "" || text(r, "CourseNumber") !== "";
+  if (!teaching) return JSON.stringify(["nt", text(r, "AcademicYear"), text(r, "Term"), text(r, "Faculty"), text(r, "InstructionalMethod")]);
+  const base = [text(r, "AcademicYear"), text(r, "Term"), text(r, "TermPart"), text(r, "Prefix"), text(r, "CourseNumber"), text(r, "Section")];
+  return JSON.stringify(rowKind === "instructor" ? [...base, text(r, "Faculty")] : base);
+}
+
+/**
+ * Pair up the rows of a group across schedules: rows with the same section identity are the
+ * same section (the n-th occurrence pairing with the n-th); whatever is left over in each
+ * schedule is paired in order, so a section whose letter changed still shows as one section
+ * that changed. Returns clusters of `[schedule, index]`; a cluster of one has no counterpart.
+ */
+export function pairMembers(members: CompareRow[][], rowKind: RowKind): [number, number][][] {
+  const exact = new Map<string, [number, number][]>();
+  members.forEach((rows, s) => {
+    const seen = new Map<string, number>();
+    rows.forEach((r, i) => {
+      const k = pairKey(r, rowKind);
+      const n = seen.get(k) ?? 0;
+      seen.set(k, n + 1);
+      const id = `${k}#${n}`;
+      exact.set(id, [...(exact.get(id) ?? []), [s, i]]);
+    });
+  });
+  const clusters: [number, number][][] = [];
+  const leftover: number[][] = members.map(() => []);
+  for (const c of exact.values()) {
+    if (c.length > 1) clusters.push(c);
+    else leftover[c[0]![0]]!.push(c[0]![1]);
+  }
+  for (let k = 0; k < Math.max(0, ...leftover.map((l) => l.length)); k++) {
+    const c = leftover.flatMap((l, s) => (l[k] === undefined ? [] : [[s, l[k]!] as [number, number]]));
+    clusters.push(c);
+  }
+  return clusters;
+}
+
+/**
+ * For each schedule's rows in a group, the line to show with its differences from the
+ * counterparts in the other schedules marked (see `pairMembers`). With one schedule having
+ * rows, or none of the others, nothing is marked.
+ */
+export function diffMembers(row: ComparisonRow, rowKind: RowKind): MemberView[][] {
+  const views: MemberView[][] = row.members.map((rows) => rows.map((r) => ({ member: memberOf(r), differs: new Set<MemberField>(), others: [] as string[], solo: false })));
+  const schedulesWithRows = row.members.filter((m) => m.length > 0).length;
+  if (schedulesWithRows < 2) return views;
+
+  for (const cluster of pairMembers(row.members, rowKind)) {
+    if (cluster.length === 1) {
+      const [s, i] = cluster[0]!;
+      views[s]![i]!.solo = true;
+      continue;
+    }
+    const rows = cluster.map(([s, i]) => row.members[s]![i]!);
+    for (const col of COMPARE_COLUMNS) {
+      const values = rows.map((r) => formatCell(r[col.key]));
+      if (values.every((v) => v === values[0])) continue;
+      cluster.forEach(([s, i], k) => {
+        const view = views[s]![i]!;
+        const teaching = text(rows[k]!, "Prefix") !== "" || text(rows[k]!, "CourseNumber") !== "";
+        const field = fieldOfColumn(col.key, teaching);
+        if (field) view.differs = new Set([...view.differs, field]);
+        else view.others.push(`${col.label}: ${values[k] === "" ? "(blank)" : values[k]}`);
+      });
+    }
+  }
+  return views;
+}

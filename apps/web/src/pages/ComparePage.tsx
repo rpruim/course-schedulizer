@@ -13,7 +13,7 @@ import {
   type ComparisonRow,
   type RowKind,
 } from "@schedulizer/core";
-import { aggregateDiffers, comparisonSheets, hueFor, loadSettings, memberOf, PRESETS, saveSettings, tableColumns, toneColor, type Roles } from "../compareView";
+import { aggregateDiffers, comparisonSheets, diffMembers, hueFor, loadSettings, PRESETS, saveSettings, tableColumns, toneColor, type MemberField, type Roles } from "../compareView";
 import { useEditor } from "../editor/context";
 import { downloadBytes, XLSX_TYPE } from "../download";
 import { SortTh, useSort } from "../sort";
@@ -204,8 +204,14 @@ export function ComparePage() {
                   {isOpen && (
                     <tr className="detail">
                       <td colSpan={columns.length + 1}>
-                        {comparison.schedules.map((s, si) => {
+                        {(() => {
+                          const views = diffMembers(r, rowKind);
+                          const marked = views.some((v) => v.some((l) => l.differs.size > 0 || l.others.length > 0 || l.solo));
+                          return [
+                            marked && <p key="key" className="muted small">Highlighted cells differ from the same section in the other schedule(s); <span className="tag solo">only here</span> means no matching section there.</p>,
+                            ...comparison.schedules.map((s, si) => {
                           const members = r.members[si] ?? [];
+                          const lines = views[si] ?? [];
                           return (
                             <div className="members" key={s.id}>
                               <h4><span className="swatch" style={{ background: `hsl(${hueFor(si)} 75% 52% / 0.5)` }} /> {s.name} <span className="muted">— {members.length === 0 ? "none" : `${members.length} ${members.length === 1 ? "item" : "items"}`}</span></h4>
@@ -213,14 +219,24 @@ export function ComparePage() {
                                 <p className="muted small">Nothing in this schedule for this row.</p>
                               ) : (
                                 <table className="mini">
-                                  <thead><tr><th>Course</th><th>Sec</th><th>Term</th><th>Title</th><th>Instructor</th><th className="num">Load</th><th>Meets</th><th>Room</th></tr></thead>
+                                  <thead><tr><th>Course</th><th>Sec</th><th>Term</th><th>Title</th><th>Instructor</th><th className="num">Load</th><th>Meets</th><th>Room</th><th>Also differs</th></tr></thead>
                                   <tbody>
-                                    {members.map((m, mi) => {
-                                      const v = memberOf(m);
+                                    {lines.map((line, mi) => {
+                                      const v = line.member;
                                       const go = () => (v.source?.kind === "section" ? openSection(v.source.sectionId, s.id) : v.source?.kind === "nonteaching" ? openNonTeaching(v.source.index, undefined, s.id) : undefined);
+                                      // a cell that differs from the same section in another schedule is highlighted (and bold, so colour is not the only cue)
+                                      const cell = (f: MemberField, extra = "") => `${extra}${line.differs.has(f) ? " d" : ""}`.trim() || undefined;
                                       return (
-                                        <tr key={mi} className={v.source ? "clickable" : undefined} tabIndex={v.source ? 0 : undefined} onClick={go} onKeyDown={(e) => e.key === "Enter" && go()} title={v.source ? "Click to edit" : undefined}>
-                                          <td className="nowrap">{v.course}</td><td>{v.section}</td><td className="nowrap">{v.term}</td><td>{v.title}</td><td>{v.instructor}</td><td className="num">{v.load}</td><td className="nowrap">{v.meets}</td><td className="nowrap">{v.room}</td>
+                                        <tr key={mi} className={`${v.source ? "clickable" : ""}${line.solo ? " solo" : ""}`.trim() || undefined} tabIndex={v.source ? 0 : undefined} onClick={go} onKeyDown={(e) => e.key === "Enter" && go()} title={v.source ? "Click to edit" : undefined}>
+                                          <td className={cell("course", "nowrap")}>{v.course}{line.solo && <span className="tag solo" title="No matching section in the other schedule(s)">only here</span>}</td>
+                                          <td className={cell("section")}>{v.section}</td>
+                                          <td className={cell("term", "nowrap")}>{v.term}</td>
+                                          <td className={cell("title")}>{v.title}</td>
+                                          <td className={cell("instructor")}>{v.instructor}</td>
+                                          <td className={cell("load", "num")}>{v.load}</td>
+                                          <td className={cell("meets", "nowrap")}>{v.meets}</td>
+                                          <td className={cell("room", "nowrap")}>{v.room}</td>
+                                          <td className={line.others.length ? "d" : undefined}>{line.others.join(" · ")}</td>
                                         </tr>
                                       );
                                     })}
@@ -229,7 +245,9 @@ export function ComparePage() {
                               )}
                             </div>
                           );
-                        })}
+                          }),
+                          ];
+                        })()}
                       </td>
                     </tr>
                   )}

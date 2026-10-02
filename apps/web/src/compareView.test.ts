@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { COMPARE_COLUMNS, compareTables, comparisonRows, importRecords, rowTones, type Comparison } from "@schedulizer/core";
-import { PRESETS, aggregateDiffers, comparisonSheets, hueFor, memberOf, meetsText, readSettings, tableColumns, toneColor, toneHex } from "./compareView";
+import { PRESETS, aggregateDiffers, comparisonSheets, diffMembers, hueFor, memberOf, meetsText, pairMembers, readSettings, tableColumns, toneColor, toneHex } from "./compareView";
 
 const sec = (prefix: string, n: string, o: Record<string, string> = {}) => ({ AcademicYear: "Y", Term: "FA", Prefix: prefix, CourseNumber: n, Section: "A", ...o });
 const sched = (rows: Record<string, string>[]) => importRecords({ sessions: rows }).schedule;
@@ -187,5 +187,70 @@ describe("meetsText / memberOf", () => {
     const sched = importRecords({ sessions: [sec("M", "1")], nonTeaching: [{ AcademicYear: "Y", Faculty: "Ada", Activity: "Chair release", Term: "SP", Load: "3" }] }).schedule;
     const nt = comparisonRows(sched, "section", { nonTeaching: true }).map(memberOf).find((x) => x.course === "Non-teaching")!;
     expect(nt).toMatchObject({ title: "Chair release", instructor: "Ada", load: "3", term: "SP", section: "", meets: "", source: { kind: "nonteaching", index: 0 } });
+  });
+});
+
+describe("pairMembers / diffMembers: marking differing fields", () => {
+  const row = (rows: Record<string, string | number>[], kind: "section" | "instructor" = "section") => rows.map((r) => ({ ...Object.fromEntries(COMPARE_COLUMNS.map((c) => [c.key, ""])), AcademicYear: "Y", Term: "FA", TermPart: "Full", Prefix: "MATH", CourseNumber: "101", Section: "A", ...r })) as ReturnType<typeof comparisonRows>;
+  const group = (...sets: ReturnType<typeof comparisonRows>[]) => ({ group: [], values: [], present: sets.map((s) => s.length > 0), members: sets, differs: true });
+  const marks = (v: ReturnType<typeof diffMembers>) => v.map((s) => s.map((m) => [[...m.differs].sort(), m.others, m.solo]));
+
+  it("marks nothing when the sections are identical", () => {
+    const a = row([{ Faculty: "Smith", FacultyLoad: 4, ShortTitle: "Calc" }]);
+    expect(marks(diffMembers(group(a, [...a]), "section"))).toEqual([[[[], [], false]], [[[], [], false]]]);
+  });
+  it("marks the fields that differ in both lines", () => {
+    const a = row([{ Faculty: "Smith", FacultyLoad: 4, MeetingDays: "MWF", StartTime: "09:00", MeetingDuration: "50", Classroom: "NH 1" }]);
+    const b = row([{ Faculty: "Lee", FacultyLoad: 6, MeetingDays: "MWF", StartTime: "10:00", MeetingDuration: "50", Classroom: "NH 1" }]);
+    expect(marks(diffMembers(group(a, b), "section"))).toEqual([
+      [[["instructor", "load", "meets"], [], false]],
+      [[["instructor", "load", "meets"], [], false]],
+    ]);
+  });
+  it("lists differences in fields that are not shown, with this line's value", () => {
+    const a = row([{ Enrollment: 20, Comment: "" }]);
+    const b = row([{ Enrollment: 25, Comment: "moved" }]);
+    expect(marks(diffMembers(group(a, b), "section"))).toEqual([
+      [[[], ["Comment: (blank)", "Enrollment: 20"], false]], // in column order
+      [[[], ["Comment: moved", "Enrollment: 25"], false]],
+    ]);
+  });
+  it("pairs sections by letter, and calls a section with no counterpart 'solo' when the other schedule has rows", () => {
+    const a = row([{ Section: "A", FacultyLoad: 4 }, { Section: "B", FacultyLoad: 4 }]);
+    const b = row([{ Section: "A", FacultyLoad: 5 }]);
+    expect(marks(diffMembers(group(a, b), "section"))).toEqual([
+      [[["load"], [], false], [[], [], true]],
+      [[["load"], [], false]],
+    ]);
+  });
+  it("pairs leftover sections in order, so a re-lettered section shows its letter as the difference", () => {
+    const a = row([{ Section: "A", FacultyLoad: 4 }]);
+    const b = row([{ Section: "B", FacultyLoad: 4 }]);
+    expect(marks(diffMembers(group(a, b), "section"))).toEqual([[[["section"], [], false]], [[["section"], [], false]]]);
+  });
+  it("does not call anything solo when the other schedule has no rows in the group", () => {
+    expect(marks(diffMembers(group(row([{}]), []), "section"))).toEqual([[[[], [], false]], []]);
+    expect(marks(diffMembers(group(row([{}])), "section"))).toEqual([[[[], [], false]]]);
+  });
+  it("marks a field that is not the same in every schedule, with three schedules", () => {
+    const mk = (load: number) => row([{ FacultyLoad: load }]);
+    expect(marks(diffMembers(group(mk(4), mk(4), mk(6)), "section")).map((s) => s[0]![0])).toEqual([["load"], ["load"], ["load"]]);
+    expect(marks(diffMembers(group(mk(4), mk(4), mk(4)), "section")).map((s) => s[0]![0])).toEqual([[], [], []]);
+    const two = marks(diffMembers(group(mk(4), [], mk(6)), "section"));
+    expect(two.map((s) => s.length)).toEqual([1, 0, 1]);
+    expect(two[0]![0]![0]).toEqual(["load"]);
+  });
+  it("pairs instructor rows by instructor too", () => {
+    const a = row([{ Faculty: "Ada", FacultyLoad: 3 }, { Faculty: "Ben", FacultyLoad: 1 }]);
+    const b = row([{ Faculty: "Ben", FacultyLoad: 2 }, { Faculty: "Ada", FacultyLoad: 3 }]);
+    expect(marks(diffMembers(group(a, b), "instructor"))).toEqual([
+      [[[], [], false], [["load"], [], false]],
+      [[["load"], [], false], [[], [], false]],
+    ]);
+  });
+  it("pairs non-teaching rows by year, term, person and activity", () => {
+    const nt = (load: number, activity = "Chair") => ({ Prefix: "", CourseNumber: "", Section: "", Faculty: "Ada", InstructionalMethod: activity, FacultyLoad: load });
+    expect(marks(diffMembers(group(row([nt(3)]), row([nt(4)])), "section"))).toEqual([[[["load"], [], false]], [[["load"], [], false]]]);
+    expect(marks(diffMembers(group(row([nt(3)]), row([nt(3, "Sabbatical")])), "section")).map((s) => s[0]![0])).toEqual([["title"], ["title"]]); // paired as leftovers: the activity differs
   });
 });

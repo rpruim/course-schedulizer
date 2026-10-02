@@ -195,3 +195,22 @@ table.mini { font-size: .85rem; }
 table.mini th { position: static; background: transparent; font-size: .7rem; padding: 3px 8px; }
 table.mini td { padding: 3px 8px; border-bottom: 1px solid var(--line); }
 table.mini tr.clickable:hover td { background: var(--bg); }
+
+/* comparison detail: fields that differ between schedules */
+table.cmp tr.detail table.mini td.d { background: hsl(45 95% 50% / .38); font-weight: 600; }
+table.mini tr.solo td:first-child { box-shadow: inset 3px 0 hsl(45 95% 50%); }
+.tag.solo { margin-left: 8px; font-size: .68rem; text-transform: uppercase; letter-spacing: .03em; color: hsl(45 90% 45%); border-color: hsl(45 90% 45%); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag.solo { color: hsl(45 90% 62%); border-color: hsl(45 90% 62%); } }
+
+/* comparison detail: the same column widths in every schedule's table, so lines line up */
+table.mini { table-layout: fixed; width: 100%; }
+table.mini td.nowrap { white-space: normal; }
+table.mini th:nth-child(1) { width: 15%; }
+table.mini th:nth-child(2) { width: 5%; }
+table.mini th:nth-child(3) { width: 8%; }
+table.mini th:nth-child(4) { width: 15%; }
+table.mini th:nth-child(5) { width: 17%; }
+table.mini th:nth-child(6) { width: 6%; }
+table.mini th:nth-child(7) { width: 14%; }
+table.mini th:nth-child(8) { width: 10%; }
+table.mini th:nth-child(9) { width: 10%; }
