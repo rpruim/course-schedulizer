@@ -1,0 +1,20 @@
+Faculty,Term,Kind,Load
+(unassigned),FA,teaching,2
+Ada Example,FA,teaching,9
+Ada Example,SP,teaching,5
+Ben Sample,FA,teaching,8
+Ben Sample,SP,teaching,10
+Cy Fictional,FA,teaching,8
+Cy Fictional,SP,teaching,4
+Dee Placeholder,FA,teaching,10
+Dee Placeholder,SP,teaching,4
+Eli Specimen,FA,teaching,6
+Eli Specimen,SP,teaching,8
+Fay Mockson,FA,teaching,4
+Fay Mockson,SP,teaching,2
+Gus Testwell,FA,teaching,8
+Gus Testwell,SP,teaching,4
+Hal Fakename,FA,teaching,4
+Hal Fakename,SP,teaching,8
+Ivy Sandbox,FA,teaching,4
+Ivy Sandbox,SP,teaching,2

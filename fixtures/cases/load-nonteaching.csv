@@ -1,0 +1,3 @@
+AcademicYear,Faculty,Activity,Term,Load,Comment
+L1,Ada Example,Chair release,AY,3,SYNTHETIC - AY: shown split evenly across the spread terms FA and SP; pairs with cases/load-sessions.csv
+L1,Ben Sample,Sabbatical,SP,4,SYNTHETIC
