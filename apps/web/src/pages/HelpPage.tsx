@@ -407,7 +407,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           Once you change anything the list says <em>Custom</em>.
         </p>
         <ul>
-          <li><strong>Save…</strong> keeps a custom comparison under a name, in the Excel files of the schedules being compared (a <em>Comparisons</em> sheet, which you can also edit by hand: one row per comparison with its group and aggregate columns). Saved comparisons appear in the list whenever one of those schedules is open and compared; <em>Delete</em> removes one from all of them.</li>
+          <li><strong>Save…</strong> keeps a custom comparison under a name, and asks where: <em>in the current schedule</em>, <em>in all the selected schedules</em> (the ones being compared), or <em>in this browser</em>. A comparison saved in a schedule travels in its Excel file, on a <em>Comparisons</em> sheet that you can also edit by hand (one row per comparison with its group and aggregate columns); one saved in the browser is there for any schedules you compare. Saved comparisons appear in the list whenever they are available, with a note of where each is saved. A name lives in one place, so saving under a name that is already saved elsewhere moves it. <em>Delete</em> removes a saved comparison from everywhere it is saved.</li>
           <li>With two schedules a <em>Difference</em> column shows the second minus the first; cells are tinted by how much they differ. A dash means the group is missing from that schedule.</li>
           <li><em>Only differences</em> hides rows that match (it is on by default when there are many rows).</li>
           <li>Click a row to see the sections behind it in each schedule; fields that differ are highlighted.</li>

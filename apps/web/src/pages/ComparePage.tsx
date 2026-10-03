@@ -15,7 +15,7 @@ import {
   type ComparisonRow,
   type RowKind,
 } from "@schedulizer/core";
-import { aggregateDiffers, comparisonSheets, describeSetup, diffMembers, hueFor, loadSettings, PRESETS, sameSetup, saveSettings, tableColumns, toneColor, type MemberField, type Roles } from "../compareView";
+import { aggregateDiffers, collectSaved, comparisonSheets, describeSetup, diffMembers, hueFor, loadBrowserComparisons, loadSaveWhere, loadSettings, PRESETS, rememberSaveWhere, sameSetup, saveBrowserComparisons, saveSettings, tableColumns, toneColor, type MemberField, type Roles, type SaveWhere, whereText } from "../compareView";
 import { useEditor } from "../editor/context";
 import { RoleIcon, Trash } from "../icons";
 import { downloadBytes, XLSX_TYPE } from "../download";
@@ -48,7 +48,9 @@ export function ComparePage() {
   const [onlyDiff, setOnlyDiff] = useState<boolean | null>(null); // null: the default rule
   const [showPartition, setShowPartition] = useState(false);
   // Saving the current setup under a name: `undefined` while not asked, else what is typed and any complaint.
-  const [naming, setNaming] = useState<{ name: string; problem: string } | undefined>();
+  const [naming, setNaming] = useState<{ name: string; where: SaveWhere; problem: string } | undefined>();
+  // Comparisons saved in this browser, for any schedules.
+  const [browserSaved, setBrowserSaved] = useState(loadBrowserComparisons);
   /** Groups whose sections are shown under their row (keyed by the group's values). */
   const [open, setOpen] = useState<Set<string>>(new Set());
   const { openSection, openNonTeaching } = useEditor();
@@ -75,18 +77,20 @@ export function ComparePage() {
   const sorting = useSort(rows, (r: ComparisonRow, key: string) => columns.find((c) => c.key === key)?.sort(r));
   const { countForced } = resolvePartition({ roles });
   const summary = describeSetup(roles, rowKind);
-  // Ready-made setups, then the ones saved in the schedules being compared (by name, the first schedule's winning).
-  const saved = useMemo(() => {
-    const byName = new Map<string, ReturnType<typeof rolesToSaved>>();
-    for (const e of entries) for (const c of e.schedule.comparisons ?? []) if (!byName.has(c.name.toLowerCase())) byName.set(c.name.toLowerCase(), c);
-    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }));
-  }, [entries]);
+  // Ready-made setups, then the saved ones: in the schedules being compared, in the current schedule (which may not be among them), and in this browser.
+  const holders = useMemo(() => {
+    const list = entries.map((e) => ({ id: e.id, comparisons: e.schedule.comparisons ?? [] }));
+    const cur = ws.current;
+    return cur && !list.some((h) => h.id === cur.id) ? [...list, { id: cur.id, comparisons: cur.schedule.comparisons ?? [] }] : list;
+  }, [entries, ws.current]);
+  const savedHere = useMemo(() => collectSaved(holders, ws.current?.id, browserSaved), [holders, ws.current?.id, browserSaved]);
+  const saved = useMemo(() => savedHere.map((h) => h.comparison), [savedHere]);
   const setups = useMemo(
     () => [
       ...PRESETS.map((p) => ({ id: `p:${p.id}`, label: p.label, description: p.description, roles: p.roles, rows: p.rows, saved: false })),
-      ...saved.map((c) => ({ id: `s:${c.name}`, label: c.name, description: "Saved in the schedules’ Excel files", roles: savedToRoles(c), rows: c.rows, saved: true })),
+      ...saved.map((c) => ({ id: `s:${c.name}`, label: c.name, description: `Saved in ${whereText(savedHere.find((h) => h.comparison.name === c.name)!)}`, roles: savedToRoles(c), rows: c.rows, saved: true })),
     ],
-    [saved],
+    [saved, savedHere],
   );
   // What the current setup is called; editing anything makes it “Custom”.
   const current = setups.find((o) => sameSetup(o, { roles, rows: rowKind }));
@@ -101,20 +105,45 @@ export function ComparePage() {
     );
   }
 
-  /** Save the current setup under `name` in every schedule being compared (replacing one of that name there). */
-  const saveAs = (name: string) => {
+  /** Where the save form starts: where the last one went (if that is still on offer), else all the selected schedules. */
+  const defaultWhere = (): SaveWhere => {
+    const last = loadSaveWhere();
+    if (last && !(last === "selected" && entries.length < 2) && !(last === "current" && !ws.current)) return last;
+    return entries.length > 1 ? "selected" : "current";
+  };
+  /** Write `list` without any comparison called `name`, then with `add` if there is one. */
+  const without = (list: ReturnType<typeof rolesToSaved>[], name: string, add?: ReturnType<typeof rolesToSaved>) => [...list.filter((c) => c.name.toLowerCase() !== name.toLowerCase()), ...(add ? [add] : [])];
+  /**
+   * Save the current setup under `name` where asked: in the current schedule, in every schedule being compared, or in this browser.
+   * A name lives in one place, so saving under a name that is saved elsewhere moves it.
+   */
+  const saveAs = (name: string, where: SaveWhere) => {
     const clean = name.trim();
-    if (!clean) return setNaming({ name, problem: "Give it a name." });
-    if (PRESETS.some((p) => p.label.toLowerCase() === clean.toLowerCase())) return setNaming({ name, problem: "A built-in comparison already has that name." });
+    if (!clean) return setNaming({ name, where, problem: "Give it a name." });
+    if (PRESETS.some((p) => p.label.toLowerCase() === clean.toLowerCase())) return setNaming({ name, where, problem: "A built-in comparison already has that name." });
+    const same = PRESETS.find((p) => sameSetup(p, { roles, rows: rowKind }));
+    if (same) return setNaming({ name, where, problem: `That is the built-in “${same.label}”; change something first.` });
     const old = saved.find((c) => c.name.toLowerCase() === clean.toLowerCase());
     const next = rolesToSaved(clean, roles, rowKind);
     if (old && !sameSetup({ roles: savedToRoles(old), rows: old.rows }, { roles, rows: rowKind }) && !window.confirm(`Replace the saved comparison “${old.name}”?`)) return;
-    for (const e of entries) ws.applyTo(e.id, (s) => ({ ...s, comparisons: [...(s.comparisons ?? []).filter((c) => c.name.toLowerCase() !== clean.toLowerCase()), next] }));
+    const target = new Set(where === "browser" ? [] : where === "current" ? (ws.current ? [ws.current.id] : []) : entries.map((e) => e.id));
+    for (const h of holders) ws.applyTo(h.id, (sc) => ({ ...sc, comparisons: without(sc.comparisons ?? [], clean, target.has(h.id) ? next : undefined) }));
+    const toBrowser = where === "browser";
+    if (toBrowser || browserSaved.some((c) => c.name.toLowerCase() === clean.toLowerCase())) {
+      const list = without(browserSaved, clean, toBrowser ? next : undefined);
+      setBrowserSaved(list);
+      saveBrowserComparisons(list);
+    }
+    rememberSaveWhere(where);
     setNaming(undefined);
   };
   const deleteSaved = (name: string) => {
-    if (!window.confirm(`Delete the saved comparison “${name}” from the schedules being compared? You can undo this.`)) return;
-    for (const e of entries) ws.applyTo(e.id, (s) => ({ ...s, comparisons: (s.comparisons ?? []).filter((c) => c.name.toLowerCase() !== name.toLowerCase()) }));
+    const here = savedHere.find((h) => h.comparison.name === name);
+    if (!window.confirm(`Delete the saved comparison “${name}”${here ? ` (saved in ${whereText(here)})` : ""}? Changes to schedules can be undone.`)) return;
+    for (const h of holders) ws.applyTo(h.id, (sc) => ({ ...sc, comparisons: without(sc.comparisons ?? [], name) }));
+    const list = without(browserSaved, name);
+    setBrowserSaved(list);
+    saveBrowserComparisons(list);
   };
   const setRole = (key: string, role: ColumnRole) => setRoles((r) => ({ ...r, [key]: role }));
   const rowKey = (r: ComparisonRow) => JSON.stringify(r.group);
@@ -168,14 +197,20 @@ export function ComparePage() {
         </label>
         {naming === undefined ? (
           <>
-            <button onClick={() => setNaming({ name: current?.saved ? current.label : "", problem: "" })} title="Keep this way of comparing under a name, in the Excel files of the schedules being compared">{current?.saved ? "Save as…" : "Save…"}</button>
-            {current?.saved && <button className="link" onClick={() => deleteSaved(current.label)} title="Remove this saved comparison from the schedules being compared"><Trash /> Delete</button>}
+            <button onClick={() => setNaming({ name: current?.saved ? current.label : "", where: defaultWhere(), problem: "" })} title="Keep this way of comparing under a name">{current?.saved ? "Save as…" : "Save…"}</button>
+            {current?.saved && <button className="link" onClick={() => deleteSaved(current.label)} title="Remove this saved comparison, wherever it is saved"><Trash /> Delete</button>}
+            {current?.saved && <span className="muted small">Saved in {whereText(savedHere.find((h) => h.comparison.name === current.label)!)}</span>}
           </>
         ) : (
-          <form className="naming" onSubmit={(e) => { e.preventDefault(); saveAs(naming.name); }}>
+          <form className="naming" onSubmit={(e) => { e.preventDefault(); saveAs(naming.name, naming.where); }}>
             <label className="field">Save as
-              <input value={naming.name} autoFocus onChange={(e) => setNaming({ name: e.target.value, problem: "" })} placeholder="a name for this comparison" aria-invalid={naming.problem ? true : undefined} />
+              <input value={naming.name} autoFocus onChange={(e) => setNaming({ ...naming, name: e.target.value, problem: "" })} placeholder="a name for this comparison" aria-invalid={naming.problem ? true : undefined} />
             </label>
+            <fieldset className="where" aria-label="Where to save it">
+              <label className="choice"><input type="radio" name="save-where" checked={naming.where === "current"} onChange={() => setNaming({ ...naming, where: "current" })} /> in the current schedule{ws.current ? ` (${ws.current.name})` : ""}</label>
+              {entries.length > 1 && <label className="choice"><input type="radio" name="save-where" checked={naming.where === "selected"} onChange={() => setNaming({ ...naming, where: "selected" })} /> in all {entries.length} selected schedules</label>}
+              <label className="choice"><input type="radio" name="save-where" checked={naming.where === "browser"} onChange={() => setNaming({ ...naming, where: "browser" })} /> in this browser</label>
+            </fieldset>
             <button type="submit" className="primary">Save</button>
             <button type="button" onClick={() => setNaming(undefined)}>Cancel</button>
             {naming.problem && <span className="err">{naming.problem}</span>}

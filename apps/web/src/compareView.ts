@@ -20,6 +20,7 @@ import {
   type Comparison,
   type ComparisonRow,
   type RowKind,
+  type SavedComparison,
   type Tone,
 } from "@schedulizer/core";
 import type { SortValue } from "./sort";
@@ -444,4 +445,97 @@ export function sameSetup(a: { roles: Roles; rows: RowKind }, b: { roles: Roles;
     return JSON.stringify([groups.map((c) => c.key).sort(), aggregates.map((c) => c.key).sort()]);
   };
   return key(a.roles) === key(b.roles);
+}
+
+
+// ---- saved comparisons: in a schedule's file, or in the browser
+
+export type SaveWhere = "current" | "selected" | "browser";
+
+export interface SavedHere {
+  comparison: SavedComparison;
+  /** Where a comparison of this name is saved. */
+  inCurrent: boolean;
+  schedules: number;
+  inBrowser: boolean;
+}
+
+/**
+ * The saved comparisons available here, one per name (case-insensitively). Where a name is saved in more than one place the
+ * current schedule's version wins, then the other schedules' in the order given, then the browser's.
+ */
+export function collectSaved(schedules: { id: string; comparisons: SavedComparison[] }[], currentId: string | undefined, browser: SavedComparison[]): SavedHere[] {
+  const byName = new Map<string, SavedHere>();
+  const ordered = [...schedules.filter((s) => s.id === currentId), ...schedules.filter((s) => s.id !== currentId)];
+  for (const s of ordered) {
+    for (const c of s.comparisons) {
+      const k = c.name.toLowerCase();
+      const have = byName.get(k) ?? { comparison: c, inCurrent: false, schedules: 0, inBrowser: false };
+      have.schedules++;
+      if (s.id === currentId) have.inCurrent = true;
+      byName.set(k, have);
+    }
+  }
+  for (const c of browser) {
+    const k = c.name.toLowerCase();
+    const have = byName.get(k) ?? { comparison: c, inCurrent: false, schedules: 0, inBrowser: false };
+    have.inBrowser = true;
+    byName.set(k, have);
+  }
+  return [...byName.values()].sort((a, b) => a.comparison.name.localeCompare(b.comparison.name, undefined, { numeric: true, sensitivity: "base" }));
+}
+
+/** `the current schedule, 2 schedules, this browser`. */
+export function whereText(h: Pick<SavedHere, "inCurrent" | "schedules" | "inBrowser">): string {
+  const others = h.schedules - (h.inCurrent ? 1 : 0);
+  return [
+    h.inCurrent ? "the current schedule" : "",
+    others > 0 ? `${others} other schedule${others === 1 ? "" : "s"}` : "",
+    h.inBrowser ? "this browser" : "",
+  ].filter(Boolean).join(", ");
+}
+
+const BROWSER_KEY = "schedulizer:savedComparisons";
+const WHERE_KEY = "schedulizer:compareSaveWhere";
+
+/** Comparisons saved in this browser (for any schedules). */
+export function loadBrowserComparisons(): SavedComparison[] {
+  try {
+    const data: unknown = JSON.parse(window.localStorage.getItem(BROWSER_KEY) ?? "[]");
+    if (!Array.isArray(data)) return [];
+    return data.flatMap((d): SavedComparison[] => {
+      const { name, rows, group, aggregate } = (d ?? {}) as Partial<SavedComparison>;
+      return typeof name === "string" && name.trim() && Array.isArray(group) && Array.isArray(aggregate)
+        ? [{ name, rows: rows === "instructor" ? "instructor" : "section", group: group.map(String), aggregate: aggregate.map(String) }]
+        : [];
+    });
+  } catch {
+    return [];
+  }
+}
+
+export function saveBrowserComparisons(list: SavedComparison[]) {
+  try {
+    window.localStorage.setItem(BROWSER_KEY, JSON.stringify(list));
+  } catch {
+    // storage may be full or disabled; they are just not remembered
+  }
+}
+
+/** Where the last comparison was saved, to offer first next time. */
+export function loadSaveWhere(): SaveWhere | undefined {
+  try {
+    const v = window.localStorage.getItem(WHERE_KEY);
+    return v === "current" || v === "selected" || v === "browser" ? v : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function rememberSaveWhere(w: SaveWhere) {
+  try {
+    window.localStorage.setItem(WHERE_KEY, w);
+  } catch {
+    // a preference only
+  }
 }

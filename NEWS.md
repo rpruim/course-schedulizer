@@ -11,7 +11,7 @@
   * It can rename a prefix across many sections, as when a department changes its name. A section is skipped if the new prefix would clash with another section, and the editor says how many constraint rows still name the old prefix.
 * A better Compare tab:
   * *What to compare* is now a list outside the fold-away panel: the ready-made comparisons, your saved ones, and *Custom*, which it switches to as soon as you change anything.
-  * *Save…* keeps a custom comparison under a name in the Excel files of the schedules being compared (on a *Comparisons* sheet), and *Delete* removes it.
+  * *Save…* keeps a custom comparison under a name: in the current schedule, in all the selected schedules (in the Excel file, on a *Comparisons* sheet), or in the browser. *Delete* removes it.
   * The group, aggregate and ignore choices for each column are small icons, so the panel takes much less room.
   * A sentence describes the setup, such as “Group by term, prefix, course number; aggregate by faculty load; ignore everything else”.
 * A section that lists the same meeting twice is now drawn once on the week views.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { COMPARE_COLUMNS, compareTables, comparisonRows, importRecords, rowTones, type Comparison } from "@schedulizer/core";
-import { PRESETS, aggregateDiffers, describeSetup, sameSetup, comparisonSheets, diffMembers, hueFor, memberOf, meetsText, readSettings, tableColumns, toneColor, toneHex } from "./compareView";
+import { PRESETS, aggregateDiffers, collectSaved, describeSetup, loadBrowserComparisons, sameSetup, whereText, comparisonSheets, diffMembers, hueFor, memberOf, meetsText, readSettings, tableColumns, toneColor, toneHex } from "./compareView";
 
 const sec = (prefix: string, n: string, o: Record<string, string> = {}) => ({ AcademicYear: "Y", Term: "FA", Prefix: prefix, CourseNumber: n, Section: "A", ...o });
 const sched = (rows: Record<string, string>[]) => importRecords({ sessions: rows }).schedule;
@@ -282,5 +282,28 @@ describe("sameSetup", () => {
   });
   it("recognizes each preset as itself", () => {
     for (const p of PRESETS) expect(PRESETS.filter((q) => sameSetup(p, q)).map((q) => q.id)).toEqual([p.id]);
+  });
+});
+
+describe("collectSaved", () => {
+  const c = (name: string, group: string[] = ["Prefix"]) => ({ name, rows: "section" as const, group, aggregate: [] });
+  it("lists each name once, the current schedule's version first, then other schedules', then the browser's", () => {
+    const got = collectSaved(
+      [{ id: "a", comparisons: [c("Shared", ["Term"]), c("Only A")] }, { id: "b", comparisons: [c("shared", ["Prefix"]), c("Only B")] }],
+      "b",
+      [c("SHARED", ["Section"]), c("Browser")],
+    );
+    expect(got.map((h) => h.comparison.name)).toEqual(["Browser", "Only A", "Only B", "shared"]);
+    const shared = got.find((h) => h.comparison.name === "shared")!;
+    expect(shared.comparison.group).toEqual(["Prefix"]); // the current schedule's (b)
+    expect([shared.inCurrent, shared.schedules, shared.inBrowser]).toEqual([true, 2, true]);
+  });
+  it("says where a comparison is saved", () => {
+    expect(whereText({ inCurrent: true, schedules: 3, inBrowser: true })).toBe("the current schedule, 2 other schedules, this browser");
+    expect(whereText({ inCurrent: false, schedules: 1, inBrowser: false })).toBe("1 other schedule");
+    expect(whereText({ inCurrent: false, schedules: 0, inBrowser: true })).toBe("this browser");
+  });
+  it("reads nothing from a browser with no list or a damaged one", () => {
+    expect(loadBrowserComparisons()).toEqual([]); // no window in the test environment
   });
 });
