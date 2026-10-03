@@ -8,9 +8,9 @@ export interface Pick {
   sectionId: string;
 }
 
-type Field = "department" | "shortTitle" | "faculty" | "facultyLoad" | "minimumCredits" | "maximumCredits" | "instructionalMethod" | "courseLevel" | "group" | "deliveryMode" | "enrollment" | "enrollmentDay10" | "comment";
+type Field = "prefix" | "department" | "shortTitle" | "faculty" | "facultyLoad" | "minimumCredits" | "maximumCredits" | "instructionalMethod" | "courseLevel" | "group" | "deliveryMode" | "enrollment" | "enrollmentDay10" | "comment";
 const BLANK: Record<Field, string> = {
-  department: "", shortTitle: "", faculty: "", facultyLoad: "", minimumCredits: "", maximumCredits: "", instructionalMethod: "", courseLevel: "", group: "", deliveryMode: "", enrollment: "", enrollmentDay10: "", comment: "",
+  prefix: "", department: "", shortTitle: "", faculty: "", facultyLoad: "", minimumCredits: "", maximumCredits: "", instructionalMethod: "", courseLevel: "", group: "", deliveryMode: "", enrollment: "", enrollmentDay10: "", comment: "",
 };
 const NUMERIC: Field[] = ["facultyLoad", "minimumCredits", "maximumCredits", "enrollment", "enrollmentDay10"];
 
@@ -18,7 +18,7 @@ const NUMERIC: Field[] = ["facultyLoad", "minimumCredits", "maximumCredits", "en
 export function readEdits(form: Record<Field, string>): { edits: MassEdits; errors: Partial<Record<Field, string>> } {
   const edits: MassEdits = {};
   const errors: Partial<Record<Field, string>> = {};
-  for (const k of ["department", "shortTitle", "instructionalMethod", "courseLevel", "group", "deliveryMode", "comment"] as const) {
+  for (const k of ["prefix", "department", "shortTitle", "instructionalMethod", "courseLevel", "group", "deliveryMode", "comment"] as const) {
     const v = form[k].trim();
     if (v) edits[k] = v;
   }
@@ -36,15 +36,44 @@ export function readEdits(form: Record<Field, string>): { edits: MassEdits; erro
   return { edits, errors };
 }
 
+/** Things worth knowing about a prefix rename, for the preview and for the message afterwards. */
+function notes(p: { skipped: number; rules: number; renamed: string[] }): string {
+  const out: string[] = [];
+  if (p.skipped > 0) out.push(`${p.skipped} section${p.skipped === 1 ? " kept its" : "s kept their"} prefix because the new one would match another section’s course, number and letter.`);
+  if (p.rules > 0) out.push(`${p.rules} constraint row${p.rules === 1 ? " still names" : "s still name"} ${p.renamed.join(", ")}; update ${p.rules === 1 ? "it" : "them"} on the Constraints tab.`);
+  return out.length ? ` ${out.join(" ")}` : "";
+}
+
+const HIDDEN_KEY = "schedulizer:massEditHidden";
+/** Whether to edit the selected sections the filters are hiding too: remembered for the session (default: no). */
+const savedWithHidden = (): boolean => {
+  try {
+    return window.sessionStorage.getItem(HIDDEN_KEY) === "yes";
+  } catch {
+    return false;
+  }
+};
+const saveWithHidden = (v: boolean) => {
+  try {
+    window.sessionStorage.setItem(HIDDEN_KEY, v ? "yes" : "no");
+  } catch {
+    /* a preference only */
+  }
+};
+
 /** One editor for many sections: every box starts blank; only the boxes filled in are applied to the selected sections. */
 export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { picks: Pick[]; hidden: Pick[]; onClose: () => void; onDone: (message: string) => void }) {
   const ws = useWorkspace();
   const dialog = useRef<HTMLDialogElement>(null);
   const [form, setForm] = useState<Record<Field, string>>(BLANK);
   const [mode, setMode] = useState<MassMode>("missing");
-  // Selected sections that the filters are hiding are left alone unless asked for.
-  const [withHidden, setWithHidden] = useState(false);
-  const picks = useMemo(() => (withHidden ? [...shown, ...hidden] : shown), [withHidden, shown, hidden]);
+  // Selected sections that the filters are hiding are left alone unless asked for (and what was chosen last is remembered).
+  const [withHidden, setWithHiddenState] = useState(savedWithHidden);
+  const setWithHidden = (v: boolean) => {
+    setWithHiddenState(v);
+    saveWithHidden(v);
+  };
+  const picks = useMemo(() => (withHidden && hidden.length > 0 ? [...shown, ...hidden] : shown), [withHidden, shown, hidden]);
   useEffect(() => {
     const d = dialog.current;
     d?.showModal();
@@ -63,20 +92,25 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
   const preview = useMemo(() => {
     let sections = 0;
     let values = 0;
+    let skipped = 0;
+    const renamed = new Map<string, number>();
     for (const [id, ids] of bySchedule) {
       const e = ws.get(id);
       if (!e) continue;
       const r = massEdit(e.schedule, ids, edits, mode);
       sections += r.sections;
       values += r.values;
+      skipped += r.skipped;
+      for (const f of r.renamedFrom) renamed.set(f.prefix, (renamed.get(f.prefix) ?? 0) + f.rules);
     }
-    return { sections, values };
+    const rules = [...renamed.values()].reduce((a, b) => a + b, 0);
+    return { sections, values, skipped, rules, renamed: [...renamed.keys()] };
   }, [bySchedule, edits, mode, ws]);
 
   const apply = () => {
     if (Object.keys(errors).length > 0 || filled === 0) return;
     for (const [id, ids] of bySchedule) ws.applyTo(id, (s) => massEdit(s, ids, edits, mode).schedule);
-    onDone(preview.sections === 0 ? "No section needed a change." : `Changed ${preview.values} value${preview.values === 1 ? "" : "s"} in ${preview.sections} of the ${picks.length} section${picks.length === 1 ? "" : "s"} edited. You can undo this.`);
+    onDone(`${preview.sections === 0 ? "No section needed a change." : `Changed ${preview.values} value${preview.values === 1 ? "" : "s"} in ${preview.sections} of the ${picks.length} section${picks.length === 1 ? "" : "s"} edited.`}${notes(preview)} You can undo this.`);
     onClose();
   };
 
@@ -97,21 +131,26 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
           <h2>Edit selected sections</h2>
           <span className="course-name">
             {picks.length} section{picks.length === 1 ? "" : "s"} will be edited
-            {hidden.length > 0 && !withHidden ? ` (of ${shown.length + hidden.length} selected)` : ""}
           </span>
           <button type="button" className="link" onClick={onClose} aria-label="Close">✕</button>
         </header>
         <div className="editor-body">
           <p className="muted small">Fill in only what you want to set. Boxes left blank change nothing.</p>
           {hidden.length > 0 && (
-            <label className="choice">
-              <input type="checkbox" checked={withHidden} onChange={(e) => setWithHidden(e.target.checked)} />{" "}
-              Also edit the {hidden.length} selected section{hidden.length === 1 ? "" : "s"} that the filters are hiding
-            </label>
+            <fieldset>
+              <legend>Which sections</legend>
+              <label className="choice">
+                <input type="radio" name="mass-which" checked={!withHidden} onChange={() => setWithHidden(false)} /> Only edit the {shown.length} selected section{shown.length === 1 ? "" : "s"} that the filters are showing
+              </label>
+              <label className="choice">
+                <input type="radio" name="mass-which" checked={withHidden} onChange={() => setWithHidden(true)} /> Also edit the {hidden.length} section{hidden.length === 1 ? "" : "s"} that the filters are hiding
+              </label>
+            </fieldset>
           )}
           <fieldset>
             <legend>Course</legend>
             <div className="row top">
+              {box("prefix", "Prefix", 8, mode === "overwrite" ? "Renames the course prefix." : "Changes only when overwriting (a section always has a prefix).")}
               {box("department", "Department", 30)}
               {box("courseLevel", "Course level", 6)}
               {box("group", "Group", 10)}
@@ -146,18 +185,20 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
             <label className="choice"><input type="radio" name="mass-mode" checked={mode === "missing"} onChange={() => setMode("missing")} /> Replace missing values only</label>
             <label className="choice"><input type="radio" name="mass-mode" checked={mode === "overwrite"} onChange={() => setMode("overwrite")} /> Overwrite existing values</label>
             <p className="preview">
-              {filled === 0
+              {picks.length === 0
+                ? "No section is chosen to edit: choose “Also edit…” above."
+                : filled === 0
                 ? "Nothing filled in yet."
                 : preview.sections === 0
-                  ? "No section being edited would change."
-                  : `This would change ${preview.values} value${preview.values === 1 ? "" : "s"} in ${preview.sections} of the ${picks.length} section${picks.length === 1 ? "" : "s"} being edited.`}
+                  ? `No section being edited would change.${notes(preview)}`
+                  : `This would change ${preview.values} value${preview.values === 1 ? "" : "s"} in ${preview.sections} of the ${picks.length} section${picks.length === 1 ? "" : "s"} being edited.${notes(preview)}`}
             </p>
           </fieldset>
         </div>
         <footer className="editor-foot">
           <span className="spacer" />
           <button type="button" onClick={onClose}>Cancel</button>
-          <button type="submit" className="primary" disabled={filled === 0 || Object.keys(errors).length > 0}>Apply edits to selected sections</button>
+          <button type="submit" className="primary" disabled={filled === 0 || picks.length === 0 || Object.keys(errors).length > 0}>Apply edits to selected sections</button>
         </footer>
       </form>
     </dialog>

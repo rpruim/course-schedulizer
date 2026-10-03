@@ -231,7 +231,7 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
             <button onClick={() => setSelected((cur) => new Set([...cur, ...visible.map(keyOf)]))} disabled={picks.length === visible.length}>Add visible courses to selection</button>
             <button onClick={() => { const shown = new Set(visible.map(keyOf)); setSelected((cur) => new Set([...cur].filter((k) => !shown.has(k)))); }} disabled={picks.length === 0}>Remove visible courses from selection</button>
             <button onClick={() => { setSelected(new Set()); setMassMessage(""); }} disabled={selected.size === 0} title="Deselects every section, including any that the filters are hiding">Clear selection</button>
-            <button className="primary" onClick={() => setMassOpen(true)} disabled={picks.length === 0}>Edit selected…</button>
+            <button className="primary" onClick={() => setMassOpen(true)} disabled={picks.length + hiddenPicks.length === 0}>Edit selected…</button>
             <span className="muted">{selectedTotal} of {everySection.size} section{everySection.size === 1 ? "" : "s"} selected, including {picks.length} of {visible.length} visible section{visible.length === 1 ? "" : "s"}</span>
             {massMessage && <span className="note ok" role="status">{massMessage}</span>}
           </div>
