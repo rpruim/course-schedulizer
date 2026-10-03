@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { comparisonsTable } from "./savedComparisons.js";
 import { constraintsTable, crossListingsTable, nonTeachingTable, sessionsTable, type ExportOptions, type Table } from "./export.js";
 import { REGISTRAR_SHEET, registrarTable } from "./registrar.js";
 import { importRecords, importSettings, type ImportOptions, type ImportResult } from "./import.js";
@@ -73,6 +74,7 @@ export async function readWorkbook(data: ArrayBuffer | Uint8Array, options: Impo
     crossListings: sheetRecords(sheetByName(wb, "CrossListings")),
     nonTeaching: sheetRecords(sheetByName(wb, "NonTeaching")),
     constraints: sheetRecords(sheetByName(wb, "Constraints")),
+    comparisons: sheetRecords(sheetByName(wb, "Comparisons")),
     settings,
     meta,
     ...(options.academicYear ? { academicYear: options.academicYear } : {}),
@@ -119,7 +121,7 @@ const two = (n: number) => String(n).padStart(2, "0");
 /**
  * Write a schedule as an .xlsx workbook. First tab: "Registrar Schedule", the
  * registrar's layout (see `registrarTable`). Then our own lossless sheets
- * (Sessions, CrossListings, NonTeaching, Constraints, Settings) and Metadata.
+ * (Sessions, CrossListings, NonTeaching, Constraints, Comparisons when there are any, Settings) and Metadata.
  */
 export async function writeWorkbook(schedule: import("./types.js").Schedule, opts: WriteOptions = {}): Promise<Uint8Array> {
   const wb = new ExcelJS.Workbook();
@@ -130,6 +132,8 @@ export async function writeWorkbook(schedule: import("./types.js").Schedule, opt
   addTable(wb, "CrossListings", crossListingsTable(schedule, opts));
   if (withNonTeaching) addTable(wb, "NonTeaching", nonTeachingTable(schedule));
   addTable(wb, "Constraints", constraintsTable(schedule));
+  // Saved comparisons get a sheet of their own only when there are some.
+  if (schedule.comparisons.length > 0) addTable(wb, "Comparisons", comparisonsTable(schedule));
   addTable(wb, "Settings", {
     header: ["Kind", "Code", "Name", "Term", "StartWeek", "EndWeek"],
     rows: [

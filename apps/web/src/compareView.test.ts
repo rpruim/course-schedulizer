@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { COMPARE_COLUMNS, compareTables, comparisonRows, importRecords, rowTones, type Comparison } from "@schedulizer/core";
-import { PRESETS, aggregateDiffers, comparisonSheets, diffMembers, hueFor, memberOf, meetsText, readSettings, tableColumns, toneColor, toneHex } from "./compareView";
+import { PRESETS, aggregateDiffers, describeSetup, sameSetup, comparisonSheets, diffMembers, hueFor, memberOf, meetsText, readSettings, tableColumns, toneColor, toneHex } from "./compareView";
 
 const sec = (prefix: string, n: string, o: Record<string, string> = {}) => ({ AcademicYear: "Y", Term: "FA", Prefix: prefix, CourseNumber: n, Section: "A", ...o });
 const sched = (rows: Record<string, string>[]) => importRecords({ sessions: rows }).schedule;
@@ -252,5 +252,35 @@ describe("pairMembers / diffMembers: marking differing fields", () => {
     const nt = (load: number, activity = "Chair") => ({ Prefix: "", CourseNumber: "", Section: "", Faculty: "Ada", InstructionalMethod: activity, FacultyLoad: load });
     expect(marks(diffMembers(group(row([nt(3)]), row([nt(4)])), "section"))).toEqual([[[["load"], [], false]], [[["load"], [], false]]]);
     expect(marks(diffMembers(group(row([nt(3)]), row([nt(3, "Sabbatical")])), "section")).map((s) => s[0]![0])).toEqual([["title"], ["title"]]); // paired as leftovers: the activity differs
+  });
+});
+
+describe("describeSetup", () => {
+  const all = Object.fromEntries(COMPARE_COLUMNS.map((c) => [c.key, "group" as const]));
+  it("calls the biggest role everything else, last, and leaves out empty roles", () => {
+    expect(describeSetup({ Term: "group", Prefix: "group", CourseNumber: "group", FacultyLoad: "aggregate" }, "section")).toBe("Group by term, prefix, course number; aggregate by faculty load; ignore everything else");
+    expect(describeSetup({ ...all, Term: "ignore" }, "section")).toBe("Ignore term; group by everything else");
+    expect(describeSetup(all, "section")).toBe("Group by everything");
+  });
+  it("does not mention a row count that is only there because nothing is aggregated", () => {
+    expect(describeSetup({ Prefix: "group" }, "section")).toBe("Group by prefix; ignore everything else");
+    expect(describeSetup({ Prefix: "group", Rows: "aggregate" }, "section")).toBe("Group by prefix; ignore everything else");
+    expect(describeSetup({ Prefix: "group", FacultyLoad: "aggregate", Rows: "aggregate" }, "section")).toBe("Group by prefix; aggregate by faculty load, number of rows; ignore everything else");
+  });
+  it("says so when a row is a section and an instructor, and when nothing is chosen", () => {
+    expect(describeSetup({ Faculty: "group", FacultyLoad: "aggregate" }, "instructor")).toMatch(/; one row per section and instructor$/);
+    expect(describeSetup({}, "section")).toBe("Ignore everything");
+  });
+});
+
+describe("sameSetup", () => {
+  it("compares what is grouped and aggregated, treating a forced row count as the same as a chosen one", () => {
+    expect(sameSetup({ roles: { Prefix: "group" }, rows: "section" }, { roles: { Prefix: "group", Rows: "aggregate" }, rows: "section" })).toBe(true);
+    expect(sameSetup({ roles: { Prefix: "group" }, rows: "section" }, { roles: { Term: "group" }, rows: "section" })).toBe(false);
+    expect(sameSetup({ roles: { Prefix: "group" }, rows: "section" }, { roles: { Prefix: "group" }, rows: "instructor" })).toBe(false);
+    expect(sameSetup({ roles: { Prefix: "group", Comment: "ignore" }, rows: "section" }, { roles: { Prefix: "group" }, rows: "section" })).toBe(true);
+  });
+  it("recognizes each preset as itself", () => {
+    for (const p of PRESETS) expect(PRESETS.filter((q) => sameSetup(p, q)).map((q) => q.id)).toEqual([p.id]);
   });
 });

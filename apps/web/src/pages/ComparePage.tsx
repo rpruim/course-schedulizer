@@ -7,14 +7,17 @@ import {
   comparisonRows,
   defaultOnlyDifferences,
   resolvePartition,
+  rolesToSaved,
   rowTones,
+  savedToRoles,
   visibleRows,
   type ColumnRole,
   type ComparisonRow,
   type RowKind,
 } from "@schedulizer/core";
-import { aggregateDiffers, comparisonSheets, diffMembers, hueFor, loadSettings, PRESETS, saveSettings, tableColumns, toneColor, type MemberField, type Roles } from "../compareView";
+import { aggregateDiffers, comparisonSheets, describeSetup, diffMembers, hueFor, loadSettings, PRESETS, sameSetup, saveSettings, tableColumns, toneColor, type MemberField, type Roles } from "../compareView";
 import { useEditor } from "../editor/context";
+import { RoleIcon, Trash } from "../icons";
 import { downloadBytes, XLSX_TYPE } from "../download";
 import { SortTh, useSort } from "../sort";
 import { yearsOf } from "../model";
@@ -23,6 +26,13 @@ import { useWorkspace } from "../state";
 import { Empty } from "./SchedulePage";
 
 const ROLE_LABEL: Record<ColumnRole, string> = { ignore: "Ignore", group: "Group", aggregate: "Aggregate" };
+const ROLE_HELP: Record<ColumnRole, string> = {
+  ignore: "Ignore: leave this column out",
+  group: "Group: one row for each combination of the values in the grouping columns",
+  aggregate: "Aggregate: add up (numbers) or sort and join (text) within each group",
+};
+/** The option of the “what to compare” list that stands for a setup nobody named. */
+const CUSTOM = "custom";
 
 /**
  * Compare the included schedules: give each column a role (ignore, group by, or aggregate),
@@ -37,6 +47,8 @@ export function ComparePage() {
   const [nonTeaching, setNonTeaching] = useState(initial.nonTeaching);
   const [onlyDiff, setOnlyDiff] = useState<boolean | null>(null); // null: the default rule
   const [showPartition, setShowPartition] = useState(false);
+  // Saving the current setup under a name: `undefined` while not asked, else what is typed and any complaint.
+  const [naming, setNaming] = useState<{ name: string; problem: string } | undefined>();
   /** Groups whose sections are shown under their row (keyed by the group's values). */
   const [open, setOpen] = useState<Set<string>>(new Set());
   const { openSection, openNonTeaching } = useEditor();
@@ -61,8 +73,23 @@ export function ComparePage() {
     return t ? new Map(comparison.rows.map((r, i) => [r, t[i]] as const)) : undefined;
   }, [comparison]);
   const sorting = useSort(rows, (r: ComparisonRow, key: string) => columns.find((c) => c.key === key)?.sort(r));
-  const { groups, aggregates, countForced } = resolvePartition({ roles });
-  const summary = `Group by ${groups.map((g) => g.label).join(", ") || "nothing (one group)"}; ${aggregates.map((a) => (a.key === COUNT_KEY ? "count rows" : `aggregate ${a.label}`)).join(", ")}${rowKind === "instructor" ? "; one row per section and instructor" : ""}`;
+  const { countForced } = resolvePartition({ roles });
+  const summary = describeSetup(roles, rowKind);
+  // Ready-made setups, then the ones saved in the schedules being compared (by name, the first schedule's winning).
+  const saved = useMemo(() => {
+    const byName = new Map<string, ReturnType<typeof rolesToSaved>>();
+    for (const e of entries) for (const c of e.schedule.comparisons ?? []) if (!byName.has(c.name.toLowerCase())) byName.set(c.name.toLowerCase(), c);
+    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }));
+  }, [entries]);
+  const setups = useMemo(
+    () => [
+      ...PRESETS.map((p) => ({ id: `p:${p.id}`, label: p.label, description: p.description, roles: p.roles, rows: p.rows, saved: false })),
+      ...saved.map((c) => ({ id: `s:${c.name}`, label: c.name, description: "Saved in the schedules’ Excel files", roles: savedToRoles(c), rows: c.rows, saved: true })),
+    ],
+    [saved],
+  );
+  // What the current setup is called; editing anything makes it “Custom”.
+  const current = setups.find((o) => sameSetup(o, { roles, rows: rowKind }));
 
   if (ws.entries.length === 0) return <Empty />;
   if (entries.length < 2) {
@@ -74,6 +101,21 @@ export function ComparePage() {
     );
   }
 
+  /** Save the current setup under `name` in every schedule being compared (replacing one of that name there). */
+  const saveAs = (name: string) => {
+    const clean = name.trim();
+    if (!clean) return setNaming({ name, problem: "Give it a name." });
+    if (PRESETS.some((p) => p.label.toLowerCase() === clean.toLowerCase())) return setNaming({ name, problem: "A built-in comparison already has that name." });
+    const old = saved.find((c) => c.name.toLowerCase() === clean.toLowerCase());
+    const next = rolesToSaved(clean, roles, rowKind);
+    if (old && !sameSetup({ roles: savedToRoles(old), rows: old.rows }, { roles, rows: rowKind }) && !window.confirm(`Replace the saved comparison “${old.name}”?`)) return;
+    for (const e of entries) ws.applyTo(e.id, (s) => ({ ...s, comparisons: [...(s.comparisons ?? []).filter((c) => c.name.toLowerCase() !== clean.toLowerCase()), next] }));
+    setNaming(undefined);
+  };
+  const deleteSaved = (name: string) => {
+    if (!window.confirm(`Delete the saved comparison “${name}” from the schedules being compared? You can undo this.`)) return;
+    for (const e of entries) ws.applyTo(e.id, (s) => ({ ...s, comparisons: (s.comparisons ?? []).filter((c) => c.name.toLowerCase() !== name.toLowerCase()) }));
+  };
   const setRole = (key: string, role: ColumnRole) => setRoles((r) => ({ ...r, [key]: role }));
   const rowKey = (r: ComparisonRow) => JSON.stringify(r.group);
   const toggle = (key: string) =>
@@ -99,17 +141,53 @@ export function ComparePage() {
           <button className="link" onClick={pairing.clear}>Reset to automatic pairing</button>
         </p>
       )}
+      <div className="bar compare-setup">
+        <label className="field">What to compare
+          <select
+            value={current?.id ?? CUSTOM}
+            onChange={(e) => {
+              const o = setups.find((x) => x.id === e.target.value);
+              if (!o) return;
+              setRoles({ ...o.roles });
+              setRowKind(o.rows);
+              setOnlyDiff(null);
+              setNaming(undefined);
+            }}
+            title={current?.description}
+          >
+            <optgroup label="Built in">
+              {setups.filter((o) => !o.saved).map((o) => <option key={o.id} value={o.id} title={o.description}>{o.label}</option>)}
+            </optgroup>
+            {saved.length > 0 && (
+              <optgroup label="Saved">
+                {setups.filter((o) => o.saved).map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+              </optgroup>
+            )}
+            <option value={CUSTOM}>Custom</option>
+          </select>
+        </label>
+        {naming === undefined ? (
+          <>
+            <button onClick={() => setNaming({ name: current?.saved ? current.label : "", problem: "" })} title="Keep this way of comparing under a name, in the Excel files of the schedules being compared">{current?.saved ? "Save as…" : "Save…"}</button>
+            {current?.saved && <button className="link" onClick={() => deleteSaved(current.label)} title="Remove this saved comparison from the schedules being compared"><Trash /> Delete</button>}
+          </>
+        ) : (
+          <form className="naming" onSubmit={(e) => { e.preventDefault(); saveAs(naming.name); }}>
+            <label className="field">Save as
+              <input value={naming.name} autoFocus onChange={(e) => setNaming({ name: e.target.value, problem: "" })} placeholder="a name for this comparison" aria-invalid={naming.problem ? true : undefined} />
+            </label>
+            <button type="submit" className="primary">Save</button>
+            <button type="button" onClick={() => setNaming(undefined)}>Cancel</button>
+            {naming.problem && <span className="err">{naming.problem}</span>}
+          </form>
+        )}
+      </div>
       <details className="partition" open={showPartition} onToggle={(e) => setShowPartition((e.target as HTMLDetailsElement).open)}>
         <summary>Choose what to compare <span className="muted">— {summary}</span></summary>
-        <div className="presets">
-          <span className="muted">Start from:</span>
-          {PRESETS.map((p) => (
-            <button key={p.id} title={p.description} onClick={() => { setRoles({ ...p.roles }); setRowKind(p.rows); setOnlyDiff(null); }}>{p.label}</button>
-          ))}
-        </div>
         <p className="muted small">
-          Give each column a role. <strong>Group</strong> columns say what makes a row (one row for each combination of their values).{" "}
-          <strong>Aggregate</strong> columns are added up (numbers) or sorted and joined (text) within each group. <strong>Ignore</strong> columns are left out.
+          Give each column a role: <span className="role-key"><RoleIcon role="group" /> <strong>Group</strong></span> columns say what makes a row (one row for each combination of their values),{" "}
+          <span className="role-key"><RoleIcon role="aggregate" /> <strong>Aggregate</strong></span> columns are added up (numbers) or sorted and joined (text) within each group, and{" "}
+          <span className="role-key"><RoleIcon role="ignore" /> <strong>Ignore</strong></span> columns are left out.
           {countForced && " With nothing aggregated, the number of rows in each group is shown."}
         </p>
         <div className="row-kind">
@@ -132,9 +210,11 @@ export function ComparePage() {
                       aria-pressed={role === o}
                       disabled={c.key === COUNT_KEY && countForced}
                       className={role === o ? "on" : ""}
+                      title={`${c.label}: ${ROLE_HELP[o]}`}
+                      aria-label={`${c.label}: ${ROLE_LABEL[o]}`}
                       onClick={() => setRole(c.key, o)}
                     >
-                      {ROLE_LABEL[o]}
+                      <RoleIcon role={o} />
                     </button>
                   ))}
                 </span>

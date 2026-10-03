@@ -22,3 +22,4 @@ export * from "./rules.js";
 export * from "./upgrade.js";
 export * from "./pairing.js";
 export * from "./massEdit.js";
+export * from "./savedComparisons.js";

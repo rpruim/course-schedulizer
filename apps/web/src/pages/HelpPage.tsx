@@ -401,10 +401,13 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     body: () => (
       <>
         <p>
-          <Link to="/compare">Compare</Link> lines the ticked schedules up row by row. Each column has a role: <em>ignore</em>, <em>group by</em> (rows with the same value are one row) or <em>aggregate</em> (numbers are summed;
-          text is listed). Start from a preset — mismatches, sections per course, load per course, load per prefix and term, or load per instructor — then adjust.
+          <Link to="/compare">Compare</Link> lines the ticked schedules up row by row. Each column has a role: <em>ignore</em> (⊘), <em>group by</em> (▦: rows with the same value are one row) or <em>aggregate</em> (Σ: numbers are summed;
+          text is listed). Choose a ready-made comparison from the <em>What to compare</em> list — mismatches, sections per course, load per course, load per prefix and term, or load per instructor —
+          then open <em>Choose what to compare</em> and adjust the roles. A sentence there says what the roles add up to, for example “Group by term, prefix, course number; aggregate by faculty load; ignore everything else”.
+          Once you change anything the list says <em>Custom</em>.
         </p>
         <ul>
+          <li><strong>Save…</strong> keeps a custom comparison under a name, in the Excel files of the schedules being compared (a <em>Comparisons</em> sheet, which you can also edit by hand: one row per comparison with its group and aggregate columns). Saved comparisons appear in the list whenever one of those schedules is open and compared; <em>Delete</em> removes one from all of them.</li>
           <li>With two schedules a <em>Difference</em> column shows the second minus the first; cells are tinted by how much they differ. A dash means the group is missing from that schedule.</li>
           <li><em>Only differences</em> hides rows that match (it is on by default when there are many rows).</li>
           <li>Click a row to see the sections behind it in each schedule; fields that differ are highlighted.</li>

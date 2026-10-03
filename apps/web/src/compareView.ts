@@ -7,6 +7,7 @@ import {
   pairClusters,
   pairRef,
   parseTime,
+  resolvePartition,
   rowSource,
   type PairHow,
   type PairOptions,
@@ -401,4 +402,46 @@ export function diffMembers(row: ComparisonRow, rowKind: RowKind, pairing: PairO
     }
   }
   return views;
+}
+
+
+// ---- describing and comparing setups
+
+/** `CourseNumber` → `course number`. */
+const plain = (key: string): string => (key === COUNT_KEY ? "number of rows" : key.replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase());
+
+/**
+ * The setup in a sentence: `Group by term, prefix, number; aggregate by load; ignore everything else`. The role with the most
+ * columns is called “everything else” (or “everything” when it is the only role in use), listed last; roles with no columns are
+ * left out. A row count that is only there because nothing else is aggregated is not mentioned.
+ */
+export function describeSetup(roles: Roles, rows: RowKind): string {
+  const { groups, aggregates, countForced } = resolvePartition({ roles });
+  const grouped = groups.map((c) => c.key);
+  const aggregated = aggregates.filter((a) => !(countForced && a.key === COUNT_KEY)).map((a) => a.key);
+  const used = new Set([...grouped, ...aggregated]);
+  const ignored = COMPARE_COLUMNS.map((c) => c.key).filter((k) => !used.has(k));
+  const parts = [
+    { verb: "group by", keys: grouped },
+    { verb: "aggregate by", keys: aggregated },
+    { verb: "ignore", keys: ignored },
+  ].filter((p) => p.keys.length > 0);
+  if (parts.length === 0) return "Nothing to compare";
+  // Ties go to the earlier role: group, then aggregate, then ignore.
+  const biggest = parts.reduce((best, p) => (p.keys.length > best.keys.length ? p : best));
+  const text = [
+    ...parts.filter((p) => p !== biggest).map((p) => `${p.verb} ${p.keys.map(plain).join(", ")}`),
+    `${biggest.verb} everything${parts.length > 1 ? " else" : ""}`,
+  ].join("; ");
+  return `${text[0]!.toUpperCase()}${text.slice(1)}${rows === "instructor" ? "; one row per section and instructor" : ""}`;
+}
+
+/** Whether two setups compare the same way: the same grouping and aggregating columns and the same kind of row. */
+export function sameSetup(a: { roles: Roles; rows: RowKind }, b: { roles: Roles; rows: RowKind }): boolean {
+  if (a.rows !== b.rows) return false;
+  const key = (r: Roles) => {
+    const { groups, aggregates } = resolvePartition({ roles: r });
+    return JSON.stringify([groups.map((c) => c.key).sort(), aggregates.map((c) => c.key).sort()]);
+  };
+  return key(a.roles) === key(b.roles);
 }

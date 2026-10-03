@@ -9,6 +9,7 @@ export function upgradeSchedule(s: Schedule): Schedule {
   return {
     ...s,
     meta: { ...emptyMeta(), ...s.meta },
+    comparisons: s.comparisons ?? [],
     constraints: (s.constraints ?? []).map((c) => {
       const r = constraintSchema.safeParse(c);
       return r.success ? r.data : c;

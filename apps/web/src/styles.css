@@ -203,14 +203,14 @@ details.partition { border: 1px solid var(--line); border-radius: 8px; padding: 
 details.partition summary { cursor: pointer; font-weight: 600; }
 .presets { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 8px 0; }
 .row-kind { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin: 6px 0 8px; }
-.columns { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px; }
+.columns { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px; }
 .col-card { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px 3px 10px; }
 .col-card.role-group { border-color: hsl(210 70% 55%); background: hsl(210 70% 55% / .10); }
 .col-card.role-aggregate { border-color: hsl(28 80% 52%); background: hsl(28 80% 52% / .10); }
 .col-card.role-ignore .col-name { color: var(--muted); }
 .col-name { font-size: .85rem; }
 .seg { display: inline-flex; }
-.seg button { padding: 1px 7px; font-size: .75rem; border-radius: 0; margin-left: -1px; }
+.seg button { padding: 2px 6px; font-size: .75rem; line-height: 1; border-radius: 0; margin-left: -1px; }
 .seg button:first-child { border-radius: 5px 0 0 5px; margin-left: 0; }
 .seg button:last-child { border-radius: 0 5px 5px 0; }
 .seg button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); position: relative; }
@@ -370,3 +370,9 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 .block.nocolor { background: repeating-linear-gradient(135deg, hsl(0 0% var(--bl)) 0 5px, hsl(0 0% calc(var(--bl) - 10%)) 5px 7px); }
 .block.nocolor:not(.conflict):not(.nonstandard) { border-color: hsl(0 0% var(--bb)); }
 .chip .flag-icon { display: inline-block; vertical-align: -0.15em; }
+
+/* Compare: the choice of what to compare, and the compact role buttons */
+.compare-setup .naming { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 8px; }
+.role-icon { display: block; width: 14px; height: 14px; }
+.role-key { white-space: nowrap; }
+.role-key .role-icon { display: inline-block; vertical-align: -0.15em; }

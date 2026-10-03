@@ -39,3 +39,26 @@ export function Check() {
     </svg>
   );
 }
+
+/** The three roles a Compare column can have: ignore (a circle with a slash), group (a grid of cells), aggregate (a sigma). */
+export function RoleIcon({ role }: { role: "ignore" | "group" | "aggregate" }) {
+  return (
+    <svg {...svg} className={`role-icon role-icon-${role}`}>
+      {role === "ignore" && (
+        <>
+          <circle cx="8" cy="8" r="5.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
+          <path d="M4.2 11.8 11.8 4.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        </>
+      )}
+      {role === "group" && (
+        <g fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
+          <rect x="2.4" y="2.4" width="4.6" height="4.6" rx=".8" />
+          <rect x="9" y="2.4" width="4.6" height="4.6" rx=".8" />
+          <rect x="2.4" y="9" width="4.6" height="4.6" rx=".8" />
+          <rect x="9" y="9" width="4.6" height="4.6" rx=".8" />
+        </g>
+      )}
+      {role === "aggregate" && <path d="M12 3H4.4L9 8l-4.6 5H12" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />}
+    </svg>
+  );
+}

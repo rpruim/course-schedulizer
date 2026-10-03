@@ -9,6 +9,11 @@
   * A filter (by prefix, course level, instructor, department, group or instructional method, with several values and *missing* allowed) narrows what is shown. *Add visible courses to selection*, *Remove visible courses from selection* and *Clear selection* build the selection, and the count says how many sections are selected in all and how many of those are shown.
   * *Edit selected…* opens an editor with every box blank. Fill in only what you want to set, and choose to replace missing values only or overwrite existing ones. It can edit just the selected sections the filters are showing or also those they are hiding, and says how many values would change before you apply.
   * It can rename a prefix across many sections, as when a department changes its name. A section is skipped if the new prefix would clash with another section, and the editor says how many constraint rows still name the old prefix.
+* A better Compare tab:
+  * *What to compare* is now a list outside the fold-away panel: the ready-made comparisons, your saved ones, and *Custom*, which it switches to as soon as you change anything.
+  * *Save…* keeps a custom comparison under a name in the Excel files of the schedules being compared (on a *Comparisons* sheet), and *Delete* removes it.
+  * The group, aggregate and ignore choices for each column are small icons, so the panel takes much less room.
+  * A sentence describes the setup, such as “Group by term, prefix, course number; aggregate by faculty load; ignore everything else”.
 * A section that lists the same meeting twice is now drawn once on the week views.
 * On the Compare tab, a row keeps its color when the pointer is over it or it has the keyboard focus; before, that row turned gray, which looked like a row that had not been colored.
 

@@ -23,6 +23,7 @@ import {
   type Session,
   type Settings,
 } from "./types.js";
+import { importComparisons } from "./savedComparisons.js";
 
 /** Canonical Sessions columns, in file order. */
 export const SESSION_COLUMNS = [
@@ -556,6 +557,7 @@ export interface ImportInput {
   crossListings?: Rec[];
   nonTeaching?: Rec[];
   constraints?: Rec[];
+  comparisons?: Rec[];
   settings?: Settings;
   meta?: Meta;
   /** Fills a blank AcademicYear (see `ImportOptions`). */
@@ -577,7 +579,8 @@ export function importRecords(input: ImportInput): ImportResult {
   const cl = importCrossListings(input.crossListings ?? [], s.sessions, s.crossListings);
   const nt = importNonTeaching(input.nonTeaching ?? [], settings, opts);
   const co = importConstraints(input.constraints ?? []);
-  const issues = [...s.issues, ...cl.issues, ...nt.issues, ...co.issues];
+  const cmp = importComparisons(input.comparisons ?? []);
+  const issues = [...s.issues, ...cl.issues, ...nt.issues, ...co.issues, ...cmp.issues];
   return {
     schedule: {
       meta: input.meta ?? emptyMeta(),
@@ -586,6 +589,7 @@ export function importRecords(input: ImportInput): ImportResult {
       crossListings: cl.crossListings,
       nonTeaching: [...s.nonTeaching, ...nt.nonTeaching],
       constraints: co.constraints,
+      comparisons: cmp.comparisons,
     },
     issues,
     ok: !issues.some((i) => i.severity === "error"),

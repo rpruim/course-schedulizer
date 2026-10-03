@@ -198,6 +198,19 @@ export function inferredLevel(courseNumber: string): string {
 /** A section's course level: its own if it has one, else the one its course number implies. */
 export const levelOf = (s: { courseLevel: string; courseNumber: string }): string => (s.courseLevel ?? "").trim() || inferredLevel(s.courseNumber);
 
+/**
+ * A named way of comparing schedules (see `compare.ts`), saved in the schedule's file: which columns are grouped by and which
+ * aggregated (every other column is ignored), and whether a row is a section or a section-and-instructor.
+ */
+export interface SavedComparison {
+  name: string;
+  rows: "section" | "instructor";
+  /** Column keys to group by, in the order listed. */
+  group: string[];
+  /** Column keys to aggregate (the row count is `Rows`). */
+  aggregate: string[];
+}
+
 export interface Schedule {
   meta: Meta;
   settings: Settings;
@@ -205,6 +218,8 @@ export interface Schedule {
   crossListings: CrossListing[];
   nonTeaching: NonTeaching[];
   constraints: Constraint[];
+  /** Comparisons saved by name (the Compare tab's own list); absent in files saved by earlier versions. */
+  comparisons: SavedComparison[];
 }
 
 // The default terms and parts live in config/settings.yaml; tools/gen-settings.mjs generates this module from it.
@@ -224,6 +239,7 @@ export const emptySchedule = (): Schedule => ({
   crossListings: [],
   nonTeaching: [],
   constraints: [],
+  comparisons: [],
 });
 
 export interface Issue {
