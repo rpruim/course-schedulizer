@@ -144,7 +144,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <strong>File</strong> (new blank schedule, meta, import, export) and  
         <strong>Help</strong> (this guide, the <Link to="/news">release notes</Link>, and About).  
         Click a menu option to open it; the menu you are in is underlined. 
-        In any tabular view, click a column heading to sort the table; click again to reverse the sort.</p>
+        In any tabular view, click a column heading to sort the table; click again to reverse the sort.
+        A button that adds something starts with a <strong>+</strong>, and one that deletes or removes something has a trash can.</p>
         <dl>
           <dt><Link to="/">Schedule</Link></dt>
           <dd>A tabular view of the schedule with one row per section listing 
@@ -164,11 +165,15 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dd>Sections as blocks on a Monday–Friday grid. See <a href="#week" onClick={jump("week")}>The week views</a>.</dd>
           <dt><Link to="/massedit">Mass edit</Link></dt>
           <dd>
-            The department week grid, but a click selects or deselects a section (selected sections have a green outline) instead of opening it.
-            Use <em>Filter by</em> (the same choices as <em>Color by</em>) and the <em>Show</em> list, where you can tick several values, including <em>(missing)</em>, to narrow what is shown;
-            <em>Add visible courses to selection</em> and <em>Remove visible courses from selection</em> work only on the sections shown, so a selection can be built up across several filters; <em>Clear selection</em> deselects everything, shown or not. The count says how many sections are selected in all and how many of those are shown. <em>Edit selected…</em> changes the selected sections that are shown; if some selected sections are hidden by the filters, two choices in the editor let you edit only the ones shown (the default) or those hidden too, and the editor remembers your choice for the session. Its heading always says how many sections will be edited. <em>Edit selected…</em> opens an editor with every box blank: fill in only what you want to set
-            (prefix, department, title, instructors, load, credits, instructional method, course level, group, delivery, enrollment, comment) and choose <em>Replace missing values only</em>
-            (the default) or <em>Overwrite existing values</em>. The editor says how many values would change before you apply, and the whole edit can be undone. Filtering by prefix and overwriting the prefix renames a department’s courses in one step (for example when a department changes its name); a section is left alone if the new prefix would give two sections the same number and letter, and rules on the Constraints tab that name the old prefix are not changed (the editor tells you how many there are). Course numbers, section letters, meeting days, times and rooms are not part of it.
+            The department week grid, but clicking a section selects or deselects it (selected sections have a green outline) instead of opening it.
+            Use it to change one thing on many sections at once.
+            <ul>
+              <li><strong>Choose what to show.</strong> <em>Filter by</em> offers the same things as <em>Color by</em>. The <em>Show</em> list beside it lets you tick several values, including <em>(missing)</em>; with nothing ticked, everything is shown.</li>
+              <li><strong>Build the selection.</strong> Click sections, or use <em>Add visible courses to selection</em> and <em>Remove visible courses from selection</em>, which work only on the sections shown, so a selection can be built up across several filters. <em>Clear selection</em> deselects everything, shown or not. The count says how many sections are selected in all and how many of those are shown.</li>
+              <li><strong>Edit.</strong> <em>Edit selected…</em> opens an editor with every box blank. Fill in only what you want to set (prefix, department, title, instructors, load, credits, instructional method, course level, group, delivery, enrollment, comment). Choose <em>Replace missing values only</em> (the default) or <em>Overwrite existing values</em>. If some selected sections are hidden by the filters, two more choices let you edit only the ones shown (the default) or those hidden too; your choice is remembered for the session. The editor says how many sections will be edited and how many values would change before you apply, and the whole edit can be undone.</li>
+              <li><strong>Rename a prefix.</strong> Filter by prefix, select the sections, put the new prefix in the <em>Prefix</em> box and choose <em>Overwrite existing values</em>: a department that changes its name can be renamed in one step. A section is left alone if the new prefix would give two sections the same number and letter. Rules on the Constraints tab that name the old prefix are not changed; the editor tells you how many there are.</li>
+              <li>Course numbers, section letters, meeting days, times and rooms are not part of a mass edit.</li>
+            </ul>
           </dd>
           <dt><Link to="/meta">Meta</Link></dt>
           <dd>View and edit information about the schedule as a whole.  Give your schedule a nickname, and a <em>default department</em> (used for every section that does not give its own; the section editor shows it in gray). Specify the file name 
