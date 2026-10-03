@@ -155,7 +155,9 @@ details summary { cursor: pointer; color: var(--muted); }
 .block.tiny { padding: 2px 1px; font-size: .58rem; gap: 1px; }
 .block.tiny .txt { align-items: center; }
 .block.tiny strong { writing-mode: vertical-rl; width: auto; height: 100%; text-overflow: clip; }
-.block:hover, .block:focus-visible { filter: brightness(.95); outline: 2px solid var(--accent); z-index: 2; }
+/* hovering (or tabbing to) a block outlines it the way selecting does, but in blue: not the red of a conflict, the orange of a non-standard time or the green of a selection */
+.block:hover, .block:focus-visible { filter: brightness(.95); outline: 3px solid #3a78c2; outline-offset: 1px; z-index: 2; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .block:hover, :root:not([data-theme="light"]) .block:focus-visible { outline-color: #6aa3e8; } }
 .block.conflict { border: 2px solid #c0392b; box-shadow: 0 0 0 1px #c0392b inset; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .block { --bl: 28%; --blfg: #f0f2f4; --bb: 45%; }
@@ -349,7 +351,7 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 
 /* Mass edit: a selected section has a green outline (clear of the red and orange borders of conflicts and non-standard times) */
 .block.selected, .chip.selected { outline: 3px solid #2e9e4f; outline-offset: 1px; }
-.block.selected { z-index: 2; }
+:root .block.selected, :root .block.selected:hover, :root .block.selected:focus-visible { outline: 3px solid #2e9e4f; outline-offset: 1px; z-index: 2; }
 
 /* Mass edit: how to apply the edit stays in view under the scrolling boxes, just above the buttons */
 .editor-apply { padding: 8px 16px; border-top: 1px solid var(--line); }

@@ -2,6 +2,7 @@
 
 * Interface improvements:
   * The week views can color by department as well as prefix, course level, instructor, group and instructional method. A block with nothing in the field being colored by is gray. *Show color key* opens a small window, which you can move and close, listing what each color means; it follows your choice of what to color by.
+  * Hovering over a section in the week views outlines it in blue, the way selecting outlines it in the Mass edit page, so it no longer looks like a conflict.
   * Buttons that add something start with a +, and buttons that delete or remove something have a trash can.
 * New *Mass edit* page: the department week grid, where clicking selects sections (green outline) instead of opening them.
   * A filter (by prefix, course level, instructor, department, group or instructional method, with several values and *missing* allowed) narrows what is shown. *Add visible courses to selection*, *Remove visible courses from selection* and *Clear selection* build the selection, and the count says how many sections are selected in all and how many of those are shown.
