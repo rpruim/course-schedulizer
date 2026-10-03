@@ -1,0 +1,4 @@
+#!/bin/sh
+# Runs before every `git push` (not on local commits): a push to main or dev needs a bumped version in package.json,
+# and main's version may have at most three parts. See tools/check-push.mjs.
+exec node "$(git rev-parse --show-toplevel)/tools/check-push.mjs" "$@"

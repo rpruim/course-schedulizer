@@ -37,4 +37,6 @@
   on Help → Release notes. Add a bullet for each user-visible change under the heading for the version in `package.json`;
   when the owner bumps the version, a heading for it must exist (a test checks this).
 - Do not push unless asked.
-
+- A git hook checks pushes to `main` and `dev` (see "Push check" in the README): the version in `package.json` must be higher than
+  the remote branch's, with at most three parts on `main` (four are allowed on `dev`). Bump it before suggesting a push; never use
+  `--no-verify` unless asked.

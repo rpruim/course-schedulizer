@@ -72,6 +72,13 @@ The icon (a week grid of course blocks in maroon and gold) is `apps/web/public/f
 modern browsers. `python3 tools/make-icons.py` redraws the PNG versions (`favicon-32.png` and
 `apple-touch-icon.png`) from the same geometry; edit both if the design changes.
 
+## Push check
+
+A git hook (`.githooks/pre-push`, using `tools/check-push.mjs`) stops a **push** to `main` or `dev` unless the `version` in the root
+`package.json` is higher than the one on that branch at the remote; on `main` the version may have at most three parts (`2.0.3`), on
+`dev` four (`2.0.3.1`). Local commits are never checked. `pnpm install` turns the hook on (it sets `core.hooksPath`); to do it by
+hand run `pnpm hooks`. `git push --no-verify` skips the check for one push. The check's own tests run with `pnpm test`.
+
 ## Release notes
 
 `NEWS.md` lists what changed in each version, newest first, in the style of an R package's `NEWS.md`. The app shows it on
