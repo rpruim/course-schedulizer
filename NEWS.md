@@ -1,0 +1,17 @@
+# Course Schedulizer 2.0.1
+
+* Interface improvements:
+  * The section editor is tidier: fields line up, instructional method and delivery are with the course, days sit on a row of their own with a one-line summary of each meeting (for example `MWF 12:15–13:20 in NH 102`), and cross-listings are under *More details*.
+  * The section editor warns about problems as you type: a pale red note and outline for conflicts, and a pale orange one for meetings at non-standard times (taking the schedule's standard-times rules into account).
+  * *File → New blank schedule* starts an empty schedule and opens the Meta tab.
+  * The Meta tab lists the current schedule first, and each schedule's details can be collapsed.
+  * Meta has a *default department*, used by every section that does not give its own. A section's course level is inferred from its course number (231 is 200-level) unless one is given. Both show in gray in the section editor.
+  * The week views can color by group or instructional method, and say *prefix* where they said *subject*.
+* Load files from a URL:
+  * Open an Excel file from a web address, or share a link that opens it (`#/import?url=…`). A link can name several files, each with its own name and academic year.
+* The Import tab's examples are now a list of files (`examples.yml`), and look like Calvin schedules: academic year `AY25`, terms FA, WI, SP and SU, and half-term courses.
+* New *Help → Release notes* page, showing this file.
+
+# Course Schedulizer 2.0.0
+
+* Initial release.

@@ -72,6 +72,12 @@ The icon (a week grid of course blocks in maroon and gold) is `apps/web/public/f
 modern browsers. `python3 tools/make-icons.py` redraws the PNG versions (`favicon-32.png` and
 `apple-touch-icon.png`) from the same geometry; edit both if the design changes.
 
+## Release notes
+
+`NEWS.md` lists what changed in each version, newest first, in the style of an R package's `NEWS.md`. The app shows it on
+*Help → Release notes*. Add a bullet for each user-visible change; a test fails if the version in `package.json` has no
+heading there.
+
 ## Branches and releases
 
 New work happens on `dev`; `main` is the released version that Netlify deploys. To release, fast-forward

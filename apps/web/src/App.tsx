@@ -12,6 +12,7 @@ import { ImportPage } from "./pages/ImportPage";
 import { HelpPage } from "./pages/HelpPage";
 import { LoadsPage } from "./pages/LoadsPage";
 import { NonTeachingPage } from "./pages/NonTeachingPage";
+import { ReleaseNotesPage } from "./pages/ReleaseNotesPage";
 import { SchedulePage } from "./pages/SchedulePage";
 import { WeekPage } from "./pages/WeekPage";
 import { SchedulePicker } from "./schedules";
@@ -39,6 +40,7 @@ const tabs = (reports: OpenReport[] | undefined, setReports: (r: OpenReport[] | 
   { to: "/import", label: "Import", element: <ImportPage reports={reports} onReports={setReports} onDismiss={() => setReports(undefined)} /> },
   { to: "/export", label: "Export", element: <ExportPage /> },
   { to: "/help", label: "User guide", element: <HelpPage /> },
+  { to: "/news", label: "Release notes", element: <ReleaseNotesPage /> },
   { to: "/about", label: "About", element: <AboutPage /> },
 ];
 
@@ -49,7 +51,7 @@ const groups = (newBlank: () => void): MenuGroup[] => [
   { label: "View", items: [{ to: "/dept", label: "Dept week" }, { to: "/faculty", label: "Faculty week" }, { to: "/rooms", label: "Room week" }] },
   { label: "Check", items: [{ to: "/conflicts", label: "Conflicts" }, { to: "/constraints", label: "Constraints" }, { to: "/compare", label: "Compare" }] },
   { label: "File", items: [{ label: "New blank schedule", onSelect: newBlank }, { to: "/meta", label: "Meta" }, { to: "/import", label: "Import" }, { to: "/export", label: "Export" }] },
-  { label: "Help", items: [{ to: "/help", label: "User guide" }, { to: "/about", label: "About" }] },
+  { label: "Help", items: [{ to: "/help", label: "User guide" }, { to: "/news", label: "Release notes" }, { to: "/about", label: "About" }] },
 ];
 
 function Shell() {

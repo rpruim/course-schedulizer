@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { oneDriveConfigured } from "../onedrive/auth";
 
 const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
   {
@@ -115,12 +116,15 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           academic year for a file that has none (<code>year=…</code>). The address box accepts that form too. A GitHub “blob” page address is turned into the raw file for you.
           Google Drive sharing pages do not work this way, because Google does not let other web pages read the files.
         </p>
-        <p>
-          <strong>OneDrive and SharePoint.</strong> When this site is set up for Microsoft sign-in, paste a OneDrive or SharePoint sharing link
-          (<em>Share → Copy link</em> in OneDrive) into the same box, or open a link containing one. The first time, a <em>Sign in and open</em> button appears (Microsoft’s
-          sign-in window needs a click); after that, links open directly. You can open only files that have been shared with you. A schedule opened this way
-          remembers its file, so the Export tab can save it back (see below).
-        </p>
+        {/* Shown only when this site has a Microsoft app registration (see oneDriveConfigured). */}
+        {oneDriveConfigured && (
+          <p>
+            <strong>OneDrive and SharePoint.</strong> When this site is set up for Microsoft sign-in, paste a OneDrive or SharePoint sharing link
+            (<em>Share → Copy link</em> in OneDrive) into the same box, or open a link containing one. The first time, a <em>Sign in and open</em> button appears (Microsoft’s
+            sign-in window needs a click); after that, links open directly. You can open only files that have been shared with you. A schedule opened this way
+            remembers its file, so the Export tab can save it back (see below).
+          </p>
+        )}
         <p>
           A report appears after opening. <em>Errors</em> are rows that could not be read (they are skipped, everything else is opened); <em>warnings</em> are things
           worth a look, such as a room with no matching time. Each message names the sheet and row so you can find it in Excel.
@@ -138,7 +142,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         then menus for <strong>Loads</strong>, <strong>View</strong> (the week grids), 
         <strong>Check</strong> (conflicts, constraints, comparison), 
         <strong>File</strong> (new blank schedule, meta, import, export) and  
-        <strong>Help</strong>.  
+        <strong>Help</strong> (this guide, the <Link to="/news">release notes</Link>, and About).  
         Click a menu option to open it; the menu you are in is underlined. 
         In any tabular view, click a column heading to sort the table; click again to reverse the sort.</p>
         <dl>
@@ -410,13 +414,17 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li>To <strong>share</strong> a schedule, send the Excel file. A colleague can open it here, and any changes they make stay in their copy.</li>
           <li>Or <strong>share a link</strong>: put the file somewhere a link can reach (see <em>Opening a schedule</em>) and send <code>…/#/import?url=…</code>. The Import tab builds the link for you.</li>
         </ul>
-        <h3>OneDrive</h3>
-        <p>
-          When the site is set up for Microsoft sign-in, the Export tab has a <em>OneDrive</em> row. <em>Save a copy to OneDrive</em> puts the whole schedule (including non-teaching load) in a
-          <em>Schedulizer</em> folder on your OneDrive. From then on <em>Save to OneDrive</em> updates that file, and <em>Get link to share</em> makes a link for people in your organization, either to <em>edit</em> (they can save changes back to your file) or <em>only view</em>
-          (they work on their own copy; good for circulating a draft). They open it and the app starts with the schedule loaded. If the file changed on OneDrive since you opened it,
-          saving stops and asks before overwriting. A schedule opened from a OneDrive link is connected to that file in the same way (<em>Disconnect</em> undoes this).
-        </p>
+        {oneDriveConfigured && (
+          <>
+            <h3>OneDrive</h3>
+            <p>
+              When the site is set up for Microsoft sign-in, the Export tab has a <em>OneDrive</em> row. <em>Save a copy to OneDrive</em> puts the whole schedule (including non-teaching load) in a
+              <em>Schedulizer</em> folder on your OneDrive. From then on <em>Save to OneDrive</em> updates that file, and <em>Get link to share</em> makes a link for people in your organization, either to <em>edit</em> (they can save changes back to your file) or <em>only view</em>
+              (they work on their own copy; good for circulating a draft). They open it and the app starts with the schedule loaded. If the file changed on OneDrive since you opened it,
+              saving stops and asks before overwriting. A schedule opened from a OneDrive link is connected to that file in the same way (<em>Disconnect</em> undoes this).
+            </p>
+          </>
+        )}
         <h3>Editing the file in Excel</h3>
         <p>
           You can edit the exported file in Excel for large systematic changes (for example moving every 50-minute class to 65 minutes). Be careful with the sheet and column names, and keep

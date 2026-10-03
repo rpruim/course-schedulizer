@@ -32,6 +32,9 @@
 
   So keep `dev` a straight line on top of `main` (no merge commits; if `main` has moved, rebase `dev` on it).
 - A release is a good moment to bump `version` in the root `package.json` (the page title and About page
-  read it). Say so when a change looks like the last one before a release, but leave the bump to the owner.
+  read it). Say so when a change looks like the last one before a release, but leave the bump to the owner unless asked.
+- `NEWS.md` (R-package style: a `# Course Schedulizer x.y.z` heading per version, newest first, then `*` bullets) is shown
+  on Help → Release notes. Add a bullet for each user-visible change under the heading for the version in `package.json`;
+  when the owner bumps the version, a heading for it must exist (a test checks this).
 - Do not push unless asked.
 
