@@ -136,17 +136,6 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
         </header>
         <div className="editor-body">
           <p className="muted small">Fill in only what you want to set. Boxes left blank change nothing.</p>
-          {hidden.length > 0 && (
-            <fieldset>
-              <legend>Which sections</legend>
-              <label className="choice">
-                <input type="radio" name="mass-which" checked={!withHidden} onChange={() => setWithHidden(false)} /> Only edit the {shown.length} selected section{shown.length === 1 ? "" : "s"} that the filters are showing
-              </label>
-              <label className="choice">
-                <input type="radio" name="mass-which" checked={withHidden} onChange={() => setWithHidden(true)} /> Also edit the {hidden.length} section{hidden.length === 1 ? "" : "s"} that the filters are hiding
-              </label>
-            </fieldset>
-          )}
           <fieldset>
             <legend>Course</legend>
             <div className="row top">
@@ -182,6 +171,16 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
           </fieldset>
         </div>
         <div className="editor-apply">
+          {hidden.length > 0 && (
+            <div className="apply-which" role="radiogroup" aria-label="Which sections">
+              <label className="choice">
+                <input type="radio" name="mass-which" checked={!withHidden} onChange={() => setWithHidden(false)} /> Only edit the {shown.length} selected section{shown.length === 1 ? "" : "s"} that the filters are showing
+              </label>
+              <label className="choice">
+                <input type="radio" name="mass-which" checked={withHidden} onChange={() => setWithHidden(true)} /> Also edit the {hidden.length} section{hidden.length === 1 ? "" : "s"} that the filters are hiding
+              </label>
+            </div>
+          )}
           <div className="apply-modes" role="radiogroup" aria-label="Apply to the selected sections">
             <label className="choice"><input type="radio" name="mass-mode" checked={mode === "missing"} onChange={() => setMode("missing")} /> Replace missing values only</label>
             <label className="choice"><input type="radio" name="mass-mode" checked={mode === "overwrite"} onChange={() => setMode("overwrite")} /> Overwrite existing values</label>
