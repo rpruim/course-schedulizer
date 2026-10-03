@@ -1,0 +1,4 @@
+Constraint,Type,Course,Section,Instructor,Count,Choose,Bound,Gap,Action,Duration,Starts,Term,Days,DayRule,From,To,Should,Meets,Comment
+Intensive terms meet daily,standard,*,,,,,,,,,,"WI, SU",,,,,,,Winter and summer courses meet every weekday for a few hours; these times are not in the university's list.
+Intensive terms meet daily,standard,,,,,,,,allow,150,09:00,,MTWRF,,,,,,
+Intensive terms meet daily,standard,,,,,,,,allow,150,13:00,,MTWRF,,,,,,

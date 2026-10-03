@@ -1,0 +1,27 @@
+AcademicYear,Term,TermPart,Prefix,CourseNumber,Section,Faculty,FacultyLoad,MinimumCredits,MeetingDays,StartTime,MeetingDuration,Classroom,ShortTitle,InstructionalMethod,DeliveryMode,Comment
+AY25,FA,Full,MATH,143,A,Ada Example,4,4,MWF,09:15,65,NH 101,Calculus I,Lecture,In-Person,
+AY25,FA,Full,MATH,143,B,Ada Example,4,4,MWF,11:00,65,NH 101,Calculus I,Lecture,In-Person,
+AY25,FA,Full,MATH,162,A,Ben Sample,4,4,MWF,12:15,65,NH 102,Calculus II,Lecture,In-Person,
+AY25,FA,Full,MATH,231,A,Cy Fictional,4,4,TR,10:20,100,NH 103,Linear Algebra,Lecture,In-Person,
+AY25,FA,Full,MATH,256,A,Cy Fictional,4,4,MWF,08:00,65,NH 103,Discrete Mathematics,Lecture,In-Person,
+AY25,FA,Full,MATH,351,A,Ben Sample,4,4,TR,14:10,100,NH 104,Real Analysis I,Lecture,In-Person,
+AY25,FA,Full,STAT,143,A,Dee Placeholder,4,4,MWF,13:30,65,NH 105,Introduction to Statistics,Lecture,In-Person,
+AY25,FA,Full,STAT,143,B,Dee Placeholder,4,4,MWF,14:45,65,NH 105,Introduction to Statistics,Lecture,In-Person,
+AY25,FA,Full,STAT,243,A,Eli Specimen,4,4,TR,10:20,100,NH 105,Statistical Methods,Lecture,In-Person,
+AY25,FA,Full,STAT,343,A,Eli Specimen; Dee Placeholder,4,4,TR,12:15,100,NH 105,Probability,Lecture,In-Person,
+AY25,FA,Full,DATA,202,A,Fay Mockson,4,4,TR,08:00,100,SB 110,Data Computing,Lecture,In-Person,
+AY25,FA,First,DATA,380,A,Fay Mockson,2,2,TR,14:10,100,SB 110,Data Ethics,Lecture,In-Person,First half of the term
+AY25,FA,Second,DATA,381,A,Fay Mockson,2,2,TR,14:10,100,SB 110,Data Visualization,Lecture,In-Person,Second half of the term
+AY25,FA,Full,DATA,385,A,Fay Mockson,4,4,MWF,11:00,65,SB 110,Optimization,Lecture,In-Person,Also listed as STAT 385
+AY25,WI,Full,MATH,110,A,Cy Fictional,4,4,MTWRF,09:00,150,NH 101,Mathematics and Music,Lecture,In-Person,Winter intensive: meets every weekday for two weeks
+AY25,WI,Full,STAT,130,A,Eli Specimen,4,4,MTWRF,13:00,150,NH 105,Sports Analytics,Lecture,In-Person,
+AY25,SP,Full,MATH,144,A,Ada Example,4,4,MWF,09:15,65,NH 101,Calculus I (second semester),Lecture,In-Person,
+AY25,SP,Full,MATH,162,A,Ben Sample,4,4,MWF,09:15,65,NH 102,Calculus II,Lecture,In-Person,
+AY25,SP,Full,MATH,232,A,Cy Fictional,4,4,TR,10:20,100,NH 103,Multivariable Calculus,Lecture,In-Person,
+AY25,SP,Full,MATH,352,A,Ben Sample,4,4,TR,14:10,100,NH 104,Real Analysis II,Lecture,In-Person,
+AY25,SP,Full,STAT,143,A,Dee Placeholder,4,4,MWF,13:30,65,NH 105,Introduction to Statistics,Lecture,In-Person,
+AY25,SP,Full,STAT,244,A,Eli Specimen,4,4,TR,10:20,100,NH 105,Regression,Lecture,In-Person,
+AY25,SP,Full,DATA,301,A,Fay Mockson,4,4,MWF,11:00,65,SB 110,Machine Learning,Lecture,In-Person,
+AY25,SP,Full,DATA,302,A,Fay Mockson,4,4,TR,12:15,100,SB 110,Data Science Capstone,Lecture,In-Person,
+AY25,SU,Second,MATH,143,A,Ben Sample,2,2,MTWRF,09:00,150,NH 101,Calculus I,Lecture,In-Person,Summer session II
+AY25,SU,First,STAT,143,A,Dee Placeholder,2,2,MTWRF,09:00,150,NH 105,Introduction to Statistics,Lecture,Online,Summer session I
