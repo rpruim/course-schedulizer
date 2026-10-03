@@ -9,8 +9,6 @@ import {
   emptySchedule,
   findConflicts,
   findRuleViolations,
-  formatTime,
-  parseTime,
   partsFor,
   saveDraft,
   validateDraft,
@@ -20,7 +18,7 @@ import {
   type SectionDraft,
 } from "@schedulizer/core";
 import { useWorkspace } from "../state";
-import { byField, DAYS, draftToForm, emptyMeetingForm, formToDraft, type Form, type MeetingForm } from "./form";
+import { byField, DAYS, draftToForm, emptyMeetingForm, formToDraft, meetingSummary, type Form, type MeetingForm } from "./form";
 
 const STANDARD_DURATIONS = [50, 65, 100];
 const DELIVERY_MODES = ["In-Person", "Online", "Hybrid"];
@@ -240,9 +238,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
             <legend>Meetings</legend>
             {form.meetings.length === 0 && <p className="muted">No scheduled time (for example an internship or an online section).</p>}
             {form.meetings.map((m, i) => {
-              const parsed = parseTime(m.start);
-              const start = typeof parsed === "number" ? parsed : undefined;
-              const end = start !== undefined && Number(m.duration) > 0 ? formatTime((start + Number(m.duration)) % 1440) : "";
+              const summary = meetingSummary(m);
               return (
                 <div className="meeting" key={i}>
                   <div className="days" role="group" aria-label="Days">
@@ -258,17 +254,19 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
                       </button>
                     ))}
                   </div>
-                  <label className="f"><span>Start</span><input type="time" value={m.start} onChange={(e) => setMeeting(i, { start: e.target.value })} /></label>
-                  <label className="f">
-                    <span>Minutes</span>
-                    <input value={m.duration} size={4} inputMode="numeric" onChange={(e) => setMeeting(i, { duration: e.target.value })} />
-                  </label>
-                  <span className="chips">
-                    {STANDARD_DURATIONS.map((n) => <button type="button" key={n} className="chip" onClick={() => setMeeting(i, { duration: String(n) })}>{n}</button>)}
-                  </span>
-                  {end && <span className="muted end">until {end}</span>}
-                  <label className="f"><span>Room</span><input value={m.room} list="dl-rooms" size={10} onChange={(e) => setMeeting(i, { room: e.target.value })} /></label>
-                  <button type="button" className="link" onClick={() => set("meetings", form.meetings.filter((_, j) => j !== i))}>Remove</button>
+                  <div className="meeting-fields">
+                    <label className="f"><span>Start</span><input type="time" value={m.start} onChange={(e) => setMeeting(i, { start: e.target.value })} /></label>
+                    <label className="f">
+                      <span>Minutes</span>
+                      <input value={m.duration} size={4} inputMode="numeric" onChange={(e) => setMeeting(i, { duration: e.target.value })} />
+                    </label>
+                    <span className="chips">
+                      {STANDARD_DURATIONS.map((n) => <button type="button" key={n} className="chip" onClick={() => setMeeting(i, { duration: String(n) })}>{n}</button>)}
+                    </span>
+                    <label className="f"><span>Room</span><input value={m.room} list="dl-rooms" size={10} onChange={(e) => setMeeting(i, { room: e.target.value })} /></label>
+                    <button type="button" className="link" onClick={() => set("meetings", form.meetings.filter((_, j) => j !== i))}>Remove</button>
+                  </div>
+                  {summary && <div className="meeting-summary">{summary}</div>}
                   {["days", "start", "duration"].map((k) => err(`meetings.${i}.${k}`))}
                 </div>
               );

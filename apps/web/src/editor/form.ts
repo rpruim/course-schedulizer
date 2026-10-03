@@ -18,6 +18,18 @@ export const DAYS = [
   { letter: "U", label: "Sun" },
 ] as const;
 
+/** One meeting as plain text, from what is typed so far: `MWF 12:15–13:20 in NH 256`. Parts not filled in are left out. */
+export function meetingSummary(m: MeetingForm): string {
+  const days = DAYS.map((d) => d.letter).filter((l) => m.days.includes(l)).join("");
+  const t = parseTime(m.start);
+  const start = typeof t === "number" ? t : undefined;
+  const minutes = Number(m.duration);
+  const time = start === undefined ? "" : minutes > 0 ? `${formatTime(start)}–${formatTime((start + minutes) % 1440)}` : formatTime(start);
+  const when = [days, time].filter(Boolean).join(" ");
+  const room = m.room.trim();
+  return [when, room && `in ${room}`].filter(Boolean).join(" ");
+}
+
 export interface MeetingForm {
   /** Selected day letters. */
   days: string[];

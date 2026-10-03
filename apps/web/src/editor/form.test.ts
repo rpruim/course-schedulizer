@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { importRecords, sectionToDraft } from "@schedulizer/core";
-import { byField, draftToForm, emptyMeetingForm, formToDraft } from "./form";
+import { byField, draftToForm, emptyMeetingForm, formToDraft, meetingSummary } from "./form";
 
 const schedule = importRecords({
   sessions: [
@@ -39,5 +39,17 @@ describe("draftToForm / formToDraft", () => {
   it("treats a blank new form as a draft with no id", () => {
     const f = { ...draftToForm(draft), sectionId: undefined };
     expect(formToDraft(f).draft.sectionId).toBeUndefined();
+  });
+});
+
+describe("meetingSummary", () => {
+  const m = (patch: Partial<ReturnType<typeof emptyMeetingForm>>) => ({ ...emptyMeetingForm(), ...patch });
+  it("writes days, times and room in a line", () => {
+    expect(meetingSummary(m({ days: ["F", "M", "W"], start: "12:15", duration: "65", room: "NH 256" }))).toBe("MWF 12:15–13:20 in NH 256");
+  });
+  it("leaves out what is missing", () => {
+    expect(meetingSummary(m({ days: ["T", "R"], start: "10:20" }))).toBe("TR 10:20");
+    expect(meetingSummary(m({ room: " SB 110 " }))).toBe("in SB 110");
+    expect(meetingSummary(m({}))).toBe("");
   });
 });
