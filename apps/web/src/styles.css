@@ -334,3 +334,7 @@ td button.link + button.link { margin-left: 6px; }
 .meta-toggle:hover { text-decoration: underline; }
 .sched-heading .badge { margin-left: 10px; }
 .release-badge { margin-left: 10px; vertical-align: middle; }
+
+/* the trash can sits on the text baseline, a little before the words */
+.trash-icon { vertical-align: -0.125em; margin-right: 2px; }
+button.link, button.danger-link, button.danger { white-space: nowrap; }

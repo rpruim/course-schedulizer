@@ -3,6 +3,7 @@
 * Interface improvements:
   * The section editor is tidier: fields line up, instructional method and delivery are with the course, days sit on a row of their own with a one-line summary of each meeting (for example `MWF 12:15–13:20 in NH 102`), and cross-listings are under *More details*.
   * The section editor warns about problems as you type: a pale red note and outline for conflicts, and a pale orange one for meetings at non-standard times (taking the schedule's standard-times rules into account).
+  * Buttons that add something start with a +, and buttons that delete or remove something have a trash can.
   * *File → New blank schedule* starts an empty schedule and opens the Meta tab.
   * The Meta tab lists the current schedule first, and each schedule's details can be collapsed.
   * Meta has a *default department*, used by every section that does not give its own. A section's course level is inferred from its course number (231 is 200-level) unless one is given. Both show in gray in the section editor.

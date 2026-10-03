@@ -20,6 +20,7 @@ import {
   DEFAULT_STANDARD_TIMES,
 } from "@schedulizer/core";
 import { useWorkspace } from "../state";
+import { Trash } from "../icons";
 
 const EMPTY = emptySchedule();
 const WEEKDAYS = [["M", "Mon"], ["T", "Tue"], ["W", "Wed"], ["R", "Thu"], ["F", "Fri"]] as const;
@@ -259,7 +260,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                       </label>
                     </>
                   )}
-                  <button type="button" className="link" onClick={() => set("items", form.items.filter((_, j) => j !== i))} disabled={form.items.length <= 1}>Remove</button>
+                  <button type="button" className="link" onClick={() => set("items", form.items.filter((_, j) => j !== i))} disabled={form.items.length <= 1}><Trash /> Remove</button>
                   {err(`items.${i}`)}
                 </div>
               );
@@ -374,7 +375,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                   <label className="f"><span>Days</span><input value={c.days} size={6} placeholder="MWF" aria-label="days" onChange={(e) => setChange(i, { days: e.target.value })} /></label>
                   <label className="f"><span>Length (min)</span><input value={c.duration} size={6} inputMode="numeric" placeholder={c.action === "allow" ? "65" : "any"} aria-label="length in minutes" onChange={(e) => setChange(i, { duration: e.target.value })} /></label>
                   <label className="f grow"><span>Starting at</span><input value={c.starts} placeholder={c.action === "allow" ? "9:15, 13:30" : "any time"} aria-label="start times" onChange={(e) => setChange(i, { starts: e.target.value })} /></label>
-                  <button type="button" className="link" onClick={() => set("changes", form.changes.filter((_, j) => j !== i))}>Remove</button>
+                  <button type="button" className="link" onClick={() => set("changes", form.changes.filter((_, j) => j !== i))}><Trash /> Remove</button>
                   {err(`changes.${i}`)}
                 </div>
               ))}
@@ -455,7 +456,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
             <div className="collision" role="alert">
               <p>Delete the rule <strong>{original.name}</strong>? You can undo this.</p>
               <div className="row">
-                <button type="button" className="danger" onClick={() => { apply((s) => deleteRule(s, original.name)); onNotice(`Deleted the rule “${original.name}”.`); onClose(); }}>Delete rule</button>
+                <button type="button" className="danger" onClick={() => { apply((s) => deleteRule(s, original.name)); onNotice(`Deleted the rule “${original.name}”.`); onClose(); }}><Trash /> Delete rule</button>
                 <button type="button" onClick={() => setConfirmDelete(false)}>Keep it</button>
               </div>
             </div>
@@ -463,10 +464,10 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
         </div>
 
         <footer className="editor-foot">
-          {!isNew && <button type="button" className="danger-link" onClick={() => setConfirmDelete(true)}>Delete…</button>}
+          {!isNew && <button type="button" className="danger-link" onClick={() => setConfirmDelete(true)}><Trash /> Delete…</button>}
           <span className="spacer" />
           <button type="button" onClick={onClose}>Cancel</button>
-          <button type="submit" className="primary">{isNew ? "Add rule" : "Save"}</button>
+          <button type="submit" className="primary">{isNew ? "+ Add rule" : "Save"}</button>
         </footer>
 
         <datalist id="rule-courses">{lists.courses.map((v) => <option key={v} value={v} />)}{lists.prefixes.map((v) => <option key={v} value={v} />)}</datalist>

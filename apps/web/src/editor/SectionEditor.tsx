@@ -20,6 +20,7 @@ import {
 } from "@schedulizer/core";
 import { useWorkspace } from "../state";
 import { byField, DAYS, draftToForm, emptyMeetingForm, formToDraft, meetingSummary, type Form, type MeetingForm } from "./form";
+import { Trash } from "../icons";
 
 const STANDARD_DURATIONS = [50, 65, 100];
 const DELIVERY_MODES = ["In-Person", "Online", "Hybrid"];
@@ -265,7 +266,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
                       {STANDARD_DURATIONS.map((n) => <button type="button" key={n} className="chip" onClick={() => setMeeting(i, { duration: String(n) })}>{n}</button>)}
                     </span>
                     <label className="f"><span>Room</span><input value={m.room} list="dl-rooms" size={10} onChange={(e) => setMeeting(i, { room: e.target.value })} /></label>
-                    <button type="button" className="link" onClick={() => set("meetings", form.meetings.filter((_, j) => j !== i))}>Remove</button>
+                    <button type="button" className="link" onClick={() => set("meetings", form.meetings.filter((_, j) => j !== i))}><Trash /> Remove</button>
                   </div>
                   {summary && <div className="meeting-summary">{summary}</div>}
                   {["days", "start", "duration"].map((k) => err(`meetings.${i}.${k}`))}
@@ -295,7 +296,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
                 <div className="row" key={i}>
                   <label className="f"><span>Prefix</span><input value={l.prefix} list="dl-prefix" size={8} onChange={(e) => set("crossListings", form.crossListings.map((x, j) => (j === i ? { ...x, prefix: e.target.value } : x)))} /></label>
                   <label className="f"><span>Number</span><input value={l.courseNumber} size={8} onChange={(e) => set("crossListings", form.crossListings.map((x, j) => (j === i ? { ...x, courseNumber: e.target.value } : x)))} /></label>
-                  <button type="button" className="link" onClick={() => set("crossListings", form.crossListings.filter((_, j) => j !== i))}>Remove</button>
+                  <button type="button" className="link" onClick={() => set("crossListings", form.crossListings.filter((_, j) => j !== i))}><Trash /> Remove</button>
                   {err(`crossListings.${i}`)}
                 </div>
               ))}
@@ -329,7 +330,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
                 <input type="radio" checked={choice === "relabel"} onChange={() => setChoice("relabel")} /> Relabel it as{" "}
                 <input value={relabelTo} size={4} onFocus={() => setChoice("relabel")} onChange={(e) => { setRelabelTo(e.target.value); setChoice("relabel"); }} />
               </label>
-              <label><input type="radio" checked={choice === "delete"} onChange={() => setChoice("delete")} /> Delete that section</label>
+              <label><input type="radio" checked={choice === "delete"} onChange={() => setChoice("delete")} /> <Trash /> Delete that section</label>
               {(staleConstraints(collision.other.sectionId) > 0 || staleConstraints(initial.sectionId) > 0) && (
                 <p className="muted small">Cohort constraints that name a section by letter may stop matching it after this change.</p>
               )}
@@ -347,7 +348,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
                 <p className="muted small">{constraintsNaming(schedule, initial.sectionId!).length} cohort-constraint row(s) name this section and will be reported as unmatched.</p>
               ) : null}
               <div className="row">
-                <button type="button" className="danger" onClick={() => { apply((s) => deleteSection(s, initial.sectionId!)); onNotice(`Deleted ${name} ${form.section.trim()}.`); onClose(); }}>Delete section</button>
+                <button type="button" className="danger" onClick={() => { apply((s) => deleteSection(s, initial.sectionId!)); onNotice(`Deleted ${name} ${form.section.trim()}.`); onClose(); }}><Trash /> Delete section</button>
                 <button type="button" onClick={() => setConfirmDelete(false)}>Keep it</button>
               </div>
             </div>
@@ -357,13 +358,13 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
         <footer className="editor-foot">
           {!isNew && (
             <>
-              <button type="button" className="danger-link" onClick={() => setConfirmDelete(true)}>Delete…</button>
-              <button type="button" onClick={() => { const c = copyAsNewSection(schedule, initial.sectionId!); if (c) onCopy(c); }} title="Opens a copy of the saved section with the next free letter">Add another section of this course</button>
+              <button type="button" className="danger-link" onClick={() => setConfirmDelete(true)}><Trash /> Delete…</button>
+              <button type="button" onClick={() => { const c = copyAsNewSection(schedule, initial.sectionId!); if (c) onCopy(c); }} title="Opens a copy of the saved section with the next free letter">+ Add another section of this course</button>
             </>
           )}
           <span className="spacer" />
           <button type="button" onClick={onClose}>Cancel</button>
-          <button type="submit" className="primary">{isNew ? "Add section" : "Save"}</button>
+          <button type="submit" className="primary">{isNew ? "+ Add section" : "Save"}</button>
         </footer>
 
         <datalist id="dl-years">{lists.years.map((v) => <option key={v} value={v} />)}</datalist>

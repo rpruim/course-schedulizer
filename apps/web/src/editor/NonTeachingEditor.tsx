@@ -13,6 +13,7 @@ import {
 import { useWorkspace } from "../state";
 import { byField } from "./form";
 import { draftToNtForm, ntFormToDraft, type NtForm } from "./ntForm";
+import { Trash } from "../icons";
 
 const EMPTY = emptySchedule();
 
@@ -147,7 +148,7 @@ export function NonTeachingEditor({ scheduleId, initial, index, onClose, onNotic
             <div className="collision" role="alert">
               <p>Delete <strong>{initial.faculty}: {initial.activity}</strong>? You can undo this.</p>
               <div className="row">
-                <button type="button" className="danger" onClick={() => { apply((s) => deleteNonTeaching(s, index!)); onNotice(`Deleted ${initial.faculty}: ${initial.activity}.`); onClose(); }}>Delete</button>
+                <button type="button" className="danger" onClick={() => { apply((s) => deleteNonTeaching(s, index!)); onNotice(`Deleted ${initial.faculty}: ${initial.activity}.`); onClose(); }}><Trash /> Delete</button>
                 <button type="button" onClick={() => setConfirmDelete(false)}>Keep it</button>
               </div>
             </div>
@@ -155,10 +156,10 @@ export function NonTeachingEditor({ scheduleId, initial, index, onClose, onNotic
         </div>
 
         <footer className="editor-foot">
-          {!isNew && <button type="button" className="danger-link" onClick={() => setConfirmDelete(true)}>Delete…</button>}
+          {!isNew && <button type="button" className="danger-link" onClick={() => setConfirmDelete(true)}><Trash /> Delete…</button>}
           <span className="spacer" />
           <button type="button" onClick={onClose}>Cancel</button>
-          <button type="submit" className="primary">{isNew ? "Add" : "Save"}</button>
+          <button type="submit" className="primary">{isNew ? "+ Add" : "Save"}</button>
         </footer>
 
         <datalist id="nt-people">{lists.people.map((v) => <option key={v} value={v} />)}</datalist>

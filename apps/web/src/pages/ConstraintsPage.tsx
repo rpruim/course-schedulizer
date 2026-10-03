@@ -17,7 +17,7 @@ export function ConstraintsPage() {
         <span className="muted">Rules that the schedule should meet, for example that students in a program can take their courses together. Broken rules are listed on the <a href="#/conflicts">Conflicts</a> tab.</span>
         <span className="spacer" />
         <button className="primary" onClick={() => openConstraint()} title={ws.current ? `Adds to “${ws.current.name}”` : ""}>
-          Add rule{ws.entries.length > 1 && ws.current ? ` to “${ws.current.name}”` : ""}
+          + Add rule{ws.entries.length > 1 && ws.current ? ` to “${ws.current.name}”` : ""}
         </button>
       </div>
       {ws.includedEntries.map((e) => (

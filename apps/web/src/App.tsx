@@ -51,7 +51,7 @@ const groups = (newBlank: () => void): MenuGroup[] => [
   { label: "Loads", items: [{ to: "/loads", label: "Teaching loads" }, { to: "/nonteaching", label: "Non-teaching load" }] },
   { label: "View", items: [{ to: "/dept", label: "Dept week" }, { to: "/faculty", label: "Faculty week" }, { to: "/rooms", label: "Room week" }] },
   { label: "Check", items: [{ to: "/conflicts", label: "Conflicts" }, { to: "/constraints", label: "Constraints" }, { to: "/compare", label: "Compare" }] },
-  { label: "File", items: [{ label: "New blank schedule", onSelect: newBlank }, { to: "/meta", label: "Meta" }, { to: "/import", label: "Import" }, { to: "/export", label: "Export" }] },
+  { label: "File", items: [{ label: "+ New blank schedule", onSelect: newBlank }, { to: "/meta", label: "Meta" }, { to: "/import", label: "Import" }, { to: "/export", label: "Export" }] },
   { label: "Help", items: [{ to: "/help", label: "User guide" }, { to: "/news", label: "Release notes" }, { to: "/about", label: "About" }] },
 ];
 

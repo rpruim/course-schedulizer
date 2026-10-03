@@ -32,7 +32,7 @@ export function NonTeachingPage() {
           <input value={text} onChange={(e) => setText(e.target.value)} placeholder="person, activity, comment" />
         </label>
         <button className="primary" onClick={() => openNonTeaching(undefined, { academicYear: year })}>
-          Add non-teaching load{ws.entries.length > 1 && ws.current ? ` to “${ws.current.name}”` : ""}
+          + Add non-teaching load{ws.entries.length > 1 && ws.current ? ` to “${ws.current.name}”` : ""}
         </button>
       </div>
       <p className="muted small">Load that is not a course: chair releases, sabbaticals, advising and so on. It counts in the Teaching loads table next to each person's teaching load.</p>

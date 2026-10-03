@@ -130,7 +130,7 @@ export function WeekPage({ kind }: { kind: GridKind }) {
             })
           }
         >
-          Add section{ws.entries.length > 1 && ws.current ? ` to “${ws.current.name}”` : ""}
+          + Add section{ws.entries.length > 1 && ws.current ? ` to “${ws.current.name}”` : ""}
         </button>
       </div>
       {kind === "room" && withoutRoom > 0 && (

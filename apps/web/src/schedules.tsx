@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useWorkspace } from "./state";
+import { Trash } from "./icons";
 
 /**
  * The open schedules: tick the ones to show in the views, click a name to make it the
@@ -52,7 +53,7 @@ export function SchedulePicker() {
               title="Remove"
               aria-label={`Remove ${e.name}`}
             >
-              ✕
+              <Trash />
             </button>
           </span>
         );

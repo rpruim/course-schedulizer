@@ -54,7 +54,7 @@ export function SchedulePage() {
         </label>
         <span className="muted">{shown.length} of {rows.length} sections</span>
         <button className="primary" onClick={() => openNew({ academicYear: year || years[0] || "", ...(term ? { term } : {}) })} title={ws.current ? `Adds to “${ws.current.name}”` : ""}>
-          Add section{ws.entries.length > 1 && ws.current ? ` to “${ws.current.name}”` : ""}
+          + Add section{ws.entries.length > 1 && ws.current ? ` to “${ws.current.name}”` : ""}
         </button>
       </div>
       <div className="table-wrap">
@@ -108,7 +108,7 @@ export function Empty() {
     <div className="empty">
       <h2>No schedule yet</h2>
       <p>Open an Excel file or try an example on the <Link to="/import">Import</Link> tab. Files from the old Course Schedulizer open too.</p>
-      <p><button onClick={() => openNew()}>Or start a new schedule by adding a section</button></p>
+      <p><button onClick={() => openNew()}>+ Or start a new schedule by adding a section</button></p>
     </div>
   );
 }
