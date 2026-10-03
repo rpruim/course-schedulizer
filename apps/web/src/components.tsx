@@ -154,7 +154,7 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
         </label>
       )}
       <label className="field grow">
-        Or open from a web address
+        Open from a web address
         <input value={address} onChange={(e) => setAddress(e.target.value)} onKeyDown={(e) => e.key === "Enter" && void openAddress()} placeholder="https://…/AY25.xlsx" />
       </label>
       <button onClick={() => void openAddress()} disabled={busy || !address.trim()}>Open address</button>
