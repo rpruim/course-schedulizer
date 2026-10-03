@@ -402,7 +402,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
       <>
         <p>
           <Link to="/compare">Compare</Link> lines the ticked schedules up row by row. Each column has a role: <em>ignore</em> (⊘), <em>group by</em> (▦: rows with the same value are one row) or <em>aggregate</em> (Σ: numbers are summed;
-          text is listed). Choose a ready-made comparison from the <em>What to compare</em> list — mismatches, sections per course, load per course, load per prefix and term, or load per instructor —
+          text is listed). Choose a ready-made comparison from the <em>How to compare</em> list — mismatches, sections per course, load per course, load per prefix and term, or load per instructor —
           then open <em>Choose how to compare</em> and adjust the roles. A sentence under the list says what the roles add up to, for example “Group by term, prefix, course number; aggregate by faculty load; ignore everything else”.
           Once you change anything the list says <em>Custom</em>, and the browser remembers that setup, so you can switch between a named comparison and your latest custom one before you have saved it. Choosing <em>Custom</em> before you have made one opens that panel.
         </p>

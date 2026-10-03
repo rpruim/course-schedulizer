@@ -31,7 +31,7 @@ const ROLE_HELP: Record<ColumnRole, string> = {
   group: "Group: one row for each combination of the values in the grouping columns",
   aggregate: "Aggregate: add up (numbers) or sort and join (text) within each group",
 };
-/** The option of the “what to compare” list that stands for a setup nobody named. */
+/** The option of the “how to compare” list that stands for a setup nobody named. */
 const CUSTOM = "custom";
 
 /**
@@ -199,7 +199,7 @@ export function ComparePage() {
         </p>
       )}
       <div className="bar compare-setup">
-        <label className="field">What to compare
+        <label className="field">How to compare
           <select
             value={pendingCustom || isCustom ? CUSTOM : current!.id}
             onChange={(e) => {

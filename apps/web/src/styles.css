@@ -371,7 +371,7 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 .block.nocolor:not(.conflict):not(.nonstandard) { border-color: hsl(0 0% var(--bb)); }
 .chip .flag-icon { display: inline-block; vertical-align: -0.15em; }
 
-/* Compare: the choice of what to compare, and the compact role buttons */
+/* Compare: the choice of how to compare, and the compact role buttons */
 .compare-setup .naming { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 8px; }
 .role-icon { display: block; width: 14px; height: 14px; }
 .role-key { white-space: nowrap; }
