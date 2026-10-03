@@ -98,7 +98,7 @@ describe("settings: non-teaching items", () => {
 });
 
 describe("toneHex", () => {
-  it("is the row colour as it looks on a white sheet", () => {
+  it("is the row color as it looks on a white sheet", () => {
     expect(toneHex(undefined)).toBeUndefined();
     const strong = toneHex({ larger: 0, strength: 1 })!;
     const weak = toneHex({ larger: 0, strength: 0 })!;
@@ -124,7 +124,7 @@ describe("comparisonSheets", () => {
     expect(main!.rows).toEqual([["DATA", "100", null, 2, 2], ["MATH", "101", 4, 6, 2], ["STAT", "200", 3, null, -3]]);
     expect(main!.filter).toBe(true);
   });
-  it("fills each row with its colour, and none where the row has no tone", () => {
+  it("fills each row with its color, and none where the row has no tone", () => {
     const [main] = comparisonSheets(c, columns, c.rows, tones, info);
     expect(main!.rowFills!.every((f) => /^[0-9A-F]{6}$/.test(f ?? ""))).toBe(true);
     const none = comparisonSheets(c, columns, c.rows, undefined, info)[0]!;
@@ -145,7 +145,7 @@ describe("comparisonSheets", () => {
       "One row for each": "section",
       "Non-teaching items": "not included",
       Rows: "all 3 groups",
-      "Row colours": "Larger FacultyLoad: Plan A = blue, Plan B = orange; darker means a bigger difference",
+      "Row colors": "Larger FacultyLoad: Plan A = blue, Plan B = orange; darker means a bigger difference",
       Exported: "2026-10-02 08:05",
     });
   });
@@ -156,7 +156,7 @@ describe("comparisonSheets", () => {
     expect(about["Non-teaching items"]).toBe("included");
     expect(about.Rows).toBe("only the 2 of 3 groups that differ");
     expect(about.Aggregate).toBe("Rows (count of rows)");
-    expect(about["Row colours"]).toBeUndefined();
+    expect(about["Row colors"]).toBeUndefined();
   });
   it("leaves text aggregates as text, and writes a Difference only for two schedules", () => {
     const text = compareTables([{ id: "a", name: "A", rows: comparisonRows(sched([sec("MATH", "1", { Faculty: "Smith" })])) }, { id: "b", name: "B", rows: comparisonRows(sched([sec("MATH", "1", { Faculty: "Lee" })])) }], { roles: { Prefix: "group", Faculty: "aggregate" } });

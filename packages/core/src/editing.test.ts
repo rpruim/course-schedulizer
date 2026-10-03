@@ -137,7 +137,7 @@ describe("saveDraft: letter collisions", () => {
   });
   it("cancel changes nothing", () => {
     const sched = s();
-    expect(saveDraft(sched, toB(), { kind: "cancel" })).toEqual({ kind: "cancelled", schedule: sched });
+    expect(saveDraft(sched, toB(), { kind: "cancel" })).toEqual({ kind: "canceled", schedule: sched });
   });
   it("a new section whose chosen letter is taken: swap gives the other section the first free letter", () => {
     const sched = s();

@@ -94,7 +94,7 @@ describe("department grid", () => {
     ]);
     expect(weekGrids(clash, opts()).grids[0]!.blocks.map((b) => b.conflict)).toEqual([true, true, false]);
   });
-  it("tags a part of term and colours by the chosen field", () => {
+  it("tags a part of term and colors by the chosen field", () => {
     const part = make([sec("MATH", "1", "A", { TermPart: "First", CourseLevel: "100", Faculty: "Ada", ...mt("M", "9:00", "50") })]);
     const b = weekGrids(part, opts()).grids[0]!.blocks[0]!;
     expect(b.title).toBe("MATH 1 A");
@@ -103,7 +103,7 @@ describe("department grid", () => {
     expect(weekGrids(part, opts({ colorBy: "level" })).grids[0]!.blocks[0]!.hue).toBe(hueOf("100"));
     expect(weekGrids(part, opts({ colorBy: "instructor" })).grids[0]!.blocks[0]!.hue).toBe(hueOf("Ada"));
   });
-  it("colours by group, instructional method, and a level taken from the course number", () => {
+  it("colors by group, instructional method, and a level taken from the course number", () => {
     const s = make([
       sec("MATH", "231", "A", { Group: "Major core", InstructionalMethod: "Lecture", ...mt("M", "9:00", "50") }),
       sec("MATH", "231", "B", { CourseLevel: "300", ...mt("T", "9:00", "50") }),

@@ -7,7 +7,7 @@ from pathlib import Path
 
 OUT = Path(__file__).resolve().parent.parent / "apps" / "web" / "public"
 MAROON, GOLD, WHITE = (0x8C, 0x21, 0x31), (0xF6, 0xC4, 0x53), (0xFF, 0xFF, 0xFF)
-# (x, y, w, h, radius, colour) in a 64 x 64 box, as in favicon.svg
+# (x, y, w, h, radius, color) in a 64 x 64 box, as in favicon.svg
 BLOCKS = [(9, 13, 13, 24, 3, GOLD), (25.5, 25, 13, 26, 3, WHITE), (42, 13, 13, 14, 3, WHITE), (42, 31, 13, 20, 3, GOLD)]
 
 def inside(px, py, x, y, w, h, r):
@@ -30,11 +30,11 @@ def render(size, radius, samples=4):
                     py = (j + (sj + 0.5) / samples) * scale
                     if not inside(px, py, 0, 0, 64, 64, radius):
                         continue
-                    colour = MAROON
+                    color = MAROON
                     for (x, y, w, h, rad, c) in BLOCKS:
                         if inside(px, py, x, y, w, h, rad):
-                            colour = c
-                    r, g, b, a = r + colour[0], g + colour[1], b + colour[2], a + 1
+                            color = c
+                    r, g, b, a = r + color[0], g + color[1], b + color[2], a + 1
             n = samples * samples
             row += bytes([round(r / a) if a else 0, round(g / a) if a else 0, round(b / a) if a else 0, round(255 * a / n)])
         rows.append(bytes(row))

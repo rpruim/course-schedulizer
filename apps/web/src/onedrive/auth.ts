@@ -70,7 +70,7 @@ async function token(access: Access, interactive: boolean): Promise<string> {
       return (await instance.acquireTokenPopup({ ...request, ...(account ? {} : { prompt: "select_account" }) })).accessToken;
     } catch (e) {
       const code = (e as { errorCode?: string }).errorCode ?? "";
-      if (code === "user_cancelled") throw new GraphError("signin", "Sign-in was cancelled.");
+      if (code === "user_canceled") throw new GraphError("signin", "Sign-in was canceled.");
       if (code === "popup_window_error" || code === "empty_window_error") throw new GraphError("signin", "The browser blocked the sign-in window. Allow pop-ups for this site and try again.");
       throw new GraphError("auth", `Could not sign in (${e instanceof Error ? e.message : String(silent)}).`);
     }

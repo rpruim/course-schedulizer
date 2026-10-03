@@ -25,7 +25,7 @@ const schedule = (): ImportResult =>
 export const EXAMPLE_FILES: Record<string, () => ImportResult> = {
   "example-schedule": schedule,
   "example-with-conflicts": () => importRecords({ sessions: recordsFromCsv(conflictSessions), constraints: recordsFromCsv(conflictConstraints) }),
-  // The rules fixtures are labelled R2 for the tests; the example shows the year Calvin would write.
+  // The rules fixtures are labeled R2 for the tests; the example shows the year Calvin would write.
   "example-with-constraint-rules": () => importRecords({ sessions: recordsFromCsv(ruleSessions).map((r) => ({ ...r, AcademicYear: "AY25" })), constraints: recordsFromCsv(ruleConstraints) }),
   // The example schedule after a round of changes, so that opening the two together shows what comparing looks like:
   // a section moved to another time, one dropped, one with a new instructor.

@@ -60,8 +60,8 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "termLoad",
-    label: "Load per subject and term",
-    description: "Group by prefix and term and add up the faculty load: the hours assigned to each subject each term.",
+    label: "Load per prefix and term",
+    description: "Group by prefix and term and add up the faculty load: the hours assigned to each prefix each term.",
     roles: { ...group("Prefix", "Term"), FacultyLoad: "aggregate" },
     rows: "section",
   },
@@ -90,7 +90,7 @@ export function toneColor(tone: Tone | undefined): string | undefined {
 
 const HUE_NAMES = ["blue", "orange", "green", "purple", "pink", "yellow", "teal", "magenta"];
 
-/** `RRGGBB` for a row's tone as it looks on a white sheet (the colour blended with white at the tone's opacity). */
+/** `RRGGBB` for a row's tone as it looks on a white sheet (the color blended with white at the tone's opacity). */
 export function toneHex(tone: Tone | undefined): string | undefined {
   if (!tone) return undefined;
   const alpha = 0.14 + 0.46 * Math.max(0, Math.min(1, tone.strength));
@@ -231,7 +231,7 @@ const two = (n: number) => String(n).padStart(2, "0");
 /**
  * The comparison as it is on screen, for a spreadsheet: sheet 1 has the rows shown, in the
  * order shown, with the same columns, the difference column, and each row filled with its
- * colour; sheet 2 says what was compared and how, so the file explains itself.
+ * color; sheet 2 says what was compared and how, so the file explains itself.
  */
 export function comparisonSheets(c: Comparison, columns: TableColumn[], rows: ComparisonRow[], tones: Map<ComparisonRow, Tone | undefined> | undefined, info: ExportInfo): SheetSpec[] {
   const cell = (col: TableColumn, r: ComparisonRow): string | number | null => {
@@ -258,7 +258,7 @@ export function comparisonSheets(c: Comparison, columns: TableColumn[], rows: Co
   ];
   if (tones) {
     const one = c.aggregates[0]!.key === COUNT_KEY ? "number of rows" : c.aggregates[0]!.label;
-    about.push(["Row colours", `${c.schedules.length === 2 ? "Larger" : "Largest"} ${one}: ${c.schedules.map((s, i) => `${s.name} = ${HUE_NAMES[i % HUE_NAMES.length]}`).join(", ")}; darker means a bigger difference`]);
+    about.push(["Row colors", `${c.schedules.length === 2 ? "Larger" : "Largest"} ${one}: ${c.schedules.map((s, i) => `${s.name} = ${HUE_NAMES[i % HUE_NAMES.length]}`).join(", ")}; darker means a bigger difference`]);
   }
   about.push(["Exported", `${when.getFullYear()}-${two(when.getMonth() + 1)}-${two(when.getDate())} ${two(when.getHours())}:${two(when.getMinutes())}`]);
 

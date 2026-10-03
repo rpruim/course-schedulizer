@@ -16,7 +16,7 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const source: OneDriveSource = { driveId: "d1", itemId: "i1", eTag: "e1", name: "AY25.xlsx", webUrl: "https://x/w" };
 
 describe("addresses", () => {
-  it("recognises OneDrive and SharePoint links", () => {
+  it("recognizes OneDrive and SharePoint links", () => {
     expect(isOneDriveUrl("https://1drv.ms/x/s!abc")).toBe(true);
     expect(isOneDriveUrl("https://calvin-my.sharepoint.com/:x:/g/personal/a/b")).toBe(true);
     expect(isOneDriveUrl("https://example.org/a.xlsx")).toBe(false);

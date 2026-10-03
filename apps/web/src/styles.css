@@ -58,7 +58,7 @@ tr.conflict td { background: var(--conflict); }
 .note { padding: 8px 12px; border-radius: 6px; background: var(--warn-bg); }
 .note.ok { background: var(--ok-bg); }
 .note.warn { background: var(--warn-bg); }
-/* in the section editor: the same two colours as the week grids (red conflict, orange non-standard time), softened to a background */
+/* in the section editor: the same two colors as the week grids (red conflict, orange non-standard time), softened to a background */
 .meetings-conflict { border: 2px solid var(--conflict-line); padding: 7px 11px 11px; }
 .meetings-nonstandard { border: 2px solid var(--nonstandard-line); padding: 7px 11px 11px; }
 .note.conflict-note { background: var(--conflict); border-left: 4px solid #c0392b; }
@@ -323,5 +323,5 @@ td button.link + button.link { margin-left: 6px; }
 .pairing-note { margin: 4px 0; }
 .breakable { word-break: break-all; }
 .onedrive { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
-/* sentence-style rows ("must be able to take [any] [2] of the listed courses"): boxes one height, words centred on them */
+/* sentence-style rows ("must be able to take [any] [2] of the listed courses"): boxes one height, words centered on them */
 .row.take-row input, .row.take-row select { height: 32px; }

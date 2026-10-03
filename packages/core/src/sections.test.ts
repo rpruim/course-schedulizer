@@ -83,7 +83,7 @@ describe("changeLetter", () => {
   });
   it("cancel leaves the schedule alone", () => {
     const sched = s();
-    expect(changeLetter(sched, "AY1-FA-MATH101-A", "B", { kind: "cancel" })).toEqual({ kind: "cancelled", schedule: sched });
+    expect(changeLetter(sched, "AY1-FA-MATH101-A", "B", { kind: "cancel" })).toEqual({ kind: "canceled", schedule: sched });
   });
   it("does not collide across courses or terms, and rejects blanks and unknown ids", () => {
     const sched = make(rec("A"), rec("B", { Term: "SP" }));

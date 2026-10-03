@@ -85,7 +85,7 @@ export type ChangeLetterResult =
   | { kind: "changed"; schedule: Schedule; other?: { sectionId: string; from: string; to?: string; deleted?: boolean } }
   /** The new letter is taken by `other`; ask the user, then call again with a resolution. */
   | { kind: "collision"; other: { sectionId: string; letter: string }; options: ("swap" | "relabel" | "delete" | "cancel")[]; defaultOption: "swap" }
-  | { kind: "cancelled"; schedule: Schedule }
+  | { kind: "canceled"; schedule: Schedule }
   | { kind: "invalid"; message: string };
 
 /**
@@ -119,7 +119,7 @@ export function changeLetter(
   }
   switch (resolution.kind) {
     case "cancel":
-      return { kind: "cancelled", schedule };
+      return { kind: "canceled", schedule };
     case "swap":
       return {
         kind: "changed",

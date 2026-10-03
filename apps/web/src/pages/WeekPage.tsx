@@ -11,7 +11,7 @@ const DAY_NAMES: Record<string, string> = { M: "Mon", T: "Tue", W: "Wed", R: "Th
 const HOUR_PX = 52;
 
 const KIND = {
-  dept: { all: "All subjects", label: "Subject", empty: "No sections meet in this term." },
+  dept: { all: "All prefixes", label: "Prefix", empty: "No sections meet in this term." },
   faculty: { all: "All instructors", label: "Instructor", empty: "No instructors in this term." },
   room: { all: "All rooms", label: "Room", empty: "No rooms are used in this term." },
 } as const;
@@ -95,7 +95,7 @@ export function WeekPage({ kind }: { kind: GridKind }) {
             {choices.map((c) => <option key={c}>{c}</option>)}
           </select>
         </label>
-        <label className="field">Colour by
+        <label className="field">Color by
           <select value={colorBy} onChange={(e) => setColorBy(e.target.value as ColorBy)}>
             <option value="prefix">Prefix</option>
             <option value="level">Course level</option>
@@ -115,7 +115,7 @@ export function WeekPage({ kind }: { kind: GridKind }) {
               academicYear: year,
               ...(term ? { term } : {}),
               ...(part !== "Full" ? { termPart: part } : {}),
-              // a grid for one subject, person or room starts the new section there
+              // a grid for one prefix, person or room starts the new section there
               ...(effectiveOnly && kind === "dept" ? { prefix: effectiveOnly } : {}),
               ...(effectiveOnly && kind === "faculty" ? { faculty: [{ name: effectiveOnly }] } : {}),
               ...(effectiveOnly && kind === "room" ? { meetings: [{ days: "", room: effectiveOnly }] } : {}),

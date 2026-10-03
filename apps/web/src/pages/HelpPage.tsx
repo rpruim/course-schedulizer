@@ -158,7 +158,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dt>Calendar views: <Link to="/dept">Dept week</Link>, <Link to="/faculty">Faculty week</Link>, <Link to="/rooms">Room week</Link></dt>
           <dd>Sections as blocks on a Monday–Friday grid. See <a href="#week" onClick={jump("week")}>The week views</a>.</dd>
           <dt><Link to="/meta">Meta</Link></dt>
-          <dd>View and edit information about the schedule as a whole.  Give your schedule a nickname, and a <em>default department</em> (used for every section that does not give its own; the section editor shows it in grey). Specify the file name 
+          <dd>View and edit information about the schedule as a whole.  Give your schedule a nickname, and a <em>default department</em> (used for every section that does not give its own; the section editor shows it in gray). Specify the file name 
             used when exporting. Label your schedule with a version and provide some notes about the schedule.</dd>
         </dl>
       </>
@@ -170,14 +170,14 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     body: () => (
       <>
         <ul>
-          <li><strong>Add a section</strong> with the <em>Add section</em> button on the Schedule tab or on any of the week tabs. On a week tab it starts from what you are looking at: the year and term, the part of the term, and the subject, instructor or room if you have picked one. It goes into the <em>current</em> schedule (see <a href="#several" onClick={jump("several")}>Several schedules</a>).</li>
+          <li><strong>Add a section</strong> with the <em>Add section</em> button on the Schedule tab or on any of the week tabs. On a week tab it starts from what you are looking at: the year and term, the part of the term, and the prefix, instructor or room if you have picked one. It goes into the <em>current</em> schedule (see <a href="#several" onClick={jump("several")}>Several schedules</a>).</li>
           <li><strong>Edit a section</strong> by clicking it: a row on the Schedule tab, a block on a week grid, or a section named in the Conflicts list.</li>
           <li><strong>Warnings while you edit.</strong> A pale red note lists the sections this one would conflict with; a pale orange note says when a meeting is at a time that is not standard (taking into account any <em>Standard times</em> rules on the Constraints tab). The <em>Meetings</em> box is outlined in the same pale red or orange while either applies. All of these update as you edit, before you save, and none stops you from saving.</li>
           <li><strong>Make several similar sections</strong> by editing one and choosing <em>Add another section of this course</em>: it opens a copy with the next free letter. Change what differs and save.</li>
           <li><strong>Several meetings</strong> (for example MW at one time and F at another) are separate meetings in the same section: use <em>+ Add meeting</em> in the editor.</li>
           <li><strong>Instructors and load.</strong> List instructors separated by semicolons (names may contain commas, as in <code>Pruim, Randall</code>). A section’s load is split equally among them; write <code>Ada Example (3); Ben Sample</code> to
             give someone a specific share. The editor shows each person’s share, and warns if shares do not add up.</li>
-          <li><strong>Department and course level</strong> (under <em>More details</em>) are filled in for you when left blank, and shown in grey: the department from the Meta tab, the level from the first digit of the course number (<code>MATH 231</code> is 200-level). Type a value to override either.</li>
+          <li><strong>Department and course level</strong> (under <em>More details</em>) are filled in for you when left blank, and shown in gray: the department from the Meta tab, the level from the first digit of the course number (<code>MATH 231</code> is 200-level). Type a value to override either.</li>
           <li><strong>Cross-listings.</strong> For a course that is also listed under another prefix or number (<code>DATA 385</code> and <code>STAT 385</code>), add the other listings under <em>Also listed as</em> in <em>More details</em> (which opens by itself for a section that has some).
             The section is shown under all its names but its load is counted once.</li>
           <li><strong>Delivery mode</strong> is, for example, In-person, Online synchronous, Online asynchronous or Hybrid; check the registrar’s guidance if none fits. Use a room
@@ -340,12 +340,12 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
       <>
         <p>
           <strong>Dept week</strong> puts the whole department on one grid, <strong>Faculty week</strong> has one grid per instructor and <strong>Room week</strong> one per room. Choose the
-          year and term, and pick one subject, person or room if you only want one. Click any block to edit its section; hover over it for the full details.
+          year and term, and pick one prefix, person or room if you only want one. Click any block to edit its section; hover over it for the full details.
         </p>
         <ul>
           <li><strong>Weeks</strong> chooses a part of the term. Choosing <em>First half</em> shows everything meeting in the first half: full-term, first-half, and A and B intensive 
           courses, for example.</li>
-          <li><strong>Colour by</strong> prefix, course level, instructor, group or instructional method.</li>
+          <li><strong>Color by</strong> prefix, course level, instructor, group or instructional method.</li>
           <li>The four <strong>dots</strong> at the left of each block are the four quarters of the term, top to bottom. A filled dot means the section meets then: a full-term
             course is <Dots on={[true, true, true, true]} />, a first-half course <Dots on={[true, true, false, false]} />, a second-half course <Dots on={[false, false, true, true]} />.</li>
           <li>Where <strong>sections overlap</strong>, blocks sit side by side and shrink their text to fit: full details, then the short course name, then the name turned on its side. Hover for the rest.
@@ -383,13 +383,13 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
       <>
         <p>
           <Link to="/compare">Compare</Link> lines the ticked schedules up row by row. Each column has a role: <em>ignore</em>, <em>group by</em> (rows with the same value are one row) or <em>aggregate</em> (numbers are summed;
-          text is listed). Start from a preset — mismatches, sections per course, load per course, load per subject and term, or load per instructor — then adjust.
+          text is listed). Start from a preset — mismatches, sections per course, load per course, load per prefix and term, or load per instructor — then adjust.
         </p>
         <ul>
           <li>With two schedules a <em>Difference</em> column shows the second minus the first; cells are tinted by how much they differ. A dash means the group is missing from that schedule.</li>
           <li><em>Only differences</em> hides rows that match (it is on by default when there are many rows).</li>
           <li>Click a row to see the sections behind it in each schedule; fields that differ are highlighted.</li>
-          <li><strong>Which section is which.</strong> The sections of different schedules are matched first by section id (a copy of a schedule keeps its ids, even if letters changed), then by course, term and letter, then by what they have in common: the same course and term with the same instructor, meeting time or room. A section whose time or instructor changed is therefore shown as <em>modified</em>, not as one dropped and one added. When two schedules are different years, the year is ignored in matching. A match that was not by id or letter is labelled with what it was based on. Sections left over are tagged <em>only here</em>.</li>
+          <li><strong>Which section is which.</strong> The sections of different schedules are matched first by section id (a copy of a schedule keeps its ids, even if letters changed), then by course, term and letter, then by what they have in common: the same course and term with the same instructor, meeting time or room. A section whose time or instructor changed is therefore shown as <em>modified</em>, not as one dropped and one added. When two schedules are different years, the year is ignored in matching. A match that was not by id or letter is labeled with what it was based on. Sections left over are tagged <em>only here</em>.</li>
           <li><strong>Correcting a match.</strong> Hover over a line and click <strong>✕</strong> to say “these are not the same section”, or use <strong>Same as…</strong> on an <em>only here</em> line to pair it with a section of another schedule. Your choices are kept in this browser for as long as none of the compared schedules changes, so you can switch between comparisons and come back; <em>Reset to automatic pairing</em> clears them.</li>
           <li><em>Include non-teaching items</em> adds non-teaching load to the comparison.</li>
           <li><em>Export comparison</em> saves exactly what is on screen to Excel, with a sheet describing how it was made.</li>

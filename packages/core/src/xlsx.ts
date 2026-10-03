@@ -166,7 +166,7 @@ export interface SheetSpec {
   header: string[];
   /** Cells: numbers are written as numbers, strings as text, `null`/`undefined` as empty. */
   rows: (string | number | null | undefined)[][];
-  /** A fill colour per row (`RRGGBB` hex), or `undefined` for none. */
+  /** A fill color per row (`RRGGBB` hex), or `undefined` for none. */
   rowFills?: (string | undefined)[];
   /** Turn on the filter buttons in the header row. */
   filter?: boolean;

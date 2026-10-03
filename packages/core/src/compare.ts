@@ -264,7 +264,7 @@ export const visibleRows = (c: Comparison, onlyDifferences: boolean) => (onlyDif
 /** Show every row when there are few of them (10 or fewer), otherwise only the ones that differ. */
 export const defaultOnlyDifferences = (c: Comparison, threshold = 10) => c.rows.length > threshold;
 
-/** How a row is coloured when exactly one (numeric) aggregate is compared. */
+/** How a row is colored when exactly one (numeric) aggregate is compared. */
 export interface Tone {
   /** Index of the schedule with the larger value. */
   larger: number;
@@ -273,7 +273,7 @@ export interface Tone {
 }
 
 /**
- * Tones for colouring rows. Only when there is exactly one aggregate and it is numeric
+ * Tones for coloring rows. Only when there is exactly one aggregate and it is numeric
  * (the row count counts). With two schedules it is the sign and size of B − A; with more,
  * the schedule with the largest value, by how far it leads the runner-up. A missing group
  * counts as 0; ties get no tone. Rows that do not differ are `undefined`.

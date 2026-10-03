@@ -19,7 +19,7 @@ const schedule = (sessions: string, nonTeaching?: string, crossListings?: string
 };
 
 describe("sectionShares", () => {
-  it("splits equally, honours explicit shares, gives the remainder to the unmarked", () => {
+  it("splits equally, honors explicit shares, gives the remainder to the unmarked", () => {
     expect(sectionShares(4, [{ name: "A" }, { name: "B" }])).toEqual([{ name: "A", load: 2 }, { name: "B", load: 2 }]);
     expect(sectionShares(4, [{ name: "A", load: 3 }, { name: "B", load: 1 }])).toEqual([{ name: "A", load: 3 }, { name: "B", load: 1 }]);
     expect(sectionShares(3, [{ name: "B", load: 2 }, { name: "A" }])).toEqual([{ name: "B", load: 2 }, { name: "A", load: 1 }]);

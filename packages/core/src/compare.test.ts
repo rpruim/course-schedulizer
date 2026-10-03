@@ -153,7 +153,7 @@ describe("compareTables: the use cases in design/schedule-comparisons.qmd", () =
     expect(flat(c)).toEqual([["DATA", "100", "–", 2], ["MATH", "101", 8, 4], ["STAT", "200", 3, 6], ["STAT", "300", 3, "–"]]);
   });
 
-  it("4. group by prefix and term, aggregate load: hours per subject per term", () => {
+  it("4. group by prefix and term, aggregate load: hours per prefix per term", () => {
     const c = compareTables(inputs(), roles({ ...group("Prefix", "Term"), FacultyLoad: "aggregate" }));
     // grouping columns appear in column order, so Term comes before Prefix
     expect(c.groups.map((g) => g.key)).toEqual(["Term", "Prefix"]);

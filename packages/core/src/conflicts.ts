@@ -86,7 +86,7 @@ export function conflictedSessions(conflicts: Conflict[], violations: { type?: s
   return out;
 }
 
-/** Meetings that break a "standard times" rule (shown in a different colour from conflicts). */
+/** Meetings that break a "standard times" rule (shown in a different color from conflicts). */
 export function nonStandardSessions(violations: { type?: string; sessions: Session[] }[]): Set<Session> {
   const out = new Set<Session>();
   for (const v of violations) if (v.type === "standard") for (const s of v.sessions) out.add(s);

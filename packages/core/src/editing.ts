@@ -243,7 +243,7 @@ export type SaveResult =
     }
   /** The letter is taken in that course and term: ask the user, then save again with a resolution. */
   | { kind: "collision"; other: { sectionId: string; letter: string }; options: ("swap" | "relabel" | "delete" | "cancel")[]; defaultOption: "swap" }
-  | { kind: "cancelled"; schedule: Schedule }
+  | { kind: "canceled"; schedule: Schedule }
   | { kind: "invalid"; errors: DraftError[] };
 
 /** A purely alphabetic section letter is stored upper-case (`a` → `A`); anything else (`04`, `O1`) is kept as typed. */
@@ -276,7 +276,7 @@ export function saveDraft(schedule: Schedule, draft: SectionDraft, resolution?: 
   if (other && !resolution) {
     return { kind: "collision", other: { sectionId: other.sectionId, letter: other.section }, options: ["swap", "relabel", "delete", "cancel"], defaultOption: "swap" };
   }
-  if (other && resolution?.kind === "cancel") return { kind: "cancelled", schedule };
+  if (other && resolution?.kind === "cancel") return { kind: "canceled", schedule };
 
   // Write the section: replace its rows where the first one was, or append.
   const fresh = draftToSessions(d, id);

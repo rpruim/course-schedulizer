@@ -166,7 +166,7 @@ export function ComparePage() {
         )}
         <button onClick={() => void exportXlsx()} disabled={rows.length === 0} title="Download the rows shown, in the order shown, as an Excel file">Export comparison</button>
         {tones && (
-          <span className="tone-legend" aria-label="Colour key">
+          <span className="tone-legend" aria-label="Color key">
             <span className="muted">{comparison.schedules.length === 2 ? `Larger ${aggName}:` : `Largest ${aggName}:`}</span>
             {comparison.schedules.map((s, i) => (
               <span key={s.id} className="legend-item"><span className="swatch" style={{ background: `hsl(${hueFor(i)} 75% 52% / 0.5)` }} />{s.name}</span>
@@ -238,7 +238,7 @@ export function ComparePage() {
                                     {lines.map((line, mi) => {
                                       const v = line.member;
                                       const go = () => (v.source?.kind === "section" ? openSection(v.source.sectionId, s.id) : v.source?.kind === "nonteaching" ? openNonTeaching(v.source.index, undefined, s.id) : undefined);
-                                      // a cell that differs from the same section in another schedule is highlighted (and bold, so colour is not the only cue)
+                                      // a cell that differs from the same section in another schedule is highlighted (and bold, so color is not the only cue)
                                       const cell = (f: MemberField, extra = "") => `${extra}${line.differs.has(f) ? " d" : ""}`.trim() || undefined;
                                       return (
                                         <tr key={mi} className={`${v.source ? "clickable" : ""}${line.solo ? " solo" : ""}`.trim() || undefined} tabIndex={v.source ? 0 : undefined} onClick={go} onKeyDown={(e) => e.key === "Enter" && go()} title={v.source ? "Click to edit" : undefined}>
