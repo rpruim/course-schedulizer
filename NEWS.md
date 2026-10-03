@@ -6,7 +6,7 @@
   * *File → New blank schedule* starts an empty schedule and opens the Meta tab.
   * The Meta tab lists the current schedule first, and each schedule's details can be collapsed.
   * Meta has a *default department*, used by every section that does not give its own. A section's course level is inferred from its course number (231 is 200-level) unless one is given. Both show in gray in the section editor.
-  * The week views can color by group or instructional method, and say *prefix* where they said *subject*.
+  * The week views can color by department, group or instructional method; a block with nothing in the field being colored by is gray. *Show color key* opens a small window, which you can move and close, listing what each color means. The week views say *prefix* where they said *subject*.
 * Load files from a URL:
   * Open an Excel file from a web address, or share a link that opens it (`#/import?url=…`). A link can name several files, each with its own name and academic year.
 * The Import tab's examples are now a list of files (`examples.yml`), and look like Calvin schedules: academic year `AY25`, terms FA, WI, SP and SU, and half-term courses.

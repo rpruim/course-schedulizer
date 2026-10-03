@@ -2,9 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { partsFor } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
+import { keyFor, openColorKey, setColorKey, useColorBy } from "../colorKey";
 import { termsAcross, yearsAcross } from "../model";
 import { useWorkspace } from "../state";
-import { groupGrids, hourLabel, termsFor, weekGrids, type ColorBy, type Grid, type GridKind } from "../week";
+import { COLOR_BY, groupGrids, hourLabel, termsFor, weekGrids, type ColorBy, type Grid, type GridKind } from "../week";
 import { Empty, NoneShown } from "./SchedulePage";
 
 const DAY_NAMES: Record<string, string> = { M: "Mon", T: "Tue", W: "Wed", R: "Thu", F: "Fri", S: "Sat", U: "Sun" };
@@ -25,7 +26,7 @@ export function WeekPage({ kind }: { kind: GridKind }) {
   const [pickedYear, setPickedYear] = useState(params.get("year") ?? "");
   const [pickedTerm, setPickedTerm] = useState(params.get("term") ?? "");
   const [pickedPart, setPickedPart] = useState("Full");
-  const [colorBy, setColorBy] = useState<ColorBy>("prefix");
+  const [colorBy, setColorBy] = useColorBy();
   const [only, setOnly] = useState(kind === "faculty" ? (params.get("who") ?? "") : "");
 
   const entries = ws.viewEntries;
@@ -62,6 +63,15 @@ export function WeekPage({ kind }: { kind: GridKind }) {
   const groups = useMemo(() => groupGrids(shownResults, kind, kind === "dept" ? undefined : effectiveOnly || undefined), [shownResults, kind, effectiveOnly]);
   const withoutRoom = shownResults.reduce((n, r) => n + r.result.withoutRoom, 0);
 
+  // The key window shows the colors of what is on screen, and goes back to its placeholder when no week view is.
+  const keyInfo = useMemo(() => keyFor(colorBy, groups.flatMap((g) => g.items.flatMap((i) => i.grid?.blocks ?? []))), [colorBy, groups]);
+  useEffect(() => {
+    setColorKey(keyInfo);
+    return () => setColorKey(undefined);
+  }, [keyInfo]);
+  const [keyBlocked, setKeyBlocked] = useState(false);
+  const showKey = () => setKeyBlocked(!openColorKey());
+
   if (ws.entries.length === 0) return <Empty />;
   if (entries.length === 0) return <NoneShown />;
   const k = KIND[kind];
@@ -97,13 +107,11 @@ export function WeekPage({ kind }: { kind: GridKind }) {
         </label>
         <label className="field">Color by
           <select value={colorBy} onChange={(e) => setColorBy(e.target.value as ColorBy)}>
-            <option value="prefix">Prefix</option>
-            <option value="level">Course level</option>
-            <option value="instructor">Instructor</option>
-            <option value="group">Group</option>
-            <option value="method">Instructional method</option>
+            {COLOR_BY.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
         </label>
+        <button onClick={showKey} title="Opens a small window listing what each color means; it stays up to date as you change the choice">Show color key</button>
+        {keyBlocked && <span className="err">The browser blocked the pop-up window. Allow pop-ups for this site and try again.</span>}
         <span className="muted legend"><span className="swatch conflict-swatch" /> conflict</span>
         {groups.some((g) => g.items.some((i) => i.grid?.blocks.some((b) => b.nonStandard))) && <span className="muted legend"><span className="swatch nonstandard-swatch" /> non-standard time</span>}
         <span className="spacer" />
@@ -195,7 +203,7 @@ function WeekGrid({ grid, onOpen }: { grid: Grid; onOpen: (sectionId: string) =>
             {grid.blocks.filter((b) => b.day === d).map((b) => (
               <button
                 key={b.key}
-                className={`block${size(b.lanes)}${b.conflict ? " conflict" : b.nonStandard ? " nonstandard" : ""}`}
+                className={`block${size(b.lanes)}${b.conflict ? " conflict" : b.nonStandard ? " nonstandard" : ""}${b.hue === undefined ? " nocolor" : ""}`}
                 title={b.detail}
                 onClick={() => onOpen(b.sectionId)}
                 style={{
@@ -203,7 +211,7 @@ function WeekGrid({ grid, onOpen }: { grid: Grid; onOpen: (sectionId: string) =>
                   height: Math.max(18, px(b.end) - px(b.start) - 1),
                   left: `calc(${(b.lane / b.lanes) * 100}% + 1px)`,
                   width: `calc(${100 / b.lanes}% - 2px)`,
-                  ["--hue" as string]: b.hue,
+                  ["--hue" as string]: b.hue ?? 0,
                 }}
               >
                 <em className="dots" aria-hidden="true">{b.quarters.map((on, i) => <i key={i} className={on ? "on" : ""} />)}</em>

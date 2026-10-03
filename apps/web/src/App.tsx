@@ -18,6 +18,7 @@ import { WeekPage } from "./pages/WeekPage";
 import { SchedulePicker } from "./schedules";
 import { MenuBar, type MenuGroup } from "./MenuBar";
 import { sharedOpener } from "./onedrive/auth";
+import { ColorKeyWindow } from "./colorKey";
 import { metaOpen } from "./metaOpen";
 import { linkRequests, type LinkRequest } from "./remote";
 import { fetchSchedule } from "./remoteOpen";
@@ -128,6 +129,7 @@ function Shell() {
             <button className="link" onClick={() => setWaiting(undefined)}>Dismiss</button>
           </p>
         )}
+        <ColorKeyWindow />
         <MenuBar groups={groups(newBlankSchedule)} />
         <main>
           <Routes>

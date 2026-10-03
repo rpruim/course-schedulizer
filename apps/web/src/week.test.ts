@@ -109,9 +109,23 @@ describe("department grid", () => {
       sec("MATH", "231", "B", { CourseLevel: "300", ...mt("T", "9:00", "50") }),
     ]);
     const hues = (colorBy: WeekOptions["colorBy"]) => weekGrids(s, opts({ colorBy })).grids[0]!.blocks.map((b) => b.hue);
-    expect(hues("group")).toEqual([hueOf("Major core"), hueOf("")]);
-    expect(hues("method")).toEqual([hueOf("Lecture"), hueOf("")]);
+    expect(hues("group")).toEqual([hueOf("Major core"), undefined]); // a missing value has no color: it is drawn gray
+    expect(hues("method")).toEqual([hueOf("Lecture"), undefined]);
     expect(hues("level")).toEqual([hueOf("200"), hueOf("300")]); // 231 implies 200 unless a level is given
+  });
+  it("colors by department (with the schedule's default) and draws a missing value gray", () => {
+    const s = make([
+      sec("MATH", "231", "A", { Department: "Math", ...mt("M", "9:00", "50") }),
+      sec("MATH", "231", "B", { ...mt("T", "9:00", "50") }),
+      sec("STAT", "143", "A", { Group: "G", ...mt("W", "9:00", "50") }),
+    ]);
+    const blocks = (sched: Schedule, colorBy: WeekOptions["colorBy"]) => weekGrids(sched, opts({ colorBy })).grids[0]!.blocks;
+    expect(blocks(s, "department").map((b) => b.colorValue)).toEqual(["Math", "", ""]);
+    expect(blocks(s, "department").map((b) => b.hue)).toEqual([hueOf("Math"), undefined, undefined]);
+    const withDefault = { ...s, meta: { ...s.meta, defaultDepartment: "Some Dept" } };
+    expect(blocks(withDefault, "department").map((b) => b.colorValue)).toEqual(["Math", "Some Dept", "Some Dept"]);
+    expect(blocks(s, "group").map((b) => b.hue)).toEqual([undefined, undefined, hueOf("G")]);
+    expect(blocks(s, "prefix").every((b) => b.hue !== undefined)).toBe(true);
   });
   it("uses the cross-listing display name", () => {
     const x = make([sec("DATA", "385", "A", mt("M", "9:00", "50"))], { crossListings: [{ SectionId: "Y-FA-DATA385-A", Prefix: "STAT", CourseNumber: "385" }] });

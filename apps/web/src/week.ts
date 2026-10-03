@@ -2,6 +2,7 @@ import {
   conflictedSessions,
   nonStandardSessions,
   courseDisplayName,
+  departmentOf,
   findConflicts,
   findRuleViolations,
   levelOf,
@@ -16,7 +17,17 @@ import {
 import { timeRange } from "./model";
 
 export type GridKind = "dept" | "faculty" | "room";
-export type ColorBy = "prefix" | "level" | "instructor" | "group" | "method";
+export type ColorBy = "prefix" | "level" | "instructor" | "group" | "method" | "department";
+
+/** What each way of coloring is called, in the order the menu lists them. */
+export const COLOR_BY: { value: ColorBy; label: string }[] = [
+  { value: "prefix", label: "Prefix" },
+  { value: "level", label: "Course level" },
+  { value: "instructor", label: "Instructor" },
+  { value: "department", label: "Department" },
+  { value: "group", label: "Group" },
+  { value: "method", label: "Instructional method" },
+];
 
 export interface Block {
   /** Unique within a grid. */
@@ -44,7 +55,10 @@ export interface Block {
   conflict: boolean;
   /** At a time that is not a standard time (shown in orange, unless it is also in a conflict). */
   nonStandard: boolean;
-  hue: number;
+  /** The block's color; undefined when the field being colored by is missing (drawn gray). */
+  hue: number | undefined;
+  /** What the color stands for (a prefix, an instructor …); empty when missing. */
+  colorValue: string;
   /** Position among side-by-side blocks that overlap in time, and how many share the space. */
   lane: number;
   lanes: number;
@@ -166,10 +180,12 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
       case "instructor": return s.faculty[0]?.name ?? "";
       case "group": return s.group.trim();
       case "method": return s.instructionalMethod.trim();
+      case "department": return departmentOf(schedule.meta, s);
       default: return s.prefix;
     }
   };
-  const hueFor = (s: Session) => hueOf(colorKey(s));
+  // A section with nothing in the field being colored by is gray, so "missing" is easy to spot.
+  const hueFor = (s: Session) => (colorKey(s) === "" ? undefined : hueOf(colorKey(s)));
   const label = (s: Session) => `${courseName(s)} ${s.section}`;
   const quartersOf = (s: Session): boolean[] => {
     const full = weeksOf(schedule.settings, s.term, "Full") ?? [1, 16];
@@ -203,6 +219,7 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
     conflict: flagged.has(s),
     nonStandard: odd.has(s),
     hue: hueFor(s),
+    colorValue: colorKey(s),
     lane: 0,
     lanes: 1,
   });
