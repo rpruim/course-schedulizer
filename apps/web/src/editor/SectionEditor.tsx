@@ -276,7 +276,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
             <button type="button" onClick={() => set("meetings", [...form.meetings, emptyMeetingForm()])}>+ Add meeting</button>
           </fieldset>
 
-          <details open={moreOpen} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>
+          <details className="more-details" open={moreOpen} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>
             <summary>More details{form.crossListings.length > 0 && !moreOpen ? " (also listed as " + form.crossListings.length + " other " + (form.crossListings.length === 1 ? "course" : "courses") + ")" : ""}</summary>
             <div className="row top">
               {field("department", "Department", { list: "dl-dept" })}
