@@ -146,7 +146,7 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
     <div className="bar">
       {examples.length > 0 && (
         <label className="field">
-          Examples
+          Examples <small>(choose one, then click “Open address” to load the file or files)</small>
           <select value="" onChange={(e) => e.target.value && setAddress(examples[Number(e.target.value)]!.url)}>
             <option value="">Choose…</option>
             {examples.map((x, i) => <option key={i} value={i}>{x.name}</option>)}
