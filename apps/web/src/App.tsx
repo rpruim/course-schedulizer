@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { HashRouter, Route, Routes, useNavigate, useSearchParams } from "react-router-dom";
+import { HashRouter, Route, Routes, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Toolbar, type OpenReport } from "./components";
 import { EditorProvider } from "./editor/context";
 import { AboutPage } from "./pages/AboutPage";
@@ -57,9 +57,13 @@ const groups = (newBlank: () => void): MenuGroup[] => [
   { label: "Help", items: [{ to: "/help", label: "User guide" }, { to: "/news", label: "Release notes" }, { to: "/about", label: "About" }] },
 ];
 
+/** Pages that make sense with no schedule open. */
+const NO_SCHEDULE_NEEDED = ["/import", "/help", "/news", "/about"];
+
 function Shell() {
   const { saveError, restored, entries, addSchedule, currentId } = useWorkspace();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [params] = useSearchParams();
   // Whenever a different schedule becomes current, the Meta tab opens just that one (toggles are remembered until then).
   useEffect(() => metaOpen.only(currentId), [currentId]);
@@ -95,9 +99,11 @@ function Shell() {
     void openFiles(wanted.files, wanted.academicYear, false);
   });
   // With nothing open, the first thing to do is open something: go to Import (at start-up, and when the last schedule is removed).
+  // The pages that need no schedule (Import, the guide, the release notes, About) can still be visited.
+  const needsNoSchedule = NO_SCHEDULE_NEEDED.includes(pathname);
   useEffect(() => {
-    if (restored && none && wanted.files.length === 0 && !opening) navigate("/import", { replace: true });
-  }, [restored, none, navigate, wanted.files.length, opening]);
+    if (restored && none && wanted.files.length === 0 && !opening && !needsNoSchedule) navigate("/import", { replace: true });
+  }, [restored, none, needsNoSchedule, navigate, wanted.files.length, opening]);
   // A notice describes what just happened; let it go on its own (an undo can make it untrue).
   useEffect(() => {
     if (!notice) return;

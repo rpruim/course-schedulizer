@@ -129,7 +129,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           A report appears after opening. <em>Errors</em> are rows that could not be read (they are skipped, everything else is opened); <em>warnings</em> are things
           worth a look, such as a room with no matching time. Each message names the sheet and row so you can find it in Excel.
         </p>
-        <p>With nothing open, the app starts on this tab.</p>
+        <p>With nothing open, the app starts on this tab. The user guide, release notes and About can still be opened; the other pages need a schedule, so they send you back here.</p>
       </>
     ),
   },

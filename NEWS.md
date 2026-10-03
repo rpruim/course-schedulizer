@@ -15,6 +15,7 @@
   * The group, aggregate and ignore choices for each column are small icons, so the panel takes much less room.
   * Rows are colored by how much the one numeric column differs, even when text columns such as the faculty are aggregated beside it. (Before, any second aggregate switched the coloring off.)
   * A sentence describes the setup, such as “Group by term, prefix, course number; aggregate by faculty load; ignore everything else”.
+* With no schedule open, the Help pages (user guide, release notes, About) can be opened as well as Import; before, every click went back to Import.
 * A section that lists the same meeting twice is now drawn once on the week views.
 * On the Compare tab, a row keeps its color when the pointer is over it or it has the keyboard focus; before, that row turned gray, which looked like a row that had not been colored.
 
