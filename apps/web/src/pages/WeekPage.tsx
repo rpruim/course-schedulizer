@@ -119,6 +119,14 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
     return keys;
   }, [mass, ws.includedEntries]);
   const selectedTotal = [...selected].filter((k) => everySection.has(k)).length;
+  // Selected sections that the filters hide: counted above, offered (but not assumed) by the edit dialog.
+  const shownKeys = new Set(visible.map(keyOf));
+  const hiddenPicks: Pick[] = [...selected]
+    .filter((k) => everySection.has(k) && !shownKeys.has(k))
+    .map((k) => {
+      const [scheduleId = "", sectionId = ""] = k.split("\u0001");
+      return { scheduleId, sectionId };
+    });
   const pick = (scheduleId: string, sectionId: string) => {
     const p = resolve(scheduleId, sectionId);
     if (!p) return;
@@ -227,7 +235,7 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
             <span className="muted">{selectedTotal} of {everySection.size} section{everySection.size === 1 ? "" : "s"} selected, including {picks.length} of {visible.length} visible section{visible.length === 1 ? "" : "s"}</span>
             {massMessage && <span className="note ok" role="status">{massMessage}</span>}
           </div>
-          {massOpen && <MassEditDialog picks={picks} onClose={() => setMassOpen(false)} onDone={setMassMessage} />}
+          {massOpen && <MassEditDialog picks={picks} hidden={hiddenPicks} onClose={() => setMassOpen(false)} onDone={setMassMessage} />}
         </>
       )}
       {kind === "room" && withoutRoom > 0 && (

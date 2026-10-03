@@ -37,11 +37,14 @@ export function readEdits(form: Record<Field, string>): { edits: MassEdits; erro
 }
 
 /** One editor for many sections: every box starts blank; only the boxes filled in are applied to the selected sections. */
-export function MassEditDialog({ picks, onClose, onDone }: { picks: Pick[]; onClose: () => void; onDone: (message: string) => void }) {
+export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { picks: Pick[]; hidden: Pick[]; onClose: () => void; onDone: (message: string) => void }) {
   const ws = useWorkspace();
   const dialog = useRef<HTMLDialogElement>(null);
   const [form, setForm] = useState<Record<Field, string>>(BLANK);
   const [mode, setMode] = useState<MassMode>("missing");
+  // Selected sections that the filters are hiding are left alone unless asked for.
+  const [withHidden, setWithHidden] = useState(false);
+  const picks = useMemo(() => (withHidden ? [...shown, ...hidden] : shown), [withHidden, shown, hidden]);
   useEffect(() => {
     const d = dialog.current;
     d?.showModal();
@@ -73,7 +76,7 @@ export function MassEditDialog({ picks, onClose, onDone }: { picks: Pick[]; onCl
   const apply = () => {
     if (Object.keys(errors).length > 0 || filled === 0) return;
     for (const [id, ids] of bySchedule) ws.applyTo(id, (s) => massEdit(s, ids, edits, mode).schedule);
-    onDone(preview.sections === 0 ? "No section needed a change." : `Changed ${preview.values} value${preview.values === 1 ? "" : "s"} in ${preview.sections} of ${picks.length} selected section${picks.length === 1 ? "" : "s"}. You can undo this.`);
+    onDone(preview.sections === 0 ? "No section needed a change." : `Changed ${preview.values} value${preview.values === 1 ? "" : "s"} in ${preview.sections} of the ${picks.length} section${picks.length === 1 ? "" : "s"} edited. You can undo this.`);
     onClose();
   };
 
@@ -92,11 +95,20 @@ export function MassEditDialog({ picks, onClose, onDone }: { picks: Pick[]; onCl
       <form method="dialog" onSubmit={(e) => { e.preventDefault(); apply(); }}>
         <header className="editor-head">
           <h2>Edit selected sections</h2>
-          <span className="course-name">{picks.length} section{picks.length === 1 ? "" : "s"} selected</span>
+          <span className="course-name">
+            {picks.length} section{picks.length === 1 ? "" : "s"} will be edited
+            {hidden.length > 0 && !withHidden ? ` (of ${shown.length + hidden.length} selected)` : ""}
+          </span>
           <button type="button" className="link" onClick={onClose} aria-label="Close">✕</button>
         </header>
         <div className="editor-body">
           <p className="muted small">Fill in only what you want to set. Boxes left blank change nothing.</p>
+          {hidden.length > 0 && (
+            <label className="choice">
+              <input type="checkbox" checked={withHidden} onChange={(e) => setWithHidden(e.target.checked)} />{" "}
+              Also edit the {hidden.length} selected section{hidden.length === 1 ? "" : "s"} that the filters are hiding
+            </label>
+          )}
           <fieldset>
             <legend>Course</legend>
             <div className="row top">
@@ -137,8 +149,8 @@ export function MassEditDialog({ picks, onClose, onDone }: { picks: Pick[]; onCl
               {filled === 0
                 ? "Nothing filled in yet."
                 : preview.sections === 0
-                  ? "No selected section would change."
-                  : `This would change ${preview.values} value${preview.values === 1 ? "" : "s"} in ${preview.sections} of ${picks.length} selected section${picks.length === 1 ? "" : "s"}.`}
+                  ? "No section being edited would change."
+                  : `This would change ${preview.values} value${preview.values === 1 ? "" : "s"} in ${preview.sections} of the ${picks.length} section${picks.length === 1 ? "" : "s"} being edited.`}
             </p>
           </fieldset>
         </div>
