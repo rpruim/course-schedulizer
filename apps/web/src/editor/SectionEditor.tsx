@@ -50,6 +50,8 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
   const dialog = useRef<HTMLDialogElement>(null);
   const [form, setForm] = useState<Form>(() => draftToForm(initial));
   const [attempted, setAttempted] = useState(false);
+  // Cross-listings are unusual, so they live under "More details", which opens by itself when there are some.
+  const [moreOpen, setMoreOpen] = useState(() => draftToForm(initial).crossListings.length > 0);
   const [collision, setCollision] = useState<Collision | undefined>();
   const [choice, setChoice] = useState<"swap" | "relabel" | "delete">("swap");
   const [relabelTo, setRelabelTo] = useState("");
@@ -92,6 +94,12 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
     const nonStandard = findRuleViolations(r.schedule).filter((v) => v.type === "standard" && v.sectionIds.includes(r.sectionId)).map((v) => v.message);
     return { conflicts, nonStandard, other: r.other, swapTo: r.other?.to };
   }, [errors, schedule, draft]);
+
+  // A problem with a listing must not hide inside the folded section.
+  const listingProblem = attempted && Object.keys(fieldErrors).some((k) => k.startsWith("crossListings"));
+  useEffect(() => {
+    if (listingProblem) setMoreOpen(true);
+  }, [listingProblem]);
 
   const name = courseDisplayName([{ prefix: form.prefix.trim().toUpperCase(), courseNumber: form.courseNumber.trim() }, ...form.crossListings.filter((l) => l.prefix.trim() && l.courseNumber.trim()).map((l) => ({ prefix: l.prefix.trim().toUpperCase(), courseNumber: l.courseNumber.trim() }))]);
   const shares = form.faculty.trim() ? draftShares(draft) : [];
@@ -179,13 +187,13 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
         <div className="editor-body">
           <fieldset>
             <legend>Course</legend>
-            <div className="row">
+            <div className="row top">
               {field("prefix", "Prefix", { list: "dl-prefix", size: 8 })}
               {field("courseNumber", "Number", { size: 8 })}
               {field("section", "Section", { size: 4, hint: "? if the registrar assigns it" })}
               <div className="grow">{field("shortTitle", "Title")}</div>
             </div>
-            <div className="row">
+            <div className="row top">
               <label className="f">
                 <span>Academic year</span>
                 <input value={form.academicYear} list="dl-years" size={8} onChange={(e) => set("academicYear", e.target.value)} aria-invalid={attempted && !!fieldErrors.academicYear ? true : undefined} />
@@ -208,11 +216,15 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
                 {err("termPart")}
               </label>
             </div>
+            <div className="row top">
+              {field("instructionalMethod", "Instructional method", { list: "dl-method" })}
+              {field("deliveryMode", "Delivery", { list: "dl-delivery", size: 10 })}
+            </div>
           </fieldset>
 
           <fieldset>
             <legend>Instructors and load</legend>
-            <div className="row">
+            <div className="row top">
               <div className="grow">{field("faculty", "Instructors", { hint: "Separate with semicolons. Give a share as Name (3); the rest is split equally." })}</div>
               {field("facultyLoad", "Load", { size: 5 })}
               {field("minimumCredits", "Credits", { size: 5 })}
@@ -263,35 +275,32 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
             <button type="button" onClick={() => set("meetings", [...form.meetings, emptyMeetingForm()])}>+ Add meeting</button>
           </fieldset>
 
-          <fieldset>
-            <legend>Also listed as</legend>
-            <p className="muted small">Cross-listings: the same section under other courses. Load and enrollment stay with this section.</p>
-            {form.crossListings.map((l, i) => (
-              <div className="row" key={i}>
-                <label className="f"><span>Prefix</span><input value={l.prefix} list="dl-prefix" size={8} onChange={(e) => set("crossListings", form.crossListings.map((x, j) => (j === i ? { ...x, prefix: e.target.value } : x)))} /></label>
-                <label className="f"><span>Number</span><input value={l.courseNumber} size={8} onChange={(e) => set("crossListings", form.crossListings.map((x, j) => (j === i ? { ...x, courseNumber: e.target.value } : x)))} /></label>
-                <button type="button" className="link" onClick={() => set("crossListings", form.crossListings.filter((_, j) => j !== i))}>Remove</button>
-                {err(`crossListings.${i}`)}
-              </div>
-            ))}
-            <button type="button" onClick={() => set("crossListings", [...form.crossListings, { prefix: "", courseNumber: "" }])}>+ Add listing</button>
-            {form.crossListings.length > 0 && name && <p className="preview">Shown as {name}</p>}
-          </fieldset>
-
-          <details>
-            <summary>More details</summary>
-            <div className="row">
+          <details open={moreOpen} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>
+            <summary>More details{form.crossListings.length > 0 && !moreOpen ? " (also listed as " + form.crossListings.length + " other " + (form.crossListings.length === 1 ? "course" : "courses") + ")" : ""}</summary>
+            <div className="row top">
               {field("department", "Department", { list: "dl-dept" })}
-              {field("instructionalMethod", "Instructional method", { list: "dl-method" })}
               {field("courseLevel", "Course level", { size: 6 })}
               {field("group", "Group", { size: 8 })}
-              {field("deliveryMode", "Delivery", { list: "dl-delivery", size: 10 })}
             </div>
-            <div className="row">
+            <div className="row top">
               {field("enrollment", "Enrollment", { size: 6 })}
               {field("enrollmentDay10", "Day-10 enrollment", { size: 6 })}
             </div>
             <label className="f"><span>Comment</span><textarea rows={2} value={form.comment} onChange={(e) => set("comment", e.target.value)} /></label>
+            <div className="also-listed">
+              <h4>Also listed as</h4>
+              <p className="muted small">Cross-listings: the same section under other courses. Load and enrollment stay with this section.</p>
+              {form.crossListings.map((l, i) => (
+                <div className="row" key={i}>
+                  <label className="f"><span>Prefix</span><input value={l.prefix} list="dl-prefix" size={8} onChange={(e) => set("crossListings", form.crossListings.map((x, j) => (j === i ? { ...x, prefix: e.target.value } : x)))} /></label>
+                  <label className="f"><span>Number</span><input value={l.courseNumber} size={8} onChange={(e) => set("crossListings", form.crossListings.map((x, j) => (j === i ? { ...x, courseNumber: e.target.value } : x)))} /></label>
+                  <button type="button" className="link" onClick={() => set("crossListings", form.crossListings.filter((_, j) => j !== i))}>Remove</button>
+                  {err(`crossListings.${i}`)}
+                </div>
+              ))}
+              <button type="button" onClick={() => set("crossListings", [...form.crossListings, { prefix: "", courseNumber: "" }])}>+ Add listing</button>
+              {form.crossListings.length > 0 && name && <p className="preview">Shown as {name}</p>}
+            </div>
           </details>
 
           {preview && preview.conflicts.length > 0 && (

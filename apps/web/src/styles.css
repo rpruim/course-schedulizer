@@ -87,6 +87,11 @@ fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px 
 legend { padding: 0 6px; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
 .row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: flex-end; margin-top: 6px; }
 .row .grow { flex: 1; min-width: 180px; }
+/* inputs line up along their tops, whether or not a field has a hint under it */
+.row.top { align-items: flex-start; }
+.also-listed { margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--line); }
+.also-listed h4 { margin: 0 0 4px; font-size: .85rem; }
+.also-listed .row .link { align-self: flex-end; padding-bottom: 6px; }
 .f { display: flex; flex-direction: column; gap: 2px; font-size: .8rem; color: var(--muted); }
 .f input, .f select, .f textarea { font-size: .95rem; color: var(--fg); min-width: 0; }
 .f input:not([size]), .f select, .f textarea { width: 100%; }

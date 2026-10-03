@@ -177,7 +177,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li><strong>Several meetings</strong> (for example MW at one time and F at another) are separate meetings in the same section: use <em>+ Add meeting</em> in the editor.</li>
           <li><strong>Instructors and load.</strong> List instructors separated by semicolons (names may contain commas, as in <code>Pruim, Randall</code>). A section’s load is split equally among them; write <code>Ada Example (3); Ben Sample</code> to
             give someone a specific share. The editor shows each person’s share, and warns if shares do not add up.</li>
-          <li><strong>Cross-listings.</strong> For a course that is also listed under another prefix or number (<code>DATA 385</code> and <code>STAT 385</code>), add the other listings under <em>Also listed as</em>.
+          <li><strong>Cross-listings.</strong> For a course that is also listed under another prefix or number (<code>DATA 385</code> and <code>STAT 385</code>), add the other listings under <em>Also listed as</em> in <em>More details</em> (which opens by itself for a section that has some).
             The section is shown under all its names but its load is counted once.</li>
           <li><strong>Delivery mode</strong> is, for example, In-person, Online synchronous, Online asynchronous or Hybrid; check the registrar’s guidance if none fits. Use a room
             for in-person sections: the registrar asks for a draft room for each, and it lets conflicts be found. <em>Off Campus</em>, <em>Online</em> and <em>TBD</em> never count as a room clash.</li>
