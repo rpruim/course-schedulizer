@@ -199,7 +199,7 @@ export function ComparePage() {
                   <Fragment key={key}>
                   <tr
                     style={color ? { background: color } : undefined}
-                    className={`clickable${r.differs ? " differs" : ""}`}
+                    className={`clickable${r.differs ? " differs" : ""}${color ? " toned" : ""}`}
                     tabIndex={0}
                     aria-expanded={isOpen}
                     onClick={() => toggle(key)}

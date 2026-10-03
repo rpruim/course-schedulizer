@@ -78,6 +78,8 @@ tr.conflict td { background: var(--conflict); }
 /* section editor */
 tr.clickable { cursor: pointer; }
 tr.clickable:hover td, tr.clickable:focus td { background: var(--panel); outline: none; }
+/* a row colored by its difference (Compare) keeps its color when hovered or focused */
+tr.clickable.toned:hover td, tr.clickable.toned:focus td { background: transparent; }
 tr.clickable.conflict:hover td { background: var(--conflict); filter: brightness(1.1); }
 dialog.editor { width: min(760px, calc(100vw - 24px)); max-height: calc(100vh - 24px); padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--fg); }
 dialog.editor::backdrop { background: rgba(0, 0, 0, .5); }

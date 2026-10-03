@@ -10,6 +10,7 @@
   * *Edit selected…* opens an editor with every box blank. Fill in only what you want to set, and choose to replace missing values only or overwrite existing ones. It can edit just the selected sections the filters are showing or also those they are hiding, and says how many values would change before you apply.
   * It can rename a prefix across many sections, as when a department changes its name. A section is skipped if the new prefix would clash with another section, and the editor says how many constraint rows still name the old prefix.
 * A section that lists the same meeting twice is now drawn once on the week views.
+* On the Compare tab, a row keeps its color when the pointer is over it or it has the keyboard focus; before, that row turned gray, which looked like a row that had not been colored.
 
 # Course Schedulizer 2.0.1
 
