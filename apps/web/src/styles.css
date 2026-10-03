@@ -355,4 +355,5 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 .editor-apply { padding: 8px 16px; border-top: 1px solid var(--line); }
 .apply-modes { display: flex; flex-wrap: wrap; gap: 4px 20px; }
 .editor-apply .preview { margin: 4px 0 0; }
-.apply-which { display: flex; flex-direction: column; gap: 2px; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
+.apply-which { display: flex; flex-wrap: wrap; gap: 2px 20px; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
+.apply-which .choice, .apply-modes .choice { white-space: nowrap; }

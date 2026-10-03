@@ -174,10 +174,10 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
           {hidden.length > 0 && (
             <div className="apply-which" role="radiogroup" aria-label="Which sections">
               <label className="choice">
-                <input type="radio" name="mass-which" checked={!withHidden} onChange={() => setWithHidden(false)} /> Only edit the {shown.length} selected section{shown.length === 1 ? "" : "s"} that the filters are showing
+                <input type="radio" name="mass-which" checked={!withHidden} onChange={() => setWithHidden(false)} /> Only edit {shown.length} selected section{shown.length === 1 ? "" : "s"} the filters are showing
               </label>
               <label className="choice">
-                <input type="radio" name="mass-which" checked={withHidden} onChange={() => setWithHidden(true)} /> Also edit the {hidden.length} section{hidden.length === 1 ? "" : "s"} that the filters are hiding
+                <input type="radio" name="mass-which" checked={withHidden} onChange={() => setWithHidden(true)} /> Also edit {hidden.length} section{hidden.length === 1 ? "" : "s"} the filters are hiding
               </label>
             </div>
           )}
