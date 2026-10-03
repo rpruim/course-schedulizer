@@ -1,23 +1,37 @@
 import { useEffect, useState } from "react";
 import { DEFAULT_SAVE_AS, exportFileName, type Schedule } from "@schedulizer/core";
 import { yearsOf } from "../model";
+import { metaOpen, useMetaOpen } from "../metaOpen";
 import { useWorkspace, type Entry } from "../state";
 import { Empty } from "./SchedulePage";
 
 /** What each open schedule is called, and notes about it. Edits are undoable like any other. */
 export function MetaPage() {
   const ws = useWorkspace();
+  const open = useMetaOpen();
   if (ws.entries.length === 0) return <Empty />;
   const many = ws.entries.length > 1;
+  // The current schedule comes first; the others follow in workspace order.
+  const ordered = [...ws.entries].sort((a, b) => Number(b.id === ws.currentId) - Number(a.id === ws.currentId));
   return (
     <>
       <p className="muted small">The nickname is shown in place of the file name everywhere in the app, and is saved in the Excel file’s Metadata sheet.</p>
-      {ws.entries.map((e) => (
-        <section key={e.id} className="sched-section meta-card">
-          {many && <h2 className="sched-heading">{e.name}{e.id === ws.currentId && <span className="badge">current</span>}</h2>}
-          <MetaForm entry={e} fileName={ws.fileNameOf(e.id)} />
-        </section>
-      ))}
+      {ordered.map((e) => {
+        const isOpen = !many || open.has(e.id);
+        return (
+          <section key={e.id} className="sched-section meta-card">
+            {many && (
+              <h2 className="sched-heading">
+                <button type="button" className="meta-toggle" aria-expanded={isOpen} onClick={() => metaOpen.toggle(e.id)} title={isOpen ? "Collapse" : "Open"}>
+                  <span aria-hidden="true">{isOpen ? "▾" : "▸"}</span> {e.name}
+                </button>
+                {e.id === ws.currentId && <span className="badge">current</span>}
+              </h2>
+            )}
+            {isOpen && <MetaForm entry={e} fileName={ws.fileNameOf(e.id)} />}
+          </section>
+        );
+      })}
     </>
   );
 }

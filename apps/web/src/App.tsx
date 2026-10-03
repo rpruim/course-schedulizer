@@ -17,6 +17,7 @@ import { WeekPage } from "./pages/WeekPage";
 import { SchedulePicker } from "./schedules";
 import { MenuBar, type MenuGroup } from "./MenuBar";
 import { sharedOpener } from "./onedrive/auth";
+import { metaOpen } from "./metaOpen";
 import { linkRequests, type LinkRequest } from "./remote";
 import { fetchSchedule } from "./remoteOpen";
 import { useWorkspace, WorkspaceProvider } from "./state";
@@ -52,9 +53,11 @@ const groups = (newBlank: () => void): MenuGroup[] => [
 ];
 
 function Shell() {
-  const { saveError, restored, entries, addSchedule } = useWorkspace();
+  const { saveError, restored, entries, addSchedule, currentId } = useWorkspace();
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  // Whenever a different schedule becomes current, the Meta tab opens just that one (toggles are remembered until then).
+  useEffect(() => metaOpen.only(currentId), [currentId]);
   const none = entries.length === 0;
   const [reports, setReports] = useState<OpenReport[] | undefined>();
   const [notice, setNotice] = useState("");

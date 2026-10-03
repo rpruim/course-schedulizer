@@ -160,7 +160,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dd>Sections as blocks on a Monday–Friday grid. See <a href="#week" onClick={jump("week")}>The week views</a>.</dd>
           <dt><Link to="/meta">Meta</Link></dt>
           <dd>View and edit information about the schedule as a whole.  Give your schedule a nickname, and a <em>default department</em> (used for every section that does not give its own; the section editor shows it in gray). Specify the file name 
-            used when exporting. Label your schedule with a version and provide some notes about the schedule.</dd>
+            used when exporting. Label your schedule with a version and provide some notes about the schedule. With several schedules open, the current one is listed first; click a schedule’s name to open or close its card. When a different schedule becomes current, only that one is open; otherwise your choices are remembered.</dd>
         </dl>
       </>
     ),
