@@ -97,6 +97,11 @@ export interface WeekOptions {
   only?: string;
   /** Department grid: only this prefix. */
   prefix?: string;
+  /**
+   * Department grid: only sections whose value for `by` (what the grid can be colored by) is one of `values`;
+   * an empty string stands for "missing". No values means every section.
+   */
+  filter?: { by: ColorBy; values: string[] };
 }
 
 export interface WeekResult {
@@ -107,6 +112,21 @@ export interface WeekResult {
   choices: string[];
   /** Room grids: meetings left out because they name no room (or a non-room such as "Online"). */
   withoutRoom: number;
+  /** The values the filter can pick from (for `filter.by` or, without a filter, the color-by field), and whether some sections have none. */
+  filterValues: string[];
+  filterMissing: boolean;
+}
+
+/** What a section has for each thing the grids can be colored (or filtered) by; empty when it has nothing. */
+export function colorValueOf(schedule: Schedule, by: ColorBy, s: Session): string {
+  switch (by) {
+    case "level": return levelOf(s);
+    case "instructor": return s.faculty[0]?.name ?? "";
+    case "group": return s.group.trim();
+    case "method": return s.instructionalMethod.trim();
+    case "department": return departmentOf(schedule.meta, s);
+    default: return s.prefix;
+  }
 }
 
 const DAY_ORDER = "MTWRFSU";
@@ -174,16 +194,7 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
   for (const s of inTerm) if (!firstOf.has(s.sectionId)) firstOf.set(s.sectionId, s);
   const courseName = (s: Session) => courseDisplayName(listingsOf(s, schedule.crossListings));
 
-  const colorKey = (s: Session): string => {
-    switch (o.colorBy) {
-      case "level": return levelOf(s);
-      case "instructor": return s.faculty[0]?.name ?? "";
-      case "group": return s.group.trim();
-      case "method": return s.instructionalMethod.trim();
-      case "department": return departmentOf(schedule.meta, s);
-      default: return s.prefix;
-    }
-  };
+  const colorKey = (s: Session): string => colorValueOf(schedule, o.colorBy, s);
   // A section with nothing in the field being colored by is gray, so "missing" is easy to spot.
   const hueFor = (s: Session) => (colorKey(s) === "" ? undefined : hueOf(colorKey(s)));
   const label = (s: Session) => `${courseName(s)} ${s.section}`;
@@ -245,9 +256,19 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
   const instructors = (s: Session) => s.faculty.map((f) => f.name).join(", ");
 
   if (o.kind === "dept") {
-    const sessions = inTerm.filter((s) => !o.prefix || s.prefix === o.prefix);
+    const by = o.filter?.by ?? o.colorBy;
+    const wantedValues = o.filter && o.filter.values.length > 0 ? new Set(o.filter.values) : undefined;
+    const sessions = inTerm.filter((s) => (!o.prefix || s.prefix === o.prefix) && (!wantedValues || wantedValues.has(colorValueOf(schedule, by, s))));
     const ids = [...new Set(sessions.map((s) => s.sectionId))];
-    return { grids: [gridOf("dept", "Department", sessions, instructors, ids)], parts, choices: [...new Set(termAll.map((s) => s.prefix))].sort(natural), withoutRoom: 0 };
+    const everyValue = termAll.map((s) => colorValueOf(schedule, by, s));
+    return {
+      grids: [gridOf("dept", "Department", sessions, instructors, ids)],
+      parts,
+      choices: [...new Set(termAll.map((s) => s.prefix))].sort(natural),
+      withoutRoom: 0,
+      filterValues: [...new Set(everyValue.filter((v) => v !== ""))].sort(natural),
+      filterMissing: everyValue.includes(""),
+    };
   }
 
   if (o.kind === "faculty") {
@@ -261,7 +282,7 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
         return gridOf(`f:${norm(name)}`, name, mine, (s) => s.room, [...new Set(mine.map((s) => s.sectionId))]);
       })
       .filter((g) => o.only || g.blocks.length > 0 || g.unscheduled.length > 0);
-    return { grids, parts, choices, withoutRoom: 0 };
+    return { grids, parts, choices, withoutRoom: 0, filterValues: [], filterMissing: false };
   }
 
   // rooms
@@ -276,7 +297,7 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
   const grids = (o.only ? [o.only] : choices)
     .map((name) => gridOf(`r:${norm(name)}`, name, inTerm.filter((s) => norm(s.room) === norm(name)), instructors, []))
     .filter((g) => o.only || g.blocks.length > 0);
-  return { grids, parts, choices, withoutRoom };
+  return { grids, parts, choices, withoutRoom, filterValues: [], filterMissing: false };
 }
 
 /** `8 AM`, `1 PM`: a label for a whole-hour mark on the time axis. */

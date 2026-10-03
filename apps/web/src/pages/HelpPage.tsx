@@ -140,7 +140,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
       <>
         <p>The menu bar under the schedules allows you to navigate: <strong>Schedule</strong>, 
         then menus for <strong>Loads</strong>, <strong>View</strong> (the week grids), 
-        <strong>Check</strong> (conflicts, constraints, comparison), 
+        <strong>Check</strong> (conflicts, constraints, comparison), <strong>Mass edit</strong>, 
         <strong>File</strong> (new blank schedule, meta, import, export) and  
         <strong>Help</strong> (this guide, the <Link to="/news">release notes</Link>, and About).  
         Click a menu option to open it; the menu you are in is underlined. 
@@ -162,6 +162,15 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dd>Side-by-side comparison of schedules. See <a href="#compare" onClick={jump("compare")}>Comparing schedules</a>.</dd>
           <dt>Calendar views: <Link to="/dept">Dept week</Link>, <Link to="/faculty">Faculty week</Link>, <Link to="/rooms">Room week</Link></dt>
           <dd>Sections as blocks on a Monday–Friday grid. See <a href="#week" onClick={jump("week")}>The week views</a>.</dd>
+          <dt><Link to="/massedit">Mass edit</Link></dt>
+          <dd>
+            The department week grid, but a click selects or deselects a section (selected sections have a green outline) instead of opening it.
+            Use <em>Filter by</em> (the same choices as <em>Color by</em>) and the <em>Show</em> list, where you can tick several values, including <em>(missing)</em>, to narrow what is shown;
+            <em>Select all</em> and <em>Deselect all</em> work on the sections shown. <em>Edit selected…</em> opens an editor with every box blank: fill in only what you want to set
+            (department, title, instructors, load, credits, instructional method, course level, group, delivery, enrollment, comment) and choose <em>Replace missing values only</em>
+            (the default) or <em>Overwrite existing values</em>. The editor says how many values would change before you apply, and the whole edit can be undone. Meeting days, times and
+            rooms are not part of it.
+          </dd>
           <dt><Link to="/meta">Meta</Link></dt>
           <dd>View and edit information about the schedule as a whole.  Give your schedule a nickname, and a <em>default department</em> (used for every section that does not give its own; the section editor shows it in gray). Specify the file name 
             used when exporting. Label your schedule with a version and provide some notes about the schedule. With several schedules open, the current one is listed first; click a schedule’s name to open or close its card. When a different schedule becomes current, only that one is open; otherwise your choices are remembered.</dd>

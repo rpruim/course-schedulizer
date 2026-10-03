@@ -127,6 +127,27 @@ describe("department grid", () => {
     expect(blocks(s, "group").map((b) => b.hue)).toEqual([undefined, undefined, hueOf("G")]);
     expect(blocks(s, "prefix").every((b) => b.hue !== undefined)).toBe(true);
   });
+  it("filters the department grid by what it can be colored by, offering the values (and whether any are missing)", () => {
+    const s = make([
+      sec("MATH", "231", "A", { Group: "Core", ...mt("M", "9:00", "50") }),
+      sec("MATH", "231", "B", { Group: "Core", ...mt("T", "9:00", "50") }),
+      sec("STAT", "143", "A", { Group: "Intro", ...mt("W", "9:00", "50") }),
+      sec("STAT", "243", "A", { ...mt("R", "9:00", "50") }),
+      sec("DATA", "301", "A"),
+    ]);
+    const ids = (filter?: { by: WeekOptions["colorBy"]; values: string[] }) => weekGrids(s, opts({ ...(filter ? { filter } : {}) })).grids[0]!;
+    const all = weekGrids(s, opts({ filter: { by: "group", values: [] } }));
+    expect(all.filterValues).toEqual(["Core", "Intro"]);
+    expect(all.filterMissing).toBe(true);
+    expect(ids({ by: "group", values: ["Core"] }).blocks.map((b) => b.title)).toEqual(["MATH 231 A", "MATH 231 B"]);
+    expect(ids({ by: "group", values: ["Core", "Intro"] }).blocks).toHaveLength(3);
+    // "" is the missing value: the section with no group, and the one with no time still listed as unscheduled
+    const missing = ids({ by: "group", values: [""] });
+    expect(missing.blocks.map((b) => b.title)).toEqual(["STAT 243 A"]);
+    expect(missing.unscheduled.map((u) => u.label)).toEqual(["DATA 301 A"]);
+    expect(ids({ by: "prefix", values: ["STAT", "DATA"] }).blocks).toHaveLength(2);
+    expect(ids().blocks).toHaveLength(4);
+  });
   it("uses the cross-listing display name", () => {
     const x = make([sec("DATA", "385", "A", mt("M", "9:00", "50"))], { crossListings: [{ SectionId: "Y-FA-DATA385-A", Prefix: "STAT", CourseNumber: "385" }] });
     expect(weekGrids(x, opts()).grids[0]!.blocks[0]!.title).toBe("DATA/STAT 385 A");

@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { partsFor } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
+import { MassEditDialog, type Pick } from "../editor/MassEditDialog";
+import { MultiSelect } from "../MultiSelect";
 import { keyFor, openColorKey, setColorKey, useColorBy } from "../colorKey";
 import { termsAcross, yearsAcross } from "../model";
-import { useWorkspace } from "../state";
+import { MERGED_ID, useWorkspace } from "../state";
 import { COLOR_BY, groupGrids, hourLabel, termsFor, weekGrids, type ColorBy, type Grid, type GridKind } from "../week";
 import { Empty, NoneShown } from "./SchedulePage";
 
@@ -17,8 +19,12 @@ const KIND = {
   room: { all: "All rooms", label: "Room", empty: "No rooms are used in this term." },
 } as const;
 
-/** Department, faculty or room week: sections as blocks on a Monday–Friday grid; click a block to edit it. */
-export function WeekPage({ kind }: { kind: GridKind }) {
+/**
+ * Department, faculty or room week: sections as blocks on a Monday–Friday grid; click a block to edit it.
+ * With `mass` (the Mass edit page: the department grid) a click selects or deselects a section instead, a filter narrows
+ * what is shown, and the selected sections can be edited together.
+ */
+export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolean }) {
   const ws = useWorkspace();
   const { openSection, openNew } = useEditor();
   // Arriving from a link (the loads table) can name the person, year and term to show.
@@ -28,6 +34,17 @@ export function WeekPage({ kind }: { kind: GridKind }) {
   const [pickedPart, setPickedPart] = useState("Full");
   const [colorBy, setColorBy] = useColorBy();
   const [only, setOnly] = useState(kind === "faculty" ? (params.get("who") ?? "") : "");
+  // Mass edit: what is selected (as "schedule id, section id"), the filter, and the dialog.
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const [filterBy, setFilterByState] = useState<ColorBy>("prefix");
+  const [filterValues, setFilterValues] = useState<string[]>([]);
+  const [massOpen, setMassOpen] = useState(false);
+  const [massMessage, setMassMessage] = useState("");
+  const setFilterBy = (by: ColorBy) => {
+    setFilterByState(by);
+    setFilterValues([]);
+  };
+  const filter = mass ? { by: filterBy, values: filterValues } : undefined;
 
   const entries = ws.viewEntries;
   const years = yearsAcross(entries);
@@ -44,15 +61,15 @@ export function WeekPage({ kind }: { kind: GridKind }) {
       entries.map((e) => ({
         id: e.id,
         name: e.name,
-        result: weekGrids(e.schedule, { year, term, kind, colorBy, part, ...(kind === "dept" && only ? { prefix: only } : {}) }),
+        result: weekGrids(e.schedule, { year, term, kind, colorBy, part, ...(filter ? { filter } : {}), ...(kind === "dept" && only && !mass ? { prefix: only } : {}) }),
       })),
-    [entries, year, term, kind, colorBy, part, only],
+    [entries, year, term, kind, colorBy, part, only, mass, filterBy, filterValues],
   );
   // Choices come from every included schedule; one that no longer exists (a different file or term) means "all".
   const choices = [...new Set(results.flatMap((r) => r.result.choices))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
   // A name from a link may differ in case or spacing from the one the grid uses.
   const sameName = (a: string, b: string) => a.trim().replace(/\s+/g, " ").toLowerCase() === b.trim().replace(/\s+/g, " ").toLowerCase();
-  const effectiveOnly = choices.find((c) => sameName(c, only)) ?? "";
+  const effectiveOnly = mass ? "" : (choices.find((c) => sameName(c, only)) ?? "");
   const shownResults = useMemo(
     () =>
       kind === "dept" || !effectiveOnly
@@ -60,6 +77,8 @@ export function WeekPage({ kind }: { kind: GridKind }) {
         : entries.map((e) => ({ id: e.id, name: e.name, result: weekGrids(e.schedule, { year, term, kind, colorBy, part, only: effectiveOnly }) })),
     [results, entries, year, term, kind, colorBy, part, effectiveOnly],
   );
+  const filterChoices = [...new Set(results.flatMap((r) => r.result.filterValues))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+  const filterHasMissing = results.some((r) => r.result.filterMissing);
   const groups = useMemo(() => groupGrids(shownResults, kind, kind === "dept" ? undefined : effectiveOnly || undefined), [shownResults, kind, effectiveOnly]);
   const withoutRoom = shownResults.reduce((n, r) => n + r.result.withoutRoom, 0);
 
@@ -69,6 +88,44 @@ export function WeekPage({ kind }: { kind: GridKind }) {
     setColorKey(keyInfo);
     return () => setColorKey(undefined);
   }, [keyInfo]);
+  // A section of the merged view belongs to the schedule it came from.
+  const resolve = (scheduleId: string, sectionId: string): Pick | undefined => {
+    if (scheduleId !== MERGED_ID) return { scheduleId, sectionId };
+    const from = ws.mergedOrigin?.sections.get(sectionId);
+    return from ? { scheduleId: from.scheduleId, sectionId: from.sectionId } : undefined;
+  };
+  const keyOf = (p: Pick) => `${p.scheduleId}\u0001${p.sectionId}`;
+  // Every section on screen: select-all and the count only ever concern these, so a section hidden by a filter is never edited.
+  const visible = useMemo(() => {
+    const out: Pick[] = [];
+    if (!mass) return out;
+    for (const g of groups) for (const item of g.items) {
+      if (!item.grid) continue;
+      const ids = new Set([...item.grid.blocks.map((b) => b.sectionId), ...item.grid.unscheduled.map((u) => u.sectionId)]);
+      for (const id of ids) {
+        const p = resolve(item.scheduleId, id);
+        if (p) out.push(p);
+      }
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups, mass, ws.mergedOrigin]);
+  const picks = visible.filter((p) => selected.has(keyOf(p)));
+  const pick = (scheduleId: string, sectionId: string) => {
+    const p = resolve(scheduleId, sectionId);
+    if (!p) return;
+    const k = keyOf(p);
+    setSelected((cur) => {
+      const next = new Set(cur);
+      if (!next.delete(k)) next.add(k);
+      return next;
+    });
+    setMassMessage("");
+  };
+  const isSelected = (scheduleId: string, sectionId: string) => {
+    const p = resolve(scheduleId, sectionId);
+    return p !== undefined && selected.has(keyOf(p));
+  };
   const [keyBlocked, setKeyBlocked] = useState(false);
   const showKey = () => setKeyBlocked(!openColorKey());
 
@@ -99,12 +156,30 @@ export function WeekPage({ kind }: { kind: GridKind }) {
             </select>
           </label>
         )}
-        <label className="field">{k.label}
-          <select value={effectiveOnly} onChange={(e) => setOnly(e.target.value)}>
-            <option value="">{k.all}</option>
-            {choices.map((c) => <option key={c}>{c}</option>)}
-          </select>
-        </label>
+        {!mass && (
+          <label className="field">{k.label}
+            <select value={effectiveOnly} onChange={(e) => setOnly(e.target.value)}>
+              <option value="">{k.all}</option>
+              {choices.map((c) => <option key={c}>{c}</option>)}
+            </select>
+          </label>
+        )}
+        {mass && (
+          <>
+            <label className="field">Filter by
+              <select value={filterBy} onChange={(e) => setFilterBy(e.target.value as ColorBy)}>
+                {COLOR_BY.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </label>
+            <div className="field">Show
+              <MultiSelect
+                choices={[...filterChoices.map((v) => ({ value: v, label: v })), ...(filterHasMissing ? [{ value: "", label: "(missing)", muted: true }] : [])]}
+                selected={filterValues}
+                onChange={setFilterValues}
+              />
+            </div>
+          </>
+        )}
         <label className="field">Color by
           <select value={colorBy} onChange={(e) => setColorBy(e.target.value as ColorBy)}>
             {COLOR_BY.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
@@ -115,7 +190,7 @@ export function WeekPage({ kind }: { kind: GridKind }) {
         <span className="muted legend"><span className="swatch conflict-swatch" /> conflict</span>
         {groups.some((g) => g.items.some((i) => i.grid?.blocks.some((b) => b.nonStandard))) && <span className="muted legend"><span className="swatch nonstandard-swatch" /> non-standard time</span>}
         <span className="spacer" />
-        <button
+        {!mass && <button
           className="primary"
           title={ws.current ? `Adds to “${ws.current.name}”${effectiveOnly ? `, starting from ${effectiveOnly}` : ""}` : ""}
           onClick={() =>
@@ -131,8 +206,21 @@ export function WeekPage({ kind }: { kind: GridKind }) {
           }
         >
           + Add section{ws.entries.length > 1 && ws.current ? ` to “${ws.current.name}”` : ""}
-        </button>
+        </button>}
       </div>
+      {mass && (
+        <>
+          <p className="muted small">Click sections to select or deselect them: selected sections have a green outline. Use the filter to narrow what is shown, then choose <em>Edit selected</em>.</p>
+          <div className="bar">
+            <button onClick={() => setSelected((cur) => new Set([...cur, ...visible.map(keyOf)]))} disabled={visible.length === 0}>Select all</button>
+            <button onClick={() => setSelected(new Set())} disabled={selected.size === 0}>Deselect all</button>
+            <button className="primary" onClick={() => setMassOpen(true)} disabled={picks.length === 0}>Edit selected…</button>
+            <span className="muted">{picks.length} of {visible.length} section{visible.length === 1 ? "" : "s"} selected</span>
+            {massMessage && <span className="note ok" role="status">{massMessage}</span>}
+          </div>
+          {massOpen && <MassEditDialog picks={picks} onClose={() => setMassOpen(false)} onDone={setMassMessage} />}
+        </>
+      )}
       {kind === "room" && withoutRoom > 0 && (
         <p className="note">{withoutRoom} meeting{withoutRoom === 1 ? " has" : "s have"} no room (or a room such as “Online”), so they are not on a room grid.</p>
       )}
@@ -145,12 +233,12 @@ export function WeekPage({ kind }: { kind: GridKind }) {
               {several && <h3 className="sched-heading">{item.scheduleName}</h3>}
               {item.grid ? (
                 <>
-                  <WeekGrid grid={item.grid} onOpen={(sectionId) => openSection(sectionId, item.scheduleId)} />
+                  <WeekGrid grid={item.grid} onOpen={(sectionId) => (mass ? pick(item.scheduleId, sectionId) : openSection(sectionId, item.scheduleId))} {...(mass ? { selected: (sectionId: string) => isSelected(item.scheduleId, sectionId) } : {})} />
                   {item.grid.unscheduled.length > 0 && (
                     <p className="unscheduled">
                       <span className="muted">No scheduled time: </span>
                       {item.grid.unscheduled.map((u) => (
-                        <button key={u.sectionId} className="chip wide" onClick={() => openSection(u.sectionId, item.scheduleId)}>{u.label}</button>
+                        <button key={u.sectionId} className={`chip wide${mass && isSelected(item.scheduleId, u.sectionId) ? " selected" : ""}`} onClick={() => (mass ? pick(item.scheduleId, u.sectionId) : openSection(u.sectionId, item.scheduleId))}>{u.label}</button>
                       ))}
                     </p>
                   )}
@@ -166,7 +254,7 @@ export function WeekPage({ kind }: { kind: GridKind }) {
   );
 }
 
-function WeekGrid({ grid, onOpen }: { grid: Grid; onOpen: (sectionId: string) => void }) {
+function WeekGrid({ grid, onOpen, selected }: { grid: Grid; onOpen: (sectionId: string) => void; selected?: (sectionId: string) => boolean }) {
   const hours: number[] = [];
   for (let m = grid.startMin; m <= grid.endMin; m += 60) hours.push(m);
   const px = (minutes: number) => ((minutes - grid.startMin) / 60) * HOUR_PX;
@@ -203,7 +291,8 @@ function WeekGrid({ grid, onOpen }: { grid: Grid; onOpen: (sectionId: string) =>
             {grid.blocks.filter((b) => b.day === d).map((b) => (
               <button
                 key={b.key}
-                className={`block${size(b.lanes)}${b.conflict ? " conflict" : b.nonStandard ? " nonstandard" : ""}${b.hue === undefined ? " nocolor" : ""}`}
+                className={`block${size(b.lanes)}${b.conflict ? " conflict" : b.nonStandard ? " nonstandard" : ""}${b.hue === undefined ? " nocolor" : ""}${selected?.(b.sectionId) ? " selected" : ""}`}
+                aria-pressed={selected ? selected(b.sectionId) : undefined}
                 title={b.detail}
                 onClick={() => onOpen(b.sectionId)}
                 style={{
