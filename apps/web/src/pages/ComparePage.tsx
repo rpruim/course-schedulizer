@@ -247,8 +247,9 @@ export function ComparePage() {
           </form>
         )}
       </div>
+      <p className="setup-sentence" aria-live="polite">{summary}</p>
       <details className="partition" open={showPartition} onToggle={(e) => setShowPartition((e.target as HTMLDetailsElement).open)}>
-        <summary>Choose what to compare <span className="muted">— {summary}</span></summary>
+        <summary>Choose how to compare</summary>
         <p className="muted small">
           Give each column a role: <span className="role-key"><RoleIcon role="group" /> <strong>Group</strong></span> columns say what makes a row (one row for each combination of their values),{" "}
           <span className="role-key"><RoleIcon role="aggregate" /> <strong>Aggregate</strong></span> columns are added up (numbers) or sorted and joined (text) within each group, and{" "}

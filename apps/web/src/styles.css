@@ -378,3 +378,4 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 .role-key .role-icon { display: inline-block; vertical-align: -0.15em; }
 .compare-setup .where { display: flex; flex-wrap: wrap; gap: 2px 14px; border: 0; padding: 0; margin: 0; }
 .compare-setup .where .choice { margin: 0; white-space: nowrap; }
+.setup-sentence { margin: 2px 0 8px; color: var(--muted); }
