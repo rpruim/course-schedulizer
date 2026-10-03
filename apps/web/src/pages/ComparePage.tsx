@@ -15,7 +15,7 @@ import {
   type ComparisonRow,
   type RowKind,
 } from "@schedulizer/core";
-import { aggregateDiffers, collectSaved, comparisonSheets, describeSetup, diffMembers, hueFor, loadBrowserComparisons, loadSaveWhere, loadSettings, PRESETS, rememberSaveWhere, sameSetup, saveBrowserComparisons, saveSettings, tableColumns, toneColor, type MemberField, type Roles, type SaveWhere, whereText } from "../compareView";
+import { aggregateDiffers, collectSaved, comparisonSheets, describeSetup, diffMembers, hueFor, loadBrowserComparisons, loadCustomSetup, loadSaveWhere, loadSettings, PRESETS, rememberSaveWhere, sameSetup, saveBrowserComparisons, saveCustomSetup, saveSettings, tableColumns, toneColor, type MemberField, type Roles, type SaveWhere, whereText } from "../compareView";
 import { useEditor } from "../editor/context";
 import { RoleIcon, Trash } from "../icons";
 import { downloadBytes, XLSX_TYPE } from "../download";
@@ -51,6 +51,10 @@ export function ComparePage() {
   const [naming, setNaming] = useState<{ name: string; where: SaveWhere; problem: string } | undefined>();
   // Comparisons saved in this browser, for any schedules.
   const [browserSaved, setBrowserSaved] = useState(loadBrowserComparisons);
+  // “Custom” is the setup arranged by hand most recently (kept in the browser), so it can be switched back to from a named one.
+  const [custom, setCustom] = useState(loadCustomSetup);
+  // Custom was chosen but the setup shown is still a named one (nothing edited yet).
+  const [pendingCustom, setPendingCustom] = useState(false);
   /** Groups whose sections are shown under their row (keyed by the group's values). */
   const [open, setOpen] = useState<Set<string>>(new Set());
   const { openSection, openNonTeaching } = useEditor();
@@ -94,6 +98,27 @@ export function ComparePage() {
   );
   // What the current setup is called; editing anything makes it “Custom”.
   const current = setups.find((o) => sameSetup(o, { roles, rows: rowKind }));
+  const isCustom = current === undefined;
+  useEffect(() => {
+    if (!isCustom) return;
+    const next = { roles: { ...roles }, rows: rowKind };
+    setCustom(next);
+    saveCustomSetup(next);
+    setPendingCustom(false);
+  }, [isCustom, roles, rowKind]);
+  /** Choose Custom: back to the last hand-made setup; with none yet, show the panel where one is made. */
+  const chooseCustom = () => {
+    if (custom) {
+      setRoles({ ...custom.roles });
+      setRowKind(custom.rows);
+      setOnlyDiff(null);
+      setPendingCustom(setups.some((o) => sameSetup(o, custom)));
+    } else {
+      setPendingCustom(true);
+      setShowPartition(true);
+    }
+    setNaming(undefined);
+  };
 
   if (ws.entries.length === 0) return <Empty />;
   if (entries.length < 2) {
@@ -135,6 +160,9 @@ export function ComparePage() {
       saveBrowserComparisons(list);
     }
     rememberSaveWhere(where);
+    // It has a name now, so it is no longer the unnamed custom setup.
+    setCustom(undefined);
+    saveCustomSetup(undefined);
     setNaming(undefined);
   };
   const deleteSaved = (name: string) => {
@@ -173,10 +201,12 @@ export function ComparePage() {
       <div className="bar compare-setup">
         <label className="field">What to compare
           <select
-            value={current?.id ?? CUSTOM}
+            value={pendingCustom || isCustom ? CUSTOM : current!.id}
             onChange={(e) => {
+              if (e.target.value === CUSTOM) return chooseCustom();
               const o = setups.find((x) => x.id === e.target.value);
               if (!o) return;
+              setPendingCustom(false);
               setRoles({ ...o.roles });
               setRowKind(o.rows);
               setOnlyDiff(null);

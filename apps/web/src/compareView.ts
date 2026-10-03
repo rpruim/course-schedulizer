@@ -539,3 +539,27 @@ export function rememberSaveWhere(w: SaveWhere) {
     // a preference only
   }
 }
+
+const CUSTOM_KEY = "schedulizer:customComparison";
+
+/** The setup the user last arranged by hand (one that was not any named comparison), kept in the browser. */
+export function loadCustomSetup(): { roles: Roles; rows: RowKind } | undefined {
+  try {
+    const d = JSON.parse(window.localStorage.getItem(CUSTOM_KEY) ?? "null") as { roles?: unknown; rows?: unknown } | null;
+    if (!d || typeof d.roles !== "object" || d.roles === null) return undefined;
+    const roles: Roles = {};
+    for (const [k, v] of Object.entries(d.roles)) if (v === "group" || v === "aggregate" || v === "ignore") roles[k] = v;
+    return { roles, rows: d.rows === "instructor" ? "instructor" : "section" };
+  } catch {
+    return undefined;
+  }
+}
+
+export function saveCustomSetup(c: { roles: Roles; rows: RowKind } | undefined) {
+  try {
+    if (c) window.localStorage.setItem(CUSTOM_KEY, JSON.stringify(c));
+    else window.localStorage.removeItem(CUSTOM_KEY);
+  } catch {
+    // a convenience only
+  }
+}
