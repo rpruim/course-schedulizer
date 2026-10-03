@@ -95,10 +95,11 @@ legend { padding: 0 6px; font-size: .8rem; text-transform: uppercase; letter-spa
 .row.top { align-items: flex-start; }
 .also-listed { margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--line); }
 .also-listed h4 { margin: 0 0 4px; font-size: .85rem; }
-.also-listed .row .link { align-self: flex-end; padding-bottom: 6px; }
 .f { display: flex; flex-direction: column; gap: 2px; font-size: .8rem; color: var(--muted); }
 .f input, .f select, .f textarea { font-size: .95rem; color: var(--fg); min-width: 0; }
 .f input:not([size]), .f select, .f textarea { width: 100%; }
+/* text, time and select boxes are one height, so boxes on a row line up whatever they hold */
+.f input:not([type=checkbox]):not([type=radio]), .f select { height: 32px; }
 .row > .f { flex: 0 0 auto; }
 .row > .grow > .f { width: 100%; }
 .f textarea { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
@@ -110,9 +111,11 @@ input[aria-invalid="true"] { border-color: #c0392b; }
 .days { display: flex; gap: 2px; }
 .day { padding: 3px 7px; font-size: .8rem; }
 .day.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
-.chips { display: flex; gap: 3px; }
+.chips { display: flex; gap: 3px; align-items: center; height: 32px; }
 .chip { padding: 1px 6px; font-size: .75rem; }
-.end { font-size: .8rem; align-self: center; }
+.end { font-size: .8rem; align-self: flex-end; line-height: 32px; }
+/* a lone link or button beside the boxes of a row sits on their line */
+.row > button.link, .meeting > button.link { align-self: flex-end; line-height: 32px; padding: 0; }
 .collision { border: 1px solid var(--accent); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
 .collision label { display: block; }
 button.danger, button.danger-link { color: #c0392b; }
@@ -315,3 +318,5 @@ td button.link + button.link { margin-left: 6px; }
 .pairing-note { margin: 4px 0; }
 .breakable { word-break: break-all; }
 .onedrive { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+/* sentence-style rows ("must be able to take [any] [2] of the listed courses"): boxes one height, words centred on them */
+.row.take-row input, .row.take-row select { height: 32px; }
