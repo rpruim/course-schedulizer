@@ -97,7 +97,7 @@ export function WeekPage({ kind }: { kind: GridKind }) {
         </label>
         <label className="field">Colour by
           <select value={colorBy} onChange={(e) => setColorBy(e.target.value as ColorBy)}>
-            <option value="prefix">Subject</option>
+            <option value="prefix">Prefix</option>
             <option value="level">Course level</option>
             <option value="instructor">Instructor</option>
             <option value="group">Group</option>

@@ -345,7 +345,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <ul>
           <li><strong>Weeks</strong> chooses a part of the term. Choosing <em>First half</em> shows everything meeting in the first half: full-term, first-half, and A and B intensive 
           courses, for example.</li>
-          <li><strong>Colour by</strong> subject, course level, instructor, group or instructional method.</li>
+          <li><strong>Colour by</strong> prefix, course level, instructor, group or instructional method.</li>
           <li>The four <strong>dots</strong> at the left of each block are the four quarters of the term, top to bottom. A filled dot means the section meets then: a full-term
             course is <Dots on={[true, true, true, true]} />, a first-half course <Dots on={[true, true, false, false]} />, a second-half course <Dots on={[false, false, true, true]} />.</li>
           <li>Where <strong>sections overlap</strong>, blocks sit side by side and shrink their text to fit: full details, then the short course name, then the name turned on its side. Hover for the rest.
