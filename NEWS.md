@@ -1,3 +1,7 @@
+# Course Schedulizer 2.0.2.9000
+
+* Development version: nothing new yet.
+
 # Course Schedulizer 2.0.2
 
 * Interface improvements:
