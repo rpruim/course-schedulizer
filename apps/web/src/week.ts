@@ -216,7 +216,7 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
   const partTag = (s: Session) => (s.termPart !== "Full" ? ` · ${s.termPart}` : "");
 
   const blockFor = (s: Session, day: string, sub: string): Block => ({
-    key: `${s.sectionId}:${day}:${s.start}:${s.room}`,
+    key: `${s.sectionId}:${day}:${s.start}:${s.duration}:${s.room}`,
     sectionId: s.sectionId,
     day,
     start: s.start!,
@@ -240,7 +240,15 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
   /** Turn a set of sessions into a grid. */
   const gridOf = (id: string, title: string, sessions: Session[], subOf: (s: Session) => string, sectionIds: string[]): Grid => {
     const blocks: Block[] = [];
-    for (const s of sessions) if (scheduled(s)) for (const d of s.days) blocks.push(blockFor(s, d, subOf(s)));
+    // A section listing the same meeting twice (say, two Thursday rows with one time and room) is drawn once; it also keeps
+    // every block's key unique, which the page needs to draw and remove blocks correctly.
+    const drawn = new Set<string>();
+    for (const s of sessions) if (scheduled(s)) for (const d of s.days) {
+      const b = blockFor(s, d, subOf(s));
+      if (drawn.has(b.key)) continue;
+      drawn.add(b.key);
+      blocks.push(b);
+    }
     const used = new Set(blocks.map((b) => b.day));
     const days = [...DAY_ORDER].filter((d) => "MTWRF".includes(d) || used.has(d));
     for (const d of days) layoutLanes(blocks.filter((b) => b.day === d));

@@ -111,6 +111,14 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups, mass, ws.mergedOrigin]);
   const picks = visible.filter((p) => selected.has(keyOf(p)));
+  // Every section of the schedules in the views, to say how many of all of them are selected (a selected section that has
+  // since gone, or whose schedule is no longer shown, does not count).
+  const everySection = useMemo(() => {
+    const keys = new Set<string>();
+    if (mass) for (const e of ws.includedEntries) for (const sec of e.schedule.sessions) keys.add(`${e.id}\u0001${sec.sectionId}`);
+    return keys;
+  }, [mass, ws.includedEntries]);
+  const selectedTotal = [...selected].filter((k) => everySection.has(k)).length;
   const pick = (scheduleId: string, sectionId: string) => {
     const p = resolve(scheduleId, sectionId);
     if (!p) return;
@@ -214,8 +222,9 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
           <div className="bar">
             <button onClick={() => setSelected((cur) => new Set([...cur, ...visible.map(keyOf)]))} disabled={picks.length === visible.length}>Add visible courses to selection</button>
             <button onClick={() => { const shown = new Set(visible.map(keyOf)); setSelected((cur) => new Set([...cur].filter((k) => !shown.has(k)))); }} disabled={picks.length === 0}>Remove visible courses from selection</button>
+            <button onClick={() => { setSelected(new Set()); setMassMessage(""); }} disabled={selected.size === 0} title="Deselects every section, including any that the filters are hiding">Clear selection</button>
             <button className="primary" onClick={() => setMassOpen(true)} disabled={picks.length === 0}>Edit selected…</button>
-            <span className="muted">{picks.length} of {visible.length} visible section{visible.length === 1 ? "" : "s"} selected{selected.size > picks.length ? ` (${selected.size - picks.length} more selected but hidden by the filters, and not edited)` : ""}</span>
+            <span className="muted">{selectedTotal} of {everySection.size} section{everySection.size === 1 ? "" : "s"} selected, including {picks.length} of {visible.length} visible section{visible.length === 1 ? "" : "s"}</span>
             {massMessage && <span className="note ok" role="status">{massMessage}</span>}
           </div>
           {massOpen && <MassEditDialog picks={picks} onClose={() => setMassOpen(false)} onDone={setMassMessage} />}

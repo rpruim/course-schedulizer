@@ -148,6 +148,14 @@ describe("department grid", () => {
     expect(ids({ by: "prefix", values: ["STAT", "DATA"] }).blocks).toHaveLength(2);
     expect(ids().blocks).toHaveLength(4);
   });
+  it("draws a meeting listed twice only once, so block keys are unique", () => {
+    const twice = make([sec("MATH", "1", "A", { ...mt("R\nR", "9:00\n9:00", "50\n50", "NH 1\nNH 1") })]);
+    const blocks = weekGrids(twice, opts()).grids[0]!.blocks;
+    expect(blocks).toHaveLength(1);
+    const many = make([sec("MATH", "1", "A", { ...mt("MWF", "9:00", "50", "NH 1") }), sec("MATH", "2", "A", { ...mt("MWF", "9:00", "50", "NH 2") })]);
+    const keys = weekGrids(many, opts()).grids[0]!.blocks.map((b) => b.key);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
   it("uses the cross-listing display name", () => {
     const x = make([sec("DATA", "385", "A", mt("M", "9:00", "50"))], { crossListings: [{ SectionId: "Y-FA-DATA385-A", Prefix: "STAT", CourseNumber: "385" }] });
     expect(weekGrids(x, opts()).grids[0]!.blocks[0]!.title).toBe("DATA/STAT 385 A");
