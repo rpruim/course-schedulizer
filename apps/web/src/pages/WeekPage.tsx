@@ -212,10 +212,10 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
         <>
           <p className="muted small">Click sections to select or deselect them: selected sections have a green outline. Use the filter to narrow what is shown, then choose <em>Edit selected</em>.</p>
           <div className="bar">
-            <button onClick={() => setSelected((cur) => new Set([...cur, ...visible.map(keyOf)]))} disabled={visible.length === 0}>Select all</button>
-            <button onClick={() => setSelected(new Set())} disabled={selected.size === 0}>Deselect all</button>
+            <button onClick={() => setSelected((cur) => new Set([...cur, ...visible.map(keyOf)]))} disabled={picks.length === visible.length}>Add visible courses to selection</button>
+            <button onClick={() => { const shown = new Set(visible.map(keyOf)); setSelected((cur) => new Set([...cur].filter((k) => !shown.has(k)))); }} disabled={picks.length === 0}>Remove visible courses from selection</button>
             <button className="primary" onClick={() => setMassOpen(true)} disabled={picks.length === 0}>Edit selected…</button>
-            <span className="muted">{picks.length} of {visible.length} section{visible.length === 1 ? "" : "s"} selected</span>
+            <span className="muted">{picks.length} of {visible.length} visible section{visible.length === 1 ? "" : "s"} selected{selected.size > picks.length ? ` (${selected.size - picks.length} more selected but hidden by the filters, and not edited)` : ""}</span>
             {massMessage && <span className="note ok" role="status">{massMessage}</span>}
           </div>
           {massOpen && <MassEditDialog picks={picks} onClose={() => setMassOpen(false)} onDone={setMassMessage} />}

@@ -166,7 +166,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dd>
             The department week grid, but a click selects or deselects a section (selected sections have a green outline) instead of opening it.
             Use <em>Filter by</em> (the same choices as <em>Color by</em>) and the <em>Show</em> list, where you can tick several values, including <em>(missing)</em>, to narrow what is shown;
-            <em>Select all</em> and <em>Deselect all</em> work on the sections shown. <em>Edit selected…</em> opens an editor with every box blank: fill in only what you want to set
+            <em>Add visible courses to selection</em> and <em>Remove visible courses from selection</em> work only on the sections shown, so a selection can be built up across several filters; only the sections shown are ever edited. <em>Edit selected…</em> opens an editor with every box blank: fill in only what you want to set
             (department, title, instructors, load, credits, instructional method, course level, group, delivery, enrollment, comment) and choose <em>Replace missing values only</em>
             (the default) or <em>Overwrite existing values</em>. The editor says how many values would change before you apply, and the whole edit can be undone. Meeting days, times and
             rooms are not part of it.
