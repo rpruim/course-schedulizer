@@ -235,7 +235,8 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
             {Object.entries(fieldErrors).filter(([k]) => k.startsWith("faculty.") && attempted).map(([k, m]) => <span key={k} className="err">{m}</span>)}
           </fieldset>
 
-          <fieldset>
+          {/* The outline follows the live preview below: red for a conflict (which wins), orange for a non-standard time. */}
+          <fieldset className={preview && preview.conflicts.length > 0 ? "meetings-conflict" : preview && preview.nonStandard.length > 0 ? "meetings-nonstandard" : undefined}>
             <legend>Meetings</legend>
             {form.meetings.length === 0 && <p className="muted">No scheduled time (for example an internship or an online section).</p>}
             {form.meetings.map((m, i) => {
