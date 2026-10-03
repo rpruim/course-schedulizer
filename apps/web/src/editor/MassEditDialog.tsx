@@ -150,7 +150,7 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
           <fieldset>
             <legend>Course</legend>
             <div className="row top">
-              {box("prefix", "Prefix", 8, mode === "overwrite" ? "Renames the course prefix." : "Changes only when overwriting (a section always has a prefix).")}
+              {box("prefix", "Prefix", 5)}
               {box("department", "Department", 30)}
               {box("courseLevel", "Course level", 6)}
               {box("group", "Group", 10)}
@@ -180,20 +180,21 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
             </div>
             <label className="f"><span>Comment</span><textarea rows={2} value={form.comment} onChange={(e) => set("comment", e.target.value)} /></label>
           </fieldset>
-          <fieldset>
-            <legend>Apply to the selected sections</legend>
+        </div>
+        <div className="editor-apply">
+          <div className="apply-modes" role="radiogroup" aria-label="Apply to the selected sections">
             <label className="choice"><input type="radio" name="mass-mode" checked={mode === "missing"} onChange={() => setMode("missing")} /> Replace missing values only</label>
             <label className="choice"><input type="radio" name="mass-mode" checked={mode === "overwrite"} onChange={() => setMode("overwrite")} /> Overwrite existing values</label>
-            <p className="preview">
-              {picks.length === 0
-                ? "No section is chosen to edit: choose “Also edit…” above."
-                : filled === 0
-                ? "Nothing filled in yet."
-                : preview.sections === 0
-                  ? `No section being edited would change.${notes(preview)}`
-                  : `This would change ${preview.values} value${preview.values === 1 ? "" : "s"} in ${preview.sections} of the ${picks.length} section${picks.length === 1 ? "" : "s"} being edited.${notes(preview)}`}
-            </p>
-          </fieldset>
+          </div>
+          <p className="preview">
+            {picks.length === 0
+              ? "No section is chosen to edit: choose “Also edit…” above."
+              : filled === 0
+              ? "Nothing filled in yet."
+              : preview.sections === 0
+                ? `No section being edited would change.${notes(preview)}`
+                : `This would change ${preview.values} value${preview.values === 1 ? "" : "s"} in ${preview.sections} of the ${picks.length} section${picks.length === 1 ? "" : "s"} being edited.${notes(preview)}`}
+          </p>
         </div>
         <footer className="editor-foot">
           <span className="spacer" />

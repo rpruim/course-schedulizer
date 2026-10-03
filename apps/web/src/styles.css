@@ -350,3 +350,8 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 /* Mass edit: a selected section has a green outline (clear of the red and orange borders of conflicts and non-standard times) */
 .block.selected, .chip.selected { outline: 3px solid #2e9e4f; outline-offset: 1px; }
 .block.selected { z-index: 2; }
+
+/* Mass edit: how to apply the edit stays in view under the scrolling boxes, just above the buttons */
+.editor-apply { padding: 8px 16px; border-top: 1px solid var(--line); }
+.apply-modes { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.editor-apply .preview { margin: 4px 0 0; }
