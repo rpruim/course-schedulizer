@@ -8,6 +8,7 @@ import {
   draftShares,
   emptySchedule,
   findConflicts,
+  findRuleViolations,
   formatTime,
   parseTime,
   partsFor,
@@ -74,7 +75,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
   const fieldErrors = byField(errors);
   const err = (field: string) => (attempted ? fieldErrors[field]?.map((m, i) => <span key={i} className="err">{m}</span>) : null);
 
-  // Live preview of what saving would do: the course name, load shares, and any conflicts it would create.
+  // Live preview of what saving would do: the course name, load shares, and any conflicts or non-standard times it would create.
   const preview = useMemo(() => {
     if (errors.length) return undefined;
     const r = saveDraft(schedule, draft, { kind: "swap" });
@@ -87,7 +88,9 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
         const o = r.schedule.sessions.find((s) => s.sectionId === otherId);
         return `${c.type}: ${names.get(otherId) ?? otherId} ${o?.section ?? ""} (${c.detail})`;
       });
-    return { conflicts, other: r.other, swapTo: r.other?.to };
+    // Meetings at times that are not standard, counting the standard-times rules of the schedule (the built-in check included).
+    const nonStandard = findRuleViolations(r.schedule).filter((v) => v.type === "standard" && v.sectionIds.includes(r.sectionId)).map((v) => v.message);
+    return { conflicts, nonStandard, other: r.other, swapTo: r.other?.to };
   }, [errors, schedule, draft]);
 
   const name = courseDisplayName([{ prefix: form.prefix.trim().toUpperCase(), courseNumber: form.courseNumber.trim() }, ...form.crossListings.filter((l) => l.prefix.trim() && l.courseNumber.trim()).map((l) => ({ prefix: l.prefix.trim().toUpperCase(), courseNumber: l.courseNumber.trim() }))]);
@@ -292,9 +295,15 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
           </details>
 
           {preview && preview.conflicts.length > 0 && (
-            <div className="note warn" role="status">
+            <div className="note conflict-note" role="status">
               <strong>This section would conflict with:</strong>
               <ul>{preview.conflicts.map((c, i) => <li key={i}>{c}</li>)}</ul>
+            </div>
+          )}
+          {preview && preview.nonStandard.length > 0 && (
+            <div className="note nonstandard-note" role="status">
+              <strong>Non-standard meeting time:</strong>
+              <ul>{preview.nonStandard.map((m, i) => <li key={i}>{m}</li>)}</ul>
             </div>
           )}
           {attempted && errors.length > 0 && <p className="err" role="alert">Fix the highlighted fields to save.</p>}
