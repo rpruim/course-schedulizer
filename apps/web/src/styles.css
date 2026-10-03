@@ -299,3 +299,4 @@ td button.link + button.link { margin-left: 6px; }
 .mini tr:hover .pairbtn, .pairbtn:focus-visible { opacity: 1; }
 .pairpick { font-size: .75rem; padding: 1px 4px; max-width: 11rem; }
 .pairing-note { margin: 4px 0; }
+.breakable { word-break: break-all; }

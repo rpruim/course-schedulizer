@@ -12,6 +12,8 @@ import {
 import { useLocation } from "react-router-dom";
 import { EXAMPLES, type ExampleKey } from "./demo";
 import { downloadBytes, XLSX_TYPE } from "./download";
+import { shareLink } from "./remote";
+import { fetchSchedule } from "./remoteOpen";
 import { allIssues, errorsOf, issueText, needsAcademicYear } from "./issues";
 import { useWorkspace } from "./state";
 
@@ -64,6 +66,7 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
   const [year, setYear] = useState("");
   const [target, setTarget] = useState("new");
   const [busy, setBusy] = useState(false);
+  const [address, setAddress] = useState("");
   const input = useRef<HTMLInputElement>(null);
   const replacing = ws.entries.find((e) => e.id === target);
   const mode = replacing ? target : "new";
@@ -94,6 +97,19 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
     }
   }
 
+  async function openAddress() {
+    const url = address.trim();
+    if (!url) return;
+    setBusy(true);
+    try {
+      const got = await fetchSchedule({ url }, year.trim() || undefined);
+      if (got.schedule) place(got.name, got.schedule, true);
+      onReports([got.report]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function example(key: ExampleKey) {
     const result = EXAMPLES[key].build();
     place(EXAMPLES[key].label, result.schedule, true);
@@ -101,6 +117,7 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
   }
 
   return (
+    <>
     <div className="bar">
       <label className="button">
         {busy ? "Opening…" : "Open Excel file…"}
@@ -125,6 +142,39 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
         <button key={k} onClick={() => example(k)}>{EXAMPLES[k].label}</button>
       ))}
     </div>
+    <div className="bar">
+      <label className="field grow">
+        Or open a file from a web address
+        <input value={address} onChange={(e) => setAddress(e.target.value)} onKeyDown={(e) => e.key === "Enter" && void openAddress()} placeholder="https://…/AY25.xlsx" />
+      </label>
+      <button onClick={() => void openAddress()} disabled={busy || !address.trim()}>Open address</button>
+    </div>
+    <ShareLink address={address} year={year} />
+    </>
+  );
+}
+
+/** The one-click link for the file at the address typed above, to copy and send. */
+function ShareLink({ address, year }: { address: string; year: string }) {
+  const [copied, setCopied] = useState(false);
+  const url = address.trim();
+  if (!/^https?:\/\//i.test(url)) return null;
+  const link = shareLink(window.location.href, [url], year.trim() ? { academicYear: year.trim() } : {});
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* the link is shown in full to copy by hand */
+    }
+  }
+  return (
+    <p className="small">
+      <span className="muted">Link that opens this file in the app: </span>
+      <code className="breakable">{link}</code>{" "}
+      <button onClick={() => void copy()}>{copied ? "Copied" : "Copy link"}</button>
+    </p>
   );
 }
 

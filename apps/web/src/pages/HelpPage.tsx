@@ -108,6 +108,13 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li><strong>Examples</strong> load small made-up schedules, handy for trying things out. <em>Example with constraint rules</em> shows each kind of rule, some met and some not (a cohort that must be able to take its courses together, “any two” and “some pair” of electives, a time window, back-to-back classes, and changes to the standard times); open the Constraints and Conflicts pages to see them.</li>
         </ul>
         <p>
+          <strong>Open from a web address.</strong> If a file is on a web server that lets other pages read it (a GitHub repository, a Dropbox share link, or any
+          site you run), paste its address into <em>Or open a file from a web address</em>. The app then shows a link you can copy and send: whoever opens it
+          gets the app with that file already opened as a new schedule. A link can name several files (<code>url=…&amp;url=…</code>), a name (<code>name=…</code>) and an
+          academic year for files that have none (<code>year=…</code>). A GitHub “blob” page address is turned into the raw file for you. Sharing pages from OneDrive
+          and Google Drive do not work this way, because those services do not let other web pages read the files.
+        </p>
+        <p>
           A report appears after opening. <em>Errors</em> are rows that could not be read (they are skipped, everything else is opened); <em>warnings</em> are things
           worth a look, such as a room with no matching time. Each message names the sheet and row so you can find it in Excel.
         </p>
