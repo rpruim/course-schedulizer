@@ -38,6 +38,26 @@ and Node 22, and `packageManager` in `package.json` pins the pnpm version. Every
 branch deploys, and every branch or pull request gets a preview URL. Nothing else is needed: no
 redirects, no environment variables. Schedules stay in each visitor's browser.
 
+## Opening schedules from a link, and OneDrive
+
+A link like `https://course-schedulizer.netlify.app/#/import?url=<file address>` opens that Excel file as a new schedule
+(repeat `url=`, add `name=` and `year=` as needed). The file's server must allow other pages to read it: GitHub raw files,
+Dropbox share links and files hosted on the site itself do; the Import tab builds the link.
+
+**OneDrive / SharePoint** links and saving back to OneDrive need Microsoft sign-in, which needs an app registration (free, one time;
+the site has no server, so there is no secret):
+
+1. In the Microsoft Entra admin center: *App registrations → New registration*. Name it *Course Schedulizer*. For *Supported account
+   types* choose *this organizational directory only* (then also set `VITE_MS_TENANT`, below) or *any organizational directory*.
+2. Add a redirect URI of platform **Single-page application**: `https://<your site>/redirect.html` (and `http://localhost:5174/redirect.html`
+   for `pnpm dev`).
+3. *API permissions → Add → Microsoft Graph → Delegated*: `Files.Read.All` and `Files.ReadWrite.All`. (Opening files asks for the first;
+   saving asks for the second only when someone saves.) If the organization does not let users consent themselves, an administrator
+   grants consent once.
+4. Copy the *Application (client) ID* into the build settings: on Netlify, *Site configuration → Environment variables* `VITE_MS_CLIENT_ID`
+   (and `VITE_MS_TENANT` = the directory (tenant) ID, or leave it out for `organizations`); for local work, the same names in
+   `apps/web/.env.local`. Redeploy. Without `VITE_MS_CLIENT_ID` the OneDrive features are simply hidden.
+
 ## Site icon
 
 The icon (a week grid of course blocks in maroon and gold) is `apps/web/public/favicon.svg`, used by

@@ -1,0 +1,140 @@
+/** Reading and writing Excel files on OneDrive / SharePoint through Microsoft Graph. */
+
+/** Where a schedule came from, so saving can write back to the same file. */
+export interface OneDriveSource {
+  driveId: string;
+  itemId: string;
+  /** Changes whenever the file does; saving checks it so someone else's edit is not overwritten. */
+  eTag: string;
+  name: string;
+  webUrl: string;
+}
+
+const GRAPH = "https://graph.microsoft.com/v1.0";
+
+/** True for the addresses OneDrive and SharePoint sharing links have. */
+export function isOneDriveUrl(raw: string): boolean {
+  try {
+    const h = new URL(raw.trim()).hostname.toLowerCase();
+    return h === "1drv.ms" || h === "onedrive.live.com" || h === "sharepoint.com" || h.endsWith(".sharepoint.com") || h.endsWith(".sharepoint.us") || h.endsWith(".sharepoint.cn");
+  } catch {
+    return false;
+  }
+}
+
+/** Graph's encoding of a sharing link: `u!` + the address in unpadded, URL-safe base64. */
+export function encodeSharingUrl(url: string): string {
+  const bytes = new TextEncoder().encode(url.trim());
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return "u!" + btoa(bin).replace(/=+$/, "").replace(/\//g, "_").replace(/\+/g, "-");
+}
+
+export type GraphErrorKind = "signin" | "auth" | "notfound" | "conflict" | "blocked" | "other";
+
+export class GraphError extends Error {
+  constructor(readonly kind: GraphErrorKind, message: string, readonly status?: number) {
+    super(message);
+    this.name = "GraphError";
+  }
+}
+
+const explain = (status: number, detail: string): GraphError => {
+  const more = detail ? ` (${detail})` : "";
+  if (status === 401) return new GraphError("auth", `Microsoft did not accept the sign-in${more}. Sign in again.`, status);
+  if (status === 403) return new GraphError("blocked", `You do not have access to this file${more}. Ask its owner to share it with you, with permission to edit if you want to save back.`, status);
+  if (status === 404) return new GraphError("notfound", `OneDrive could not find this file${more}. The link may have been removed or may need sign-in with another account.`, status);
+  if (status === 409 || status === 412) return new GraphError("conflict", `The file on OneDrive has changed since it was opened${more}.`, status);
+  return new GraphError("other", `OneDrive answered ${status}${more}.`, status);
+};
+
+interface DriveItem {
+  id: string;
+  name: string;
+  eTag?: string;
+  webUrl?: string;
+  parentReference?: { driveId?: string };
+  "@microsoft.graph.downloadUrl"?: string;
+}
+
+const toSource = (item: DriveItem): OneDriveSource => ({
+  driveId: item.parentReference?.driveId ?? "",
+  itemId: item.id,
+  eTag: item.eTag ?? "",
+  name: item.name,
+  webUrl: item.webUrl ?? "",
+});
+
+/** Which access a call needs; reading asks for less than writing. */
+export type Access = "read" | "write";
+
+export class GraphClient {
+  constructor(
+    private readonly token: (access: Access) => Promise<string>,
+    private readonly fetcher: typeof fetch = (...a) => fetch(...a),
+  ) {}
+
+  private async call(access: Access, path: string, init: RequestInit = {}): Promise<Response> {
+    let res: Response;
+    try {
+      res = await this.fetcher(path.startsWith("http") ? path : GRAPH + path, { ...init, headers: { Authorization: `Bearer ${await this.token(access)}`, ...init.headers } });
+    } catch (e) {
+      if (e instanceof GraphError) throw e;
+      throw new GraphError("other", `could not reach OneDrive (${e instanceof Error ? e.message : String(e)})`);
+    }
+    if (!res.ok) {
+      let detail = "";
+      try {
+        detail = ((await res.json()) as { error?: { message?: string } }).error?.message ?? "";
+      } catch {
+        /* no detail */
+      }
+      throw explain(res.status, detail);
+    }
+    return res;
+  }
+
+  /** The file a sharing link points to, and its bytes. */
+  async openShared(link: string): Promise<{ source: OneDriveSource; bytes: Uint8Array }> {
+    const res = await this.call("read", `/shares/${encodeSharingUrl(link)}/driveItem`, { headers: { Prefer: "redeemSharingLinkIfNecessary" } });
+    const item = (await res.json()) as DriveItem;
+    return { source: toSource(item), bytes: await this.download(item) };
+  }
+
+  private async download(item: DriveItem): Promise<Uint8Array> {
+    const url = item["@microsoft.graph.downloadUrl"];
+    // The download address is pre-authorised; it must be fetched without the Authorization header.
+    const res = url ? await this.fetcher(url) : await this.call("read", `/drives/${item.parentReference?.driveId}/items/${item.id}/content`);
+    if (!res.ok) throw explain(res.status, "");
+    return new Uint8Array(await res.arrayBuffer());
+  }
+
+  /** Replace the contents of the file this schedule came from. Unless `force`, refuses if the file changed meanwhile. */
+  async saveBack(source: OneDriveSource, bytes: Uint8Array, force = false): Promise<OneDriveSource> {
+    const headers: Record<string, string> = { "Content-Type": XLSX };
+    if (!force && source.eTag) headers["If-Match"] = source.eTag;
+    const res = await this.call("write", `/drives/${source.driveId}/items/${source.itemId}/content`, { method: "PUT", headers, body: bytes as BodyInit });
+    return { ...source, ...toSource((await res.json()) as DriveItem), name: source.name };
+  }
+
+  /** Put a new file in the Schedulizer folder of the signed-in user's OneDrive (renamed if the name is taken). */
+  async saveNew(fileName: string, bytes: Uint8Array): Promise<OneDriveSource> {
+    const path = `Schedulizer/${fileName}`.split("/").map(encodeURIComponent).join("/");
+    const res = await this.call("write", `/me/drive/root:/${path}:/content?@microsoft.graph.conflictBehavior=rename`, { method: "PUT", headers: { "Content-Type": XLSX }, body: bytes as BodyInit });
+    return toSource((await res.json()) as DriveItem);
+  }
+
+  /** A link that lets people in the organization open (or edit) the file. */
+  async shareLink(source: OneDriveSource, type: "view" | "edit"): Promise<string> {
+    const res = await this.call("write", `/drives/${source.driveId}/items/${source.itemId}/createLink`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, scope: "organization" }),
+    });
+    const link = ((await res.json()) as { link?: { webUrl?: string } }).link?.webUrl;
+    if (!link) throw new GraphError("other", "OneDrive did not return a link");
+    return link;
+  }
+}
+
+const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";

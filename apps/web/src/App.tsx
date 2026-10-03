@@ -16,7 +16,8 @@ import { SchedulePage } from "./pages/SchedulePage";
 import { WeekPage } from "./pages/WeekPage";
 import { SchedulePicker } from "./schedules";
 import { MenuBar, type MenuGroup } from "./MenuBar";
-import { linkRequests } from "./remote";
+import { sharedOpener } from "./onedrive/auth";
+import { linkRequests, type LinkRequest } from "./remote";
 import { fetchSchedule } from "./remoteOpen";
 import { useWorkspace, WorkspaceProvider } from "./state";
 
@@ -57,23 +58,30 @@ function Shell() {
   const [opening, setOpening] = useState(false);
   const wanted = linkRequests(params);
   const opened = useRef("");
+  // Files from a link that sit on OneDrive and wait for a click, because Microsoft's sign-in window needs one.
+  const [waiting, setWaiting] = useState<{ files: LinkRequest[]; academicYear?: string } | undefined>();
+  async function openFiles(files: LinkRequest[], academicYear: string | undefined, interactive: boolean) {
+    setOpening(true);
+    const shared = sharedOpener(interactive);
+    const results = [];
+    for (const f of files) results.push(await fetchSchedule(f, academicYear, undefined, undefined, shared));
+    for (const r of results) if (r.schedule) addSchedule(r.name, r.schedule, r.source);
+    const signIn = results.flatMap((r, i) => (r.needsSignIn ? [files[i]!] : []));
+    setWaiting(signIn.length ? { files: signIn, ...(academicYear ? { academicYear } : {}) } : undefined);
+    const count = results.filter((r) => r.schedule).length;
+    const problems = results.filter((r) => !r.needsSignIn).some((r) => r.report.issues.length > 0);
+    const done = results.filter((r) => !r.needsSignIn).map((r) => r.report);
+    setReports(done.length ? done : undefined);
+    setOpening(false);
+    // The address is spent: drop it so reloading the page does not open the files again.
+    navigate(count > 0 && !problems && signIn.length === 0 ? "/" : "/import", { replace: true });
+    if (count > 0 && !problems) setNotice(count === 1 ? `Opened “${results.find((r) => r.schedule)!.name}” from the link.` : `Opened ${count} schedules from the link.`);
+  }
   // A link that names files (`#/import?url=…`) opens them as new schedules once the saved workspace is back.
   useEffect(() => {
     if (!restored || wanted.files.length === 0 || opened.current === params.toString()) return;
     opened.current = params.toString();
-    setOpening(true);
-    void (async () => {
-      const results = [];
-      for (const f of wanted.files) results.push(await fetchSchedule(f, wanted.academicYear));
-      for (const r of results) if (r.schedule) addSchedule(r.name, r.schedule);
-      const count = results.filter((r) => r.schedule).length;
-      const problems = results.some((r) => r.report.issues.length > 0);
-      setReports(results.map((r) => r.report));
-      setOpening(false);
-      // The address is spent: drop it so reloading the page does not open the files again.
-      navigate(count > 0 && !problems ? "/" : "/import", { replace: true });
-      if (count > 0 && !problems) setNotice(count === 1 ? `Opened “${results[0]!.name}” from the link.` : `Opened ${count} schedules from the link.`);
-    })();
+    void openFiles(wanted.files, wanted.academicYear, false);
   });
   // With nothing open, the first thing to do is open something: go to Import (at start-up, and when the last schedule is removed).
   useEffect(() => {
@@ -99,6 +107,13 @@ function Shell() {
         )}
         {saveError && <p className="note warn">Your browser would not keep a working copy ({saveError}). Export to Excel to keep your changes.</p>}
         {opening && <p className="note" role="status">Opening the file from the link…</p>}
+        {waiting && !opening && (
+          <p className="note" role="status">
+            {waiting.files.length === 1 ? "This file is on OneDrive." : `${waiting.files.length} files are on OneDrive.`} Sign in with Microsoft to open {waiting.files.length === 1 ? "it" : "them"}.{" "}
+            <button className="primary" onClick={() => void openFiles(waiting.files, waiting.academicYear, true)}>Sign in and open</button>{" "}
+            <button className="link" onClick={() => setWaiting(undefined)}>Dismiss</button>
+          </p>
+        )}
         <MenuBar groups={GROUPS} />
         <main>
           <Routes>

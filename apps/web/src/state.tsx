@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import { emptySchedule, mergeSchedules, type MergeOrigin, type Schedule } from "@schedulizer/core";
+import type { OneDriveSource } from "./onedrive/graph";
 import { LocalWorkspaceStore, type WorkspaceEntry, type WorkspaceSnapshot, type WorkspaceStore } from "./store";
 
 const MAX_HISTORY = 100;
@@ -37,7 +38,8 @@ export interface State {
 export type Action =
   | { type: "load"; snapshot: WorkspaceSnapshot }
   | { type: "add"; entry: Entry }
-  | { type: "replace"; id: string; name: string; schedule: Schedule }
+  | { type: "replace"; id: string; name: string; schedule: Schedule; source?: OneDriveSource }
+  | { type: "setSource"; id: string; source: OneDriveSource | undefined }
   | { type: "remove"; id: string }
   | { type: "rename"; id: string; name: string }
   | { type: "edit"; id: string; fn: (s: Schedule) => Schedule }
@@ -47,6 +49,11 @@ export type Action =
   | { type: "redo" };
 
 export const initialState = (): State => ({ past: [], present: [], future: [], currentId: "", included: [] });
+
+const withSource = (entry: Entry, source: OneDriveSource | undefined): Entry => {
+  const { source: _old, ...rest } = entry;
+  return source ? { ...rest, source } : rest;
+};
 
 const cleanName = (name: string) => name.trim() || "Schedule";
 
@@ -97,8 +104,14 @@ export function reducer(state: State, action: Action): State {
     }
     case "replace": {
       if (!state.present.some((e) => e.id === action.id)) return state;
-      const next = change(state, state.present.map((e) => (e.id === action.id ? { ...e, name: cleanName(action.name), schedule: action.schedule } : e)));
+      // New contents come from wherever they came from: a file opened over a schedule is no longer the OneDrive file it was.
+      const next = change(state, state.present.map((e) => (e.id === action.id ? withSource({ ...e, name: cleanName(action.name), schedule: action.schedule }, action.source) : e)));
       return state.included.includes(action.id) ? next : sanitize({ ...next, included: [...state.included, action.id] });
+    }
+    case "setSource": {
+      // Remembering where a schedule is saved is bookkeeping, not an edit: not in the undo history.
+      if (!state.present.some((e) => e.id === action.id)) return state;
+      return { ...state, present: state.present.map((e) => (e.id === action.id ? withSource(e, action.source) : e)) };
     }
     case "remove":
       return change(state, state.present.filter((e) => e.id !== action.id));
@@ -159,9 +172,11 @@ export interface Workspace {
   undo(): void;
   redo(): void;
   /** Open a schedule as a new one; it becomes current and is included. Returns its id. */
-  addSchedule(name: string, schedule: Schedule): string;
+  addSchedule(name: string, schedule: Schedule, source?: OneDriveSource): string;
   /** Replace a schedule's contents (opening a file over it). */
-  replaceSchedule(id: string, name: string, schedule: Schedule): void;
+  replaceSchedule(id: string, name: string, schedule: Schedule, source?: OneDriveSource): void;
+  /** Note (or forget, with undefined) the OneDrive file a schedule is saved in. */
+  setSource(id: string, source: OneDriveSource | undefined): void;
   removeSchedule(id: string): void;
   renameSchedule(id: string, name: string): void;
   /** Edit one schedule; undoable. */
@@ -225,9 +240,9 @@ export function WorkspaceProvider({ children, store }: { children: ReactNode; st
     return () => clearTimeout(t);
   }, [backing, state.present, state.currentId, state.included]);
 
-  const addSchedule = useCallback((name: string, schedule: Schedule) => {
+  const addSchedule = useCallback((name: string, schedule: Schedule, source?: OneDriveSource) => {
     const id = newId();
-    dispatch({ type: "add", entry: { id, name, schedule } });
+    dispatch({ type: "add", entry: { id, name, schedule, ...(source ? { source } : {}) } });
     return id;
   }, []);
 
@@ -254,7 +269,8 @@ export function WorkspaceProvider({ children, store }: { children: ReactNode; st
       undo: () => dispatch({ type: "undo" }),
       redo: () => dispatch({ type: "redo" }),
       addSchedule,
-      replaceSchedule: (id, name, schedule) => dispatch({ type: "replace", id, name, schedule }),
+      replaceSchedule: (id, name, schedule, source) => dispatch({ type: "replace", id, name, schedule, ...(source ? { source } : {}) }),
+      setSource: (id, source) => dispatch({ type: "setSource", id, source }),
       removeSchedule: (id) => dispatch({ type: "remove", id }),
       renameSchedule: (id, name) => dispatch({ type: "rename", id, name }),
       applyTo: (id, fn) => dispatch({ type: "edit", id, fn }),

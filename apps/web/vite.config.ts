@@ -21,5 +21,10 @@ export default defineConfig({
   base: "./",
   resolve: { alias: { "@schedulizer/core": core, "@fixtures": fixtures } },
   server: { port: 5174, fs: { allow: ["../.."] } },
-  build: { outDir: "dist", sourcemap: false },
+  build: {
+    outDir: "dist",
+    sourcemap: false,
+    // redirect.html is the page Microsoft's sign-in window returns to.
+    rollupOptions: { input: { main: fileURLToPath(new URL("index.html", import.meta.url)), redirect: fileURLToPath(new URL("redirect.html", import.meta.url)) } },
+  },
 });

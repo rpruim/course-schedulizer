@@ -12,6 +12,9 @@ import {
 import { useLocation } from "react-router-dom";
 import { EXAMPLES, type ExampleKey } from "./demo";
 import { downloadBytes, XLSX_TYPE } from "./download";
+import { sharedOpener } from "./onedrive/auth";
+import type { OneDriveSource } from "./onedrive/graph";
+import { OneDrivePanel } from "./onedrive/OneDrivePanel";
 import { shareLink } from "./remote";
 import { fetchSchedule } from "./remoteOpen";
 import { allIssues, errorsOf, issueText, needsAcademicYear } from "./issues";
@@ -72,9 +75,9 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
   const mode = replacing ? target : "new";
 
   /** Put a schedule in the workspace per the "Open as" choice; `first` is true for the first of several files. */
-  function place(name: string, schedule: Schedule, first: boolean) {
-    if (replacing && first) ws.replaceSchedule(replacing.id, ws.fileNameOf(replacing.id), schedule);
-    else ws.addSchedule(name, schedule);
+  function place(name: string, schedule: Schedule, first: boolean, source?: OneDriveSource) {
+    if (replacing && first) ws.replaceSchedule(replacing.id, ws.fileNameOf(replacing.id), schedule, source);
+    else ws.addSchedule(name, schedule, source);
   }
 
   async function open(files: File[]) {
@@ -102,8 +105,9 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
     if (!url) return;
     setBusy(true);
     try {
-      const got = await fetchSchedule({ url }, year.trim() || undefined);
-      if (got.schedule) place(got.name, got.schedule, true);
+      const shared = sharedOpener(true);
+      const got = await fetchSchedule({ url }, year.trim() || undefined, undefined, undefined, shared);
+      if (got.schedule) place(got.name, got.schedule, true, got.source);
       onReports([got.report]);
     } finally {
       setBusy(false);
@@ -223,14 +227,16 @@ export function ExportPanel() {
   const s = entry.schedule;
   const empty = s.sessions.length === 0 && s.nonTeaching.length === 0;
 
-  async function exportXlsx() {
-    if (!entry) return;
+  const build = (includeNonTeaching: boolean) => {
     const named = { ...entry.schedule, meta: { ...entry.schedule.meta, name: ws.fileNameOf(entry.id) } };
-    const bytes = await writeWorkbook(named, { includeNonTeaching: !teachingOnly });
-    downloadBytes(bytes, exportFileName(entry.schedule.meta), XLSX_TYPE);
+    return writeWorkbook(named, { includeNonTeaching });
+  };
+  async function exportXlsx() {
+    downloadBytes(await build(!teachingOnly), exportFileName(entry!.schedule.meta), XLSX_TYPE);
   }
 
   return (
+    <>
     <div className="bar">
       {ws.entries.length > 1 && (
         <label className="field">Schedule
@@ -246,5 +252,7 @@ export function ExportPanel() {
       <button className="primary" onClick={() => void exportXlsx()} disabled={empty}>Export Excel</button>
       <span className="muted small">Downloads as <code>{exportFileName(s.meta)}</code> (change this on the Meta tab).</span>
     </div>
+    <OneDrivePanel entry={entry} build={() => build(true)} fileName={exportFileName(s.meta)} disabled={empty} />
+    </>
   );
 }

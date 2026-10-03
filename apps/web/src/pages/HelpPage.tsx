@@ -111,8 +111,14 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <strong>Open from a web address.</strong> If a file is on a web server that lets other pages read it (a GitHub repository, a Dropbox share link, or any
           site you run), paste its address into <em>Or open a file from a web address</em>. The app then shows a link you can copy and send: whoever opens it
           gets the app with that file already opened as a new schedule. A link can name several files (<code>url=…&amp;url=…</code>), a name (<code>name=…</code>) and an
-          academic year for files that have none (<code>year=…</code>). A GitHub “blob” page address is turned into the raw file for you. Sharing pages from OneDrive
-          and Google Drive do not work this way, because those services do not let other web pages read the files.
+          academic year for files that have none (<code>year=…</code>). A GitHub “blob” page address is turned into the raw file for you.
+          Google Drive sharing pages do not work this way, because Google does not let other web pages read the files.
+        </p>
+        <p>
+          <strong>OneDrive and SharePoint.</strong> When this site is set up for Microsoft sign-in, paste a OneDrive or SharePoint sharing link
+          (<em>Share → Copy link</em> in OneDrive) into the same box, or open a link containing one. The first time, a <em>Sign in and open</em> button appears (Microsoft’s
+          sign-in window needs a click); after that, links open directly. You can open only files that have been shared with you. A schedule opened this way
+          remembers its file, so the Export tab can save it back (see below).
         </p>
         <p>
           A report appears after opening. <em>Errors</em> are rows that could not be read (they are skipped, everything else is opened); <em>warnings</em> are things
@@ -399,7 +405,15 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li>The first sheet, <em>Registrar Schedule</em>, is in the format the registrar asked for, including a column for cross-listings and your notes. The other sheets let Schedulizer read the file back in full.</li>
           <li><em>Teaching schedule only</em> leaves non-teaching load out of the file, to share a schedule without those details. Whoever opens it still sees the schedule; loads will cover teaching only.</li>
           <li>To <strong>share</strong> a schedule, send the Excel file. A colleague can open it here, and any changes they make stay in their copy.</li>
+          <li>Or <strong>share a link</strong>: put the file somewhere a link can reach (see <em>Opening a schedule</em>) and send <code>…/#/import?url=…</code>. The Import tab builds the link for you.</li>
         </ul>
+        <h3>OneDrive</h3>
+        <p>
+          When the site is set up for Microsoft sign-in, the Export tab has a <em>OneDrive</em> row. <em>Save a copy to OneDrive</em> puts the whole schedule (including non-teaching load) in a
+          <em>Schedulizer</em> folder on your OneDrive. From then on <em>Save to OneDrive</em> updates that file, and <em>Get link to share</em> makes a link for people in your organization:
+          they open it and the app starts with the schedule loaded, and they can save their changes back if you gave them edit access. If the file changed on OneDrive since you opened it,
+          saving stops and asks before overwriting. A schedule opened from a OneDrive link is connected to that file in the same way (<em>Disconnect</em> undoes this).
+        </p>
         <h3>Editing the file in Excel</h3>
         <p>
           You can edit the exported file in Excel for large systematic changes (for example moving every 50-minute class to 65 minutes). Be careful with the sheet and column names, and keep

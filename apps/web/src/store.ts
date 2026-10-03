@@ -1,4 +1,5 @@
 import { upgradeSchedule, type Schedule } from "@schedulizer/core";
+import type { OneDriveSource } from "./onedrive/graph";
 
 /**
  * Where the user's work lives. v1 is browser storage; a hosted service would
@@ -10,6 +11,8 @@ export interface WorkspaceEntry {
   id: string;
   name: string;
   schedule: Schedule;
+  /** The OneDrive file this schedule was opened from or last saved to, so it can be saved back there. */
+  source?: OneDriveSource;
 }
 
 export interface WorkspaceSnapshot {

@@ -300,3 +300,4 @@ td button.link + button.link { margin-left: 6px; }
 .pairpick { font-size: .75rem; padding: 1px 4px; max-width: 11rem; }
 .pairing-note { margin: 4px 0; }
 .breakable { word-break: break-all; }
+.onedrive { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
