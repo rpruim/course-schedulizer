@@ -290,8 +290,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
             <label className="f"><span>Comment</span><textarea rows={2} value={form.comment} onChange={(e) => set("comment", e.target.value)} /></label>
             <div className="also-listed">
               <h4>Also listed as</h4>
-              <p className="muted small">Cross-listings: the same section under other courses. Load and enrollment stay with this section.</p>
-              {form.crossListings.map((l, i) => (
+                            {form.crossListings.map((l, i) => (
                 <div className="row" key={i}>
                   <label className="f"><span>Prefix</span><input value={l.prefix} list="dl-prefix" size={8} onChange={(e) => set("crossListings", form.crossListings.map((x, j) => (j === i ? { ...x, prefix: e.target.value } : x)))} /></label>
                   <label className="f"><span>Number</span><input value={l.courseNumber} size={8} onChange={(e) => set("crossListings", form.crossListings.map((x, j) => (j === i ? { ...x, courseNumber: e.target.value } : x)))} /></label>
