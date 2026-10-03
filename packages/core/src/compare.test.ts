@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { recordsFromCsv } from "./csv.js";
 import {
-  COMPARE_COLUMNS, COUNT_KEY, rowSource, aggregateRows, compareTables, comparisonRows, defaultOnlyDifferences, difference, formatCell, resolvePartition, rowTones, visibleRows,
+  COMPARE_COLUMNS, COUNT_KEY, rowSource, aggregateRows, compareTables, comparisonRows, defaultOnlyDifferences, difference, formatCell, resolvePartition, rowTones, toneAggregate, visibleRows,
   type ColumnRole, type CompareRow, type Comparison,
 } from "./compare.js";
 import { importRecords } from "./import.js";
@@ -229,6 +229,22 @@ describe("rowTones", () => {
     expect(rowTones(cmp([[1, 2]], "text"))).toBeUndefined();
     const two = cmp([[1, 2]]);
     expect(rowTones({ ...two, aggregates: [...two.aggregates, ...two.aggregates] })).toBeUndefined();
+  });
+  it("ignores text aggregates beside the one numeric aggregate (a difference column exists only for numbers)", () => {
+    const one = cmp([[2, 4], [4, 4]]);
+    const withText: Comparison = {
+      ...one,
+      aggregates: [{ key: "Faculty", label: "Faculty", kind: "text" }, ...one.aggregates],
+      rows: one.rows.map((r) => ({ ...r, values: [["Ada", "Ben"], ...r.values] })),
+    };
+    expect(toneAggregate(withText)).toBe(1);
+    expect(rowTones(withText)).toEqual([{ larger: 1, strength: 1 }, undefined]);
+    // the same with the text column after the number
+    const after: Comparison = { ...withText, aggregates: [...one.aggregates, withText.aggregates[0]!], rows: withText.rows.map((r) => ({ ...r, values: [r.values[1]!, r.values[0]!] })) };
+    expect(toneAggregate(after)).toBe(0);
+    expect(rowTones(after)).toEqual([{ larger: 1, strength: 1 }, undefined]);
+    // two numeric aggregates: nothing to say which to color by
+    expect(toneAggregate({ ...withText, aggregates: [...one.aggregates, ...one.aggregates] })).toBeUndefined();
   });
 });
 

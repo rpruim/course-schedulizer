@@ -13,6 +13,7 @@
   * *How to compare* is now a list outside the fold-away panel: the ready-made comparisons, your saved ones, and *Custom*, which it switches to as soon as you change anything. *Custom* is your latest hand-made setup, remembered in the browser, so you can flip between it and a named comparison even before saving it.
   * *Save…* keeps a custom comparison under a name: in the current schedule, in all the selected schedules (in the Excel file, on a *Comparisons* sheet), or in the browser. *Delete* removes it.
   * The group, aggregate and ignore choices for each column are small icons, so the panel takes much less room.
+  * Rows are colored by how much the one numeric column differs, even when text columns such as the faculty are aggregated beside it. (Before, any second aggregate switched the coloring off.)
   * A sentence describes the setup, such as “Group by term, prefix, course number; aggregate by faculty load; ignore everything else”.
 * A section that lists the same meeting twice is now drawn once on the week views.
 * On the Compare tab, a row keeps its color when the pointer is over it or it has the keyboard focus; before, that row turned gray, which looked like a row that had not been colored.

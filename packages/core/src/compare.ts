@@ -273,15 +273,26 @@ export interface Tone {
 }
 
 /**
- * Tones for coloring rows. Only when there is exactly one aggregate and it is numeric
- * (the row count counts). With two schedules it is the sign and size of B − A; with more,
+ * The aggregate that rows are colored by: the only numeric one (the row count counts). Text aggregates have no difference to
+ * measure, so they do not count; with no numeric aggregate, or with several, nothing is colored. Returns its index in
+ * `c.aggregates`, or `undefined`.
+ */
+export function toneAggregate(c: Comparison): number | undefined {
+  const numeric = c.aggregates.flatMap((a, i) => (a.kind === "number" ? [i] : []));
+  return numeric.length === 1 ? numeric[0] : undefined;
+}
+
+/**
+ * Tones for coloring rows. Only when there is exactly one numeric aggregate (see `toneAggregate`; text aggregates such as
+ * the faculty may sit beside it). With two schedules it is the sign and size of B − A; with more,
  * the schedule with the largest value, by how far it leads the runner-up. A missing group
  * counts as 0; ties get no tone. Rows that do not differ are `undefined`.
  */
 export function rowTones(c: Comparison): (Tone | undefined)[] | undefined {
-  if (c.aggregates.length !== 1 || c.aggregates[0]!.kind !== "number") return undefined;
+  const a = toneAggregate(c);
+  if (a === undefined) return undefined;
   const lead = c.rows.map((r) => {
-    const v = r.values[0]!.map((x) => (typeof x === "number" ? x : 0));
+    const v = r.values[a]!.map((x) => (typeof x === "number" ? x : 0));
     const max = Math.max(...v);
     const top = v.indexOf(max);
     const second = Math.max(...v.filter((_, i) => i !== top));

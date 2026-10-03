@@ -9,6 +9,7 @@ import {
   parseTime,
   resolvePartition,
   rowSource,
+  toneAggregate,
   type PairHow,
   type PairOptions,
   type PairRef,
@@ -259,7 +260,8 @@ export function comparisonSheets(c: Comparison, columns: TableColumn[], rows: Co
     ["Rows", info.onlyDifferences ? `only the ${rows.length} of ${c.rows.length} groups that differ` : `all ${c.rows.length} groups`],
   ];
   if (tones) {
-    const one = c.aggregates[0]!.key === COUNT_KEY ? "number of rows" : c.aggregates[0]!.label;
+    const col = c.aggregates[toneAggregate(c) ?? 0]!;
+    const one = col.key === COUNT_KEY ? "number of rows" : col.label;
     about.push(["Row colors", `${c.schedules.length === 2 ? "Larger" : "Largest"} ${one}: ${c.schedules.map((s, i) => `${s.name} = ${HUE_NAMES[i % HUE_NAMES.length]}`).join(", ")}; darker means a bigger difference`]);
   }
   about.push(["Exported", `${when.getFullYear()}-${two(when.getMonth() + 1)}-${two(when.getDate())} ${two(when.getHours())}:${two(when.getMinutes())}`]);

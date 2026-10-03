@@ -10,6 +10,7 @@ import {
   rolesToSaved,
   rowTones,
   savedToRoles,
+  toneAggregate,
   visibleRows,
   type ColumnRole,
   type ComparisonRow,
@@ -188,7 +189,9 @@ export function ComparePage() {
     downloadBytes(await writeSheets(sheets), `comparison_${new Date().toISOString().slice(0, 10)}.xlsx`, XLSX_TYPE);
   }
   const differing = comparison.rows.filter((r) => r.differs).length;
-  const aggName = comparison.aggregates[0] ? (comparison.aggregates[0].key === COUNT_KEY ? "number of rows" : comparison.aggregates[0].label) : "";
+  const toneAgg = toneAggregate(comparison);
+  const toneCol = toneAgg === undefined ? undefined : comparison.aggregates[toneAgg];
+  const aggName = toneCol ? (toneCol.key === COUNT_KEY ? "number of rows" : toneCol.label) : "";
 
   return (
     <>
