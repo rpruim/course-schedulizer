@@ -84,6 +84,7 @@ const POPUP_CSS = `
   li { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
   .sw { flex: none; width: 22px; height: 14px; border-radius: 3px; background: hsl(var(--hue) var(--sat) var(--bl)); border: 1px solid hsl(var(--hue) var(--bsat) var(--bb)); }
   .muted { color: var(--muted); }
+  .sw.none { background: repeating-linear-gradient(135deg, hsl(0 0% var(--bl)) 0 4px, hsl(0 0% calc(var(--bl) - 10%)) 4px 6px); border-color: hsl(0 0% var(--bb)); }
 `;
 
 /**
@@ -133,7 +134,7 @@ export function ColorKeyWindow() {
           <ul>
             {info.entries.map((e) => (
               <li key={e.label}>
-                <span className="sw" style={{ ["--hue" as string]: e.hue ?? 0, ["--sat" as string]: e.hue === undefined ? "0%" : "60%", ["--bsat" as string]: e.hue === undefined ? "0%" : "45%" }} />
+                <span className={`sw${e.hue === undefined ? " none" : ""}`} style={{ ["--hue" as string]: e.hue ?? 0, ["--sat" as string]: e.hue === undefined ? "0%" : "60%", ["--bsat" as string]: e.hue === undefined ? "0%" : "45%" }} />
                 <span className={e.hue === undefined ? "muted" : ""}>{e.label}</span>
               </li>
             ))}

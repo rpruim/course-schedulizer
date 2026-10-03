@@ -6,3 +6,36 @@ export function Trash() {
     </svg>
   );
 }
+
+const svg = { viewBox: "0 0 16 16", width: "1em", height: "1em", "aria-hidden": true, focusable: false } as const;
+
+/** A warning triangle: a conflict. */
+export function Warn() {
+  return (
+    <svg {...svg} className="flag-icon flag-conflict">
+      <path d="M8 1.6 15 14H1z" fill="#D55E00" stroke="#fff" strokeWidth="1" strokeLinejoin="round" />
+      <path d="M8 6v4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="8" cy="12" r="1" fill="#fff" />
+    </svg>
+  );
+}
+
+/** A clock: a meeting at a time that is not a standard time. */
+export function Clock() {
+  return (
+    <svg {...svg} className="flag-icon flag-nonstd">
+      <circle cx="8" cy="8" r="6.4" fill="#fff" stroke="#B87900" strokeWidth="1.6" />
+      <path d="M8 4.2V8l2.6 1.6" fill="none" stroke="#B87900" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** A check mark in a circle: a selected section. */
+export function Check() {
+  return (
+    <svg {...svg} className="flag-icon flag-selected">
+      <circle cx="8" cy="8" r="7" fill="#009E73" stroke="#fff" strokeWidth="1" />
+      <path d="M4.6 8.4 7 10.8l4.6-5" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

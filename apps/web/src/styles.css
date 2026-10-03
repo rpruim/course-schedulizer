@@ -11,14 +11,14 @@
   --ok-bg: #e8f5ec;
   --conflict: #fdecec;
   --nonstandard: #fdf0dc;
-  --conflict-line: #e2a49c;
-  --nonstandard-line: #eeba7a;
+  --conflict-line: #efb98f;
+  --nonstandard-line: #f2cf80;
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #14171a; --fg: #e8eaed; --muted: #9aa3ad; --line: #2e343b; --panel: #1d2126;
-    --accent: #d65a6e; --accent-fg: #14171a; --warn-bg: #3a3118; --err-bg: #3b1d20; --ok-bg: #1b3326; --conflict: #3b1d20; --nonstandard: #3a2d17; --conflict-line: #8a3f3a; --nonstandard-line: #8a6430;
+    --accent: #d65a6e; --accent-fg: #14171a; --warn-bg: #3a3118; --err-bg: #3b1d20; --ok-bg: #1b3326; --conflict: #3b1d20; --nonstandard: #3a2d17; --conflict-line: #8f4a1c; --nonstandard-line: #8a6a1c;
   }
 }
 * { box-sizing: border-box; }
@@ -61,8 +61,8 @@ tr.conflict td { background: var(--conflict); }
 /* in the section editor: the same two colors as the week grids (red conflict, orange non-standard time), softened to a background */
 .meetings-conflict { border: 2px solid var(--conflict-line); padding: 7px 11px 11px; }
 .meetings-nonstandard { border: 2px solid var(--nonstandard-line); padding: 7px 11px 11px; }
-.note.conflict-note { background: var(--conflict); border-left: 4px solid #c0392b; }
-.note.nonstandard-note { background: var(--nonstandard); border-left: 4px solid #e08a1e; }
+.note.conflict-note { background: var(--conflict); border-left: 4px solid #D55E00; }
+.note.nonstandard-note { background: var(--nonstandard); border-left: 4px dashed #E69F00; }
 .note.conflict-note ul, .note.nonstandard-note ul { margin: 4px 0 0; padding-left: 20px; }
 .report { padding: 8px 12px; border-radius: 6px; margin: 8px 0; }
 .report-ok { background: var(--ok-bg); }
@@ -156,9 +156,9 @@ details summary { cursor: pointer; color: var(--muted); }
 .block.tiny .txt { align-items: center; }
 .block.tiny strong { writing-mode: vertical-rl; width: auto; height: 100%; text-overflow: clip; }
 /* hovering (or tabbing to) a block outlines it the way selecting does, but in blue: not the red of a conflict, the orange of a non-standard time or the green of a selection */
-.block:hover, .block:focus-visible { filter: brightness(.95); outline: 3px solid #3a78c2; outline-offset: 1px; z-index: 2; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .block:hover, :root:not([data-theme="light"]) .block:focus-visible { outline-color: #6aa3e8; } }
-.block.conflict { border: 2px solid #c0392b; box-shadow: 0 0 0 1px #c0392b inset; }
+.block:hover, .block:focus-visible { filter: brightness(.95); outline: 3px solid #0072B2; outline-offset: 1px; z-index: 2; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .block:hover, :root:not([data-theme="light"]) .block:focus-visible { outline-color: #56B4E9; } }
+.block.conflict { border: 3px solid #D55E00; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .block { --bl: 28%; --blfg: #f0f2f4; --bb: 45%; }
 }
@@ -166,7 +166,7 @@ details summary { cursor: pointer; color: var(--muted); }
 .chip.wide { padding: 2px 10px; font-size: .8rem; }
 .legend { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; }
 .swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
-.conflict-swatch { border: 2px solid #c0392b; }
+.conflict-swatch { border: 3px solid #D55E00; }
 
 /* non-teaching editor */
 dialog.editor.narrow { width: min(520px, calc(100vw - 24px)); }
@@ -310,11 +310,11 @@ td button.link + button.link { margin-left: 6px; }
 .teams dd { margin: 0; }
 
 /* a time that is not one of the standard times: orange, not the red of a conflict */
-.block.nonstandard { border: 2px solid #e08a1e; box-shadow: 0 0 0 1px #e08a1e inset; }
-.nonstandard-swatch { border: 2px solid #e08a1e; }
-.nonstandard-mark { color: #e08a1e; }
-.tag-standard { background: #e08a1e; color: #1c2024; }
-.warn-orange { color: #e08a1e; }
+.block.nonstandard { border: 2px dashed #E69F00; }
+.nonstandard-swatch { border: 2px dashed #E69F00; }
+.nonstandard-mark { color: #B87900; }
+.tag-standard { background: #E69F00; color: #1c2024; }
+.warn-orange { color: #B87900; }
 
 .standard-list { margin: 4px 0 0; padding-left: 20px; columns: 2; font-size: .85rem; }
 .terms-field .row { margin-top: 0; }
@@ -350,8 +350,8 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 .multi-clear { padding: 0 0 4px; }
 
 /* Mass edit: a selected section has a green outline (clear of the red and orange borders of conflicts and non-standard times) */
-.block.selected, .chip.selected { outline: 3px solid #2e9e4f; outline-offset: 1px; }
-:root .block.selected, :root .block.selected:hover, :root .block.selected:focus-visible { outline: 3px solid #2e9e4f; outline-offset: 1px; z-index: 2; }
+.block.selected, .chip.selected { outline: 3px solid #009E73; outline-offset: 1px; }
+:root .block.selected, :root .block.selected:hover, :root .block.selected:focus-visible { outline: 3px solid #009E73; outline-offset: 1px; z-index: 2; }
 
 /* Mass edit: how to apply the edit stays in view under the scrolling boxes, just above the buttons */
 .editor-apply { padding: 8px 16px; border-top: 1px solid var(--line); }
@@ -359,3 +359,12 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 .editor-apply .preview { margin: 4px 0 0; }
 .apply-which { display: flex; flex-wrap: wrap; gap: 2px 20px; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
 .apply-which .choice, .apply-modes .choice { white-space: nowrap; }
+
+/* Signals that do not rely on color alone: a conflict has a thick solid border and a warning triangle, a non-standard time
+   a dashed border and a clock, a selection a check mark; a missing value is hatched gray, not just gray. */
+.block .flags { position: absolute; right: 1px; bottom: 1px; display: flex; gap: 1px; font-size: 13px; line-height: 1; pointer-events: none; }
+.flag-icon { display: block; }
+.legend .flag-icon { display: inline-block; vertical-align: -0.15em; margin-right: 2px; }
+.block.nocolor { background: repeating-linear-gradient(135deg, hsl(0 0% var(--bl)) 0 5px, hsl(0 0% calc(var(--bl) - 10%)) 5px 7px); }
+.block.nocolor:not(.conflict):not(.nonstandard) { border-color: hsl(0 0% var(--bb)); }
+.chip .flag-icon { display: inline-block; vertical-align: -0.15em; }

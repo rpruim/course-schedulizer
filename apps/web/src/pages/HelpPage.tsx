@@ -165,7 +165,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dd>Sections as blocks on a Monday–Friday grid. See <a href="#week" onClick={jump("week")}>The week views</a>.</dd>
           <dt><Link to="/massedit">Mass edit</Link></dt>
           <dd>
-            The department week grid, but clicking a section selects or deselects it (selected sections have a green outline) instead of opening it.
+            The department week grid, but clicking a section selects or deselects it (selected sections have a green outline and a ✓) instead of opening it.
             Use it to change one thing on many sections at once.
             <ul>
               <li><strong>Choose what to show.</strong> <em>Filter by</em> offers the same things as <em>Color by</em>. The <em>Show</em> list beside it lets you tick several values, including <em>(missing)</em>; with nothing ticked, everything is shown.</li>
@@ -246,7 +246,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           “everyone” (for example a department meeting) and clashes with every section at that time.
         </p>
         <p>
-          Conflicting sections are outlined in red in the week views and marked ⚠ on the Schedule tab. Click a section in the <Link to="/conflicts">Conflicts</Link> list to fix it.
+          Conflicting sections have a thick solid red-orange border and a ⚠ in the week views, and are marked ⚠ on the Schedule tab. Click a section in the <Link to="/conflicts">Conflicts</Link> list to fix it.
         </p>
         <p>Below the clashes, the Conflicts tab also lists any <a href="#rules" onClick={jump("rules")}>constraint rules</a> the schedule does not meet.</p>
       </>
@@ -297,7 +297,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <p>
           Every meeting is checked against the university’s <strong>standard times</strong>: its days, start time and length (in minutes) must all be one of the standard patterns, for example MWF at 9:15 for 65 minutes
           or TR at 10:20 for 100 minutes. (The list comes from the earlier Course Schedulizer and is kept in <code>config/settings.yaml</code>.) Meetings that are not standard are shown in <strong>orange</strong>, not the red of a conflict:
-          an orange outline on the week grids, an orange ⚠ on the Schedule tab, and a <em>Non-standard meeting times</em> list on the Conflicts tab that says what would be standard. Sections with no meeting time are not checked.
+          a dashed orange border and a clock on the week grids, an orange ⚠ on the Schedule tab, and a <em>Non-standard meeting times</em> list on the Conflicts tab that says what would be standard. Sections with no meeting time are not checked.
         </p>
         <p>
           A <em>Modify standard times</em> rule changes that list for the courses it names (<code>*</code> alone for every course):

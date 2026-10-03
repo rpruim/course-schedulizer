@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { partsFor } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
+import { Check, Clock, Warn } from "../icons";
 import { MassEditDialog, type Pick } from "../editor/MassEditDialog";
 import { MultiSelect } from "../MultiSelect";
 import { keyFor, openColorKey, setColorKey, useColorBy } from "../colorKey";
@@ -203,8 +204,8 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
         </label>
         <button onClick={showKey} title="Opens a small window listing what each color means; it stays up to date as you change the choice">Show color key</button>
         {keyBlocked && <span className="err">The browser blocked the pop-up window. Allow pop-ups for this site and try again.</span>}
-        <span className="muted legend"><span className="swatch conflict-swatch" /> conflict</span>
-        {groups.some((g) => g.items.some((i) => i.grid?.blocks.some((b) => b.nonStandard))) && <span className="muted legend"><span className="swatch nonstandard-swatch" /> non-standard time</span>}
+        <span className="muted legend"><span className="swatch conflict-swatch" /><Warn /> conflict</span>
+        {groups.some((g) => g.items.some((i) => i.grid?.blocks.some((b) => b.nonStandard))) && <span className="muted legend"><span className="swatch nonstandard-swatch" /><Clock /> non-standard time</span>}
         <span className="spacer" />
         {!mass && <button
           className="primary"
@@ -255,7 +256,7 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
                     <p className="unscheduled">
                       <span className="muted">No scheduled time: </span>
                       {item.grid.unscheduled.map((u) => (
-                        <button key={u.sectionId} className={`chip wide${mass && isSelected(item.scheduleId, u.sectionId) ? " selected" : ""}`} onClick={() => (mass ? pick(item.scheduleId, u.sectionId) : openSection(u.sectionId, item.scheduleId))}>{u.label}</button>
+                        <button key={u.sectionId} className={`chip wide${mass && isSelected(item.scheduleId, u.sectionId) ? " selected" : ""}`} onClick={() => (mass ? pick(item.scheduleId, u.sectionId) : openSection(u.sectionId, item.scheduleId))}>{mass && isSelected(item.scheduleId, u.sectionId) && <Check />} {u.label}</button>
                       ))}
                     </p>
                   )}
@@ -310,7 +311,7 @@ function WeekGrid({ grid, onOpen, selected }: { grid: Grid; onOpen: (sectionId: 
                 key={b.key}
                 className={`block${size(b.lanes)}${b.conflict ? " conflict" : b.nonStandard ? " nonstandard" : ""}${b.hue === undefined ? " nocolor" : ""}${selected?.(b.sectionId) ? " selected" : ""}`}
                 aria-pressed={selected ? selected(b.sectionId) : undefined}
-                title={b.detail}
+                title={[b.conflict ? "Conflict" : b.nonStandard ? "Not a standard time" : "", b.detail].filter(Boolean).join("\n")}
                 onClick={() => onOpen(b.sectionId)}
                 style={{
                   top: px(b.start),
@@ -320,6 +321,12 @@ function WeekGrid({ grid, onOpen, selected }: { grid: Grid; onOpen: (sectionId: 
                   ["--hue" as string]: b.hue ?? 0,
                 }}
               >
+                {(selected?.(b.sectionId) || b.conflict || b.nonStandard) && (
+                  <span className="flags" aria-hidden="true">
+                    {selected?.(b.sectionId) && <Check />}
+                    {b.conflict ? <Warn /> : b.nonStandard ? <Clock /> : null}
+                  </span>
+                )}
                 <em className="dots" aria-hidden="true">{b.quarters.map((on, i) => <i key={i} className={on ? "on" : ""} />)}</em>
                 <span className="txt">
                   <strong>{level(b.lanes) > 0 ? b.short : b.title}</strong>
