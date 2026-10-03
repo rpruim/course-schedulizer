@@ -9,6 +9,7 @@ import {
   emptySchedule,
   findConflicts,
   findRuleViolations,
+  inferredLevel,
   partsFor,
   saveDraft,
   validateDraft,
@@ -277,8 +278,10 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
           <details className="more-details" open={moreOpen} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>
             <summary>More details{form.crossListings.length > 0 && !moreOpen ? " (also listed as " + form.crossListings.length + " other " + (form.crossListings.length === 1 ? "course" : "courses") + ")" : ""}</summary>
             <div className="row top">
-              {field("department", "Department", { list: "dl-dept" })}
-              {field("courseLevel", "Course level", { size: 6 })}
+              {/* A blank box means "the schedule's default": it is shown, in grey, as the placeholder. */}
+              {field("department", "Department", { list: "dl-dept", size: 30, ...(schedule.meta.defaultDepartment?.trim() ? { placeholder: schedule.meta.defaultDepartment.trim(), ...(form.department.trim() === "" ? { hint: "Default from the Meta tab" } : {}) } : {}) })}
+              {/* A blank box means "what the course number implies" (231 → 200), shown in grey as the placeholder. */}
+              {field("courseLevel", "Course level", { size: 6, ...(inferredLevel(form.courseNumber) ? { placeholder: inferredLevel(form.courseNumber), ...(form.courseLevel.trim() === "" ? { hint: "From the course number" } : {}) } : {}) })}
               {field("group", "Group", { size: 8 })}
             </div>
             <div className="row top">

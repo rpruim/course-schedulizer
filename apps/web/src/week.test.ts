@@ -103,6 +103,16 @@ describe("department grid", () => {
     expect(weekGrids(part, opts({ colorBy: "level" })).grids[0]!.blocks[0]!.hue).toBe(hueOf("100"));
     expect(weekGrids(part, opts({ colorBy: "instructor" })).grids[0]!.blocks[0]!.hue).toBe(hueOf("Ada"));
   });
+  it("colours by group, instructional method, and a level taken from the course number", () => {
+    const s = make([
+      sec("MATH", "231", "A", { Group: "Major core", InstructionalMethod: "Lecture", ...mt("M", "9:00", "50") }),
+      sec("MATH", "231", "B", { CourseLevel: "300", ...mt("T", "9:00", "50") }),
+    ]);
+    const hues = (colorBy: WeekOptions["colorBy"]) => weekGrids(s, opts({ colorBy })).grids[0]!.blocks.map((b) => b.hue);
+    expect(hues("group")).toEqual([hueOf("Major core"), hueOf("")]);
+    expect(hues("method")).toEqual([hueOf("Lecture"), hueOf("")]);
+    expect(hues("level")).toEqual([hueOf("200"), hueOf("300")]); // 231 implies 200 unless a level is given
+  });
   it("uses the cross-listing display name", () => {
     const x = make([sec("DATA", "385", "A", mt("M", "9:00", "50"))], { crossListings: [{ SectionId: "Y-FA-DATA385-A", Prefix: "STAT", CourseNumber: "385" }] });
     expect(weekGrids(x, opts()).grids[0]!.blocks[0]!.title).toBe("DATA/STAT 385 A");

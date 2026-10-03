@@ -158,7 +158,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dt>Calendar views: <Link to="/dept">Dept week</Link>, <Link to="/faculty">Faculty week</Link>, <Link to="/rooms">Room week</Link></dt>
           <dd>Sections as blocks on a Monday–Friday grid. See <a href="#week" onClick={jump("week")}>The week views</a>.</dd>
           <dt><Link to="/meta">Meta</Link></dt>
-          <dd>View and edit information about the schedule as a whole.  Give your schedule a nickname. Specify the file name 
+          <dd>View and edit information about the schedule as a whole.  Give your schedule a nickname, and a <em>default department</em> (used for every section that does not give its own; the section editor shows it in grey). Specify the file name 
             used when exporting. Label your schedule with a version and provide some notes about the schedule.</dd>
         </dl>
       </>
@@ -177,6 +177,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li><strong>Several meetings</strong> (for example MW at one time and F at another) are separate meetings in the same section: use <em>+ Add meeting</em> in the editor.</li>
           <li><strong>Instructors and load.</strong> List instructors separated by semicolons (names may contain commas, as in <code>Pruim, Randall</code>). A section’s load is split equally among them; write <code>Ada Example (3); Ben Sample</code> to
             give someone a specific share. The editor shows each person’s share, and warns if shares do not add up.</li>
+          <li><strong>Department and course level</strong> (under <em>More details</em>) are filled in for you when left blank, and shown in grey: the department from the Meta tab, the level from the first digit of the course number (<code>MATH 231</code> is 200-level). Type a value to override either.</li>
           <li><strong>Cross-listings.</strong> For a course that is also listed under another prefix or number (<code>DATA 385</code> and <code>STAT 385</code>), add the other listings under <em>Also listed as</em> in <em>More details</em> (which opens by itself for a section that has some).
             The section is shown under all its names but its load is counted once.</li>
           <li><strong>Delivery mode</strong> is, for example, In-person, Online synchronous, Online asynchronous or Hybrid; check the registrar’s guidance if none fits. Use a room
@@ -344,7 +345,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <ul>
           <li><strong>Weeks</strong> chooses a part of the term. Choosing <em>First half</em> shows everything meeting in the first half: full-term, first-half, and A and B intensive 
           courses, for example.</li>
-          <li><strong>Colour by</strong> subject, course level or instructor.</li>
+          <li><strong>Colour by</strong> subject, course level, instructor, group or instructional method.</li>
           <li>The four <strong>dots</strong> at the left of each block are the four quarters of the term, top to bottom. A filled dot means the section meets then: a full-term
             course is <Dots on={[true, true, true, true]} />, a first-half course <Dots on={[true, true, false, false]} />, a second-half course <Dots on={[false, false, true, true]} />.</li>
           <li>Where <strong>sections overlap</strong>, blocks sit side by side and shrink their text to fit: full details, then the short course name, then the name turned on its side. Hover for the rest.

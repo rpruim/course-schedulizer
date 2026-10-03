@@ -2,7 +2,7 @@ import { formatFaculty, formatNumber, formatTime } from "./format.js";
 import { sectionShares } from "./load.js";
 import { nonTeachingShown } from "./nonteaching.js";
 import { listingsOf } from "./names.js";
-import type { Schedule, Session } from "./types.js";
+import { departmentOf, levelOf, type Schedule, type Session } from "./types.js";
 
 /**
  * Row-based schedule comparison (design/schedule-comparisons.qmd).
@@ -116,7 +116,7 @@ export function comparisonRows(schedule: Schedule, kind: RowKind = "section", op
     const others = listingsOf(h, schedule.crossListings).slice(1);
     const base = (): CompareRow => ({
       ...blankRow(),
-      Department: h.department,
+      Department: departmentOf(schedule.meta, h),
       AcademicYear: h.academicYear,
       Term: h.term,
       TermPart: h.termPart,
@@ -131,7 +131,7 @@ export function comparisonRows(schedule: Schedule, kind: RowKind = "section", op
       Classroom: join((m) => m.room),
       ShortTitle: h.shortTitle,
       InstructionalMethod: h.instructionalMethod,
-      CourseLevel: h.courseLevel,
+      CourseLevel: levelOf(h),
       Group: h.group,
       DeliveryMode: h.deliveryMode,
       Comment: h.comment,

@@ -22,15 +22,15 @@ export function MetaPage() {
   );
 }
 
-type Field = "nickname" | "saveAs" | "version" | "notes";
+type Field = "nickname" | "defaultDepartment" | "saveAs" | "version" | "notes";
 
 function MetaForm({ entry, fileName }: { entry: Entry; fileName: string }) {
   const ws = useWorkspace();
   const meta = entry.schedule.meta;
   const stored = (f: Field) => meta[f] ?? "";
-  const [draft, setDraft] = useState<Record<Field, string>>({ nickname: stored("nickname"), saveAs: stored("saveAs"), version: stored("version"), notes: stored("notes") });
+  const [draft, setDraft] = useState<Record<Field, string>>({ nickname: stored("nickname"), defaultDepartment: stored("defaultDepartment"), saveAs: stored("saveAs"), version: stored("version"), notes: stored("notes") });
   // Follow changes made elsewhere (undo, replacing the schedule, the ✎ in the Schedules row).
-  useEffect(() => setDraft({ nickname: meta.nickname ?? "", saveAs: meta.saveAs ?? "", version: meta.version ?? "", notes: meta.notes ?? "" }), [meta.nickname, meta.saveAs, meta.version, meta.notes]);
+  useEffect(() => setDraft({ nickname: meta.nickname ?? "", defaultDepartment: meta.defaultDepartment ?? "", saveAs: meta.saveAs ?? "", version: meta.version ?? "", notes: meta.notes ?? "" }), [meta.nickname, meta.defaultDepartment, meta.saveAs, meta.version, meta.notes]);
 
   const commit = (f: Field) => {
     const v = draft[f].trim();
@@ -50,6 +50,11 @@ function MetaForm({ entry, fileName }: { entry: Entry; fileName: string }) {
       <label className="field">Nickname
         <input {...bind("nickname")} placeholder={fileName} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />
         <span className="muted small">Blank shows the file name.</span>
+      </label>
+      <label className="field">Default department
+        <input {...bind("defaultDepartment")} list={`dl-meta-dept-${entry.id}`} placeholder="e.g. Mathematics and Statistics" onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />
+        <datalist id={`dl-meta-dept-${entry.id}`}>{[...new Set(s.sessions.map((x) => x.department).filter(Boolean))].map((d) => <option key={d} value={d} />)}</datalist>
+        <span className="muted small">The department of every section that does not give its own (under More details in the section editor).</span>
       </label>
       <label className="field">Save as
         <input {...bind("saveAs")} placeholder={DEFAULT_SAVE_AS} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />

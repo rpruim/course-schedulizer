@@ -100,6 +100,8 @@ export function WeekPage({ kind }: { kind: GridKind }) {
             <option value="prefix">Subject</option>
             <option value="level">Course level</option>
             <option value="instructor">Instructor</option>
+            <option value="group">Group</option>
+            <option value="method">Instructional method</option>
           </select>
         </label>
         <span className="muted legend"><span className="swatch conflict-swatch" /> conflict</span>

@@ -3,7 +3,7 @@ import { emptySchedule, type Schedule } from "@schedulizer/core";
 import { displayEntries, initialState, reducer, type Action, type Entry, type State } from "./state";
 
 /** Schedules are told apart by their meta name. */
-const sched = (label: string): Schedule => ({ ...emptySchedule(), meta: { name: label, nickname: "", saveAs: "schedulizer", timestamp: true, notes: "", version: "" } });
+const sched = (label: string): Schedule => ({ ...emptySchedule(), meta: { name: label, nickname: "", saveAs: "schedulizer", timestamp: true, notes: "", version: "", defaultDepartment: "" } });
 const entry = (id: string, name = id, label = id): Entry => ({ id, name, schedule: sched(label) });
 const run = (state: State, ...actions: Action[]) => actions.reduce(reducer, state);
 const label = (e: Entry | undefined) => e?.schedule.meta.name;

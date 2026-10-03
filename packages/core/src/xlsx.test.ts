@@ -58,7 +58,7 @@ describe("workbook layout", () => {
       sessions: recordsFromCsv(fixtureText("cases/registrar-sessions.csv")),
       crossListings: recordsFromCsv(fixtureText("cases/registrar-crosslistings.csv")),
       nonTeaching: recordsFromCsv(fixtureText("cases/registrar-nonteaching.csv")),
-      meta: { name: "Test", nickname: "Nick", saveAs: "schedulizer", timestamp: true, notes: "n", version: "2" },
+      meta: { name: "Test", nickname: "Nick", saveAs: "schedulizer", timestamp: true, notes: "n", version: "2", defaultDepartment: "Mathematics" },
     }).schedule;
 
   it("opens with the registrar tab, then our sheets, then Metadata", async () => {
@@ -75,7 +75,7 @@ describe("workbook layout", () => {
     expect(reg.getRow(10).getCell(12).value).toBe("65\n"); // MATH 150
     const meta = wb.getWorksheet("Metadata")!;
     expect(meta.getSheetValues().slice(1).map((r) => (r as string[]).slice(1))).toEqual([
-      ["Label", "Value"], ["Export Date", "2026-10-01"], ["Export Time", "17:14:20"], ["Academic Year", "R1"], ["Name", "Test"], ["Nickname", "Nick"], ["Save As", "schedulizer"], ["Time Stamp In File Name", "Yes"], ["Version", "2"], ["Notes", "n"],
+      ["Label", "Value"], ["Export Date", "2026-10-01"], ["Export Time", "17:14:20"], ["Academic Year", "R1"], ["Name", "Test"], ["Nickname", "Nick"], ["Save As", "schedulizer"], ["Time Stamp In File Name", "Yes"], ["Default Department", "Mathematics"], ["Version", "2"], ["Notes", "n"],
     ]);
   });
 
@@ -125,7 +125,7 @@ describe("workbook round trips", () => {
         terms: [{ code: "FA", name: "Fall" }, { code: "WI", name: "Winter Intensive" }, { code: "SP", name: "Spring" }, { code: "SU", name: "Summer" }, { code: "J", name: "January" }],
         parts: [...defaultSettings().parts, { term: "J", code: "Full", name: "January", startWeek: 1, endWeek: 4 }, { term: "J", code: "W1", name: "Week 1-2", startWeek: 1, endWeek: 2 }],
       },
-      meta: { name: "Test", nickname: "", saveAs: "my plan", timestamp: false, notes: "line1\nline2", version: "3" },
+      meta: { name: "Test", nickname: "", saveAs: "my plan", timestamp: false, notes: "line1\nline2", version: "3", defaultDepartment: "" },
     });
 
   it("multi-row", async () => {

@@ -4,6 +4,7 @@ import {
   courseDisplayName,
   findConflicts,
   findRuleViolations,
+  levelOf,
   listingsOf,
   partsFor,
   weeksOf,
@@ -15,7 +16,7 @@ import {
 import { timeRange } from "./model";
 
 export type GridKind = "dept" | "faculty" | "room";
-export type ColorBy = "prefix" | "level" | "instructor";
+export type ColorBy = "prefix" | "level" | "instructor" | "group" | "method";
 
 export interface Block {
   /** Unique within a grid. */
@@ -159,7 +160,16 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
   for (const s of inTerm) if (!firstOf.has(s.sectionId)) firstOf.set(s.sectionId, s);
   const courseName = (s: Session) => courseDisplayName(listingsOf(s, schedule.crossListings));
 
-  const hueFor = (s: Session) => hueOf(o.colorBy === "level" ? (s.courseLevel || s.courseNumber.slice(0, 1)) : o.colorBy === "instructor" ? (s.faculty[0]?.name ?? "") : s.prefix);
+  const colourKey = (s: Session): string => {
+    switch (o.colorBy) {
+      case "level": return levelOf(s);
+      case "instructor": return s.faculty[0]?.name ?? "";
+      case "group": return s.group.trim();
+      case "method": return s.instructionalMethod.trim();
+      default: return s.prefix;
+    }
+  };
+  const hueFor = (s: Session) => hueOf(colourKey(s));
   const label = (s: Session) => `${courseName(s)} ${s.section}`;
   const quartersOf = (s: Session): boolean[] => {
     const full = weeksOf(schedule.settings, s.term, "Full") ?? [1, 16];

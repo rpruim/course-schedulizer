@@ -1,4 +1,4 @@
-import { emptySchedule, type Schedule } from "./types.js";
+import { departmentOf, emptySchedule, type Schedule } from "./types.js";
 
 export interface MergeInput {
   id: string;
@@ -31,7 +31,7 @@ export function mergeSchedules(inputs: MergeInput[]): Merged {
   const out = emptySchedule();
   const origin: MergeOrigin = { sections: new Map(), nonTeaching: [], rules: new Map() };
   const names = inputs.map((i) => i.name).filter(Boolean);
-  out.meta = { name: names.join(" + "), nickname: "", saveAs: "", timestamp: true, notes: "", version: "" };
+  out.meta = { name: names.join(" + "), nickname: "", saveAs: "", timestamp: true, notes: "", version: "", defaultDepartment: "" };
   const first = inputs[0];
   if (first) out.settings = structuredClone(first.schedule.settings);
 
@@ -49,7 +49,8 @@ export function mergeSchedules(inputs: MergeInput[]): Merged {
         rename.set(s.sectionId, merged);
         origin.sections.set(merged, { scheduleId: id, sectionId: s.sectionId });
       }
-      out.sessions.push({ ...s, sectionId: merged });
+      // The merged schedule has no default of its own, so each section carries the department it had.
+      out.sessions.push({ ...s, sectionId: merged, department: departmentOf(schedule.meta, s) });
     }
     for (const c of schedule.crossListings) out.crossListings.push({ ...c, sectionId: rename.get(c.sectionId) ?? c.sectionId });
     schedule.nonTeaching.forEach((n, index) => {

@@ -179,7 +179,24 @@ export interface Meta {
   timestamp: boolean;
   notes: string;
   version: string;
+  /** The department of every section that has none of its own (the Department box under More details); blank = none. */
+  defaultDepartment: string;
 }
+
+/** A section's department: its own if it has one, else the schedule's default. */
+export const departmentOf = (meta: Pick<Meta, "defaultDepartment">, s: { department: string }): string => (s.department ?? "").trim() || (meta.defaultDepartment ?? "").trim();
+
+/**
+ * The level a course number implies: 100, 200, 300 … from its first digit (`MATH 231` → `200`); blank when it has no digit.
+ * Used for a section that does not give a level of its own.
+ */
+export function inferredLevel(courseNumber: string): string {
+  const d = /\d/.exec(courseNumber)?.[0];
+  return d ? `${d}00` : "";
+}
+
+/** A section's course level: its own if it has one, else the one its course number implies. */
+export const levelOf = (s: { courseLevel: string; courseNumber: string }): string => (s.courseLevel ?? "").trim() || inferredLevel(s.courseNumber);
 
 export interface Schedule {
   meta: Meta;
@@ -199,7 +216,7 @@ export const defaultSettings = (): Settings => ({
   spreadTerms: [...DEFAULT_SPREAD_TERMS],
   nonRooms: [...DEFAULT_NON_ROOMS],
 });
-export const emptyMeta = (): Meta => ({ name: "", nickname: "", saveAs: DEFAULT_SAVE_AS, timestamp: true, notes: "", version: "" });
+export const emptyMeta = (): Meta => ({ name: "", nickname: "", saveAs: DEFAULT_SAVE_AS, timestamp: true, notes: "", version: "", defaultDepartment: "" });
 export const emptySchedule = (): Schedule => ({
   meta: emptyMeta(),
   settings: defaultSettings(),

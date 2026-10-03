@@ -63,6 +63,7 @@ export async function readWorkbook(data: ArrayBuffer | Uint8Array, options: Impo
   for (const r of [...sheetRecords(sheetByName(wb, "Metadata")), ...sheetRecords(sheetByName(wb, "Meta"))]) {
     const k = (r.Label ?? r.Key ?? "").toLowerCase();
     if (k === "name" || k === "nickname" || k === "notes" || k === "version") meta[k] = r.Value ?? "";
+    else if (k === "default department") meta.defaultDepartment = (r.Value ?? "").trim();
     else if (k === "save as") meta.saveAs = (r.Value ?? "").trim() || DEFAULT_SAVE_AS;
     else if (k === "time stamp in file name") meta.timestamp = !/^(no|false|0)$/i.test((r.Value ?? "").trim());
   }
@@ -150,6 +151,7 @@ export async function writeWorkbook(schedule: import("./types.js").Schedule, opt
       ["Nickname", schedule.meta.nickname ?? ""],
       ["Save As", schedule.meta.saveAs || DEFAULT_SAVE_AS],
       ["Time Stamp In File Name", schedule.meta.timestamp === false ? "No" : "Yes"],
+      ["Default Department", schedule.meta.defaultDepartment ?? ""],
       ["Version", schedule.meta.version],
       ["Notes", schedule.meta.notes],
     ],
