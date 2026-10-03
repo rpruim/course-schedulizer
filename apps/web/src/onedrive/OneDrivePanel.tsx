@@ -14,6 +14,8 @@ export function OneDrivePanel({ entry, build, fileName, disabled }: { entry: Ent
   const [message, setMessage] = useState<Message | undefined>();
   const [conflict, setConflict] = useState(false);
   const [link, setLink] = useState("");
+  const [access, setAccess] = useState<"edit" | "view">("edit");
+  const [linkAccess, setLinkAccess] = useState<"edit" | "view">("edit");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -55,8 +57,9 @@ export function OneDrivePanel({ entry, build, fileName, disabled }: { entry: Ent
   const makeLink = () =>
     run(async () => {
       if (!entry.source) return;
-      const url = await graphClient(true).shareLink(entry.source, "edit");
+      const url = await graphClient(true).shareLink(entry.source, access);
       setLink(shareLink(window.location.href, [url]));
+      setLinkAccess(access);
       setCopied(false);
     });
 
@@ -76,7 +79,17 @@ export function OneDrivePanel({ entry, build, fileName, disabled }: { entry: Ent
         <button className="primary" onClick={() => void save(false)} disabled={busy || disabled}>
           {entry.source ? "Save to OneDrive" : "Save a copy to OneDrive"}
         </button>
-        {entry.source && <button onClick={() => void makeLink()} disabled={busy}>Get link to share</button>}
+        {entry.source && (
+          <>
+            <label className="field">Link lets people
+              <select value={access} onChange={(e) => { setAccess(e.target.value as "edit" | "view"); setLink(""); }}>
+                <option value="edit">edit and save back</option>
+                <option value="view">only view (a copy)</option>
+              </select>
+            </label>
+            <button onClick={() => void makeLink()} disabled={busy}>Get link to share</button>
+          </>
+        )}
         <span className="spacer" />
         {account ? (
           <span className="muted small">
@@ -99,7 +112,7 @@ export function OneDrivePanel({ entry, build, fileName, disabled }: { entry: Ent
       {conflict && <p className="small">Someone changed the file on OneDrive after you opened it. <button onClick={() => void save(true)} disabled={busy}>Overwrite it anyway</button></p>}
       {link && (
         <p className="small">
-          <span className="muted">Anyone at your organization who opens this link gets the app with the schedule loaded: </span>
+          <span className="muted">Anyone at your organization who opens this link gets the app with the schedule loaded{linkAccess === "edit" ? ", and can save changes back to your file" : "; they can change their copy but not your file"}: </span>
           <code className="breakable">{link}</code> <button onClick={() => void copy()}>{copied ? "Copied" : "Copy link"}</button>
         </p>
       )}

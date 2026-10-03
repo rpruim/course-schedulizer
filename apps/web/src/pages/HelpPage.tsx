@@ -410,8 +410,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <h3>OneDrive</h3>
         <p>
           When the site is set up for Microsoft sign-in, the Export tab has a <em>OneDrive</em> row. <em>Save a copy to OneDrive</em> puts the whole schedule (including non-teaching load) in a
-          <em>Schedulizer</em> folder on your OneDrive. From then on <em>Save to OneDrive</em> updates that file, and <em>Get link to share</em> makes a link for people in your organization:
-          they open it and the app starts with the schedule loaded, and they can save their changes back if you gave them edit access. If the file changed on OneDrive since you opened it,
+          <em>Schedulizer</em> folder on your OneDrive. From then on <em>Save to OneDrive</em> updates that file, and <em>Get link to share</em> makes a link for people in your organization, either to <em>edit</em> (they can save changes back to your file) or <em>only view</em>
+          (they work on their own copy; good for circulating a draft). They open it and the app starts with the schedule loaded. If the file changed on OneDrive since you opened it,
           saving stops and asks before overwriting. A schedule opened from a OneDrive link is connected to that file in the same way (<em>Disconnect</em> undoes this).
         </p>
         <h3>Editing the file in Excel</h3>
