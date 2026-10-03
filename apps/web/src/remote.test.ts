@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { directUrl, fetchProblem, linkRequests, nameFromUrl, shareLink } from "./remote";
+import { directUrl, fetchProblem, linkRequests, nameFromUrl, parseAddress, shareLink } from "./remote";
 
 describe("directUrl", () => {
   it("keeps ordinary http(s) addresses", () => {
@@ -20,20 +20,31 @@ describe("directUrl", () => {
   });
 });
 
-describe("linkRequests and shareLink", () => {
-  it("reads repeated urls, names by position, and a year", () => {
-    const r = linkRequests(new URLSearchParams("url=https://a/x.xlsx&url=https://b/y.xlsx&name=Draft&year=AY25"));
-    expect(r.files).toEqual([{ url: "https://a/x.xlsx", name: "Draft" }, { url: "https://b/y.xlsx" }]);
-    expect(r.academicYear).toBe("AY25");
+describe("linkRequests, parseAddress and shareLink", () => {
+  it("attaches each name and year to the file before it", () => {
+    const r = linkRequests(new URLSearchParams("url=https://a/x.xlsx&name=Draft&year=AY25&url=https://b/y.xlsx"));
+    expect(r.files).toEqual([{ url: "https://a/x.xlsx", name: "Draft", academicYear: "AY25" }, { url: "https://b/y.xlsx" }]);
+    expect(r.academicYear).toBeUndefined();
+  });
+  it("takes a year before the first url as the default", () => {
+    const r = linkRequests(new URLSearchParams("year=AY24&url=a&url=b&year=AY25"));
+    expect(r.academicYear).toBe("AY24");
+    expect(r.files).toEqual([{ url: "a" }, { url: "b", academicYear: "AY25" }]);
   });
   it("has no files without a url", () => {
-    expect(linkRequests(new URLSearchParams("")).files).toEqual([]);
+    expect(linkRequests(new URLSearchParams("name=x")).files).toEqual([]);
+  });
+  it("reads the address box in its three forms", () => {
+    expect(parseAddress("https://x.org/a.xlsx?v=1&url=2").files).toEqual([{ url: "https://x.org/a.xlsx?v=1&url=2" }]);
+    expect(parseAddress("url=ex/a.xlsx&name=A%20b&url=ex/b.xlsx").files).toEqual([{ url: "ex/a.xlsx", name: "A b" }, { url: "ex/b.xlsx" }]);
+    expect(parseAddress("https://app/#/import?url=https%3A%2F%2Fx%2Fa.xlsx&year=AY25").files).toEqual([{ url: "https://x/a.xlsx", academicYear: "AY25" }]);
+    expect(parseAddress("   ").files).toEqual([]);
   });
   it("builds a link that reads back the same", () => {
-    const link = shareLink("https://app.example/#/old", ["https://a/x y.xlsx?v=1&w=2"], { name: "Draft", academicYear: "AY25" });
-    const q = new URLSearchParams(link.split("?")[1]);
+    const files = [{ url: "https://a/x y.xlsx?v=1&w=2", name: "Draft", academicYear: "AY25" }, { url: "https://b/z.xlsx" }];
+    const link = shareLink("https://app.example/#/old", files);
     expect(link.startsWith("https://app.example/#/import?")).toBe(true);
-    expect(linkRequests(q)).toEqual({ files: [{ url: "https://a/x y.xlsx?v=1&w=2", name: "Draft" }], academicYear: "AY25" });
+    expect(parseAddress(link).files).toEqual(files);
   });
 });
 

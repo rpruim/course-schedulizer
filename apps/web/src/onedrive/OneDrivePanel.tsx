@@ -58,7 +58,7 @@ export function OneDrivePanel({ entry, build, fileName, disabled }: { entry: Ent
     run(async () => {
       if (!entry.source) return;
       const url = await graphClient(true).shareLink(entry.source, access);
-      setLink(shareLink(window.location.href, [url]));
+      setLink(shareLink(window.location.href, [{ url }]));
       setLinkAccess(access);
       setCopied(false);
     });

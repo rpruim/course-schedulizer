@@ -12,7 +12,8 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "notices": "node tools/third-party-notices.mjs",
-    "settings": "node tools/gen-settings.mjs"
+    "settings": "node tools/gen-settings.mjs",
+    "examples": "node tools/make-examples.mjs"
   },
   "devDependencies": {
     "prettier": "^3.3.0",

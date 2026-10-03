@@ -41,7 +41,7 @@ redirects, no environment variables. Schedules stay in each visitor's browser.
 ## Opening schedules from a link, and OneDrive
 
 A link like `https://course-schedulizer.netlify.app/#/import?url=<file address>` opens that Excel file as a new schedule
-(repeat `url=`, add `name=` and `year=` as needed). The file's server must allow other pages to read it: GitHub raw files,
+(repeat `url=` for several files; a `name=` or `year=` after a `url=` belongs to that file). The file's server must allow other pages to read it: GitHub raw files,
 Dropbox share links and files hosted on the site itself do; the Import tab builds the link.
 
 **OneDrive / SharePoint** links and saving back to OneDrive need Microsoft sign-in, which needs an app registration (free, one time;
@@ -57,6 +57,14 @@ the site has no server, so there is no secret):
 4. Copy the *Application (client) ID* into the build settings: on Netlify, *Site configuration → Environment variables* `VITE_MS_CLIENT_ID`
    (and `VITE_MS_TENANT` = the directory (tenant) ID, or leave it out for `organizations`); for local work, the same names in
    `apps/web/.env.local`. Redeploy. Without `VITE_MS_CLIENT_ID` the OneDrive features are simply hidden.
+
+## Examples
+
+The Import tab's **Examples** list comes from `apps/web/public/examples/examples.yml`: a list of `name` and `url`.
+Choosing one fills the address box. A `url` is a file address relative to the site, or several files written
+as a link's query (`url=a.xlsx&name=A&url=b.xlsx&name=B&year=AY25`). To add an example, put the workbook in that
+folder and add an entry. The built-in examples are made from the synthetic fixtures by `pnpm examples`
+(`apps/web/src/exampleBuilders.ts`); a test fails if the files are out of date.
 
 ## Site icon
 

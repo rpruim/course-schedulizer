@@ -105,13 +105,13 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           that is already open.</li>
           <li><strong>Academic year</strong> is used only when the file has no academic year of its own (for example <code>AY25</code>). If a report says some rows have no
             academic year, type one here and open the file again, choosing the schedule to replace.</li>
-          <li><strong>Examples</strong> load small made-up schedules, handy for trying things out. <em>Example with constraint rules</em> shows each kind of rule, some met and some not (a cohort that must be able to take its courses together, “any two” and “some pair” of electives, a time window, back-to-back classes, and changes to the standard times); open the Constraints and Conflicts pages to see them.</li>
+          <li><strong>Examples</strong> is a list of small made-up schedules, handy for trying things out. Choosing one puts its address in the address box below; <em>Open address</em> opens it. <em>Example with constraint rules</em> shows each kind of rule, some met and some not (a cohort that must be able to take its courses together, “any two” and “some pair” of electives, a time window, back-to-back classes, and changes to the standard times); open the Constraints and Conflicts pages to see them. <em>Two drafts, to compare</em> opens two versions of a schedule, for the Compare tab.</li>
         </ul>
         <p>
           <strong>Open from a web address.</strong> If a file is on a web server that lets other pages read it (a GitHub repository, a Dropbox share link, or any
           site you run), paste its address into <em>Or open a file from a web address</em>. The app then shows a link you can copy and send: whoever opens it
-          gets the app with that file already opened as a new schedule. A link can name several files (<code>url=…&amp;url=…</code>), a name (<code>name=…</code>) and an
-          academic year for files that have none (<code>year=…</code>). A GitHub “blob” page address is turned into the raw file for you.
+          gets the app with that file already opened as a new schedule. A link can name several files: each <code>url=…</code> may be followed by its own name (<code>name=…</code>) and an
+          academic year for a file that has none (<code>year=…</code>). The address box accepts that form too. A GitHub “blob” page address is turned into the raw file for you.
           Google Drive sharing pages do not work this way, because Google does not let other web pages read the files.
         </p>
         <p>

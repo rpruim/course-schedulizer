@@ -1,13 +1,15 @@
 /** Opening a schedule from a web address: `…/#/import?url=<file address>` loads that file as a new schedule. */
 
-/** What a link asks for: files to fetch (in order), with optional names, and an academic year for files that lack one. */
+/** One file a link asks for, with the name and academic year given for it (if any). */
 export interface LinkRequest {
   url: string;
   name?: string;
+  academicYear?: string;
 }
 
 export interface LinkRequests {
   files: LinkRequest[];
+  /** An academic year for every file that has none of its own (a `year=` before the first `url=`). */
   academicYear?: string;
 }
 
@@ -49,25 +51,48 @@ export function nameFromUrl(url: string): string {
 }
 
 /**
- * Read the request out of a link's query: repeated `url=` (each may be followed by its own `name=`),
- * and `year=`. `name=` entries are matched to `url=` entries by position.
+ * Read the request out of a link's query. Each `url=` starts a file; the `name=` and `year=` that follow it belong
+ * to that file. A `year=` before any `url=` is the default for all files.
  */
 export function linkRequests(params: URLSearchParams): LinkRequests {
-  const urls = params.getAll("url").map((u) => u.trim()).filter(Boolean);
-  const names = params.getAll("name");
-  const year = params.get("year")?.trim();
-  return {
-    files: urls.map((url, i) => ({ url, ...(names[i]?.trim() ? { name: names[i]!.trim() } : {}) })),
-    ...(year ? { academicYear: year } : {}),
-  };
+  const files: LinkRequest[] = [];
+  let academicYear: string | undefined;
+  for (const [key, raw] of params) {
+    const value = raw.trim();
+    const last = files.at(-1);
+    if (key === "url") {
+      if (value) files.push({ url: value });
+    } else if (key === "name" && last && value) last.name = value;
+    else if (key === "year" && value) {
+      if (last) last.academicYear = value;
+      else academicYear = value;
+    }
+  }
+  return { files, ...(academicYear ? { academicYear } : {}) };
 }
 
-/** The link to give someone so that the file opens in the app. `appUrl` is the address of the app itself. */
-export function shareLink(appUrl: string, fileUrls: string[], options: { name?: string; academicYear?: string } = {}): string {
+/**
+ * What the address box holds: one file address, or several files written as a link's query (`url=…&name=…&url=…`),
+ * or a whole link to this app (`…/#/import?url=…`).
+ */
+export function parseAddress(text: string): LinkRequests {
+  const t = text.trim();
+  if (!t) return { files: [] };
+  const route = t.indexOf("#/import?");
+  if (route >= 0) return linkRequests(new URLSearchParams(t.slice(route + "#/import?".length)));
+  if (/^url=/i.test(t)) return linkRequests(new URLSearchParams(t));
+  return { files: [{ url: t }] };
+}
+
+/** The link to give someone so that the files open in the app. `appUrl` is the address of the app itself. */
+export function shareLink(appUrl: string, files: LinkRequest[], defaultYear?: string): string {
   const q = new URLSearchParams();
-  for (const u of fileUrls) q.append("url", u);
-  if (options.name && fileUrls.length === 1) q.set("name", options.name);
-  if (options.academicYear) q.set("year", options.academicYear);
+  if (defaultYear) q.set("year", defaultYear);
+  for (const f of files) {
+    q.append("url", f.url);
+    if (f.name) q.append("name", f.name);
+    if (f.academicYear) q.append("year", f.academicYear);
+  }
   return `${appUrl.replace(/#.*$/, "")}#/import?${q.toString()}`;
 }
 

@@ -41,7 +41,8 @@ export async function fetchSchedule(
     return failed(name, fetchProblem(url, e));
   }
   try {
-    const result = await readWorkbook(bytes, academicYear ? { academicYear } : {});
+    const year = file.academicYear ?? academicYear;
+    const result = await readWorkbook(bytes, year ? { academicYear: year } : {});
     return { name, schedule: result.schedule, report: { name, issues: allIssues(result.schedule, result.issues) } };
   } catch (e) {
     return failed(name, `could not read this as an Excel workbook (${e instanceof Error ? e.message : String(e)}). If this is a web page rather than the file, the address is a sharing page, not a download`);
@@ -61,7 +62,8 @@ async function fetchShared(file: LinkRequest, academicYear: string | undefined, 
   }
   const shown = file.name ?? got.source.name.replace(/\.xlsx$/i, "");
   try {
-    const result = await readWorkbook(got.bytes, academicYear ? { academicYear } : {});
+    const year = file.academicYear ?? academicYear;
+    const result = await readWorkbook(got.bytes, year ? { academicYear: year } : {});
     return { name: shown, schedule: result.schedule, source: got.source, report: { name: shown, issues: allIssues(result.schedule, result.issues) } };
   } catch (e) {
     return failed(shown, `could not read this as an Excel workbook (${e instanceof Error ? e.message : String(e)})`);

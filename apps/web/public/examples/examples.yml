@@ -1,0 +1,19 @@
+# The examples offered on the Import tab. Each entry has a name and a url; choosing one puts its url in the
+# address box, and Open address opens it. Addresses are relative to the site (these files sit next to this one).
+#
+# A url is either one file address, or several files written as a link's query: each `url=` starts a file,
+# and the `name=` and `year=` after it belong to that file (year only for files with no academic year).
+#
+# The .xlsx files here are made by `pnpm examples`, from the synthetic fixtures; examples of your own can
+# simply be added: put the workbook in this folder and add an entry.
+- name: Example schedule
+  url: examples/example-schedule.xlsx
+
+- name: Example with conflicts
+  url: examples/example-with-conflicts.xlsx
+
+- name: Example with constraint rules
+  url: examples/example-with-constraint-rules.xlsx
+
+- name: Two drafts, to compare
+  url: url=examples/example-schedule.xlsx&name=First%20draft&url=examples/example-schedule-revised.xlsx&name=Revised%20draft
