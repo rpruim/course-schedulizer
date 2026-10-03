@@ -286,8 +286,9 @@ td button.link + button.link { margin-left: 6px; }
 .menu-button:hover, .menu-button[aria-expanded="true"] { color: var(--fg); }
 .menu-button.active { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
 .menu-list { position: absolute; z-index: 20; top: 100%; left: 0; min-width: 11rem; display: flex; flex-direction: column; padding: 4px 0; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); box-shadow: 0 6px 18px rgba(0, 0, 0, .3); }
-.menu-list a { padding: 7px 14px; border-bottom: 0; white-space: nowrap; }
-.menu-list a:hover, .menu-list a:focus-visible { background: var(--bg); color: var(--fg); outline: none; }
+.menu-list a, .menu-list button { padding: 7px 14px; border-bottom: 0; white-space: nowrap; }
+.menu-list button { border: 0; border-radius: 0; background: none; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.menu-list a:hover, .menu-list a:focus-visible, .menu-list button:hover, .menu-list button:focus-visible { background: var(--bg); color: var(--fg); outline: none; }
 .menu-list a.active { border-bottom: 0; background: var(--bg); }
 
 .take-row { align-items: center; }

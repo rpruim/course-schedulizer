@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
+/** A page to go to (`to`), or an action to run (`onSelect`). */
 export interface MenuItem {
-  to: string;
   label: string;
+  to?: string;
+  onSelect?: () => void;
 }
 /** A top-level entry: a plain link (one item, no `label` of its own) or a menu of links. */
 export interface MenuGroup {
@@ -38,9 +40,9 @@ export function MenuBar({ groups }: { groups: MenuGroup[] }) {
       {groups.map((g) => {
         if (g.direct) {
           const it = g.items[0]!;
-          return <NavLink key={it.to} to={it.to} end={it.to === "/"}>{g.label}</NavLink>;
+          return <NavLink key={it.label} to={it.to ?? "/"} end={it.to === "/"}>{g.label}</NavLink>;
         }
-        const current = g.items.find((it) => (it.to === "/" ? pathname === "/" : pathname === it.to || pathname.startsWith(`${it.to}/`)));
+        const current = g.items.find((it) => it.to !== undefined && (it.to === "/" ? pathname === "/" : pathname === it.to || pathname.startsWith(`${it.to}/`)));
         const here = current !== undefined;
         const isOpen = open === g.label;
         return (
@@ -55,7 +57,7 @@ export function MenuBar({ groups }: { groups: MenuGroup[] }) {
                 if (e.key === "ArrowDown") {
                   e.preventDefault();
                   setOpen(g.label);
-                  requestAnimationFrame(() => (e.currentTarget.nextElementSibling?.querySelector("a") as HTMLElement | null)?.focus());
+                  requestAnimationFrame(() => (e.currentTarget.nextElementSibling?.querySelector("a, button") as HTMLElement | null)?.focus());
                 }
               }}
             >
@@ -63,21 +65,19 @@ export function MenuBar({ groups }: { groups: MenuGroup[] }) {
             </button>
             {isOpen && (
               <div className="menu-list" role="menu">
-                {g.items.map((it) => (
-                  <NavLink
-                    key={it.to}
-                    to={it.to}
-                    role="menuitem"
-                    onKeyDown={(e) => {
-                      const links = [...(e.currentTarget.parentElement?.querySelectorAll("a") ?? [])] as HTMLElement[];
-                      const i = links.indexOf(e.currentTarget);
-                      if (e.key === "ArrowDown") (e.preventDefault(), links[(i + 1) % links.length]?.focus());
-                      if (e.key === "ArrowUp") (e.preventDefault(), links[(i - 1 + links.length) % links.length]?.focus());
-                    }}
-                  >
-                    {it.label}
-                  </NavLink>
-                ))}
+                {g.items.map((it) => {
+                  const keys = (e: React.KeyboardEvent<HTMLElement>) => {
+                    const items = [...(e.currentTarget.parentElement?.querySelectorAll("a, button") ?? [])] as HTMLElement[];
+                    const i = items.indexOf(e.currentTarget);
+                    if (e.key === "ArrowDown") (e.preventDefault(), items[(i + 1) % items.length]?.focus());
+                    if (e.key === "ArrowUp") (e.preventDefault(), items[(i - 1 + items.length) % items.length]?.focus());
+                  };
+                  return it.to !== undefined ? (
+                    <NavLink key={it.label} to={it.to} role="menuitem" onKeyDown={keys}>{it.label}</NavLink>
+                  ) : (
+                    <button key={it.label} type="button" role="menuitem" onKeyDown={keys} onClick={() => { setOpen(undefined); it.onSelect?.(); }}>{it.label}</button>
+                  );
+                })}
               </div>
             )}
           </div>

@@ -98,7 +98,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     title: "Opening a schedule",
     body: () => (
       <>
-        <p>On the <Link to="/import">Import</Link> tab:</p>
+        <p>To start from nothing, choose <strong>File → New blank schedule</strong>: an empty schedule named <em>New schedule</em> becomes the current one and the Meta tab opens so you can rename it. Then use <em>Add section</em> to fill it in.</p>
+        <p>To open files, go to the <Link to="/import">Import</Link> tab:</p>
         <ul>
           <li><strong>Open Excel file…</strong> picks one or more files. Each file becomes its own schedule, named after the file.</li>
           <li><strong>Open as</strong> chooses <em>A new schedule</em> or <em>Replace “…”</em> to load the file in place of a schedule 
@@ -136,7 +137,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <p>The menu bar under the schedules allows you to navigate: <strong>Schedule</strong>, 
         then menus for <strong>Loads</strong>, <strong>View</strong> (the week grids), 
         <strong>Check</strong> (conflicts, constraints, comparison), 
-        <strong>File</strong> (meta, import, export) and  
+        <strong>File</strong> (new blank schedule, meta, import, export) and  
         <strong>Help</strong>.  
         Click a menu option to open it; the menu you are in is underlined. 
         In any tabular view, click a column heading to sort the table; click again to reverse the sort.</p>

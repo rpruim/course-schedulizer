@@ -20,6 +20,9 @@ import { sharedOpener } from "./onedrive/auth";
 import { linkRequests, type LinkRequest } from "./remote";
 import { fetchSchedule } from "./remoteOpen";
 import { useWorkspace, WorkspaceProvider } from "./state";
+import { emptySchedule } from "@schedulizer/core";
+
+const NEW_SCHEDULE = "New schedule";
 
 const tabs = (reports: OpenReport[] | undefined, setReports: (r: OpenReport[] | undefined) => void): { to: string; label: string; element: JSX.Element }[] => [
   { to: "/", label: "Schedule", element: <SchedulePage /> },
@@ -39,12 +42,12 @@ const tabs = (reports: OpenReport[] | undefined, setReports: (r: OpenReport[] | 
 ];
 
 /** How the pages are grouped in the menu bar. */
-const GROUPS: MenuGroup[] = [
+const groups = (newBlank: () => void): MenuGroup[] => [
   { label: "Schedule", direct: true, items: [{ to: "/", label: "Schedule" }] },
   { label: "Loads", items: [{ to: "/loads", label: "Teaching loads" }, { to: "/nonteaching", label: "Non-teaching load" }] },
   { label: "View", items: [{ to: "/dept", label: "Dept week" }, { to: "/faculty", label: "Faculty week" }, { to: "/rooms", label: "Room week" }] },
   { label: "Check", items: [{ to: "/conflicts", label: "Conflicts" }, { to: "/constraints", label: "Constraints" }, { to: "/compare", label: "Compare" }] },
-  { label: "File", items: [{ to: "/meta", label: "Meta" }, { to: "/import", label: "Import" }, { to: "/export", label: "Export" }] },
+  { label: "File", items: [{ label: "New blank schedule", onSelect: newBlank }, { to: "/meta", label: "Meta" }, { to: "/import", label: "Import" }, { to: "/export", label: "Export" }] },
   { label: "Help", items: [{ to: "/help", label: "User guide" }, { to: "/about", label: "About" }] },
 ];
 
@@ -94,6 +97,12 @@ function Shell() {
     return () => clearTimeout(t);
   }, [notice]);
   const TABS = tabs(reports, setReports);
+  // A new empty schedule becomes the current one, and its Meta tab opens so it can be named.
+  const newBlankSchedule = () => {
+    const blank = emptySchedule();
+    addSchedule(NEW_SCHEDULE, { ...blank, meta: { ...blank.meta, nickname: NEW_SCHEDULE } });
+    navigate("/meta");
+  };
   return (
     <EditorProvider onNotice={setNotice}>
       <div className="app">
@@ -114,7 +123,7 @@ function Shell() {
             <button className="link" onClick={() => setWaiting(undefined)}>Dismiss</button>
           </p>
         )}
-        <MenuBar groups={GROUPS} />
+        <MenuBar groups={groups(newBlankSchedule)} />
         <main>
           <Routes>
             {TABS.map((t) => <Route key={t.to} path={t.to} element={t.element} />)}
