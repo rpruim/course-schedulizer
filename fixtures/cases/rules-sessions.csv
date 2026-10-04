@@ -19,3 +19,5 @@ R2,FA,Full,CORE,100,A,Hal Fakename,4,4,MWF,09:15,65,HH 210,Core 100,Lecture,In-P
 R2,FA,Full,CORE,100,B,Hal Fakename,4,4,TR,12:15,100,HH 210,Core 100,Lecture,In-Person,
 R2,SP,Full,MATH,232,A,Cy Fictional,4,4,TR,10:20,100,NH 103,Multivariable Calculus,Lecture,In-Person,
 R2,SP,Full,STAT,244,A,Eli Specimen,4,4,TR,10:20,100,NH 105,Regression Models,Lecture,In-Person,
+R2,SP,Full,MATH,255,A,Cy Fictional,4,4,T,08:00,100,NH 103,Introductory Linear Algebra,Lecture,In-Person,Tuesday only: some of the days of TR at 8:00; allowed by this department's subset rule
+R2,SP,Full,STAT,245,A,Eli Specimen,4,4,F,09:15,65,NH 105,Applied Data Analysis,Lecture,In-Person,Friday only: some of the days of MWF at 9:15; not covered by the subset rule

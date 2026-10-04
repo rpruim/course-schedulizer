@@ -421,6 +421,7 @@ describe("the demo schedule with constraint rules (fixtures/cases/rules-*.csv)",
       ["Lee: at least two classes in a row", "consecutive"],
       ["Colloquium time", "standard"],
       ["No 8:00 MWF", "standard"],
+      ["Linear algebra may meet one day of TR", "subset"],
     ]);
     expect(violations(demo()).map((v) => [v.rule, v.message])).toEqual([
       ["Data science minor: any two electives", "Not every 2 of the 3 courses can be taken together: DATA 301 + STAT 343"],
@@ -435,7 +436,59 @@ describe("the demo schedule with constraint rules (fixtures/cases/rules-*.csv)",
   });
   it("flags only the standard-time exceptions the rules do not cover", () => {
     const odd = findRuleViolations(demo()).filter((v) => v.builtin);
-    expect(odd.map((v) => v.sectionIds[0])).toEqual(["R2-FA-CS108-B", "R2-FA-STAT143-C"]);
+    expect(odd.map((v) => v.sectionIds[0])).toEqual(["R2-FA-CS108-B", "R2-FA-STAT143-C", "R2-SP-STAT245-A"]); // MATH 255 on Tuesday alone is allowed by the subset rule; STAT 245 on Friday alone is not covered
     expect(odd[0]!.message).toContain("standard M W F starts for 65 minutes: 9:15, 11:00, 12:15, 13:30, 14:45"); // 8:00 is disallowed, so it is no longer offered
+  });
+});
+
+describe("subset of standard times", () => {
+  const meet = (n: string, days: string, start: string, dur: string, prefix = "MATH", extra: Rec = {}) => sec(prefix, n, "A", days, start, { MeetingDuration: dur, ...extra });
+  const rule = (course: string, extra: Rec = {}): Rec[] => [{ Constraint: "Subsets are intended", Type: "subset", Course: course, ...extra }];
+
+  it("flags Tuesday alone at 8:00 for 100 minutes, and says a subset rule would allow it", () => {
+    const s = build([meet("1", "T", "8:00", "100"), meet("2", "TR", "8:00", "100")]);
+    expect(allMsgs(s)).toEqual(["MATH 1 A meets T 08:00–09:40 (100 min), which is not a standard time (only some of the days of T R at that time; a “Subset of standard times” rule allows that)"]);
+  });
+  it("lets the courses it names use some, but not all, of the days of a standard time", () => {
+    const sessions = [meet("1", "T", "8:00", "100"), meet("2", "MW", "9:15", "65"), meet("3", "W", "11:00", "65", "STAT")];
+    expect(allMsgs(build(sessions))).toHaveLength(3);
+    expect(allMsgs(build(sessions, rule("MATH *")))).toEqual([expect.stringContaining("STAT 3 A")]); // the rule does not name STAT
+    expect(allMsgs(build(sessions, rule("*")))).toEqual([]);
+  });
+  it("still flags a meeting whose start or length is not standard, or whose days are in no standard time", () => {
+    const sessions = [meet("1", "T", "8:30", "100"), meet("2", "T", "8:00", "90"), meet("3", "MT", "9:15", "65"), meet("4", "TWR", "8:00", "100")];
+    expect(allMsgs(build(sessions, rule("*")))).toHaveLength(4);
+  });
+  it("does not change what is standard: a whole pattern is fine either way, and a modified list is used", () => {
+    expect(allMsgs(build([meet("1", "TR", "8:00", "100")], rule("*")))).toEqual([]);
+    // a standard-times rule that adds a pattern: subsets of the new pattern are allowed too
+    const rows = [...rule("*"), { Constraint: "Colloquium", Type: "standard", Course: "*" }, { Constraint: "Colloquium", Action: "allow", Days: "MW", Duration: "75", Starts: "15:00" }];
+    expect(allMsgs(build([meet("1", "W", "15:00", "75")], rows))).toEqual([]);
+    expect(allMsgs(build([meet("1", "W", "15:00", "75")], rows.slice(0, 1)))).toHaveLength(1);
+  });
+  it("can be limited to some terms, like other rules", () => {
+    const sessions = [meet("1", "T", "8:00", "100"), meet("2", "T", "8:00", "100", "MATH", { Term: "SP" })];
+    expect(allMsgs(build(sessions, rule("*", { Term: "FA" })))).toEqual([expect.stringContaining("MATH 2 A")]);
+  });
+  it("reads and writes as a rule with a type of its own, and is described in a sentence", () => {
+    const s = build([meet("1", "T", "8:00", "100")], rule("MATH 3*", { Term: "FA" }));
+    const r = rulesOf(s)[0]!;
+    expect(r.type).toBe("subset");
+    expect(describeRule(r)).toBe("MATH 3* may meet on only some of the days of a standard time (for example Tuesday alone when TR is standard) in FA.");
+    expect(describeRule({ ...r, items: [{ course: "*", section: "", instructor: "" }], term: "" })).toMatch(/^Every course may meet/);
+    expect(rulesToRows(r)[0]).toMatchObject({ type: "subset", course: "MATH 3*", term: "FA" });
+    expect(importConstraints([{ Constraint: "X", Type: "Subset of standard times", Course: "*" }]).constraints[0]!.type).toBe("subset");
+  });
+  it("needs courses, not instructors, and no changes", () => {
+    const s = build([]);
+    expect(validateRule(s, { ...emptyRule("subset"), name: "S" }).map((p) => p.field)).toEqual(["items"]);
+    expect(validateRule(s, { ...emptyRule("subset"), name: "S", items: [{ course: "*", section: "", instructor: "" }] })).toEqual([]);
+    expect(validateRule(s, { ...emptyRule("subset"), name: "S", items: [{ course: "", section: "", instructor: "Ada" }] }).map((p) => p.message)).toContain("A “subset of standard times” rule lists courses.");
+  });
+  it("survives a round trip through the Excel file", async () => {
+    const s = build([meet("1", "T", "8:00", "100")], rule("*"));
+    const back = (await readWorkbook(await writeWorkbook(s))).schedule;
+    expect(rulesOf(back).map((r) => r.type)).toEqual(["subset"]);
+    expect(allMsgs(back)).toEqual([]);
   });
 });

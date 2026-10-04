@@ -188,7 +188,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
       } else {
         subject = "courses";
         if (hasPeople) items = [];
-        if (items.length === 0 || blank) items = type === "standard" ? [{ ...blankLine(), course: "*" }] : [blankLine(), blankLine()];
+        if (items.length === 0 || blank) items = type === "standard" || type === "subset" ? [{ ...blankLine(), course: "*" }] : [blankLine(), blankLine()];
         if (type === "takeable" && items.length === 1 && items[0]!.course === "*") items = [blankLine(), blankLine()];
       }
       return {
@@ -198,7 +198,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
         items,
         from: type === "window" && f.from === "" ? "10:00" : f.from,
         to: type === "window" && f.to === "" ? "11:00" : f.to,
-        count: type === "consecutive" && f.count.trim() === "" ? "3" : type === "standard" ? "" : f.count,
+        count: type === "consecutive" && f.count.trim() === "" ? "3" : type === "standard" || type === "subset" ? "" : f.count,
         changes: type === "standard" && f.changes.length === 0 ? [{ action: "allow", days: "", duration: "", starts: "" }] : f.changes,
       };
     });
@@ -228,6 +228,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
             <label className="choice"><input type="radio" checked={form.type === "takeable"} onChange={() => switchType("takeable")} /> <strong>Take together.</strong> A student must be able to take all, some or any set of these courses, one section of each, without a clash.</label>
             <label className="choice"><input type="radio" checked={form.type === "window"} onChange={() => switchType("window")} /> <strong>Time window.</strong> These courses or instructors should (or should not) meet during a time of day.</label>
             <label className="choice"><input type="radio" checked={form.type === "standard"} onChange={() => switchType("standard")} /> <strong>Modify standard times.</strong> Normally courses should meet only at standard days, start times and durations, as defined by the university. Add a custom rule to modify the list for some or all courses.</label>
+            <label className="choice"><input type="radio" checked={form.type === "subset"} onChange={() => switchType("subset")} /> <strong>Subset of standard times.</strong> Normally courses should meet for all of the times in a standard meeting. Add this rule to allow a section to meet for only some of the allowed times.</label>
             <label className="choice"><input type="radio" checked={form.type === "consecutive"} onChange={() => switchType("consecutive")} /> <strong>Back-to-back classes.</strong> These instructors should teach at most (or at least) some number of consecutive classes.</label>
           </fieldset>
 
@@ -267,7 +268,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
             })}
             {!(form.type === "consecutive" || (form.type === "window" && form.subject === "instructors")) ? (
               <p className="muted small">
-                {form.type === "standard" && <>Use <code>*</code> alone for every course. </>}
+                {(form.type === "standard" || form.type === "subset") && <>Use <code>*</code> alone for every course. </>}
                 Patterns: <code>*</code> any run of characters, <code>?</code> any one character, <code>[23]</code> either of those. <code>MATH 3*</code> is every 300-level MATH course, <code>STAT [23]4?</code> is 241, 243, 345 and so on, <code>MATH *</code> every MATH course. Leave Section blank for every section.
               </p>
             ) : (
@@ -389,6 +390,11 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                 </ul>
               </details>
             </fieldset>
+          ) : form.type === "subset" ? (
+            <p className="muted small">
+              Every meeting is checked against the university’s standard times (as changed by any <em>Modify standard times</em> rules), and a meeting on only some of the days of a standard time is flagged in orange,
+              since it may be a slip in choosing days. For the courses above this rule accepts such a meeting, as long as its start time and length are those of a standard time. A meeting that matches no standard time at all is still flagged.
+            </p>
           ) : (
             <div>
               <div className="row take-row">

@@ -52,7 +52,7 @@ function RuleList({ entry }: { entry: Entry }) {
         <tbody>
           <tr title="Built in: always checked. Add a Modify standard times rule to allow exceptions or to disallow times.">
             <td><strong>Standard times</strong> <span className="muted small">(built in)</span></td>
-            <td>Normally every meeting should be at one of the university’s standard days, start times and durations. Add a “Modify standard times” rule below to change the list for some or all courses.</td>
+            <td>Normally every meeting should be at one of the university’s standard days, start times and durations. Add a “Modify standard times” rule below to change the list for some or all courses, or a “Subset of standard times” rule to accept a course that meets on only some of the days of a standard time.</td>
             <td className="nowrap">{nonStandard === 0 ? <span className="ok-text">✓ met</span> : <span className="warn-orange">⚠ {nonStandard} non-standard</span>}</td>
           </tr>
           {rules.map((r) => {
@@ -61,7 +61,7 @@ function RuleList({ entry }: { entry: Entry }) {
               <tr key={r.name} className="clickable" tabIndex={0} onClick={() => openConstraint(r.name, entry.id)} onKeyDown={(e) => e.key === "Enter" && openConstraint(r.name, entry.id)} title="Click to edit">
                 <td><strong>{r.name}</strong></td>
                 <td>{describeRule(r)}{r.comment && <div className="muted small">{r.comment}</div>}</td>
-                <td className="nowrap">{r.type === "standard" ? <span className="muted">changes the standard times</span> : n === 0 ? <span className="ok-text">✓ met</span> : <span className="err">⚠ not met ({n})</span>}</td>
+                <td className="nowrap">{r.type === "standard" ? <span className="muted">changes the standard times</span> : r.type === "subset" ? <span className="muted">allows subsets of standard times</span> : n === 0 ? <span className="ok-text">✓ met</span> : <span className="err">⚠ not met ({n})</span>}</td>
               </tr>
             );
           })}

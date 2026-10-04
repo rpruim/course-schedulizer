@@ -19,3 +19,4 @@ Colloquium time,standard,MATH 290,,,,,,,,,,,,,,,,,The colloquium meets at a time
 Colloquium time,standard,,,,,,,,allow,50,15:05,,R,,,,,,
 No 8:00 MWF,standard,*,,,,,,,,,,,,,,,,,This department does not use 8:00 on MWF.
 No 8:00 MWF,standard,,,,,,,,disallow,65,8:00,,MWF,,,,,,
+Linear algebra may meet one day of TR,subset,MATH 255,,,,,,,,,,,,,,,,,"MATH 255 is meant to meet on only one of the standard days, so it is not flagged for that."

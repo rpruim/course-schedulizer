@@ -34,7 +34,7 @@ export const termList = (setting: string): string[] => setting.split(/[,;\s]+/).
 /** A constraint as the editor sees it: the rows that share a name, gathered into one object. */
 export interface Rule {
   name: string;
-  type: "takeable" | "window" | "standard" | "consecutive";
+  type: "takeable" | "window" | "standard" | "subset" | "consecutive";
   items: RuleItem[];
   /** `standard` rules: the changes to the standard times. */
   changes: StandardChange[];
@@ -162,14 +162,14 @@ export function validateRule(schedule: Schedule, rule: Rule, original?: string):
   if (!name) out.push({ field: "name", message: "Give the rule a name." });
   else if (schedule.constraints.some((c) => c.constraint.toLowerCase() === name.toLowerCase() && c.constraint !== original)) out.push({ field: "name", message: `Another rule is already called “${name}”.` });
   if (rule.items.length === 0) {
-    const message = { takeable: "List at least two courses.", window: "Say which courses or instructors the rule is about.", standard: "Say which courses it applies to (* means every course).", consecutive: "List at least one instructor." }[rule.type];
+    const message = { takeable: "List at least two courses.", window: "Say which courses or instructors the rule is about.", standard: "Say which courses it applies to (* means every course).", subset: "Say which courses it applies to (* means every course).", consecutive: "List at least one instructor." }[rule.type];
     out.push({ field: "items", message });
   }
   rule.items.forEach((it, i) => {
     if (!it.course.trim() && !it.instructor.trim()) out.push({ field: `items.${i}`, message: "Name a course or an instructor." });
     if (it.course.trim() && it.instructor.trim()) out.push({ field: `items.${i}`, message: "Use a course or an instructor on a line, not both." });
     if (rule.type === "window" && ruleSubject(rule) === "courses" && it.instructor.trim() && !it.course.trim()) out.push({ field: `items.${i}`, message: "A rule is about courses or about instructors, not both." });
-    if ((rule.type === "takeable" || rule.type === "standard") && it.instructor.trim()) out.push({ field: `items.${i}`, message: `A “${rule.type === "standard" ? "standard times" : "take together"}” rule lists courses.` });
+    if ((rule.type === "takeable" || rule.type === "standard" || rule.type === "subset") && it.instructor.trim()) out.push({ field: `items.${i}`, message: `A “${rule.type === "standard" ? "standard times" : rule.type === "subset" ? "subset of standard times" : "take together"}” rule lists courses.` });
     if (rule.type === "consecutive" && it.course.trim()) out.push({ field: `items.${i}`, message: "A back-to-back rule lists instructors." });
     if (rule.type !== "consecutive" && it.course.trim() && !/^\S+(\s+\S+)?$/.test(it.course.trim())) out.push({ field: `items.${i}`, message: "Write a course as PREFIX NUMBER, for example MATH 231 or MATH 3*." });
   });
@@ -223,6 +223,10 @@ export function describeRule(r: Rule): string {
     };
     return `Modified standard times for ${everything ? "every course" : items}: ${r.changes.map(change).join("; ") || "no changes yet"}${when}.`;
   }
+  if (r.type === "subset") {
+    const everything = r.items.length > 0 && r.items.every((it) => it.course.trim() === "*");
+    return `${everything ? "Every course" : items} may meet on only some of the days of a standard time (for example Tuesday alone when TR is standard)${when}.`;
+  }
   if (r.type === "consecutive") {
     const who = r.items.length > 1 ? `Each of ${items}` : items;
     const how = r.bound === "atMost" ? "at most" : "at least";
@@ -242,6 +246,15 @@ export function describeRule(r: Rule): string {
 /** Is this meeting at a standard time: exactly these days, this start, this length? */
 export function isStandardTime(m: Pick<Session, "days" | "start" | "duration">, times: StandardTime[] = DEFAULT_STANDARD_TIMES): boolean {
   return times.some((t) => t.days === m.days && t.duration === m.duration && m.start !== undefined && t.starts.includes(m.start));
+}
+
+/**
+ * A meeting that uses only some of the days of a standard time: the same start and length as a standard pattern, on some but not
+ * all of its days (T at 8:00 for 100 minutes, where TR at 8:00 for 100 minutes is standard). Returns that pattern's days, or undefined.
+ */
+export function subsetOfStandard(m: Pick<Session, "days" | "start" | "duration">, times: StandardTime[] = DEFAULT_STANDARD_TIMES): string | undefined {
+  if (m.start === undefined || m.days === "") return undefined;
+  return times.find((t) => t.duration === m.duration && t.starts.includes(m.start!) && t.days !== m.days && [...m.days].every((d) => t.days.includes(d)))?.days;
 }
 
 /** Why a meeting is not at a standard time, and what would be: the standard starts for its days and length, else the lengths or days that exist. */
@@ -344,7 +357,7 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
       consecutive(rule);
       continue;
     }
-    if (rule.type === "standard") continue; // they change the standard times, checked below
+    if (rule.type === "standard" || rule.type === "subset") continue; // they change what the standard-times check accepts, below
     for (const g of groups.values()) {
       if (!termMatches(rule.term, g.term)) continue;
       if (rule.type === "takeable") takeable(rule, g);
@@ -365,6 +378,7 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
    */
   function standardTimes(g: { year: string; term: string; sections: Session[] }) {
     const changing = rules.filter((r) => r.type === "standard" && termMatches(r.term, g.term));
+    const subsetting = rules.filter((r) => r.type === "subset" && termMatches(r.term, g.term));
     const effective = new Map<string, StandardTime[]>();
     for (const p of g.sections) {
       const mine = changing.filter((r) => named(r, { sections: [p] }).length > 0);
@@ -374,10 +388,15 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
         times = mine.reduce((t, r) => applyChanges(t, r.changes), DEFAULT_STANDARD_TIMES);
         effective.set(key, times);
       }
-      const odd = bySection.get(p.sectionId)!.filter((m) => scheduled(m) && !isStandardTime(m, times));
+      // A section a “subset of standard times” rule names may use some, but not all, of the days of a standard time.
+      const mayUseSubset = subsetting.some((r) => named(r, { sections: [p] }).length > 0);
+      const odd = bySection.get(p.sectionId)!.filter((m) => scheduled(m) && !isStandardTime(m, times) && !(mayUseSubset && subsetOfStandard(m, times) !== undefined));
       if (odd.length === 0) continue;
       const what = odd.map((m) => `${dayList(m.days)} ${formatTime(m.start!)}–${formatTime((m.start! + m.duration!) % 1440)} (${m.duration} min)`);
-      const why = [...new Set(odd.map((m) => standardAdvice(m, times!)))].join("; ");
+      const why = [...new Set(odd.map((m) => {
+        const whole = subsetOfStandard(m, times!);
+        return whole ? `only some of the days of ${dayList(whole)} at that time; a “Subset of standard times” rule allows that` : standardAdvice(m, times!);
+      }))].join("; ");
       out.push({
         rule: STANDARD_TIMES_RULE,
         builtin: true,

@@ -34,22 +34,32 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
             </li>
           </ol>
           </li>
-          <li> Look over your schedule using one of 
-            the <a href="#caldendar-views" onClick={jump("calendar-views")}>calendar views</a>.
+          <li> 
+            <a href="#caldendar-views" onClick={jump("calendar-views")}>
+            Look</a> over your schedule using one of the calendar views.
           </li>
-          <li>Change what needs changing: <a href="#edit" onClick={jump("edit")}>edit, add, and delete sections</a>, 
-              add <a href="#loads" onClick={jump("loads")}>non-teaching load</a>.
+          <li>
+            <a href="#edit" onClick={jump("edit")}>
+            Change</a>, 
+            what needs changing: 
+            Edit, add, and delete sections
+            add <a href="#loads" onClick={jump("loads")}>non-teaching load</a>.
           </li>
-          <li>Check your schedule by 
-            examining <a href="#loads" onClick={jump("loads")}> teaching (and non-teaching) loads</a>,
+          <li>
+            <strong>Check</strong>
+            your schedule by examining 
+            <a href="#loads" onClick={jump("loads")}> teaching (and non-teaching) loads</a>,
               investigating <a href="#conflicts" onClick={jump("conflicts")}>conflicts</a>,
               or <a href="#compare" onClick={jump("compare")}>comparing schedules</a>.
           </li>
+          <ul>
+
           <li>
             You may want to set up <a href="#constraints" onClick={jump("constraints")}>custom constraints</a> 
             to make sure you don't forget some important constraints on your schedule.
             Violated constraints appear just like conflicts.
           </li>
+          </ul>
           <li>
               <a href="#export" onClick={jump("export")}>Export</a> to Excel to save your work 
           for next time or so you can send it to someone else 
@@ -307,6 +317,12 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li><strong>Disallow</strong> a pattern that is standard everywhere but that your department does not want to use, for example MWF at 8:00. Leave the length or the start times blank to mean any.</li>
           <li>Days are letters (<code>MWF</code>, <code>TR</code>; R is Thursday). Start times are separated by commas. Later changes win, and a rule can be limited to some terms.</li>
         </ul>
+        <p>
+          A <em>Subset of standard times</em> rule is for courses that are meant to use only some of the days of a standard time. Without it, a course that meets on Tuesday at 8:00 for 100 minutes is flagged, because
+          the standard time is Tuesday and Thursday together; that is often useful, since it can point to a slip in choosing the days. With the rule, such a meeting is accepted for the courses it names (<code>*</code> alone for every course;
+          it can be limited to some terms) as long as its start time and length are those of a standard time and its days are some, but not all, of that time’s days. A meeting that matches no standard time at all is still flagged.
+          The flag says when a subset rule would allow the meeting.
+        </p>
         <h3>Back-to-back classes</h3>
         <p>
           “Each of these instructors should teach <em>at most</em> (or <em>at least</em>) <em>n</em> consecutive classes.” One class follows another when it starts within 20 minutes of the other’s end
@@ -337,6 +353,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dd><em>Core 100 needs an evening section.</em> Course CORE 100; <em>should</em> meet within 17:00–22:00; applies to at least 1 section.</dd>
           <dt>Modify standard times: allow</dt>
           <dd><em>Colloquium time.</em> Course MATH 290; allow R, 50 minutes, starting 15:05.</dd>
+          <dt>Subset of standard times</dt>
+          <dd><em>Linear algebra may meet one day of TR.</em> Course MATH 255, which meets on Tuesday alone at 8:00 for 100 minutes and is not flagged; STAT 245 on Friday alone at 9:15 is still flagged, because the rule does not name it.</dd>
           <dt>Modify standard times: disallow</dt>
           <dd><em>No 8:00 MWF.</em> Every course (<code>*</code>); disallow MWF, 65 minutes, starting 8:00.</dd>
           <dt>Back-to-back: at most</dt>

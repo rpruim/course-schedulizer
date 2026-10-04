@@ -453,7 +453,7 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
     }
     const looksConsecutive = have.Bound !== undefined || have.Gap !== undefined;
     const looksWindow = !standard && (have.From !== undefined || have.To !== undefined || have.Days !== undefined || have.Should !== undefined || (k.Instructor ?? "").trim() !== "");
-    const type = oneOf("Type", have.Type, { takeable: "takeable", cohort: "takeable", window: "window", time: "window", standard: "standard", "standard times": "standard", standardtimes: "standard", consecutive: "consecutive", "back-to-back": "consecutive" } as Record<string, "takeable" | "window" | "standard" | "consecutive">, standard ? "standard" : looksConsecutive ? "consecutive" : looksWindow ? "window" : "takeable");
+    const type = oneOf("Type", have.Type, { takeable: "takeable", cohort: "takeable", window: "window", time: "window", standard: "standard", "standard times": "standard", standardtimes: "standard", subset: "subset", "subset of standard times": "subset", consecutive: "consecutive", "back-to-back": "consecutive" } as Record<string, "takeable" | "window" | "standard" | "subset" | "consecutive">, standard ? "standard" : looksConsecutive ? "consecutive" : looksWindow ? "window" : "takeable");
     const from = time("From", have.From);
     const to = time("To", have.To);
     if (type === "window" && !reported.has(`${name}|window`)) {

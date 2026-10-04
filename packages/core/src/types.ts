@@ -89,6 +89,7 @@ export type NonTeaching = z.infer<typeof nonTeachingSchema>;
  *   `count` courses must be takeable together; with "any", every set of `count` courses must be. `course` is a pattern
  *   (`MATH 231`, `MATH 3*`); `section` names one section.
  * - `standard`: changes to the department's standard days, start times and lengths
+ * - `subset`: lets the courses it names meet on only some of the days of a standard time (T alone where TR is standard)
  *   (`DEFAULT_STANDARD_TIMES`, which every section is always checked against) for the sections named by
  *   `course` patterns (`*` = every course). Rows with an `action` are the changes; the rest name the courses.
  * - `consecutive`: each instructor named should teach at most (or at least) `count` consecutive
@@ -99,7 +100,7 @@ export type NonTeaching = z.infer<typeof nonTeachingSchema>;
  */
 export const constraintSchema = z.object({
   constraint: z.string().min(1),
-  type: z.enum(["takeable", "window", "standard", "consecutive"]).default("takeable"),
+  type: z.enum(["takeable", "window", "standard", "subset", "consecutive"]).default("takeable"),
   /** `Prefix CourseNumber` pattern, where `*` matches anything: `MATH 231`, `MATH 3*`, `MATH *`. */
   course: str,
   /** A section letter to name one section of the course; blank = every section. */
