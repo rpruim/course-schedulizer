@@ -91,8 +91,11 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
         return `${c.type}: ${names.get(otherId) ?? otherId} ${o?.section ?? ""} (${c.detail})`;
       });
     // Meetings at times that are not standard, counting the standard-times rules of the schedule (the built-in check included).
-    const nonStandard = findRuleViolations(r.schedule).filter((v) => v.type === "standard" && v.sectionIds.includes(r.sectionId)).map((v) => v.message);
-    return { conflicts, nonStandard, other: r.other, swapTo: r.other?.to };
+    const violations = findRuleViolations(r.schedule).filter((v) => v.sectionIds.includes(r.sectionId));
+    const nonStandard = violations.filter((v) => v.type === "standard").map((v) => v.message);
+    // Other rules the schedule has (a cohort that cannot take its courses, a clash with a window, too many classes in a row) show as conflicts in the grids.
+    const ruleBreaks = violations.filter((v) => v.type !== "standard").map((v) => `${v.rule}: ${v.message}`);
+    return { conflicts, ruleBreaks, nonStandard, other: r.other, swapTo: r.other?.to };
   }, [errors, schedule, draft]);
 
   // A problem with a listing must not hide inside the folded section.
@@ -236,7 +239,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
           </fieldset>
 
           {/* The outline follows the live preview below: red for a conflict (which wins), orange for a non-standard time. */}
-          <fieldset className={preview && preview.conflicts.length > 0 ? "meetings-conflict" : preview && preview.nonStandard.length > 0 ? "meetings-nonstandard" : undefined}>
+          <fieldset className={preview && (preview.conflicts.length > 0 || preview.ruleBreaks.length > 0) ? "meetings-conflict" : preview && preview.nonStandard.length > 0 ? "meetings-nonstandard" : undefined}>
             <legend>Meetings</legend>
             {form.meetings.length === 0 && <p className="muted">No scheduled time (for example an internship or an online section).</p>}
             {form.meetings.map((m, i) => {
@@ -309,6 +312,12 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
             <div className="note conflict-note" role="status">
               <strong>This section would conflict with:</strong>
               <ul>{preview.conflicts.map((c, i) => <li key={i}>{c}</li>)}</ul>
+            </div>
+          )}
+          {preview && preview.ruleBreaks.length > 0 && (
+            <div className="note conflict-note" role="status">
+              <strong>This section would break {preview.ruleBreaks.length === 1 ? "a rule" : "rules"}:</strong>
+              <ul>{preview.ruleBreaks.map((c, i) => <li key={i}>{c}</li>)}</ul>
             </div>
           )}
           {preview && preview.nonStandard.length > 0 && (

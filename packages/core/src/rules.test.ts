@@ -434,6 +434,10 @@ describe("the demo schedule with constraint rules (fixtures/cases/rules-*.csv)",
       ["Lee: at least two classes in a row", "Lee never teaches 2 consecutive classes in FA (the most is 1)"],
     ]);
   });
+  it("names every section a rule violation involves, so the section editor can list it", () => {
+    const rule = findRuleViolations(demo()).filter((v) => !v.builtin && v.rule.startsWith("Kim"));
+    expect(new Set(rule.flatMap((v) => v.sectionIds))).toEqual(new Set(["R2-FA-CRUD167-A", "R2-FA-CRUD245-A", "R2-FA-CRUD315-A"]));
+  });
   it("flags only the standard-time exceptions the rules do not cover", () => {
     const odd = findRuleViolations(demo()).filter((v) => v.builtin);
     expect(odd.map((v) => v.sectionIds[0])).toEqual(["R2-FA-CRUD167-B", "R2-FA-BHAV112-C", "R2-SP-BHAV226-A"]); // AMUS 296 on Tuesday alone is allowed by the subset rule; BHAV 226 on Friday alone is not covered
