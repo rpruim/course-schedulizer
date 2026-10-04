@@ -40,3 +40,9 @@
 - A git hook checks pushes to `main` and `dev` (see "Push check" in the README): the version in `package.json` must be higher than
   the remote branch's, with at most three parts on `main` (four are allowed on `dev`). Bump it before suggesting a push; never use
   `--no-verify` unless asked.
+- Versions are `major.minor.patch.dev`, as in R's usethis: a release has three parts (`2.0.2`) and is what `main` carries; `dev` carries
+  the development version, the last release plus a fourth part starting at `9000` (`2.0.2.9000`). Each push of `dev` needs a bump, which
+  increments the fourth part (`2.0.2.9001`, `2.0.2.9002`, …). A release drops the fourth part and raises major, minor or patch
+  (`2.0.3`); right after it, `dev` goes to that release with `.9000` (`2.0.3.9000`). `NEWS.md` keeps one section for the development
+  version at the top, named by the current `package.json` version, which collects the changes since the last release; at a release it
+  is renamed to the release number.
