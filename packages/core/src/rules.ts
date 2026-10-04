@@ -393,17 +393,20 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
       const odd = bySection.get(p.sectionId)!.filter((m) => scheduled(m) && !isStandardTime(m, times) && !(mayUseSubset && subsetOfStandard(m, times) !== undefined));
       if (odd.length === 0) continue;
       const what = odd.map((m) => `${dayList(m.days)} ${formatTime(m.start!)}–${formatTime((m.start! + m.duration!) % 1440)} (${m.duration} min)`);
-      const why = [...new Set(odd.map((m) => {
+      const tails = [...new Set(odd.map((m) => {
         const whole = subsetOfStandard(m, times!);
-        return whole ? `only some of the days of ${dayList(whole)} at that time; a “Subset of standard times” rule allows that` : standardAdvice(m, times!);
-      }))].join("; ");
+        if (whole) return `which is not a standard time (only some of the days of ${dayList(whole)} at that time; a “Subset of standard times” rule allows that)`;
+        // Standard by default, but a rule took it away: say so, instead of listing starts that seem to leave it out.
+        if (mine.length > 0 && isStandardTime(m, DEFAULT_STANDARD_TIMES)) return `which is a standard time, but not allowed by ${mine.map((r) => `“${r.name}”`).join(", ")}; ${standardAdvice(m, times!).replace(/^standard /, "allowable ")}`;
+        return `which is not a standard time (${standardAdvice(m, times!)})`;
+      }))].join("; and ");
       out.push({
         rule: STANDARD_TIMES_RULE,
         builtin: true,
         type: "standard",
         academicYear: g.year,
         term: g.term,
-        message: `${label(p.sectionId)} meets ${[...new Set(what)].join(" and ")}, which is not a standard time (${why})`,
+        message: `${label(p.sectionId)} meets ${[...new Set(what)].join(" and ")}, ${tails}`,
         sectionIds: [p.sectionId],
         sessions: odd,
       });

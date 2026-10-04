@@ -1,6 +1,7 @@
 # Course Schedulizer 2.0.2.9002
 
 * New constraint rule, *Subset of standard times*: a course it names is not flagged for meeting on only some of the days of a standard time (for example Tuesday alone at 8:00 for 100 minutes, where Tuesday and Thursday together is standard). Without the rule such meetings are still flagged, which is often useful for catching a slip in choosing days, and the flag now says when this rule would allow it.
+* A section at a time that is standard but that a rule disallows (for example 8:00 MWF under a rule against it) is now flagged with the reason (“which is a standard time, but not allowed by …”), followed by the starts that are allowed.
 
 # Course Schedulizer 2.0.2
 

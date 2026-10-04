@@ -277,7 +277,7 @@ describe("standard times (built in) and the rules that change them", () => {
   it("a rule can disallow a time that is standard elsewhere", () => {
     const sessions = [meet("1", "MWF", "8:00", "65"), meet("2", "MWF", "9:15", "65")];
     const rows = [{ Constraint: "No early", Type: "standard", Course: "*" }, { Constraint: "No early", Type: "standard", Action: "disallow", Days: "MWF", Duration: "65", Starts: "8:00" }];
-    expect(allMsgs(build(sessions, rows))).toEqual([expect.stringContaining("MUSC 1 A meets M W F 08:00–09:05 (65 min), which is not a standard time (standard M W F starts for 65 minutes: 9:15, 11:00, 12:15, 13:30, 14:45)")]);
+    expect(allMsgs(build(sessions, rows))).toEqual([expect.stringContaining("MUSC 1 A meets M W F 08:00–09:05 (65 min), which is a standard time, but not allowed by “No early”; allowable M W F starts for 65 minutes: 9:15, 11:00, 12:15, 13:30, 14:45")]);
   });
   it("a disallow with no length or starts removes every pattern on those days", () => {
     const rows = [{ Constraint: "No MWF", Type: "standard", Course: "*" }, { Constraint: "No MWF", Action: "disallow", Days: "MWF" }];
@@ -437,7 +437,7 @@ describe("the demo schedule with constraint rules (fixtures/cases/rules-*.csv)",
   it("flags only the standard-time exceptions the rules do not cover", () => {
     const odd = findRuleViolations(demo()).filter((v) => v.builtin);
     expect(odd.map((v) => v.sectionIds[0])).toEqual(["R2-FA-CRUD167-B", "R2-FA-BHAV112-C", "R2-SP-BHAV226-A"]); // AMUS 296 on Tuesday alone is allowed by the subset rule; BHAV 226 on Friday alone is not covered
-    expect(odd[0]!.message).toContain("standard M W F starts for 65 minutes: 9:15, 11:00, 12:15, 13:30, 14:45"); // 8:00 is disallowed, so it is no longer offered
+    expect(odd[0]!.message).toContain("allowable M W F starts for 65 minutes: 9:15, 11:00, 12:15, 13:30, 14:45"); // 8:00 is disallowed, so it is no longer offered
   });
 });
 
