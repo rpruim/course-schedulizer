@@ -43,6 +43,7 @@ export type Action =
   | { type: "remove"; id: string }
   | { type: "rename"; id: string; name: string }
   | { type: "edit"; id: string; fn: (s: Schedule) => Schedule }
+  | { type: "move"; id: string; before: string | undefined }
   | { type: "setCurrent"; id: string }
   | { type: "setIncluded"; ids: string[] }
   | { type: "undo" }
@@ -123,6 +124,16 @@ export function reducer(state: State, action: Action): State {
       const schedule = action.fn(target.schedule);
       return schedule === target.schedule ? state : change(state, state.present.map((e) => (e.id === action.id ? { ...e, schedule } : e)));
     }
+    case "move": {
+      // Put a schedule just before another one (undefined: last). Views and `included` follow workspace order.
+      const moving = state.present.find((e) => e.id === action.id);
+      if (!moving || action.before === action.id) return state;
+      const rest = state.present.filter((e) => e.id !== action.id);
+      const at = action.before === undefined ? rest.length : rest.findIndex((e) => e.id === action.before);
+      if (at < 0) return state;
+      const next = [...rest.slice(0, at), moving, ...rest.slice(at)];
+      return next.every((e, i) => e === state.present[i]) ? state : change(state, next);
+    }
     case "setCurrent":
       return state.present.some((e) => e.id === action.id) ? { ...state, currentId: action.id } : state;
     case "setIncluded":
@@ -181,6 +192,8 @@ export interface Workspace {
   renameSchedule(id: string, name: string): void;
   /** Edit one schedule; undoable. */
   applyTo(id: string, fn: (s: Schedule) => Schedule): void;
+  /** Put a schedule just before another one, or last when `before` is undefined; undoable. */
+  moveSchedule(id: string, before: string | undefined): void;
   setCurrent(id: string): void;
   setIncluded(ids: string[]): void;
   toggleIncluded(id: string): void;
@@ -274,6 +287,7 @@ export function WorkspaceProvider({ children, store }: { children: ReactNode; st
       removeSchedule: (id) => dispatch({ type: "remove", id }),
       renameSchedule: (id, name) => dispatch({ type: "rename", id, name }),
       applyTo: (id, fn) => dispatch({ type: "edit", id, fn }),
+      moveSchedule: (id, before) => dispatch({ type: "move", id, before }),
       setCurrent: (id) => dispatch({ type: "setCurrent", id }),
       setIncluded: (ids) => dispatch({ type: "setIncluded", ids }),
       toggleIncluded: (id) => dispatch({ type: "setIncluded", ids: state.included.includes(id) ? state.included.filter((x) => x !== id) : [...state.included, id] }),

@@ -62,3 +62,12 @@ export function RoleIcon({ role }: { role: "ignore" | "group" | "aggregate" }) {
     </svg>
   );
 }
+
+/** Arrows in the four directions: a handle to drag something by. */
+export function Move() {
+  return (
+    <svg {...svg} className="move-icon">
+      <path fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" d="M8 1.5v13M1.5 8h13M8 1.5 6.2 3.3M8 1.5l1.8 1.8M8 14.5l-1.8-1.8M8 14.5l1.8-1.8M1.5 8l1.8-1.8M1.5 8l1.8 1.8M14.5 8l-1.8-1.8M14.5 8l-1.8 1.8" />
+    </svg>
+  );
+}

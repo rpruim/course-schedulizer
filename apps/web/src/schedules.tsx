@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useWorkspace } from "./state";
-import { Trash } from "./icons";
+import { Move, Trash } from "./icons";
 
 /**
  * The open schedules: tick the ones to show in the views, click a name to make it the
@@ -11,12 +11,23 @@ export function SchedulePicker() {
   const [renaming, setRenaming] = useState<string | undefined>();
   const [draft, setDraft] = useState("");
   const input = useRef<HTMLInputElement>(null);
+  // Dragging: the schedule being dragged, and the pill and side the pointer is over.
+  const [dragging, setDragging] = useState<string | undefined>();
+  const [over, setOver] = useState<{ id: string; after: boolean } | undefined>();
   if (ws.entries.length === 0) return null;
 
   const commit = () => {
     if (renaming) ws.applyTo(renaming, (s) => ({ ...s, meta: { ...s.meta, nickname: draft.trim() } }));
     setRenaming(undefined);
   };
+
+  const ids = ws.entries.map((e) => e.id);
+  /** Move `id` to the left of the pill `target`, or right after it. */
+  const drop = (id: string, target: string, after: boolean) => {
+    const at = ids.indexOf(target);
+    ws.moveSchedule(id, after ? ids[at + 1] : target);
+  };
+  const clearDrag = () => { setDragging(undefined); setOver(undefined); };
 
   return (
     <div className="picker" role="group" aria-label="Open schedules">
@@ -25,7 +36,45 @@ export function SchedulePicker() {
         const isCurrent = e.id === ws.currentId;
         const shown = ws.included.includes(e.id);
         return (
-          <span key={e.id} className={`sched${isCurrent ? " current" : ""}${shown ? "" : " hidden"}`}>
+          <span
+            key={e.id}
+            className={`sched${isCurrent ? " current" : ""}${shown ? "" : " hidden"}${over?.id === e.id && dragging !== e.id ? (over.after ? " drop-after" : " drop-before") : ""}${dragging === e.id ? " dragging" : ""}`}
+            onDragOver={(ev) => {
+              if (!dragging) return;
+              ev.preventDefault();
+              const box = ev.currentTarget.getBoundingClientRect();
+              const after = ev.clientX > box.left + box.width / 2;
+              if (over?.id !== e.id || over.after !== after) setOver({ id: e.id, after });
+            }}
+            onDrop={(ev) => {
+              ev.preventDefault();
+              if (dragging && over && dragging !== e.id) drop(dragging, e.id, over.after);
+              clearDrag();
+            }}
+          >
+            {ids.length > 1 && (
+              <button
+                className="icon grip"
+                draggable
+                onDragStart={(ev) => {
+                  ev.dataTransfer.effectAllowed = "move";
+                  ev.dataTransfer.setData("text/plain", e.id);
+                  const pill = ev.currentTarget.parentElement;
+                  if (pill) ev.dataTransfer.setDragImage(pill, 12, 12);
+                  setDragging(e.id);
+                }}
+                onDragEnd={clearDrag}
+                onKeyDown={(ev) => {
+                  const at = ids.indexOf(e.id);
+                  if (ev.key === "ArrowLeft" && at > 0) { ev.preventDefault(); ws.moveSchedule(e.id, ids[at - 1]); }
+                  if (ev.key === "ArrowRight" && at < ids.length - 1) { ev.preventDefault(); ws.moveSchedule(e.id, ids[at + 2]); }
+                }}
+                title="Drag to change the order of the schedules, or use the left and right arrow keys"
+                aria-label={`Move ${e.name}: drag, or press the left or right arrow key`}
+              >
+                <Move />
+              </button>
+            )}
             <input type="checkbox" checked={shown} onChange={() => ws.toggleIncluded(e.id)} aria-label={`Show ${e.name} in the views`} title="Show in the views" />
             {renaming === e.id ? (
               <input

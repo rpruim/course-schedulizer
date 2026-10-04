@@ -140,3 +140,26 @@ describe("loading a saved workspace", () => {
     expect([ids(s), s.currentId, s.included, s.past.length]).toEqual([["a", "b"], "a", ["b"], 0]);
   });
 });
+
+describe("move", () => {
+  const three = () => run(initialState(), { type: "add", entry: entry("a") }, { type: "add", entry: entry("b") }, { type: "add", entry: entry("c") });
+  it("puts a schedule before another, or last", () => {
+    expect(ids(run(three(), { type: "move", id: "c", before: "a" }))).toEqual(["c", "a", "b"]);
+    expect(ids(run(three(), { type: "move", id: "a", before: undefined }))).toEqual(["b", "c", "a"]);
+    expect(ids(run(three(), { type: "move", id: "a", before: "c" }))).toEqual(["b", "a", "c"]);
+  });
+  it("changes nothing for an unknown schedule, itself, or an order it already has", () => {
+    const s = three();
+    expect(run(s, { type: "move", id: "x", before: "a" })).toBe(s);
+    expect(run(s, { type: "move", id: "a", before: "z" })).toBe(s);
+    expect(run(s, { type: "move", id: "a", before: "a" })).toBe(s);
+    expect(run(s, { type: "move", id: "a", before: "b" })).toBe(s);
+    expect(run(s, { type: "move", id: "c", before: undefined })).toBe(s);
+  });
+  it("keeps the current schedule, and the shown ones follow the new order; undo restores the old order", () => {
+    const s = run(three(), { type: "setCurrent", id: "b" }, { type: "setIncluded", ids: ["a", "c"] }, { type: "move", id: "c", before: "a" });
+    expect(s.currentId).toBe("b");
+    expect(s.included).toEqual(["c", "a"]);
+    expect(ids(run(s, { type: "undo" }))).toEqual(["a", "b", "c"]);
+  });
+});

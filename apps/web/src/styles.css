@@ -184,6 +184,10 @@ dialog.editor.narrow { width: min(520px, calc(100vw - 24px)); }
 .sched .name { border: 0; background: none; padding: 2px 4px; font: inherit; color: var(--fg); cursor: pointer; }
 .sched .icon { border: 0; background: none; padding: 0 3px; color: var(--muted); font-size: .85rem; }
 .sched .icon:hover { color: var(--fg); }
+.sched .grip { cursor: grab; }
+.sched.dragging { opacity: .5; }
+.sched.drop-before { box-shadow: -4px 0 0 var(--accent); }
+.sched.drop-after { box-shadow: 4px 0 0 var(--accent); }
 .sched input[type="checkbox"] { margin: 0; }
 .sched .rename { padding: 1px 6px; width: 12em; }
 .badge { font-size: .65rem; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); }
