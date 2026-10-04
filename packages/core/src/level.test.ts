@@ -17,7 +17,7 @@ describe("course level", () => {
     expect(levelOf({ courseLevel: "300", courseNumber: "231" })).toBe("300");
   });
   it("shows in the comparison rows", () => {
-    const s = (over: Partial<Session>) => ({ sectionId: "x", department: "", academicYear: "AY25", term: "FA", termPart: "Full", prefix: "MATH", courseNumber: "231", section: "A", shortTitle: "", faculty: [], days: "", comment: "", extra: {}, courseLevel: "", ...over }) as Session;
+    const s = (over: Partial<Session>) => ({ sectionId: "x", department: "", academicYear: "AY25", term: "FA", termPart: "Full", prefix: "MUSC", courseNumber: "231", section: "A", shortTitle: "", faculty: [], days: "", comment: "", extra: {}, courseLevel: "", ...over }) as Session;
     const sched = { ...emptySchedule(), sessions: [s({ sectionId: "a" }), s({ sectionId: "b", courseLevel: "300" })] };
     expect(comparisonRows(sched).map((r) => r.CourseLevel)).toEqual(["200", "300"]);
   });

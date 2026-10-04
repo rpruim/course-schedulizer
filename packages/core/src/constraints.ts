@@ -31,8 +31,8 @@ function globRe(pattern: string): RegExp {
 
 /**
  * Does a course pattern match a course? The pattern is `PREFIX NUMBER`, where `*` matches any run of
- * characters, `?` any one character and `[234]` any one of those: `MATH 231` (exactly), `MATH 3*`
- * (300-level), `STAT [23]4?` (241, 243, 345, …), `MATH *` or just `MATH` (any MATH course). Matching
+ * characters, `?` any one character and `[234]` any one of those: `MUSC 234` (exactly), `MUSC 3*`
+ * (300-level), `URBS [23]4?` (241, 243, 345, …), `MUSC *` or just `MUSC` (any MUSC course). Matching
  * ignores case and extra spaces.
  */
 export function courseMatches(pattern: string, prefix: string, courseNumber: string): boolean {

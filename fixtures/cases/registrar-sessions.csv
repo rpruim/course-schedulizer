@@ -1,12 +1,12 @@
 AcademicYear,Term,TermPart,Prefix,CourseNumber,Section,Faculty,FacultyLoad,MinimumCredits,MeetingDays,StartTime,MeetingDuration,Classroom,ShortTitle,InstructionalMethod,DeliveryMode,Comment
-R1,FA,Full,MATH,101,A,Smith,4,4,MWF,09:15,65,NH 101,Calculus,Lecture,In-Person,
-R1,SP,Full,MATH,102,A,"Ada Example (3), Ben Sample (1)",4,4,MW,09:15,65,NH 101,Linear Algebra,Lecture,In-Person,
-R1,SP,Full,MATH,102,A,,,,F,10:20,50,NH 102,,,,
-R1,FA,Full,STAT,201,A,Lee,4,4,TR,10:20,100,NH 1,Statistics,Lecture,Online,
-R1,FA,Full,STAT,201,A,,,,TR,10:20,100,NH 2,,,,
-R1,FA,Full,EDUC,346,J,Kim,1.8,12,,,,Off Campus,Internship,Internship,,Might be 1.8 hours
-R1,FA,Full,DATA,385,A,Lee,4,4,MWF,11:00,65,NH 103,Optimization,Lecture,In-Person,
-R1,SP,Full,DATA,301,A,Ben Sample,4,4,TR,14:10,100,NH 104,Topics,Lecture,In-Person,
-R1,SU,Full,MATH,150,A,Smith,2,2,MWF,08:00,65,NH 105,Summer Topics,Lecture,In-Person,
-R1,SU,Full,MATH,150,A,,,,,,,Online,,,,
-R1,SU,First,MATH,160,A,Smith,2,2,MTWRF,13:00,50,NH 106,Half Term,Lecture,,
+R1,FA,Full,MUSC,104,A,Smith,4,4,MWF,09:15,65,NH 101,Musical Patterns,Lecture,In-Person,
+R1,SP,Full,MUSC,105,A,"Ada Example (3), Ben Sample (1)",4,4,MW,09:15,65,NH 101,Harmonic Structures,Lecture,In-Person,
+R1,SP,Full,MUSC,105,A,,,,F,10:20,50,NH 102,,,,
+R1,FA,Full,URBS,204,A,Lee,4,4,TR,10:20,100,NH 1,Statistics,Lecture,Online,
+R1,FA,Full,URBS,204,A,,,,TR,10:20,100,NH 2,,,,
+R1,FA,Full,HELP,349,J,Kim,1.8,12,,,,Off Campus,Field Internship,Internship,,Might be 1.8 hours
+R1,FA,Full,DIGI,388,A,Lee,4,4,MWF,11:00,65,NH 103,Network Optimization,Lecture,In-Person,
+R1,SP,Full,DIGI,304,A,Ben Sample,4,4,TR,14:10,100,NH 104,Special Topics,Lecture,In-Person,
+R1,SU,Full,MUSC,153,A,Smith,2,2,MWF,08:00,65,NH 105,Summer Topics,Lecture,In-Person,
+R1,SU,Full,MUSC,153,A,,,,,,,Online,,,,
+R1,SU,First,MUSC,163,A,Smith,2,2,MTWRF,13:00,50,NH 106,Half Term,Lecture,,

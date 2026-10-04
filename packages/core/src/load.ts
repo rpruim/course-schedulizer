@@ -91,7 +91,7 @@ function collectLoad(schedule: Schedule): Collected {
   return { rows, items };
 }
 
-/** `MATH 171 (2) · MATH 271` — each distinct item once, with the number of instances in parentheses when repeated. */
+/** `MUSC 174 (2) · MUSC 274` — each distinct item once, with the number of instances in parentheses when repeated. */
 export function summarizeItems(items: string[]): string {
   const counts = new Map<string, number>();
   for (const i of items) counts.set(i, (counts.get(i) ?? 0) + 1);

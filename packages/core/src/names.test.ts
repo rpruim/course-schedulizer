@@ -7,14 +7,14 @@ import { fixtureText } from "./testutil.js";
 describe("courseDisplayName", () => {
   const l = (p: string, n: string) => ({ prefix: p, courseNumber: n });
   it("groups listings that share a number", () => {
-    expect(courseDisplayName([l("MATH", "110")])).toBe("MATH 110");
-    expect(courseDisplayName([l("DATA", "385"), l("STAT", "385")])).toBe("DATA/STAT 385");
-    expect(courseDisplayName([l("DATA", "301"), l("STAT", "305"), l("MATH", "307")])).toBe("DATA 301/STAT 305/MATH 307");
-    expect(courseDisplayName([l("DATA", "201"), l("STAT", "201"), l("MATH", "207")])).toBe("DATA/STAT 201/MATH 207");
+    expect(courseDisplayName([l("MUSC", "113")])).toBe("MUSC 113");
+    expect(courseDisplayName([l("DIGI", "388"), l("URBS", "388")])).toBe("DIGI/URBS 388");
+    expect(courseDisplayName([l("DIGI", "304"), l("URBS", "308"), l("MUSC", "310")])).toBe("DIGI 304/URBS 308/MUSC 310");
+    expect(courseDisplayName([l("DIGI", "204"), l("URBS", "204"), l("MUSC", "210")])).toBe("DIGI/URBS 204/MUSC 210");
   });
   it("groups a non-adjacent repeat of a number and ignores duplicate listings", () => {
-    expect(courseDisplayName([l("DATA", "1"), l("MATH", "2"), l("STAT", "1")])).toBe("DATA/STAT 1/MATH 2");
-    expect(courseDisplayName([l("DATA", "1"), l("DATA", "1")])).toBe("DATA 1");
+    expect(courseDisplayName([l("DIGI", "1"), l("MUSC", "2"), l("URBS", "1")])).toBe("DIGI/URBS 1/MUSC 2");
+    expect(courseDisplayName([l("DIGI", "1"), l("DIGI", "1")])).toBe("DIGI 1");
   });
 });
 

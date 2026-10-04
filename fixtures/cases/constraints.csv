@@ -1,6 +1,6 @@
 Constraint,Course,Section,Comment
-Math major year 2,MATH 231,,
-Math major year 2,STAT 243,,
-Math major year 2,MATH 250,,SYNTHETIC - pairs with cases/conflicts.csv T17
-Cohort 2,MATH 270,A,SYNTHETIC - names one section; pairs with T18
-Cohort 2,STAT 280,,
+MUSC major year 2,MUSC 234,,
+MUSC major year 2,URBS 246,,
+MUSC major year 2,MUSC 253,,SYNTHETIC - pairs with cases/conflicts.csv T17
+Cohort 2,MUSC 273,A,SYNTHETIC - names one section; pairs with T18
+Cohort 2,URBS 283,,

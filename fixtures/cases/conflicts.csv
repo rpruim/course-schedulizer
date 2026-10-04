@@ -1,43 +1,43 @@
 AcademicYear,Term,TermPart,Prefix,CourseNumber,Section,Faculty,FacultyLoad,MeetingDays,StartTime,MeetingDuration,Classroom,Comment
-T01,FA,Full,MATH,101,A,Smith,4,MWF,09:15,65,NH 101,instructor overlap (partial time overlap)
-T01,FA,Full,MATH,102,A,Smith,4,MWF,10:00,65,NH 102,
-T02,FA,Full,MATH,101,A,Smith,4,MWF,09:15,65,NH 101,back-to-back: end == start is NOT an overlap
-T02,FA,Full,MATH,102,A,Smith,4,MWF,10:20,65,NH 102,
-T03,FA,Full,MATH,101,A,Smith,4,MWF,09:15,65,NH 101,room conflict only
-T03,FA,Full,MATH,102,A,Jones,4,MWF,09:15,65,NH 101,
-T04,FA,Full,MATH,101,A,Smith,4,MWF,09:15,65,NH 101,instructor AND room: two conflict rows
-T04,FA,Full,MATH,102,A,Smith,4,MWF,09:15,65,NH 101,
-T05,FA,Full,MATH,101,A,Smith,4,MWF,09:15,65,NH 101,a section never conflicts with itself (two meeting rows overlap on Friday)
-T05,FA,Full,MATH,101,A,Smith,4,F,09:15,65,NH 101,
-T06,FA,Full,MATH,101,A,Smith,4,MWF,09:15,65,NH 101,different terms never conflict
-T06,SP,Full,MATH,102,A,Smith,4,MWF,09:15,65,NH 101,
-T07,FA,First,MATH,101,A,Smith,4,MWF,09:15,65,NH 101,term parts: First (wk 1-8) vs Second (wk 9-16) do not overlap
-T07,FA,Second,MATH,102,A,Smith,4,MWF,09:15,65,NH 102,
-T07,FA,Full,MATH,103,A,Smith,4,MWF,09:15,65,NH 103,Full overlaps both halves
-T08,FA,Full,MATH,101,A,Smith,4,MWF,09:15,65,NH 101,no common day
-T08,FA,Full,MATH,102,A,Smith,4,TR,09:15,65,NH 102,
-T09,FA,Full,MATH,101,A,Smith,4,MW,09:15,65,NH 101,one common day (W) is enough
-T09,FA,Full,MATH,102,A,Smith,4,WF,09:15,65,NH 102,
-T10,FA,Full,MATH,101,A,"Smith, Jones",4,MWF,09:15,65,NH 101,co-teaching: sharing one of several instructors
-T10,FA,Full,MATH,102,A,Jones,4,MWF,09:15,65,NH 102,
-T11,FA,Full,MATH,101,A,*,4,MWF,09:15,65,NH 101,wildcard instructor conflicts with every overlapping session
-T11,FA,Full,MATH,102,A,Jones,4,MWF,09:15,65,NH 102,
-T12-AY1,FA,Full,MATH,101,A,Smith,4,MWF,09:15,65,NH 101,different academic years never conflict (old app compared Term only)
-T12-AY2,FA,Full,MATH,102,A,Smith,4,MWF,09:15,65,NH 101,
-T13,FA,Full,MATH,101,A,Smith,4,,,,,unscheduled session never conflicts
-T13,FA,Full,MATH,102,A,Smith,4,MWF,09:15,65,NH 102,
-T13,FA,Full,MATH,103,A,Jones,4,MWF,09:15,65,,empty room is not a room: no room conflict
-T13,FA,Full,MATH,104,A,Lee,4,MWF,09:15,65,,
-T14,FA,Full,MATH,101,A,Smith,4,MWF,09:15,65,NH 101,names and rooms compare case-insensitively after trimming
-T14,FA,Full,MATH,102,A,smith ,4,MWF,09:15,65,nh  101,
-T15,FA,Full,MATH,101,A,Smith,4,MWF,09:15,65,Off Campus,Off Campus / Online / TBD are non-rooms: no room conflict
-T15,FA,Full,MATH,102,A,Jones,4,MWF,09:15,65,Off Campus,
-T16,FA,Full,MATH,101,A,"Smith (3), Jones (1)",4,MWF,09:15,65,NH 101,"per-instructor load ""(n)"" is not part of the name"
-T16,FA,Full,MATH,102,A,Jones,4,MWF,09:15,65,NH 102,
-T17,FA,Full,MATH,231,A,Smith,4,MWF,09:15,65,NH 101,cohort constraint: MATH 231 and STAT 243 are in the same group (cases/constraints.csv)
-T17,FA,Full,STAT,243,A,Jones,4,MWF,09:15,65,NH 102,
-T17,FA,Full,MATH,250,A,Lee,4,TR,09:15,65,NH 103,same group but meets at a different time: no violation
-T17,FA,Full,MATH,260,A,Kim,4,MWF,09:15,65,NH 104,not in any group: no violation despite same time
-T18,FA,Full,MATH,270,A,Smith,4,MWF,09:15,65,NH 101,constraint naming ONE section (MATH 270 A) conflicts with STAT 280 (cases/constraints.csv)
-T18,FA,Full,MATH,270,B,Jones,4,MWF,09:15,65,NH 102,same course and time but section B is not named: no violation
-T18,FA,Full,STAT,280,A,Lee,4,MWF,09:15,65,NH 103,
+T01,FA,Full,MUSC,104,A,Smith,4,MWF,09:15,65,NH 101,instructor overlap (partial time overlap)
+T01,FA,Full,MUSC,105,A,Smith,4,MWF,10:00,65,NH 102,
+T02,FA,Full,MUSC,104,A,Smith,4,MWF,09:15,65,NH 101,back-to-back: end == start is NOT an overlap
+T02,FA,Full,MUSC,105,A,Smith,4,MWF,10:20,65,NH 102,
+T03,FA,Full,MUSC,104,A,Smith,4,MWF,09:15,65,NH 101,room conflict only
+T03,FA,Full,MUSC,105,A,Jones,4,MWF,09:15,65,NH 101,
+T04,FA,Full,MUSC,104,A,Smith,4,MWF,09:15,65,NH 101,instructor AND room: two conflict rows
+T04,FA,Full,MUSC,105,A,Smith,4,MWF,09:15,65,NH 101,
+T05,FA,Full,MUSC,104,A,Smith,4,MWF,09:15,65,NH 101,a section never conflicts with itself (two meeting rows overlap on Friday)
+T05,FA,Full,MUSC,104,A,Smith,4,F,09:15,65,NH 101,
+T06,FA,Full,MUSC,104,A,Smith,4,MWF,09:15,65,NH 101,different terms never conflict
+T06,SP,Full,MUSC,105,A,Smith,4,MWF,09:15,65,NH 101,
+T07,FA,First,MUSC,104,A,Smith,4,MWF,09:15,65,NH 101,term parts: First (wk 1-8) vs Second (wk 9-16) do not overlap
+T07,FA,Second,MUSC,105,A,Smith,4,MWF,09:15,65,NH 102,
+T07,FA,Full,MUSC,106,A,Smith,4,MWF,09:15,65,NH 103,Full overlaps both halves
+T08,FA,Full,MUSC,104,A,Smith,4,MWF,09:15,65,NH 101,no common day
+T08,FA,Full,MUSC,105,A,Smith,4,TR,09:15,65,NH 102,
+T09,FA,Full,MUSC,104,A,Smith,4,MW,09:15,65,NH 101,one common day (W) is enough
+T09,FA,Full,MUSC,105,A,Smith,4,WF,09:15,65,NH 102,
+T10,FA,Full,MUSC,104,A,"Smith, Jones",4,MWF,09:15,65,NH 101,co-teaching: sharing one of several instructors
+T10,FA,Full,MUSC,105,A,Jones,4,MWF,09:15,65,NH 102,
+T11,FA,Full,MUSC,104,A,*,4,MWF,09:15,65,NH 101,wildcard instructor conflicts with every overlapping session
+T11,FA,Full,MUSC,105,A,Jones,4,MWF,09:15,65,NH 102,
+T12-AY1,FA,Full,MUSC,104,A,Smith,4,MWF,09:15,65,NH 101,different academic years never conflict (old app compared Term only)
+T12-AY2,FA,Full,MUSC,105,A,Smith,4,MWF,09:15,65,NH 101,
+T13,FA,Full,MUSC,104,A,Smith,4,,,,,unscheduled session never conflicts
+T13,FA,Full,MUSC,105,A,Smith,4,MWF,09:15,65,NH 102,
+T13,FA,Full,MUSC,106,A,Jones,4,MWF,09:15,65,,empty room is not a room: no room conflict
+T13,FA,Full,MUSC,107,A,Lee,4,MWF,09:15,65,,
+T14,FA,Full,MUSC,104,A,Smith,4,MWF,09:15,65,NH 101,names and rooms compare case-insensitively after trimming
+T14,FA,Full,MUSC,105,A,smith ,4,MWF,09:15,65,nh  101,
+T15,FA,Full,MUSC,104,A,Smith,4,MWF,09:15,65,Off Campus,Off Campus / Online / TBD are non-rooms: no room conflict
+T15,FA,Full,MUSC,105,A,Jones,4,MWF,09:15,65,Off Campus,
+T16,FA,Full,MUSC,104,A,"Smith (3), Jones (1)",4,MWF,09:15,65,NH 101,"per-instructor load ""(n)"" is not part of the name"
+T16,FA,Full,MUSC,105,A,Jones,4,MWF,09:15,65,NH 102,
+T17,FA,Full,MUSC,234,A,Smith,4,MWF,09:15,65,NH 101,cohort constraint: MUSC 234 and URBS 246 are in the same group (cases/constraints.csv)
+T17,FA,Full,URBS,246,A,Jones,4,MWF,09:15,65,NH 102,
+T17,FA,Full,MUSC,253,A,Lee,4,TR,09:15,65,NH 103,same group but meets at a different time: no violation
+T17,FA,Full,MUSC,263,A,Kim,4,MWF,09:15,65,NH 104,not in any group: no violation despite same time
+T18,FA,Full,MUSC,273,A,Smith,4,MWF,09:15,65,NH 101,constraint naming ONE section (MUSC 273 A) conflicts with URBS 283 (cases/constraints.csv)
+T18,FA,Full,MUSC,273,B,Jones,4,MWF,09:15,65,NH 102,same course and time but section B is not named: no violation
+T18,FA,Full,URBS,283,A,Lee,4,MWF,09:15,65,NH 103,

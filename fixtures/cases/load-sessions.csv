@@ -1,10 +1,10 @@
 AcademicYear,Term,TermPart,Prefix,CourseNumber,Section,Faculty,FacultyLoad,MeetingDays,StartTime,MeetingDuration,Classroom,Comment
-L1,FA,Full,MATH,101,A,Ada Example,4,MWF,09:15,65,NH 101,
-L1,SP,Full,MATH,102,A,Ada Example,4,MWF,09:15,65,NH 101,
-L1,FA,Full,MATH,201,A,"Ada Example, Ben Sample",4,TR,10:20,100,NH 102,team-taught: equal split 2/2
-L1,FA,Full,STAT,101,A,Ben Sample,3,MWF,11:00,65,NH 103,
-L1,SU,Full,MATH,150,A,Ben Sample,2,,,,,
-L1,WI,Full,MATH,190,A,Ben Sample,1,,,,,
-L1,SP,Full,MATH,301,A,,4,TR,12:15,100,NH 104,no instructor assigned yet
-L1,FA,Full,MATH,220,A,"Ada Example (3), Ben Sample (1)",4,TR,13:30,65,NH 105,explicit shares 3/1
-L1,FA,Full,STAT,210,A,"Ben Sample (2), Ada Example",3,TR,14:45,65,NH 106,remainder to the unmarked instructor: Ada gets 1
+L1,FA,Full,MUSC,104,A,Ada Example,4,MWF,09:15,65,NH 101,
+L1,SP,Full,MUSC,105,A,Ada Example,4,MWF,09:15,65,NH 101,
+L1,FA,Full,MUSC,204,A,"Ada Example, Ben Sample",4,TR,10:20,100,NH 102,team-taught: equal split 2/2
+L1,FA,Full,URBS,104,A,Ben Sample,3,MWF,11:00,65,NH 103,
+L1,SU,Full,MUSC,153,A,Ben Sample,2,,,,,
+L1,WI,Full,MUSC,193,A,Ben Sample,1,,,,,
+L1,SP,Full,MUSC,304,A,,4,TR,12:15,100,NH 104,no instructor assigned yet
+L1,FA,Full,MUSC,223,A,"Ada Example (3), Ben Sample (1)",4,TR,13:30,65,NH 105,explicit shares 3/1
+L1,FA,Full,URBS,213,A,"Ben Sample (2), Ada Example",3,TR,14:45,65,NH 106,remainder to the unmarked instructor: Ada gets 1

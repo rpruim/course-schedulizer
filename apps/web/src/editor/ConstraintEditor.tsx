@@ -219,7 +219,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
         <div className="editor-body">
           <label className="f">
             <span>Name</span>
-            <input value={form.name} placeholder="for example Math major, year 2" aria-invalid={attempted && has("name").length ? true : undefined} onChange={(e) => set("name", e.target.value)} />
+            <input value={form.name} placeholder="for example AMUS major, year 2" aria-invalid={attempted && has("name").length ? true : undefined} onChange={(e) => set("name", e.target.value)} />
             {err("name")}
           </label>
 
@@ -253,7 +253,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                     <>
                       <label className="f grow">
                         <span>Course</span>
-                        <input value={it.course} list="rule-courses" placeholder="MATH 231, MATH 3*, STAT [23]4?" onChange={(e) => setItem(i, { course: e.target.value })} />
+                        <input value={it.course} list="rule-courses" placeholder="MUSC 234, MUSC 3*, URBS [23]4?" onChange={(e) => setItem(i, { course: e.target.value })} />
                       </label>
                       <label className="f">
                         <span>Section</span>
@@ -269,7 +269,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
             {!(form.type === "consecutive" || (form.type === "window" && form.subject === "instructors")) ? (
               <p className="muted small">
                 {(form.type === "standard" || form.type === "subset") && <>Use <code>*</code> alone for every course. </>}
-                Patterns: <code>*</code> any run of characters, <code>?</code> any one character, <code>[23]</code> either of those. <code>MATH 3*</code> is every 300-level MATH course, <code>STAT [23]4?</code> is 241, 243, 345 and so on, <code>MATH *</code> every MATH course. Leave Section blank for every section.
+                Patterns: <code>*</code> any run of characters, <code>?</code> any one character, <code>[23]</code> either of those. <code>MUSC 3*</code> is every 300-level MUSC course, <code>URBS [23]4?</code> is 241, 243, 345 and so on, <code>MUSC *</code> every MUSC course. Leave Section blank for every section.
               </p>
             ) : (
               <p className="muted small">{form.type === "consecutive" ? "Each instructor is checked separately." : "The rule is about the sections each of these instructors teaches."}</p>
@@ -295,7 +295,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                 {form.count.trim() === ""
                   ? "Every listed course must fit together: some section of each, with no two clashing."
                   : form.choose === "any"
-                    ? `Any ${form.count} of them: every set of ${form.count} courses must be takeable together (for example, any two 300-level MATH courses).`
+                    ? `Any ${form.count} of them: every set of ${form.count} courses must be takeable together (for example, any two 300-level MUSC courses).`
                     : `Some ${form.count} of them: at least one set of ${form.count} courses must be takeable together (for example, some pair from this list).`}
               </p>
             </div>

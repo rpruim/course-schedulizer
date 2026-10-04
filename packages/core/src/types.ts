@@ -87,7 +87,7 @@ export type NonTeaching = z.infer<typeof nonTeachingSchema>;
  * - `takeable`: a student must be able to take `count` (default: all) of the listed courses,
  *   choosing one section of each, with no two overlapping. With `choose` "some", some set of
  *   `count` courses must be takeable together; with "any", every set of `count` courses must be. `course` is a pattern
- *   (`MATH 231`, `MATH 3*`); `section` names one section.
+ *   (`MUSC 234`, `MUSC 3*`); `section` names one section.
  * - `standard`: changes to the department's standard days, start times and lengths
  * - `subset`: lets the courses it names meet on only some of the days of a standard time (T alone where TR is standard)
  *   (`DEFAULT_STANDARD_TIMES`, which every section is always checked against) for the sections named by
@@ -101,7 +101,7 @@ export type NonTeaching = z.infer<typeof nonTeachingSchema>;
 export const constraintSchema = z.object({
   constraint: z.string().min(1),
   type: z.enum(["takeable", "window", "standard", "subset", "consecutive"]).default("takeable"),
-  /** `Prefix CourseNumber` pattern, where `*` matches anything: `MATH 231`, `MATH 3*`, `MATH *`. */
+  /** `Prefix CourseNumber` pattern, where `*` matches anything: `MUSC 234`, `MUSC 3*`, `MUSC *`. */
   course: str,
   /** A section letter to name one section of the course; blank = every section. */
   section: str,
@@ -188,7 +188,7 @@ export interface Meta {
 export const departmentOf = (meta: Pick<Meta, "defaultDepartment">, s: { department: string }): string => (s.department ?? "").trim() || (meta.defaultDepartment ?? "").trim();
 
 /**
- * The level a course number implies: 100, 200, 300 … from its first digit (`MATH 231` → `200`); blank when it has no digit.
+ * The level a course number implies: 100, 200, 300 … from its first digit (`MUSC 234` → `200`); blank when it has no digit.
  * Used for a section that does not give a level of its own.
  */
 export function inferredLevel(courseNumber: string): string {

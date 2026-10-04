@@ -4,7 +4,7 @@ import { emptySchedule, type Schedule, type Session } from "./types.js";
 
 const session = (over: Partial<Session>): Session =>
   ({
-    sectionId: "a", department: "", academicYear: "AY25", term: "FA", termPart: "Full", prefix: "MATH", courseNumber: "101", section: "A",
+    sectionId: "a", department: "", academicYear: "AY25", term: "FA", termPart: "Full", prefix: "MUSC", courseNumber: "101", section: "A",
     shortTitle: "", instructionalMethod: "", courseLevel: "", group: "", deliveryMode: "", comment: "", faculty: [], days: "MWF", start: 540, duration: 50, room: "", extra: {},
     ...over,
   }) as Session;
@@ -67,10 +67,10 @@ describe("massEdit", () => {
 
   describe("renaming a prefix", () => {
     const base = () => sched(
-      { sectionId: "a", prefix: "MATH", courseNumber: "143" },
-      { sectionId: "b", prefix: "MATH", courseNumber: "171", section: "B" },
-      { sectionId: "c", prefix: "STAT", courseNumber: "143", section: "A" },
-      { sectionId: "d", prefix: "MATH", courseNumber: "143", section: "A", term: "SP" },
+      { sectionId: "a", prefix: "MUSC", courseNumber: "143" },
+      { sectionId: "b", prefix: "MUSC", courseNumber: "171", section: "B" },
+      { sectionId: "c", prefix: "URBS", courseNumber: "143", section: "A" },
+      { sectionId: "d", prefix: "MUSC", courseNumber: "143", section: "A", term: "SP" },
     );
     it("renames every row of the selected sections, only when overwriting", () => {
       const t = base();
@@ -78,16 +78,16 @@ describe("massEdit", () => {
       const r = massEdit(t, ["a", "b"], { prefix: "AMUS" }, "overwrite");
       expect(field(r.schedule, "a", "prefix")).toEqual(["AMUS"]);
       expect(field(r.schedule, "b", "prefix")).toEqual(["AMUS"]);
-      expect(field(r.schedule, "d", "prefix")).toEqual(["MATH"]);
+      expect(field(r.schedule, "d", "prefix")).toEqual(["MUSC"]);
       expect([r.sections, r.values, r.skipped]).toEqual([2, 2, 0]);
-      expect(field(t, "a", "prefix")).toEqual(["MATH"]);
+      expect(field(t, "a", "prefix")).toEqual(["MUSC"]);
     });
     it("leaves a section alone when the new prefix would duplicate another's course, number and letter", () => {
       const t = base();
-      // STAT 143 A would become MATH 143 A, which section a already is (same term)
-      const r = massEdit(t, ["c"], { prefix: "MATH" }, "overwrite");
+      // URBS 143 A would become MUSC 143 A, which section a already is (same term)
+      const r = massEdit(t, ["c"], { prefix: "MUSC" }, "overwrite");
       expect([r.sections, r.skipped]).toEqual([0, 1]);
-      expect(field(r.schedule, "c", "prefix")).toEqual(["STAT"]);
+      expect(field(r.schedule, "c", "prefix")).toEqual(["URBS"]);
       // both renamed together to a prefix neither has: the second would duplicate the first
       const both = massEdit(t, ["a", "c"], { prefix: "XXXX" }, "overwrite");
       expect([both.sections, both.skipped]).toEqual([1, 1]);
@@ -99,9 +99,9 @@ describe("massEdit", () => {
       expect(massEdit(u, ["a", "b"], { prefix: "NEW" }, "overwrite")).toMatchObject({ sections: 0, skipped: 1 }); // OLD 101 A would become NEW 101 A, which b already is
     });
     it("says which prefixes were renamed and how many constraint rows still name them", () => {
-      const t: Schedule = { ...base(), constraints: [{ constraint: "R", course: "MATH 231" }, { constraint: "R", course: "math 3*" }, { constraint: "R", course: "MATHEMATICS 1" }, { constraint: "R", course: "STAT 143" }] as never };
+      const t: Schedule = { ...base(), constraints: [{ constraint: "R", course: "MUSC 231" }, { constraint: "R", course: "musc 3*" }, { constraint: "R", course: "MATHEMATICS 1" }, { constraint: "R", course: "URBS 143" }] as never };
       const r = massEdit(t, ["a", "b"], { prefix: "AMUS" }, "overwrite");
-      expect(r.renamedFrom).toEqual([{ prefix: "MATH", rules: 2 }]);
+      expect(r.renamedFrom).toEqual([{ prefix: "MUSC", rules: 2 }]);
     });
   });
 });

@@ -11,14 +11,14 @@ const read = async (bytes: Uint8Array) => {
 describe("writeSheets", () => {
   it("writes each table as a sheet with a bold header, numbers as numbers and blanks as empty cells", async () => {
     const wb = await read(await writeSheets([
-      { name: "Comparison", header: ["Course", "Load\nPlan A", "Load\nPlan B"], rows: [["MATH 101", 4, 6], ["STAT 200", 4, null], ["DATA 100", undefined, "n/a"]] },
+      { name: "Comparison", header: ["Course", "Load\nPlan A", "Load\nPlan B"], rows: [["MUSC 101", 4, 6], ["URBS 200", 4, null], ["DIGI 100", undefined, "n/a"]] },
       { name: "About", header: ["Setting", "Value"], rows: [["Compared", "Plan A\nPlan B"]] },
     ]));
     expect(wb.worksheets.map((w) => w.name)).toEqual(["Comparison", "About"]);
     const ws = wb.getWorksheet("Comparison")!;
     expect(ws.getRow(1).font?.bold).toBe(true);
     expect(ws.getRow(1).getCell(2).value).toBe("Load\nPlan A");
-    expect(ws.getRow(2).values).toEqual([undefined, "MATH 101", 4, 6]);
+    expect(ws.getRow(2).values).toEqual([undefined, "MUSC 101", 4, 6]);
     expect(ws.getRow(3).getCell(3).value).toBeNull();
     expect(typeof ws.getRow(2).getCell(2).value).toBe("number");
     expect(ws.getRow(4).getCell(2).value).toBeNull();

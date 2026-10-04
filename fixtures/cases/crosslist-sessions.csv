@@ -1,5 +1,5 @@
 AcademicYear,Term,TermPart,Prefix,CourseNumber,Section,Faculty,FacultyLoad,MeetingDays,StartTime,MeetingDuration,Classroom,Comment
-X1,FA,Full,DATA,385,A,Ada Example,4,MWF,09:15,65,NH 101,also STAT 385: same number
-X1,SP,Full,DATA,301,A,Ben Sample,4,TR,10:20,100,NH 102,also STAT 305 and MATH 307: all different numbers
-X1,FA,Full,DATA,201,A,Ben Sample,4,TR,10:20,100,NH 102,also STAT 201 and MATH 207: mixed
-X1,FA,Full,MATH,110,A,Ada Example,0,,,,,not cross-listed
+X1,FA,Full,DIGI,388,A,Ada Example,4,MWF,09:15,65,NH 101,also URBS 388: same number
+X1,SP,Full,DIGI,304,A,Ben Sample,4,TR,10:20,100,NH 102,also URBS 308 and MUSC 310: all different numbers
+X1,FA,Full,DIGI,204,A,Ben Sample,4,TR,10:20,100,NH 102,also URBS 204 and MUSC 210: mixed
+X1,FA,Full,MUSC,113,A,Ada Example,0,,,,,not cross-listed

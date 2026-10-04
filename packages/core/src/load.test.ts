@@ -119,24 +119,24 @@ describe("loadTable", () => {
 
 describe("loadItems / summarizeItems", () => {
   it("lists distinct items with counts for repeats, sorted, joined by semicolons", () => {
-    expect(summarizeItems(["MATH 271", "MATH 171", "MATH 171"])).toBe("MATH 171 (2) · MATH 271");
+    expect(summarizeItems(["MUSC 274", "MUSC 174", "MUSC 174"])).toBe("MUSC 174 (2) · MUSC 274");
     expect(summarizeItems([])).toBe("");
   });
 
   it("explains each cell of the load table", () => {
     const s = importRecords({
       sessions: [
-        { SectionId: "a", AcademicYear: "AY1", Term: "FA", Prefix: "MATH", CourseNumber: "171", Section: "A", Faculty: "Kim", FacultyLoad: "4" },
-        { SectionId: "b", AcademicYear: "AY1", Term: "FA", Prefix: "MATH", CourseNumber: "171", Section: "B", Faculty: "kim", FacultyLoad: "4" },
-        { SectionId: "c", AcademicYear: "AY1", Term: "SP", Prefix: "MATH", CourseNumber: "271", Section: "A", Faculty: "Kim", FacultyLoad: "4" },
+        { SectionId: "a", AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: "174", Section: "A", Faculty: "Kim", FacultyLoad: "4" },
+        { SectionId: "b", AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: "174", Section: "B", Faculty: "kim", FacultyLoad: "4" },
+        { SectionId: "c", AcademicYear: "AY1", Term: "SP", Prefix: "MUSC", CourseNumber: "274", Section: "A", Faculty: "Kim", FacultyLoad: "4" },
       ],
       nonTeaching: [{ AcademicYear: "AY1", Faculty: "Kim", Activity: "Chair", Term: "AY", Load: "3" }],
     }).schedule;
     const items = loadItems(s, "AY1");
-    expect(items("Kim", "FA", "teaching")).toBe("MATH 171 (2)");
-    expect(items("Kim", "SP", "teaching")).toBe("MATH 271");
+    expect(items("Kim", "FA", "teaching")).toBe("MUSC 174 (2)");
+    expect(items("Kim", "SP", "teaching")).toBe("MUSC 274");
     expect(items("Kim", "FA", "nonteaching")).toBe("Chair");
-    expect(items("Kim")).toBe("Chair · MATH 171 (2) · MATH 271");
+    expect(items("Kim")).toBe("Chair · MUSC 174 (2) · MUSC 274");
     expect(items("Nobody", "FA")).toBe("");
   });
 });

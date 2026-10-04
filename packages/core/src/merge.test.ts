@@ -5,7 +5,7 @@ import { emptySchedule, type Schedule, type Session } from "./types.js";
 
 const session = (over: Partial<Session>): Session =>
   ({
-    sectionId: "x", academicYear: "2026-27", term: "FA", termPart: "Full", prefix: "MATH", courseNumber: "101", section: "A",
+    sectionId: "x", academicYear: "2026-27", term: "FA", termPart: "Full", prefix: "MUSC", courseNumber: "101", section: "A",
     shortTitle: "", faculty: [], days: "MWF", start: 540, duration: 50, room: "SB 110", deliveryMode: "", comment: "", extra: {},
     ...over,
   }) as Session;
@@ -15,16 +15,16 @@ const sched = (...s: Partial<Session>[]): Schedule => ({ ...emptySchedule(), ses
 describe("mergeSchedules", () => {
   it("finds conflicts across the inputs", () => {
     const a = sched({ sectionId: "a", faculty: [{ name: "Kim", share: undefined }] as never });
-    const b = sched({ sectionId: "b", prefix: "STAT", courseNumber: "343", faculty: [{ name: "Kim", share: undefined }] as never });
-    const { schedule } = mergeSchedules([{ id: "1", name: "Math", schedule: a }, { id: "2", name: "Stat", schedule: b }]);
+    const b = sched({ sectionId: "b", prefix: "URBS", courseNumber: "343", faculty: [{ name: "Kim", share: undefined }] as never });
+    const { schedule } = mergeSchedules([{ id: "1", name: "Musicology", schedule: a }, { id: "2", name: "Urbs", schedule: b }]);
     expect(schedule.sessions).toHaveLength(2);
-    expect(schedule.meta.name).toBe("Math + Stat");
+    expect(schedule.meta.name).toBe("Musicology + Urbs");
     expect(findConflicts(schedule).length).toBeGreaterThan(0);
   });
 
   it("renames a colliding section id and remembers where it came from", () => {
     const a = sched({ sectionId: "same" });
-    const b = { ...sched({ sectionId: "same", prefix: "STAT" }), crossListings: [{ sectionId: "same", prefix: "DATA", courseNumber: "1" }] };
+    const b = { ...sched({ sectionId: "same", prefix: "URBS" }), crossListings: [{ sectionId: "same", prefix: "DIGI", courseNumber: "1" }] };
     const m = mergeSchedules([{ id: "1", name: "A", schedule: a }, { id: "2", name: "B", schedule: b }]);
     expect(m.schedule.sessions.map((s) => s.sectionId)).toEqual(["same", "same~2"]);
     expect(m.schedule.crossListings[0]!.sectionId).toBe("same~2");
@@ -42,8 +42,8 @@ describe("mergeSchedules", () => {
 
 describe("mergeSchedules rules", () => {
   it("keeps same-named rules of different schedules apart", () => {
-    const row = { constraint: "Cohort", type: "takeable" as const, course: "MATH 1", section: "", instructor: "", term: "", days: "", dayRule: "any" as const, should: "should not" as const, meets: "" as const, comment: "" };
-    const a = { ...emptySchedule(), constraints: [row, { ...row, course: "MATH 2" }] };
+    const row = { constraint: "Cohort", type: "takeable" as const, course: "MUSC 1", section: "", instructor: "", term: "", days: "", dayRule: "any" as const, should: "should not" as const, meets: "" as const, comment: "" };
+    const a = { ...emptySchedule(), constraints: [row, { ...row, course: "MUSC 2" }] };
     const b = { ...emptySchedule(), constraints: [row] };
     const m = mergeSchedules([{ id: "1", name: "A", schedule: a }, { id: "2", name: "B", schedule: b }]);
     expect(m.schedule.constraints.map((c) => c.constraint)).toEqual(["Cohort", "Cohort", "Cohort (2)"]);

@@ -4,10 +4,10 @@ import { byField, draftToForm, emptyMeetingForm, formToDraft, meetingSummary } f
 
 const schedule = importRecords({
   sessions: [
-    { AcademicYear: "Y", Term: "FA", Prefix: "MATH", CourseNumber: "101", Section: "A", ShortTitle: "Calc", Faculty: "Ada (3), Ben", FacultyLoad: "4", MinimumCredits: "4", Enrollment: "20", Comment: "hi", MeetingDays: "MW\nF", StartTime: "09:15\n10:20", MeetingDuration: "65\n50", Classroom: "NH 1\nNH 2" },
+    { AcademicYear: "Y", Term: "FA", Prefix: "MUSC", CourseNumber: "101", Section: "A", ShortTitle: "Calc", Faculty: "Ada (3), Ben", FacultyLoad: "4", MinimumCredits: "4", Enrollment: "20", Comment: "hi", MeetingDays: "MW\nF", StartTime: "09:15\n10:20", MeetingDuration: "65\n50", Classroom: "NH 1\nNH 2" },
   ],
 }).schedule;
-const draft = sectionToDraft(schedule, "Y-FA-MATH101-A")!;
+const draft = sectionToDraft(schedule, "Y-FA-MUSC101-A")!;
 
 describe("draftToForm / formToDraft", () => {
   it("round-trips a section through the dialog's strings", () => {

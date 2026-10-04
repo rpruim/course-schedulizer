@@ -7,8 +7,8 @@ export interface Listing {
 
 /**
  * Course display name for a section's listings, primary first: listings that
- * share a number are grouped (`DATA/STAT 385`); groups are joined with `/`
- * (`DATA 301/STAT 305/MATH 307`, `DATA/STAT 201/MATH 207`).
+ * share a number are grouped (`DIGI/URBS 388`); groups are joined with `/`
+ * (`DIGI 304/URBS 308/MUSC 310`, `DIGI/URBS 204/MUSC 210`).
  */
 export function courseDisplayName(listings: Listing[]): string {
   const groups = new Map<string, string[]>();

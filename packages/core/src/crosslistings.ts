@@ -16,8 +16,8 @@ export const crossListingsOf = (schedule: Schedule, sectionId: string): Listing[
   schedule.crossListings.filter((l) => l.sectionId === sectionId).map(({ prefix, courseNumber }) => ({ prefix, courseNumber }));
 
 /**
- * Declare that a section is also listed as another course (e.g. DATA 385 is also
- * STAT 385). The section's own course is its primary listing and cannot be added
+ * Declare that a section is also listed as another course (e.g. DIGI 388 is also
+ * URBS 388). The section's own course is its primary listing and cannot be added
  * again; a listing already declared is rejected. Load, enrollment and meetings
  * stay on the section, so nothing is counted twice.
  */
@@ -56,7 +56,7 @@ export function setCrossListings(schedule: Schedule, sectionId: string, listings
 
 /**
  * A listing that would produce two sections with the same course and letter in a
- * term: `DATA 385 A` also listed as `STAT 385`, while `STAT 385 A` exists as a
+ * term: `DIGI 388 A` also listed as `URBS 388`, while `URBS 388 A` exists as a
  * separate section of its own.
  */
 export function crossListingWarnings(schedule: Schedule): Issue[] {

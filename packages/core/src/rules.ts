@@ -171,7 +171,7 @@ export function validateRule(schedule: Schedule, rule: Rule, original?: string):
     if (rule.type === "window" && ruleSubject(rule) === "courses" && it.instructor.trim() && !it.course.trim()) out.push({ field: `items.${i}`, message: "A rule is about courses or about instructors, not both." });
     if ((rule.type === "takeable" || rule.type === "standard" || rule.type === "subset") && it.instructor.trim()) out.push({ field: `items.${i}`, message: `A “${rule.type === "standard" ? "standard times" : rule.type === "subset" ? "subset of standard times" : "take together"}” rule lists courses.` });
     if (rule.type === "consecutive" && it.course.trim()) out.push({ field: `items.${i}`, message: "A back-to-back rule lists instructors." });
-    if (rule.type !== "consecutive" && it.course.trim() && !/^\S+(\s+\S+)?$/.test(it.course.trim())) out.push({ field: `items.${i}`, message: "Write a course as PREFIX NUMBER, for example MATH 231 or MATH 3*." });
+    if (rule.type !== "consecutive" && it.course.trim() && !/^\S+(\s+\S+)?$/.test(it.course.trim())) out.push({ field: `items.${i}`, message: "Write a course as PREFIX NUMBER, for example MUSC 234 or MUSC 3*." });
   });
   if (rule.type === "takeable") {
     const wild = rule.items.some((it) => /[*?[]/.test(it.course) || !/\s/.test(it.course.trim()));
@@ -313,7 +313,7 @@ const sameLetter = (a: string, b: string) => a.trim().toLowerCase() === b.trim()
  * Every constraint rule that is not met, per academic year and term (rules apply within a term).
  *
  * - **take together**: the rule's course lines are expanded into courses (a pattern such as
- *   `MATH 3*` stands for each matching course), keeping those offered in the term. Choosing one
+ *   `MUSC 3*` stands for each matching course), keeping those offered in the term. Choosing one
  *   section of each of some `n` of them (n = `count`, default all, never more than are offered),
  *   must be possible with no two chosen sections overlapping (`choose` "some"). With "any", this
  *   must hold for every set of n courses, not just for some set. Rules with fewer than two courses

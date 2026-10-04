@@ -6,7 +6,7 @@ import type { Schedule } from "./types.js";
 
 const make = (nt: Record<string, string>[] = []): Schedule => {
   const r = importRecords({
-    sessions: [{ AcademicYear: "Y", Term: "FA", Prefix: "MATH", CourseNumber: "1", Section: "A", Faculty: "Ada Example", FacultyLoad: "4" }],
+    sessions: [{ AcademicYear: "Y", Term: "FA", Prefix: "MUSC", CourseNumber: "1", Section: "A", Faculty: "Ada Example", FacultyLoad: "4" }],
     nonTeaching: nt,
   });
   expect(r.issues).toEqual([]);

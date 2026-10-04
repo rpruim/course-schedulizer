@@ -4,7 +4,7 @@ import { importCrossListings, importNonTeaching, importRecords, importSessions }
 import { fixtureText } from "./testutil.js";
 import { defaultSettings, type Settings } from "./types.js";
 
-const rec = (o: Record<string, string>) => ({ AcademicYear: "AY1", Term: "FA", Prefix: "MATH", CourseNumber: "101", Section: "A", ...o });
+const rec = (o: Record<string, string>) => ({ AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: "104", Section: "A", ...o });
 
 describe("importSessions: packed form", () => {
   it("explodes newline-separated meetings", () => {
@@ -13,8 +13,8 @@ describe("importSessions: packed form", () => {
     ]);
     expect(issues).toEqual([]);
     expect(sessions.map((s) => [s.sectionId, s.days, s.start, s.duration, s.room])).toEqual([
-      ["AY1-FA-MATH101-A", "MWF", 735, 65, "HH 316"],
-      ["AY1-FA-MATH101-A", "MWF", 735, 65, "HH 323"],
+      ["AY1-FA-MUSC104-A", "MWF", 735, 65, "HH 316"],
+      ["AY1-FA-MUSC104-A", "MWF", 735, 65, "HH 323"],
     ]);
   });
   it("treats 00:00 for 0 minutes as unscheduled but keeps the room", () => {
@@ -27,11 +27,11 @@ describe("importSessions: packed form", () => {
     expect(importSessions([rec({})]).sessions).toHaveLength(1);
   });
   it("splits listings into primary + additional, broadcasting a shared number", () => {
-    const { sessions, crossListings } = importSessions([rec({ Prefix: "DATA\nSTAT", CourseNumber: "385" })]);
-    expect(sessions[0]).toMatchObject({ prefix: "DATA", courseNumber: "385", sectionId: "AY1-FA-DATA385-A" });
-    expect(crossListings).toEqual([{ sectionId: "AY1-FA-DATA385-A", prefix: "STAT", courseNumber: "385" }]);
-    const mixed = importSessions([rec({ Prefix: "DATA\nSTAT\nMATH", CourseNumber: "301\n305\n307" })]);
-    expect(mixed.crossListings.map((l) => `${l.prefix} ${l.courseNumber}`)).toEqual(["STAT 305", "MATH 307"]);
+    const { sessions, crossListings } = importSessions([rec({ Prefix: "DIGI\nURBS", CourseNumber: "388" })]);
+    expect(sessions[0]).toMatchObject({ prefix: "DIGI", courseNumber: "388", sectionId: "AY1-FA-DIGI388-A" });
+    expect(crossListings).toEqual([{ sectionId: "AY1-FA-DIGI388-A", prefix: "URBS", courseNumber: "388" }]);
+    const mixed = importSessions([rec({ Prefix: "DIGI\nURBS\nMUSC", CourseNumber: "301\n305\n307" })]);
+    expect(mixed.crossListings.map((l) => `${l.prefix} ${l.courseNumber}`)).toEqual(["URBS 305", "MUSC 307"]);
   });
 });
 
@@ -63,8 +63,8 @@ describe("compact form: one value or n values", () => {
     expect(meet({ MeetingDays: "R", StartTime: "15:05", MeetingDuration: "50", Classroom: "NH 276, NH 280" }).sessions[0]!.room).toBe("NH 276, NH 280");
   });
   it("reads cross-listed prefixes joined with commas or newlines", () => {
-    expect(importSessions([rec({ Prefix: "DATA, STAT", CourseNumber: "385" })]).crossListings).toEqual([{ sectionId: "AY1-FA-DATA385-A", prefix: "STAT", courseNumber: "385" }]);
-    expect(importSessions([rec({ Prefix: "DATA, STAT", CourseNumber: "301, 305" })]).crossListings).toEqual([{ sectionId: "AY1-FA-DATA301-A", prefix: "STAT", courseNumber: "305" }]);
+    expect(importSessions([rec({ Prefix: "DIGI, URBS", CourseNumber: "388" })]).crossListings).toEqual([{ sectionId: "AY1-FA-DIGI388-A", prefix: "URBS", courseNumber: "388" }]);
+    expect(importSessions([rec({ Prefix: "DIGI, URBS", CourseNumber: "301, 305" })]).crossListings).toEqual([{ sectionId: "AY1-FA-DIGI301-A", prefix: "URBS", courseNumber: "305" }]);
   });
 });
 
@@ -91,7 +91,7 @@ describe("inline non-teaching rows and default academic year", () => {
     expect(importSessions([rec({ AcademicYear: "" })]).issues.some((i) => i.severity === "error")).toBe(true);
     const r = importSessions([rec({ AcademicYear: "" })], undefined, { academicYear: "AY25" });
     expect(r.issues).toEqual([]);
-    expect(r.sessions[0]!.sectionId).toBe("AY25-FA-MATH101-A");
+    expect(r.sessions[0]!.sectionId).toBe("AY25-FA-MUSC104-A");
     expect(importSessions([rec({ AcademicYear: "AY1" })], undefined, { academicYear: "AY25" }).sessions[0]!.academicYear).toBe("AY1");
   });
 });
@@ -106,7 +106,7 @@ describe("sections lettered ?", () => {
     ]);
     expect(r.issues).toEqual([]);
     expect(r.sessions.map((s) => [s.sectionId, s.faculty[0]!.name])).toEqual([
-      ["AY1-FA-MATH101-?", "Ada"], ["AY1-FA-MATH101-?-2", "Ben"], ["AY1-FA-MATH101-?-3", "Cy"], ["AY1-FA-MATH101-A", "Dee"],
+      ["AY1-FA-MUSC104-?", "Ada"], ["AY1-FA-MUSC104-?-2", "Ben"], ["AY1-FA-MUSC104-?-3", "Cy"], ["AY1-FA-MUSC104-A", "Dee"],
     ]);
   });
   it("keeps the several meetings of one packed record together", () => {
@@ -136,8 +136,8 @@ describe("sections lettered ?", () => {
 describe("importSessions: multi-row form", () => {
   it("ties rows together by SectionId without duplicating listings", () => {
     const r = importSessions([
-      rec({ Prefix: "DATA\nSTAT", CourseNumber: "385", MeetingDays: "MW", StartTime: "09:15", MeetingDuration: "65" }),
-      rec({ Prefix: "DATA\nSTAT", CourseNumber: "385", MeetingDays: "F", StartTime: "09:15", MeetingDuration: "65" }),
+      rec({ Prefix: "DIGI\nURBS", CourseNumber: "388", MeetingDays: "MW", StartTime: "09:15", MeetingDuration: "65" }),
+      rec({ Prefix: "DIGI\nURBS", CourseNumber: "388", MeetingDays: "F", StartTime: "09:15", MeetingDuration: "65" }),
     ]);
     expect(r.issues).toEqual([]);
     expect(r.sessions).toHaveLength(2);
@@ -165,7 +165,7 @@ describe("term parts", () => {
   });
   it("splits a combined code like FA1 into term and part when TermPart is blank", () => {
     const fill = (term: string, termPart?: string) => part({ Term: term, ...(termPart ? { TermPart: termPart } : {}) });
-    expect(fill("FA1").sessions[0]).toMatchObject({ term: "FA", termPart: "First", sectionId: "AY1-FA-MATH101-A" });
+    expect(fill("FA1").sessions[0]).toMatchObject({ term: "FA", termPart: "First", sectionId: "AY1-FA-MUSC104-A" });
     expect(fill("sp2").sessions[0]).toMatchObject({ term: "SP", termPart: "Second" });
     expect(fill("SU1", "first").issues).toEqual([]);
   });
@@ -191,7 +191,7 @@ describe("importSessions: validation", () => {
     expect(r.issues).toEqual([]);
   });
   it("requires identifying fields, and says which are blank, once per row", () => {
-    const issues = importSessions([{ Term: "FA", Prefix: "MATH", MeetingDays: "M\nW", StartTime: "9:00", MeetingDuration: "50" }]).issues;
+    const issues = importSessions([{ Term: "FA", Prefix: "MUSC", MeetingDays: "M\nW", StartTime: "9:00", MeetingDuration: "50" }]).issues;
     expect(issues.map((i) => i.message)).toEqual([
       "AcademicYear is blank; give a default academic year when opening the file",
       "CourseNumber is blank",
@@ -218,7 +218,7 @@ describe("importSessions: validation", () => {
     expect(importSessions([rec({ Hallway: "East" })]).sessions[0]!.extra).toEqual({ Hallway: "East" });
   });
   it("matches headers loosely", () => {
-    const r = importSessions([{ "academic year": "AY1", TERM: "FA", prefix: "MATH", "Course Number": "101", section: "A", "meeting days": "MW", "start time": "9:00", "meeting duration": "50" }]);
+    const r = importSessions([{ "academic year": "AY1", TERM: "FA", prefix: "MUSC", "Course Number": "101", section: "A", "meeting days": "MW", "start time": "9:00", "meeting duration": "50" }]);
     expect(r.sessions[0]).toMatchObject({ academicYear: "AY1", days: "MW" });
   });
 });
@@ -235,7 +235,7 @@ describe("importNonTeaching", () => {
 describe("importCrossListings", () => {
   it("rejects listings for unknown sections", () => {
     const { sessions } = importSessions([rec({})]);
-    const r = importCrossListings([{ SectionId: "nope", Prefix: "STAT", CourseNumber: "1" }], sessions);
+    const r = importCrossListings([{ SectionId: "nope", Prefix: "URBS", CourseNumber: "1" }], sessions);
     expect(r.issues[0]!.message).toMatch(/not in Sessions/);
   });
 });

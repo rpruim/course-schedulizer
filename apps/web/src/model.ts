@@ -21,7 +21,7 @@ export interface SectionRow {
   year: string;
   term: string;
   termPart: string;
-  /** Display name of all listings, e.g. `DATA/STAT 385`. */
+  /** Display name of all listings, e.g. `DIGI/URBS 388`. */
   course: string;
   prefix: string;
   courseNumber: string;

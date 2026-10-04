@@ -37,7 +37,7 @@ export interface Block {
   day: string;
   start: number;
   end: number;
-  /** `MATH 102 A`, with the part of term when it is not the full term. */
+  /** `MUSC 105 A`, with the part of term when it is not the full term. */
   title: string;
   /**
    * Which quarters of the term the section meets, for the four dots: the term's full weeks are
@@ -46,7 +46,7 @@ export interface Block {
   quarters: boolean[];
   /** Rank of the section's part of term (full first), to order blocks that start together. */
   order: number;
-  /** `MATH 102A` — the primary listing only, for crowded blocks. */
+  /** `MUSC 102A` — the primary listing only, for crowded blocks. */
   short: string;
   /** A second line: who or where, depending on the grid. */
   sub: string;

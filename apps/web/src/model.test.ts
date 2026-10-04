@@ -22,24 +22,24 @@ describe("timeRange", () => {
 describe("sectionRows", () => {
   const s = make(
     [
-      sec("MATH", "110", "B", { Faculty: "Smith", FacultyLoad: "4", MeetingDays: "MWF", StartTime: "9:15", MeetingDuration: "65", Classroom: "NH 1" }),
-      sec("MATH", "99", "A"),
-      sec("DATA", "385", "A", { MeetingDays: "TR", StartTime: "10:20", MeetingDuration: "100", Classroom: "NH 2" }),
-      sec("DATA", "385", "A", { MeetingDays: "F", StartTime: "10:20", MeetingDuration: "50", Classroom: "NH 3" }),
-      sec("MATH", "110", "A", { Term: "SP", Faculty: "Smith", MeetingDays: "MWF", StartTime: "9:15", MeetingDuration: "65", Classroom: "NH 9" }),
+      sec("MUSC", "110", "B", { Faculty: "Smith", FacultyLoad: "4", MeetingDays: "MWF", StartTime: "9:15", MeetingDuration: "65", Classroom: "NH 1" }),
+      sec("MUSC", "99", "A"),
+      sec("DIGI", "385", "A", { MeetingDays: "TR", StartTime: "10:20", MeetingDuration: "100", Classroom: "NH 2" }),
+      sec("DIGI", "385", "A", { MeetingDays: "F", StartTime: "10:20", MeetingDuration: "50", Classroom: "NH 3" }),
+      sec("MUSC", "110", "A", { Term: "SP", Faculty: "Smith", MeetingDays: "MWF", StartTime: "9:15", MeetingDuration: "65", Classroom: "NH 9" }),
     ],
-    { crossListings: [{ SectionId: "Y1-FA-DATA385-A", Prefix: "STAT", CourseNumber: "385" }] },
+    { crossListings: [{ SectionId: "Y1-FA-DIGI385-A", Prefix: "URBS", CourseNumber: "385" }] },
   );
   const rows = sectionRows(s);
 
   it("makes one row per section in natural course order", () => {
     expect(rows.map((r) => `${r.prefix} ${r.courseNumber} ${r.section} ${r.term}`)).toEqual([
-      "DATA 385 A FA", "MATH 99 A FA", "MATH 110 A SP", "MATH 110 B FA",
+      "DIGI 385 A FA", "MUSC 99 A FA", "MUSC 110 A SP", "MUSC 110 B FA",
     ]);
   });
   it("uses the cross-listing display name and collects meetings", () => {
     const data = rows[0]!;
-    expect(data.course).toBe("DATA/STAT 385");
+    expect(data.course).toBe("DIGI/URBS 385");
     expect(data.meetings).toEqual([
       { days: "TR", time: "10:20–12:00", room: "NH 2" },
       { days: "F", time: "10:20–11:10", room: "NH 3" },
@@ -61,18 +61,18 @@ describe("sectionRows", () => {
 
 describe("filterRows", () => {
   const s = make([
-    sec("MATH", "101", "A", { Faculty: "Ada Example", Classroom: "NH 101" }),
-    sec("STAT", "201", "A", { Term: "SP", Faculty: "Ben Sample", Classroom: "SC 7" }),
-    sec("STAT", "201", "A", { AcademicYear: "Y2", Faculty: "Ben Sample" }),
+    sec("MUSC", "101", "A", { Faculty: "Ada Example", Classroom: "NH 101" }),
+    sec("URBS", "201", "A", { Term: "SP", Faculty: "Ben Sample", Classroom: "SC 7" }),
+    sec("URBS", "201", "A", { AcademicYear: "Y2", Faculty: "Ben Sample" }),
   ]);
   const rows = sectionRows(s);
   it("filters by year, term and text (course, instructor, room), case-insensitively", () => {
     expect(filterRows(rows, {})).toHaveLength(3);
     expect(filterRows(rows, { year: "Y2" })).toHaveLength(1);
     expect(filterRows(rows, { term: "SP" })).toHaveLength(1);
-    expect(filterRows(rows, { text: "ada" }).map((r) => r.prefix)).toEqual(["MATH"]);
-    expect(filterRows(rows, { text: "  sc 7 " }).map((r) => r.prefix)).toEqual(["STAT"]);
-    expect(filterRows(rows, { text: "stat 201", term: "FA" })).toHaveLength(1);
+    expect(filterRows(rows, { text: "ada" }).map((r) => r.prefix)).toEqual(["MUSC"]);
+    expect(filterRows(rows, { text: "  sc 7 " }).map((r) => r.prefix)).toEqual(["URBS"]);
+    expect(filterRows(rows, { text: "urbs 201", term: "FA" })).toHaveLength(1);
     expect(filterRows(rows, { text: "nothing" })).toEqual([]);
   });
   it("lists years and terms in use", () => {
@@ -83,12 +83,12 @@ describe("filterRows", () => {
 
 describe("multiSectionRows", () => {
   const mk = (rows: Record<string, string>[]) => make(rows);
-  const a = mk([sec("MATH", "101", "A", { Faculty: "Smith", MeetingDays: "M", StartTime: "9:00", MeetingDuration: "50" }), sec("MATH", "102", "A")]);
-  const b = mk([sec("MATH", "101", "A", { Faculty: "Lee" }), sec("STAT", "200", "A", { Term: "SP" })]);
+  const a = mk([sec("MUSC", "101", "A", { Faculty: "Smith", MeetingDays: "M", StartTime: "9:00", MeetingDuration: "50" }), sec("MUSC", "102", "A")]);
+  const b = mk([sec("MUSC", "101", "A", { Faculty: "Lee" }), sec("URBS", "200", "A", { Term: "SP" })]);
   const entries = [{ id: "a", name: "Draft A", schedule: a }, { id: "b", name: "Draft B", schedule: b }];
   it("keeps the same section from different schedules together, in schedule order", () => {
     expect(multiSectionRows(entries).map((r) => `${r.prefix} ${r.courseNumber} ${r.section} ${r.scheduleName}`)).toEqual([
-      "MATH 101 A Draft A", "MATH 101 A Draft B", "MATH 102 A Draft A", "STAT 200 A Draft B",
+      "MUSC 101 A Draft A", "MUSC 101 A Draft B", "MUSC 102 A Draft A", "URBS 200 A Draft B",
     ]);
     expect(multiSectionRows([...entries].reverse()).map((r) => r.scheduleName).slice(0, 2)).toEqual(["Draft B", "Draft A"]);
   });

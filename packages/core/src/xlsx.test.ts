@@ -33,13 +33,13 @@ describe("acceptance: old app's one-tab workbook → fixtures/sessions.csv", () 
 describe("the old app's own export (fixtures/legacy/old-app-export.xlsx)", () => {
   it("imports its first tab, given the missing academic year", async () => {
     const r = await readWorkbook(fixtureBytes("legacy/old-app-export.xlsx"), { academicYear: "AY25" });
-    // 21 rows: 15 sections (16 meetings: MATH 391 meets twice) and 6 non-teaching rows. One of those has
+    // 21 rows: 15 sections (16 meetings: MUSC 394 meets twice) and 6 non-teaching rows. One of those has
     // no Term (Dee Placeholder, "Data Science Director", row 5 of the sheet), so 5 are read and it is reported.
     expect(r.schedule.sessions).toHaveLength(16);
     expect(new Set(r.schedule.sessions.map((s) => s.sectionId)).size).toBe(15);
     expect(r.schedule.nonTeaching).toHaveLength(5);
     expect(r.issues).toEqual([{ severity: "error", sheet: "Sessions", row: 5, message: "a non-teaching row needs a Term (Dee Placeholder: Data Science Director)" }]);
-    const colloquium = r.schedule.sessions.filter((s) => s.sectionId === "AY25-SP-MATH391-A");
+    const colloquium = r.schedule.sessions.filter((s) => s.sectionId === "AY25-SP-MUSC394-A");
     expect(colloquium.map((s) => [s.days, s.start, s.duration, s.room, s.deliveryMode])).toEqual([
       ["R", 905, 50, "NH 276", "In-Person"],
       ["R", 905, 50, "NH 276", "In-Person"],
@@ -69,10 +69,10 @@ describe("workbook layout", () => {
     expect((reg.getRow(1).values as string[]).slice(1)).toEqual([...REGISTRAR_COLUMNS]);
     // text for load and credits (as the old app wrote them), a number only for a single Duration
     expect(typeof reg.getRow(5).getCell(6).value).toBe("string");
-    expect(reg.getRow(8).getCell(12).value).toBe(65); // MATH 101: one meeting, so a number
-    expect(reg.getRow(9).getCell(12).value).toBe("65\n50"); // MATH 102: two meetings
+    expect(reg.getRow(8).getCell(12).value).toBe(65); // MUSC 104: one meeting, so a number
+    expect(reg.getRow(9).getCell(12).value).toBe("65\n50"); // MUSC 105: two meetings
     // a compact cell with a trailing empty value must stay text ("65\n"), not collapse to the number 65
-    expect(reg.getRow(10).getCell(12).value).toBe("65\n"); // MATH 150
+    expect(reg.getRow(10).getCell(12).value).toBe("65\n"); // MUSC 153
     const meta = wb.getWorksheet("Metadata")!;
     expect(meta.getSheetValues().slice(1).map((r) => (r as string[]).slice(1))).toEqual([
       ["Label", "Value"], ["Export Date", "2026-10-01"], ["Export Time", "17:14:20"], ["Academic Year", "R1"], ["Name", "Test"], ["Nickname", "Nick"], ["Save As", "schedulizer"], ["Time Stamp In File Name", "Yes"], ["Default Department", "Mathematics"], ["Version", "2"], ["Notes", "n"],
@@ -97,7 +97,7 @@ describe("workbook layout", () => {
     const s = sample();
     const back = await readWorkbook(await writeWorkbook(s, { packed: true }));
     expect(back.issues).toEqual([]);
-    const mixed = back.schedule.sessions.filter((x) => x.courseNumber === "150");
+    const mixed = back.schedule.sessions.filter((x) => x.courseNumber === "153");
     expect(mixed.map((m) => [m.days, m.start, m.room])).toEqual([["MWF", 480, "NH 105"], ["", undefined, "Online"]]);
     expect(back.schedule.sessions).toEqual(s.sessions);
   });

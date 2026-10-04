@@ -414,7 +414,7 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
   for (const { row, k } of rows) {
     const name = (k.Constraint ?? "").trim();
     const have = settings.get(name) ?? {};
-    // "MATH 231" names every section; "MATH 231 A" (or a Section column) names one.
+    // "MUSC 234" names every section; "MUSC 234 A" (or a Section column) names one.
     const tokens = (k.Course ?? "").split(/\s+/).filter(Boolean);
     const typed = tokens.length >= 3 ? tokens.slice(2).join(" ") : "";
     const column = (k.Section ?? "").trim();

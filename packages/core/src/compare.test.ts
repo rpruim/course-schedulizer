@@ -23,17 +23,17 @@ const flat = (c: Comparison) => c.rows.map((r) => [...r.group, ...r.values.flatM
 describe("comparisonRows: sections", () => {
   const s = make(
     [
-      sec("DATA", "385", "A", { Faculty: "Ada (3), Ben", FacultyLoad: "4", MinimumCredits: "4", Enrollment: "20", MeetingDays: "MW\nF", StartTime: "09:15\n10:20", MeetingDuration: "65\n50", Classroom: "NH 1\nNH 2", ShortTitle: "Opt", Comment: "c" }),
-      sec("MATH", "110", "A", {}),
+      sec("DIGI", "385", "A", { Faculty: "Ada (3), Ben", FacultyLoad: "4", MinimumCredits: "4", Enrollment: "20", MeetingDays: "MW\nF", StartTime: "09:15\n10:20", MeetingDuration: "65\n50", Classroom: "NH 1\nNH 2", ShortTitle: "Opt", Comment: "c" }),
+      sec("MUSC", "110", "A", {}),
     ],
-    { crossListings: [{ SectionId: "Y-FA-DATA385-A", Prefix: "STAT", CourseNumber: "385" }] },
+    { crossListings: [{ SectionId: "Y-FA-DIGI385-A", Prefix: "URBS", CourseNumber: "385" }] },
   );
   it("makes one row per section with the meetings joined in each cell", () => {
     const rows = comparisonRows(s);
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({
-      AcademicYear: "Y", Term: "FA", TermPart: "Full", Prefix: "DATA", CourseNumber: "385", Section: "A", Faculty: "Ada (3), Ben", FacultyLoad: 4, MinimumCredits: 4,
-      MeetingDays: "MW + F", StartTime: "09:15 + 10:20", MeetingDuration: "65 + 50", Classroom: "NH 1 + NH 2", ShortTitle: "Opt", Comment: "c", Enrollment: 20, CrossListings: "STAT 385",
+      AcademicYear: "Y", Term: "FA", TermPart: "Full", Prefix: "DIGI", CourseNumber: "385", Section: "A", Faculty: "Ada (3), Ben", FacultyLoad: 4, MinimumCredits: 4,
+      MeetingDays: "MW + F", StartTime: "09:15 + 10:20", MeetingDuration: "65 + 50", Classroom: "NH 1 + NH 2", ShortTitle: "Opt", Comment: "c", Enrollment: 20, CrossListings: "URBS 385",
     });
     expect(rows[1]).toMatchObject({ MeetingDays: "", StartTime: "", Classroom: "", Faculty: "", FacultyLoad: "", CrossListings: "" });
   });
@@ -43,7 +43,7 @@ describe("comparisonRows: sections", () => {
 });
 
 describe("comparisonRows: instructors", () => {
-  const s = make([sec("MATH", "1", "A", { Faculty: "Ada (3), Ben", FacultyLoad: "4" }), sec("MATH", "2", "A", { Faculty: "Cy", FacultyLoad: "2" }), sec("MATH", "3", "A", { FacultyLoad: "1" })]);
+  const s = make([sec("MUSC", "1", "A", { Faculty: "Ada (3), Ben", FacultyLoad: "4" }), sec("MUSC", "2", "A", { Faculty: "Cy", FacultyLoad: "2" }), sec("MUSC", "3", "A", { FacultyLoad: "1" })]);
   it("makes one row per section and instructor, each with that person's share", () => {
     expect(comparisonRows(s, "instructor").map((r) => [r.CourseNumber, r.Faculty, r.FacultyLoad])).toEqual([
       ["1", "Ada", 3], ["1", "Ben", 1], ["2", "Cy", 2], ["3", "", 1],
@@ -52,7 +52,7 @@ describe("comparisonRows: instructors", () => {
 });
 
 describe("comparisonRows: non-teaching load", () => {
-  const s = make([sec("MATH", "1", "A")], {
+  const s = make([sec("MUSC", "1", "A")], {
     nonTeaching: [
       { AcademicYear: "Y", Faculty: "Ada", Activity: "Chair", Term: "AY", Load: "3", Comment: "why" },
       { AcademicYear: "Y", Faculty: "Ben", Activity: "Sabbatical", Term: "SP", Load: "4" },
@@ -89,18 +89,18 @@ describe("resolvePartition", () => {
 
 describe("aggregateRows", () => {
   const rows: CompareRow[] = [
-    { Prefix: "MATH", FacultyLoad: 4, Faculty: "Smith", Enrollment: "" },
-    { Prefix: "MATH", FacultyLoad: 2, Faculty: "Ada", Enrollment: 5 },
-    { Prefix: "MATH", FacultyLoad: "", Faculty: "", Enrollment: "" },
-    { Prefix: "STAT", FacultyLoad: 1.25, Faculty: "Lee", Enrollment: "" },
+    { Prefix: "MUSC", FacultyLoad: 4, Faculty: "Smith", Enrollment: "" },
+    { Prefix: "MUSC", FacultyLoad: 2, Faculty: "Ada", Enrollment: 5 },
+    { Prefix: "MUSC", FacultyLoad: "", Faculty: "", Enrollment: "" },
+    { Prefix: "URBS", FacultyLoad: 1.25, Faculty: "Lee", Enrollment: "" },
   ];
   const run = () => resolvePartition(roles({ Prefix: "group", FacultyLoad: "aggregate", Faculty: "aggregate", Enrollment: "aggregate", [COUNT_KEY]: "aggregate" }));
   it("sums numbers (blanks count as 0), sorts and joins text, and counts rows", () => {
     const p = run();
     const out = aggregateRows(rows, p.groups, p.aggregates);
     expect([...out.values()].map((g) => [g.group, g.values])).toEqual([
-      [["MATH"], { Faculty: "Ada; Smith", FacultyLoad: 6, Enrollment: 5, Rows: 3 }],
-      [["STAT"], { Faculty: "Lee", FacultyLoad: 1.25, Enrollment: 0, Rows: 1 }],
+      [["MUSC"], { Faculty: "Ada; Smith", FacultyLoad: 6, Enrollment: 5, Rows: 3 }],
+      [["URBS"], { Faculty: "Lee", FacultyLoad: 1.25, Enrollment: 0, Rows: 1 }],
     ]);
   });
   it("with no grouping columns makes a single group of everything", () => {
@@ -111,16 +111,16 @@ describe("aggregateRows", () => {
 
 describe("compareTables: the use cases in design/schedule-comparisons.qmd", () => {
   const a = make([
-    sec("MATH", "101", "A", { Faculty: "Smith", FacultyLoad: "4", MeetingDays: "MWF", StartTime: "9:00", MeetingDuration: "50", Classroom: "NH 1" }),
-    sec("MATH", "101", "B", { Faculty: "Lee", FacultyLoad: "4" }),
-    sec("STAT", "200", "A", { Faculty: "Kim", FacultyLoad: "3" }),
-    sec("STAT", "300", "A", { Term: "SP", Faculty: "Kim", FacultyLoad: "3" }),
+    sec("MUSC", "101", "A", { Faculty: "Smith", FacultyLoad: "4", MeetingDays: "MWF", StartTime: "9:00", MeetingDuration: "50", Classroom: "NH 1" }),
+    sec("MUSC", "101", "B", { Faculty: "Lee", FacultyLoad: "4" }),
+    sec("URBS", "200", "A", { Faculty: "Kim", FacultyLoad: "3" }),
+    sec("URBS", "300", "A", { Term: "SP", Faculty: "Kim", FacultyLoad: "3" }),
   ]);
   const b = make([
-    sec("MATH", "101", "A", { Faculty: "Smith", FacultyLoad: "4", MeetingDays: "MWF", StartTime: "10:00", MeetingDuration: "50", Classroom: "NH 1" }), // moved an hour
-    sec("STAT", "200", "A", { Faculty: "Kim", FacultyLoad: "3" }),
-    sec("STAT", "200", "B", { Faculty: "Kim", FacultyLoad: "3" }), // a new section
-    sec("DATA", "100", "A", { Faculty: "Ada", FacultyLoad: "2" }), // a new course
+    sec("MUSC", "101", "A", { Faculty: "Smith", FacultyLoad: "4", MeetingDays: "MWF", StartTime: "10:00", MeetingDuration: "50", Classroom: "NH 1" }), // moved an hour
+    sec("URBS", "200", "A", { Faculty: "Kim", FacultyLoad: "3" }),
+    sec("URBS", "200", "B", { Faculty: "Kim", FacultyLoad: "3" }), // a new section
+    sec("DIGI", "100", "A", { Faculty: "Ada", FacultyLoad: "2" }), // a new course
   ]);
   const inputs = (kind: "section" | "instructor" = "section") => [
     { id: "a", name: "Plan A", rows: comparisonRows(a, kind) },
@@ -131,41 +131,41 @@ describe("compareTables: the use cases in design/schedule-comparisons.qmd", () =
     const all = Object.fromEntries(COMPARE_COLUMNS.map((c) => [c.key, "group" as const]));
     const c = compareTables(inputs(), roles(all));
     expect(c.aggregates.map((x) => x.key)).toEqual([COUNT_KEY]);
-    // the moved MATH 101 A appears twice (one row per schedule); sections that match exactly appear once with 1 and 1
+    // the moved MUSC 101 A appears twice (one row per schedule); sections that match exactly appear once with 1 and 1
     const matching = c.rows.filter((r) => r.present[0] && r.present[1]).map((r) => `${r.group[4]} ${r.group[5]} ${r.group[6]}`);
-    expect(matching).toEqual(["STAT 200 A"]);
+    expect(matching).toEqual(["URBS 200 A"]);
     expect(c.rows.filter((r) => r.differs)).toHaveLength(c.rows.length - 1);
   });
 
   it("2. group by course, ignore the rest: how many sections each course has", () => {
     const c = compareTables(inputs(), roles(group("Prefix", "CourseNumber")));
     expect(flat(c)).toEqual([
-      ["DATA", "100", "–", 1],
-      ["MATH", "101", 2, 1],
-      ["STAT", "200", 1, 2],
-      ["STAT", "300", 1, "–"],
+      ["DIGI", "100", "–", 1],
+      ["MUSC", "101", 2, 1],
+      ["URBS", "200", 1, 2],
+      ["URBS", "300", 1, "–"],
     ]);
     expect(c.rows.map((r) => r.differs)).toEqual([true, true, true, true]);
   });
 
   it("3. group by course, aggregate load: total hours per course", () => {
     const c = compareTables(inputs(), roles({ ...group("Prefix", "CourseNumber"), FacultyLoad: "aggregate" }));
-    expect(flat(c)).toEqual([["DATA", "100", "–", 2], ["MATH", "101", 8, 4], ["STAT", "200", 3, 6], ["STAT", "300", 3, "–"]]);
+    expect(flat(c)).toEqual([["DIGI", "100", "–", 2], ["MUSC", "101", 8, 4], ["URBS", "200", 3, 6], ["URBS", "300", 3, "–"]]);
   });
 
   it("4. group by prefix and term, aggregate load: hours per prefix per term", () => {
     const c = compareTables(inputs(), roles({ ...group("Prefix", "Term"), FacultyLoad: "aggregate" }));
     // grouping columns appear in column order, so Term comes before Prefix
     expect(c.groups.map((g) => g.key)).toEqual(["Term", "Prefix"]);
-    expect(flat(c)).toEqual([["FA", "DATA", "–", 2], ["FA", "MATH", 8, 4], ["FA", "STAT", 3, 6], ["SP", "STAT", 3, "–"]]);
+    expect(flat(c)).toEqual([["FA", "DIGI", "–", 2], ["FA", "MUSC", 8, 4], ["FA", "URBS", 3, 6], ["SP", "URBS", 3, "–"]]);
     expect(c.rows.map((r) => r.differs)).toEqual([true, true, true, true]);
   });
 
   it("marks a group that agrees as not differing", () => {
     const c = compareTables(inputs(), roles({ ...group("Prefix", "CourseNumber", "Section"), FacultyLoad: "aggregate" }));
-    const stat = c.rows.find((r) => r.group.join() === "STAT,200,A")!;
+    const stat = c.rows.find((r) => r.group.join() === "URBS,200,A")!;
     expect([stat.differs, stat.present]).toEqual([false, [true, true]]);
-    expect(c.rows.find((r) => r.group.join() === "MATH,101,B")).toMatchObject({ differs: true, present: [true, false] });
+    expect(c.rows.find((r) => r.group.join() === "MUSC,101,B")).toMatchObject({ differs: true, present: [true, false] });
   });
 
   it("can compare per instructor, adding up a person's load across sections", () => {
@@ -175,7 +175,7 @@ describe("compareTables: the use cases in design/schedule-comparisons.qmd", () =
 
   it("compares three or more schedules", () => {
     const c = compareTables([...inputs(), { id: "c", name: "Plan C", rows: comparisonRows(a, "section") }], roles(group("Prefix", "CourseNumber")));
-    expect(flat(c)[1]).toEqual(["MATH", "101", 2, 1, 2]);
+    expect(flat(c)[1]).toEqual(["MUSC", "101", 2, 1, 2]);
     expect(c.schedules.map((s) => s.name)).toEqual(["Plan A", "Plan B", "Plan C"]);
   });
 
@@ -288,17 +288,17 @@ describe("on the registrar-case fixture", () => {
 describe("where rows came from", () => {
   const s = make(
     [
-      sec("MATH", "1", "A", { Faculty: "Ada (3), Ben", FacultyLoad: "4" }),
-      sec("MATH", "1", "A", { MeetingDays: "F", StartTime: "9:00", MeetingDuration: "50" }),
-      sec("MATH", "2", "B", { Faculty: "Cy", FacultyLoad: "2" }),
+      sec("MUSC", "1", "A", { Faculty: "Ada (3), Ben", FacultyLoad: "4" }),
+      sec("MUSC", "1", "A", { MeetingDays: "F", StartTime: "9:00", MeetingDuration: "50" }),
+      sec("MUSC", "2", "B", { Faculty: "Cy", FacultyLoad: "2" }),
     ],
     { nonTeaching: [{ AcademicYear: "Y", Faculty: "Ada", Activity: "Chair", Term: "AY", Load: "3" }, { AcademicYear: "Y", Faculty: "Ben", Activity: "Sabbatical", Term: "SP", Load: "4" }] },
   );
   it("marks a section row with its section, and a non-teaching row with its position", () => {
     const rows = comparisonRows(s, "section", { nonTeaching: true });
     expect(rows.map((r) => rowSource(r))).toEqual([
-      { kind: "section", sectionId: "Y-FA-MATH1-A" },
-      { kind: "section", sectionId: "Y-FA-MATH2-B" },
+      { kind: "section", sectionId: "Y-FA-MUSC1-A" },
+      { kind: "section", sectionId: "Y-FA-MUSC2-B" },
       { kind: "nonteaching", index: 0 }, // a full-year row, split across FA and SP
       { kind: "nonteaching", index: 0 },
       { kind: "nonteaching", index: 1 },
@@ -307,32 +307,32 @@ describe("where rows came from", () => {
   it("marks every instructor row of a section with that section", () => {
     const rows = comparisonRows(s, "instructor");
     expect(rows.map((r) => [r.Faculty, rowSource(r)])).toEqual([
-      ["Ada", { kind: "section", sectionId: "Y-FA-MATH1-A" }],
-      ["Ben", { kind: "section", sectionId: "Y-FA-MATH1-A" }],
-      ["Cy", { kind: "section", sectionId: "Y-FA-MATH2-B" }],
+      ["Ada", { kind: "section", sectionId: "Y-FA-MUSC1-A" }],
+      ["Ben", { kind: "section", sectionId: "Y-FA-MUSC1-A" }],
+      ["Cy", { kind: "section", sectionId: "Y-FA-MUSC2-B" }],
     ]);
   });
   it("is not a column, and survives copying", () => {
     const row = comparisonRows(s)[0]!;
     expect(Object.keys(row)).toEqual(COMPARE_COLUMNS.map((c) => c.key));
-    expect(rowSource({ ...row })).toEqual({ kind: "section", sectionId: "Y-FA-MATH1-A" });
+    expect(rowSource({ ...row })).toEqual({ kind: "section", sectionId: "Y-FA-MUSC1-A" });
     expect(rowSource({ Prefix: "x" })).toBeUndefined();
   });
   it("lists the rows behind each comparison row, per schedule, and none where a schedule lacks the group", () => {
-    const other = make([sec("MATH", "1", "A", { FacultyLoad: "9" }), sec("STAT", "5", "A")]);
+    const other = make([sec("MUSC", "1", "A", { FacultyLoad: "9" }), sec("URBS", "5", "A")]);
     const c = compareTables(
       [{ id: "a", name: "A", rows: comparisonRows(s) }, { id: "b", name: "B", rows: comparisonRows(other) }],
       roles(group("Prefix", "CourseNumber")),
     );
     const byGroup = Object.fromEntries(c.rows.map((r) => [r.group.join(" "), r.members.map((m) => m.map((x) => rowSource(x)))]));
     expect(byGroup).toEqual({
-      "MATH 1": [[{ kind: "section", sectionId: "Y-FA-MATH1-A" }], [{ kind: "section", sectionId: "Y-FA-MATH1-A" }]],
-      "MATH 2": [[{ kind: "section", sectionId: "Y-FA-MATH2-B" }], []],
-      "STAT 5": [[], [{ kind: "section", sectionId: "Y-FA-STAT5-A" }]],
+      "MUSC 1": [[{ kind: "section", sectionId: "Y-FA-MUSC1-A" }], [{ kind: "section", sectionId: "Y-FA-MUSC1-A" }]],
+      "MUSC 2": [[{ kind: "section", sectionId: "Y-FA-MUSC2-B" }], []],
+      "URBS 5": [[], [{ kind: "section", sectionId: "Y-FA-URBS5-A" }]],
     });
   });
   it("lists several rows when a group has several (sections of a course)", () => {
-    const two = make([sec("MATH", "1", "A"), sec("MATH", "1", "B")]);
+    const two = make([sec("MUSC", "1", "A"), sec("MUSC", "1", "B")]);
     const c = compareTables([{ id: "a", name: "A", rows: comparisonRows(two) }], roles(group("Prefix", "CourseNumber")));
     expect(c.rows[0]!.members[0]!.map((r) => r.Section)).toEqual(["A", "B"]);
   });

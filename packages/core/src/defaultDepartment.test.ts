@@ -6,7 +6,7 @@ import { readWorkbook, writeWorkbook } from "./xlsx.js";
 
 const session = (over: Partial<Session>): Session =>
   ({
-    sectionId: "x", department: "", academicYear: "AY25", term: "FA", termPart: "Full", prefix: "MATH", courseNumber: "101", section: "A",
+    sectionId: "x", department: "", academicYear: "AY25", term: "FA", termPart: "Full", prefix: "MUSC", courseNumber: "101", section: "A",
     shortTitle: "", faculty: [], days: "MWF", start: 540, duration: 50, room: "SB 110", deliveryMode: "", comment: "", extra: {},
     ...over,
   }) as Session;
@@ -25,22 +25,22 @@ describe("default department", () => {
   });
 
   it("shows in the comparison rows", () => {
-    const s = sched("Math", { sectionId: "a" }, { sectionId: "b", department: "CS" });
-    expect(comparisonRows(s).map((r) => r.Department)).toEqual(["Math", "CS"]);
+    const s = sched("Musicology", { sectionId: "a" }, { sectionId: "b", department: "CRUD" });
+    expect(comparisonRows(s).map((r) => r.Department)).toEqual(["Musicology", "CRUD"]);
   });
 
   it("stays out of the sections themselves when saved, and comes back from the Metadata sheet", async () => {
-    const s = sched("Math", { sectionId: "a" });
+    const s = sched("Musicology", { sectionId: "a" });
     const back = (await readWorkbook(await writeWorkbook(s))).schedule;
-    expect(back.meta.defaultDepartment).toBe("Math");
+    expect(back.meta.defaultDepartment).toBe("Musicology");
     expect(back.sessions[0]!.department).toBe("");
   });
 
   it("is carried by each section when schedules are merged", () => {
-    const a = sched("Math", { sectionId: "a" });
+    const a = sched("Musicology", { sectionId: "a" });
     const b = sched("", { sectionId: "b" });
-    const c = sched("Stat", { sectionId: "c", department: "CS" });
+    const c = sched("Stat", { sectionId: "c", department: "CRUD" });
     const { schedule } = mergeSchedules([a, b, c].map((schedule, i) => ({ id: String(i), name: `s${i}`, schedule })));
-    expect(schedule.sessions.map((x) => x.department)).toEqual(["Math", "", "CS"]);
+    expect(schedule.sessions.map((x) => x.department)).toEqual(["Musicology", "", "CRUD"]);
   });
 });

@@ -9,8 +9,8 @@ const cmp = (a: Record<string, string>[], b: Record<string, string>[], preset = 
     [{ id: "a", name: "Plan A", rows: comparisonRows(sched(a), preset.rows) }, { id: "b", name: "Plan B", rows: comparisonRows(sched(b), preset.rows) }, ...(c ? [{ id: "c", name: "Plan C", rows: comparisonRows(sched(c), preset.rows) }] : [])],
     { roles: preset.roles },
   );
-const A = [sec("MATH", "101", { FacultyLoad: "4" }), sec("STAT", "200", { FacultyLoad: "3" })];
-const B = [sec("MATH", "101", { FacultyLoad: "6" }), sec("DATA", "100", { FacultyLoad: "2" })];
+const A = [sec("MUSC", "101", { FacultyLoad: "4" }), sec("URBS", "200", { FacultyLoad: "3" })];
+const B = [sec("MUSC", "101", { FacultyLoad: "6" }), sec("DIGI", "100", { FacultyLoad: "2" })];
 
 describe("presets", () => {
   it("name only real columns, and the instructor one compares per instructor", () => {
@@ -39,7 +39,7 @@ describe("tableColumns", () => {
     const c = cmp(A, B);
     const cols = tableColumns(c);
     const text = (key: string) => c.rows.map((r) => cols.find((x) => x.key === key)!.text(r));
-    expect(text("g0")).toEqual(["DATA", "MATH", "STAT"]);
+    expect(text("g0")).toEqual(["DIGI", "MUSC", "URBS"]);
     expect(text("a0_0")).toEqual(["—", "4", "3"]);
     expect(text("a0_1")).toEqual(["2", "6", "—"]);
     expect(text("d0")).toEqual(["+2", "+2", "-3"]);
@@ -53,7 +53,7 @@ describe("tableColumns", () => {
 
 describe("aggregateDiffers", () => {
   it("is true when a schedule lacks the group or the values differ, false when they agree", () => {
-    const c = cmp([sec("MATH", "101", { FacultyLoad: "4" }), sec("STAT", "1", { FacultyLoad: "1" }), sec("DATA", "1", { FacultyLoad: "1" })], [sec("MATH", "101", { FacultyLoad: "4" }), sec("STAT", "1", { FacultyLoad: "2" })]);
+    const c = cmp([sec("MUSC", "101", { FacultyLoad: "4" }), sec("URBS", "1", { FacultyLoad: "1" }), sec("DIGI", "1", { FacultyLoad: "1" })], [sec("MUSC", "101", { FacultyLoad: "4" }), sec("URBS", "1", { FacultyLoad: "2" })]);
     expect(c.rows.map((r) => aggregateDiffers(r, 0))).toEqual([true, false, true]);
   });
 });
@@ -66,7 +66,7 @@ describe("toneColor", () => {
     expect(toneColor({ larger: 1, strength: 5 })).toBe(toneColor({ larger: 1, strength: 1 }));
     expect(hueFor(0)).not.toBe(hueFor(1));
   });
-  it("lines up with the core's tones", () => {
+  it("lines up with the bhav's tones", () => {
     const c = cmp(A, B);
     const tones = rowTones(c)!;
     expect(tones.map((t) => t?.larger)).toEqual([1, 1, 0]);
@@ -121,7 +121,7 @@ describe("comparisonSheets", () => {
     const [main] = comparisonSheets(c, columns, c.rows, tones, info);
     expect(main!.name).toBe("Comparison");
     expect(main!.header).toEqual(["Prefix", "CourseNumber", "FacultyLoad\nPlan A", "FacultyLoad\nPlan B", "Difference\nPlan B − Plan A"]);
-    expect(main!.rows).toEqual([["DATA", "100", null, 2, 2], ["MATH", "101", 4, 6, 2], ["STAT", "200", 3, null, -3]]);
+    expect(main!.rows).toEqual([["DIGI", "100", null, 2, 2], ["MUSC", "101", 4, 6, 2], ["URBS", "200", 3, null, -3]]);
     expect(main!.filter).toBe(true);
   });
   it("fills each row with its color, and none where the row has no tone", () => {
@@ -132,7 +132,7 @@ describe("comparisonSheets", () => {
   });
   it("exports the rows it is given, in the order given", () => {
     const reversed = [...c.rows].reverse();
-    expect(comparisonSheets(c, columns, reversed, tones, info)[0]!.rows.map((r) => r[0])).toEqual(["STAT", "MATH", "DATA"]);
+    expect(comparisonSheets(c, columns, reversed, tones, info)[0]!.rows.map((r) => r[0])).toEqual(["URBS", "MUSC", "DIGI"]);
     expect(comparisonSheets(c, columns, [c.rows[1]!], tones, info)[0]!.rows).toHaveLength(1);
   });
   it("says what was compared and how on a second sheet", () => {
@@ -159,10 +159,10 @@ describe("comparisonSheets", () => {
     expect(about["Row colors"]).toBeUndefined();
   });
   it("leaves text aggregates as text, and writes a Difference only for two schedules", () => {
-    const text = compareTables([{ id: "a", name: "A", rows: comparisonRows(sched([sec("MATH", "1", { Faculty: "Smith" })])) }, { id: "b", name: "B", rows: comparisonRows(sched([sec("MATH", "1", { Faculty: "Lee" })])) }], { roles: { Prefix: "group", Faculty: "aggregate" } });
+    const text = compareTables([{ id: "a", name: "A", rows: comparisonRows(sched([sec("MUSC", "1", { Faculty: "Smith" })])) }, { id: "b", name: "B", rows: comparisonRows(sched([sec("MUSC", "1", { Faculty: "Lee" })])) }], { roles: { Prefix: "group", Faculty: "aggregate" } });
     const sheet = comparisonSheets(text, tableColumns(text), text.rows, undefined, info)[0]!;
     expect(sheet.header).toEqual(["Prefix", "Faculty\nA", "Faculty\nB"]);
-    expect(sheet.rows).toEqual([["MATH", "Smith", "Lee"]]);
+    expect(sheet.rows).toEqual([["MUSC", "Smith", "Lee"]]);
   });
 });
 
@@ -177,11 +177,11 @@ describe("meetsText / memberOf", () => {
   });
   it("describes a section row", () => {
     const sched = importRecords({
-      sessions: [sec("DATA", "385", { Faculty: "Ada", FacultyLoad: "4", ShortTitle: "Opt", MeetingDays: "MWF", StartTime: "11:00", MeetingDuration: "65", Classroom: "NH 1", TermPart: "First" })],
-      crossListings: [{ SectionId: "Y-FA-DATA385-A", Prefix: "STAT", CourseNumber: "385" }],
+      sessions: [sec("DIGI", "385", { Faculty: "Ada", FacultyLoad: "4", ShortTitle: "Opt", MeetingDays: "MWF", StartTime: "11:00", MeetingDuration: "65", Classroom: "NH 1", TermPart: "First" })],
+      crossListings: [{ SectionId: "Y-FA-DIGI385-A", Prefix: "URBS", CourseNumber: "385" }],
     }).schedule;
     const m = memberOf(comparisonRows(sched)[0]!);
-    expect(m).toEqual({ course: "DATA 385 (also STAT 385)", section: "A", term: "FA · First", title: "Opt", instructor: "Ada", load: "4", meets: "MWF 11:00–12:05", room: "NH 1", source: { kind: "section", sectionId: "Y-FA-DATA385-A" } });
+    expect(m).toEqual({ course: "DIGI 385 (also URBS 385)", section: "A", term: "FA · First", title: "Opt", instructor: "Ada", load: "4", meets: "MWF 11:00–12:05", room: "NH 1", source: { kind: "section", sectionId: "Y-FA-DIGI385-A" } });
   });
   it("describes a non-teaching row by its activity", () => {
     const sched = importRecords({ sessions: [sec("M", "1")], nonTeaching: [{ AcademicYear: "Y", Faculty: "Ada", Activity: "Chair release", Term: "SP", Load: "3" }] }).schedule;
@@ -191,7 +191,7 @@ describe("meetsText / memberOf", () => {
 });
 
 describe("pairMembers / diffMembers: marking differing fields", () => {
-  const row = (rows: Record<string, string | number>[], kind: "section" | "instructor" = "section") => rows.map((r) => ({ ...Object.fromEntries(COMPARE_COLUMNS.map((c) => [c.key, ""])), AcademicYear: "Y", Term: "FA", TermPart: "Full", Prefix: "MATH", CourseNumber: "101", Section: "A", ...r })) as ReturnType<typeof comparisonRows>;
+  const row = (rows: Record<string, string | number>[], kind: "section" | "instructor" = "section") => rows.map((r) => ({ ...Object.fromEntries(COMPARE_COLUMNS.map((c) => [c.key, ""])), AcademicYear: "Y", Term: "FA", TermPart: "Full", Prefix: "MUSC", CourseNumber: "101", Section: "A", ...r })) as ReturnType<typeof comparisonRows>;
   const group = (...sets: ReturnType<typeof comparisonRows>[]) => ({ group: [], values: [], present: sets.map((s) => s.length > 0), members: sets, differs: true });
   const marks = (v: ReturnType<typeof diffMembers>) => v.map((s) => s.map((m) => [[...m.differs].sort(), m.others, m.solo]));
 

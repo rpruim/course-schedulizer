@@ -5,11 +5,11 @@ import { pairClusters, pairingFingerprint, pairMembers, pairRef, type PairOverri
 
 type Rec = Record<string, string>;
 const sec = (n: string, letter: string, o: Rec = {}): Rec => ({
-  AcademicYear: "AY1", Term: "FA", Prefix: "MATH", CourseNumber: n, Section: letter, Faculty: "Smith", FacultyLoad: "4", MeetingDays: "MWF", StartTime: "09:15", MeetingDuration: "65", Classroom: "NH 1", ...o,
+  AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: n, Section: letter, Faculty: "Smith", FacultyLoad: "4", MeetingDays: "MWF", StartTime: "09:15", MeetingDuration: "65", Classroom: "NH 1", ...o,
 });
 const rowsOf = (...recs: Rec[]) => comparisonRows(importRecords({ sessions: recs }).schedule);
 /** plain rows with no source, for pairing by what they say */
-const plain = (rows: Rec[]): CompareRow[] => rows.map((r) => ({ ...Object.fromEntries(COMPARE_COLUMNS.map((c) => [c.key, ""])), Prefix: "MATH", CourseNumber: "101", Term: "FA", TermPart: "Full", AcademicYear: "AY1", Section: "A", ...r }));
+const plain = (rows: Rec[]): CompareRow[] => rows.map((r) => ({ ...Object.fromEntries(COMPARE_COLUMNS.map((c) => [c.key, ""])), Prefix: "MUSC", CourseNumber: "101", Term: "FA", TermPart: "Full", AcademicYear: "AY1", Section: "A", ...r }));
 const pairs = (c: ReturnType<typeof pairClusters>) => c.filter((x) => x.items.length > 1).map((x) => x.items.map(([s, i]) => `${s}.${i}`).join("~") + ":" + x.how);
 
 describe("pairing sections across schedules", () => {

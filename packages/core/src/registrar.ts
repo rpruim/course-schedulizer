@@ -31,7 +31,7 @@ const compact = (values: string[]) => values.join("\n");
  *   newline-separated (the compact form, so a section with two meetings has two
  *   lines in each — unlike the old app, which kept only the first meeting's time).
  * - Prefix and CourseNumber are the section's primary listing only; any other
- *   listings go in `CrossListings` as `STAT 385, MATH 307`.
+ *   listings go in `CrossListings` as `URBS 388, MUSC 310`.
  * - Rows are in natural course order: prefix, then course number, then section
  *   letter (then term, then academic year); non-teaching rows come first.
  * - Faculty: names only (a `Name (n)` load share is not shown here); `FacultyLoad`

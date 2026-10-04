@@ -33,8 +33,8 @@ describe("layoutLanes", () => {
 
 describe("hueOf", () => {
   it("is stable and in range", () => {
-    expect(hueOf("MATH")).toBe(hueOf("MATH"));
-    expect(hueOf("MATH")).not.toBe(hueOf("STAT"));
+    expect(hueOf("MUSC")).toBe(hueOf("MUSC"));
+    expect(hueOf("MUSC")).not.toBe(hueOf("URBS"));
     expect(hueOf("anything")).toBeGreaterThanOrEqual(0);
     expect(hueOf("anything")).toBeLessThan(360);
   });
@@ -42,11 +42,11 @@ describe("hueOf", () => {
 
 describe("department grid", () => {
   const s = make([
-    sec("MATH", "101", "A", { Faculty: "Smith", ...mt("MWF", "09:15", "65", "NH 1"), ShortTitle: "Calc" }),
-    sec("MATH", "102", "A", { Faculty: "Smith", ...mt("TR", "14:10", "100", "NH 2") }),
-    sec("STAT", "201", "A", { Faculty: "Lee", ...mt("MW", "09:30", "50", "NH 3") }),
-    sec("MATH", "150", "A", { Faculty: "Kim" }),
-    sec("MATH", "999", "A", { Term: "SP", Faculty: "Kim", ...mt("M", "9:00", "50") }),
+    sec("MUSC", "101", "A", { Faculty: "Smith", ...mt("MWF", "09:15", "65", "NH 1"), ShortTitle: "Calc" }),
+    sec("MUSC", "102", "A", { Faculty: "Smith", ...mt("TR", "14:10", "100", "NH 2") }),
+    sec("URBS", "201", "A", { Faculty: "Lee", ...mt("MW", "09:30", "50", "NH 3") }),
+    sec("MUSC", "150", "A", { Faculty: "Kim" }),
+    sec("MUSC", "999", "A", { Term: "SP", Faculty: "Kim", ...mt("M", "9:00", "50") }),
   ]);
 
   it("makes a block for each day of each meeting, in the chosen term only", () => {
@@ -54,13 +54,13 @@ describe("department grid", () => {
     expect(grids).toHaveLength(1);
     const g = grids[0]!;
     expect(g.blocks.map((x) => `${x.title} ${x.day}`).sort()).toEqual([
-      "MATH 101 A F", "MATH 101 A M", "MATH 101 A W", "MATH 102 A R", "MATH 102 A T", "STAT 201 A M", "STAT 201 A W",
+      "MUSC 101 A F", "MUSC 101 A M", "MUSC 101 A W", "MUSC 102 A R", "MUSC 102 A T", "URBS 201 A M", "URBS 201 A W",
     ]);
   });
   it("places each block by its start and end time", () => {
-    const m = weekGrids(s, opts()).grids[0]!.blocks.find((b) => b.title === "MATH 101 A" && b.day === "M")!;
+    const m = weekGrids(s, opts()).grids[0]!.blocks.find((b) => b.title === "MUSC 101 A" && b.day === "M")!;
     expect([m.start, m.end]).toEqual([555, 620]);
-    expect(m).toMatchObject({ sub: "Smith", detail: "MATH 101 A\nCalc\nSmith\nMWF 09:15–10:20\nNH 1" });
+    expect(m).toMatchObject({ sub: "Smith", detail: "MUSC 101 A\nCalc\nSmith\nMWF 09:15–10:20\nNH 1" });
   });
   it("sizes the axis to the data, never smaller than 8:00–17:00, and shows Mon–Fri", () => {
     const g = weekGrids(s, opts()).grids[0]!;
@@ -73,15 +73,15 @@ describe("department grid", () => {
   });
   it("lays overlapping blocks side by side", () => {
     const m = weekGrids(s, opts()).grids[0]!.blocks.filter((b) => b.day === "M");
-    expect(m.map((b) => [b.title, b.lane, b.lanes])).toEqual([["MATH 101 A", 0, 2], ["STAT 201 A", 1, 2]]);
+    expect(m.map((b) => [b.title, b.lane, b.lanes])).toEqual([["MUSC 101 A", 0, 2], ["URBS 201 A", 1, 2]]);
   });
   it("lists sections with no time", () => {
-    expect(weekGrids(s, opts()).grids[0]!.unscheduled).toEqual([{ sectionId: "Y-FA-MATH150-A", label: "MATH 150 A" }]);
+    expect(weekGrids(s, opts()).grids[0]!.unscheduled).toEqual([{ sectionId: "Y-FA-MUSC150-A", label: "MUSC 150 A" }]);
   });
   it("can be limited to a prefix, and offers the prefixes", () => {
-    const r = weekGrids(s, opts({ prefix: "STAT" }));
-    expect(r.grids[0]!.blocks.every((b) => b.title.startsWith("STAT"))).toBe(true);
-    expect(r.choices).toEqual(["MATH", "STAT"]);
+    const r = weekGrids(s, opts({ prefix: "URBS" }));
+    expect(r.grids[0]!.blocks.every((b) => b.title.startsWith("URBS"))).toBe(true);
+    expect(r.choices).toEqual(["MUSC", "URBS"]);
   });
   it("is empty for a term with nothing", () => {
     expect(weekGrids(s, opts({ term: "SU" })).grids[0]!.blocks).toEqual([]);
@@ -95,91 +95,91 @@ describe("department grid", () => {
     expect(weekGrids(clash, opts()).grids[0]!.blocks.map((b) => b.conflict)).toEqual([true, true, false]);
   });
   it("tags a part of term and colors by the chosen field", () => {
-    const part = make([sec("MATH", "1", "A", { TermPart: "First", CourseLevel: "100", Faculty: "Ada", ...mt("M", "9:00", "50") })]);
+    const part = make([sec("MUSC", "1", "A", { TermPart: "First", CourseLevel: "100", Faculty: "Ada", ...mt("M", "9:00", "50") })]);
     const b = weekGrids(part, opts()).grids[0]!.blocks[0]!;
-    expect(b.title).toBe("MATH 1 A");
-    expect(b.detail).toContain("MATH 1 A · First");
+    expect(b.title).toBe("MUSC 1 A");
+    expect(b.detail).toContain("MUSC 1 A · First");
     expect(b.quarters).toEqual([true, true, false, false]);
     expect(weekGrids(part, opts({ colorBy: "level" })).grids[0]!.blocks[0]!.hue).toBe(hueOf("100"));
     expect(weekGrids(part, opts({ colorBy: "instructor" })).grids[0]!.blocks[0]!.hue).toBe(hueOf("Ada"));
   });
   it("colors by group, instructional method, and a level taken from the course number", () => {
     const s = make([
-      sec("MATH", "231", "A", { Group: "Major core", InstructionalMethod: "Lecture", ...mt("M", "9:00", "50") }),
-      sec("MATH", "231", "B", { CourseLevel: "300", ...mt("T", "9:00", "50") }),
+      sec("MUSC", "231", "A", { Group: "Major bhav", InstructionalMethod: "Lecture", ...mt("M", "9:00", "50") }),
+      sec("MUSC", "231", "B", { CourseLevel: "300", ...mt("T", "9:00", "50") }),
     ]);
     const hues = (colorBy: WeekOptions["colorBy"]) => weekGrids(s, opts({ colorBy })).grids[0]!.blocks.map((b) => b.hue);
-    expect(hues("group")).toEqual([hueOf("Major core"), undefined]); // a missing value has no color: it is drawn gray
+    expect(hues("group")).toEqual([hueOf("Major bhav"), undefined]); // a missing value has no color: it is drawn gray
     expect(hues("method")).toEqual([hueOf("Lecture"), undefined]);
     expect(hues("level")).toEqual([hueOf("200"), hueOf("300")]); // 231 implies 200 unless a level is given
   });
   it("colors by department (with the schedule's default) and draws a missing value gray", () => {
     const s = make([
-      sec("MATH", "231", "A", { Department: "Math", ...mt("M", "9:00", "50") }),
-      sec("MATH", "231", "B", { ...mt("T", "9:00", "50") }),
-      sec("STAT", "143", "A", { Group: "G", ...mt("W", "9:00", "50") }),
+      sec("MUSC", "231", "A", { Department: "Musicology", ...mt("M", "9:00", "50") }),
+      sec("MUSC", "231", "B", { ...mt("T", "9:00", "50") }),
+      sec("URBS", "143", "A", { Group: "G", ...mt("W", "9:00", "50") }),
     ]);
     const blocks = (sched: Schedule, colorBy: WeekOptions["colorBy"]) => weekGrids(sched, opts({ colorBy })).grids[0]!.blocks;
-    expect(blocks(s, "department").map((b) => b.colorValue)).toEqual(["Math", "", ""]);
-    expect(blocks(s, "department").map((b) => b.hue)).toEqual([hueOf("Math"), undefined, undefined]);
+    expect(blocks(s, "department").map((b) => b.colorValue)).toEqual(["Musicology", "", ""]);
+    expect(blocks(s, "department").map((b) => b.hue)).toEqual([hueOf("Musicology"), undefined, undefined]);
     const withDefault = { ...s, meta: { ...s.meta, defaultDepartment: "Some Dept" } };
-    expect(blocks(withDefault, "department").map((b) => b.colorValue)).toEqual(["Math", "Some Dept", "Some Dept"]);
+    expect(blocks(withDefault, "department").map((b) => b.colorValue)).toEqual(["Musicology", "Some Dept", "Some Dept"]);
     expect(blocks(s, "group").map((b) => b.hue)).toEqual([undefined, undefined, hueOf("G")]);
     expect(blocks(s, "prefix").every((b) => b.hue !== undefined)).toBe(true);
   });
   it("filters the department grid by what it can be colored by, offering the values (and whether any are missing)", () => {
     const s = make([
-      sec("MATH", "231", "A", { Group: "Core", ...mt("M", "9:00", "50") }),
-      sec("MATH", "231", "B", { Group: "Core", ...mt("T", "9:00", "50") }),
-      sec("STAT", "143", "A", { Group: "Intro", ...mt("W", "9:00", "50") }),
-      sec("STAT", "243", "A", { ...mt("R", "9:00", "50") }),
-      sec("DATA", "301", "A"),
+      sec("MUSC", "231", "A", { Group: "Core", ...mt("M", "9:00", "50") }),
+      sec("MUSC", "231", "B", { Group: "Core", ...mt("T", "9:00", "50") }),
+      sec("URBS", "143", "A", { Group: "Intro", ...mt("W", "9:00", "50") }),
+      sec("URBS", "243", "A", { ...mt("R", "9:00", "50") }),
+      sec("DIGI", "301", "A"),
     ]);
     const ids = (filter?: { by: WeekOptions["colorBy"]; values: string[] }) => weekGrids(s, opts({ ...(filter ? { filter } : {}) })).grids[0]!;
     const all = weekGrids(s, opts({ filter: { by: "group", values: [] } }));
     expect(all.filterValues).toEqual(["Core", "Intro"]);
     expect(all.filterMissing).toBe(true);
-    expect(ids({ by: "group", values: ["Core"] }).blocks.map((b) => b.title)).toEqual(["MATH 231 A", "MATH 231 B"]);
+    expect(ids({ by: "group", values: ["Core"] }).blocks.map((b) => b.title)).toEqual(["MUSC 231 A", "MUSC 231 B"]);
     expect(ids({ by: "group", values: ["Core", "Intro"] }).blocks).toHaveLength(3);
     // "" is the missing value: the section with no group, and the one with no time still listed as unscheduled
     const missing = ids({ by: "group", values: [""] });
-    expect(missing.blocks.map((b) => b.title)).toEqual(["STAT 243 A"]);
-    expect(missing.unscheduled.map((u) => u.label)).toEqual(["DATA 301 A"]);
-    expect(ids({ by: "prefix", values: ["STAT", "DATA"] }).blocks).toHaveLength(2);
+    expect(missing.blocks.map((b) => b.title)).toEqual(["URBS 243 A"]);
+    expect(missing.unscheduled.map((u) => u.label)).toEqual(["DIGI 301 A"]);
+    expect(ids({ by: "prefix", values: ["URBS", "DIGI"] }).blocks).toHaveLength(2);
     expect(ids().blocks).toHaveLength(4);
   });
   it("draws a meeting listed twice only once, so block keys are unique", () => {
-    const twice = make([sec("MATH", "1", "A", { ...mt("R\nR", "9:00\n9:00", "50\n50", "NH 1\nNH 1") })]);
+    const twice = make([sec("MUSC", "1", "A", { ...mt("R\nR", "9:00\n9:00", "50\n50", "NH 1\nNH 1") })]);
     const blocks = weekGrids(twice, opts()).grids[0]!.blocks;
     expect(blocks).toHaveLength(1);
-    const many = make([sec("MATH", "1", "A", { ...mt("MWF", "9:00", "50", "NH 1") }), sec("MATH", "2", "A", { ...mt("MWF", "9:00", "50", "NH 2") })]);
+    const many = make([sec("MUSC", "1", "A", { ...mt("MWF", "9:00", "50", "NH 1") }), sec("MUSC", "2", "A", { ...mt("MWF", "9:00", "50", "NH 2") })]);
     const keys = weekGrids(many, opts()).grids[0]!.blocks.map((b) => b.key);
     expect(new Set(keys).size).toBe(keys.length);
   });
   it("uses the cross-listing display name", () => {
-    const x = make([sec("DATA", "385", "A", mt("M", "9:00", "50"))], { crossListings: [{ SectionId: "Y-FA-DATA385-A", Prefix: "STAT", CourseNumber: "385" }] });
-    expect(weekGrids(x, opts()).grids[0]!.blocks[0]!.title).toBe("DATA/STAT 385 A");
+    const x = make([sec("DIGI", "385", "A", mt("M", "9:00", "50"))], { crossListings: [{ SectionId: "Y-FA-DIGI385-A", Prefix: "URBS", CourseNumber: "385" }] });
+    expect(weekGrids(x, opts()).grids[0]!.blocks[0]!.title).toBe("DIGI/URBS 385 A");
   });
 });
 
 describe("faculty grids", () => {
   const s = make([
-    sec("MATH", "101", "A", { Faculty: "Smith, Lee", ...mt("MWF", "09:15", "65", "NH 1") }),
-    sec("MATH", "102", "A", { Faculty: "lee ", ...mt("TR", "10:00", "50", "NH 2") }),
-    sec("MATH", "103", "A", { Faculty: "Smith (2)" }),
-    sec("MATH", "104", "A", { Faculty: "*", ...mt("F", "9:00", "50") }),
+    sec("MUSC", "101", "A", { Faculty: "Smith, Lee", ...mt("MWF", "09:15", "65", "NH 1") }),
+    sec("MUSC", "102", "A", { Faculty: "lee ", ...mt("TR", "10:00", "50", "NH 2") }),
+    sec("MUSC", "103", "A", { Faculty: "Smith (2)" }),
+    sec("MUSC", "104", "A", { Faculty: "*", ...mt("F", "9:00", "50") }),
   ]);
   it("makes one grid per instructor, in name order, listing their unscheduled sections", () => {
     const { grids, choices } = weekGrids(s, opts({ kind: "faculty" }));
     expect(choices).toEqual(["Lee", "Smith"]);
     expect(grids.map((g) => g.title)).toEqual(["Lee", "Smith"]);
-    expect(grids[0]!.blocks.map((b) => b.title).filter((t, i, a) => a.indexOf(t) === i)).toEqual(["MATH 101 A", "MATH 102 A"]);
-    expect(grids[1]!.unscheduled).toEqual([{ sectionId: "Y-FA-MATH103-A", label: "MATH 103 A" }]);
+    expect(grids[0]!.blocks.map((b) => b.title).filter((t, i, a) => a.indexOf(t) === i)).toEqual(["MUSC 101 A", "MUSC 102 A"]);
+    expect(grids[1]!.unscheduled).toEqual([{ sectionId: "Y-FA-MUSC103-A", label: "MUSC 103 A" }]);
   });
   it("shows the room as the second line, and a team-taught section on each person's grid", () => {
     const smith = weekGrids(s, opts({ kind: "faculty", only: "Smith" })).grids;
     expect(smith).toHaveLength(1);
-    expect(smith[0]!.blocks[0]).toMatchObject({ title: "MATH 101 A", sub: "NH 1" });
+    expect(smith[0]!.blocks[0]).toMatchObject({ title: "MUSC 101 A", sub: "NH 1" });
   });
   it("does not make a grid for the wildcard instructor", () => {
     expect(weekGrids(s, opts({ kind: "faculty" })).choices).not.toContain("*");
@@ -188,17 +188,17 @@ describe("faculty grids", () => {
 
 describe("room grids", () => {
   const s = make([
-    sec("MATH", "101", "A", { Faculty: "Smith", ...mt("MWF", "09:15", "65", "NH 101") }),
-    sec("MATH", "102", "A", { Faculty: "Lee", ...mt("TR", "10:00", "50", "nh  101") }),
-    sec("MATH", "103", "A", { Faculty: "Kim", ...mt("M", "13:00", "50", "NH 9") }),
-    sec("MATH", "104", "A", { Faculty: "Kim", ...mt("M", "14:00", "50", "Online") }),
-    sec("MATH", "105", "A", { Faculty: "Kim", ...mt("M", "15:00", "50") }),
+    sec("MUSC", "101", "A", { Faculty: "Smith", ...mt("MWF", "09:15", "65", "NH 101") }),
+    sec("MUSC", "102", "A", { Faculty: "Lee", ...mt("TR", "10:00", "50", "nh  101") }),
+    sec("MUSC", "103", "A", { Faculty: "Kim", ...mt("M", "13:00", "50", "NH 9") }),
+    sec("MUSC", "104", "A", { Faculty: "Kim", ...mt("M", "14:00", "50", "Online") }),
+    sec("MUSC", "105", "A", { Faculty: "Kim", ...mt("M", "15:00", "50") }),
   ]);
   it("makes one grid per room (same room however it is spelled), in natural order", () => {
     const { grids, choices } = weekGrids(s, opts({ kind: "room" }));
     expect(choices).toEqual(["NH 9", "NH 101"]);
     expect(grids.map((g) => g.title)).toEqual(["NH 9", "NH 101"]);
-    expect(grids[1]!.blocks.map((b) => b.title).filter((t, i, a) => a.indexOf(t) === i)).toEqual(["MATH 101 A", "MATH 102 A"]);
+    expect(grids[1]!.blocks.map((b) => b.title).filter((t, i, a) => a.indexOf(t) === i)).toEqual(["MUSC 101 A", "MUSC 102 A"]);
     expect(grids[1]!.blocks[0]!.sub).toBe("Smith");
   });
   it("counts meetings with no room or a non-room, and leaves them out", () => {
@@ -218,9 +218,9 @@ describe("hourLabel", () => {
 describe("filtering by part of the term", () => {
   // one course per part, all meeting at the same time, so lanes show how crowded the slot is
   const parts = ["Full", "First", "Second", "A", "B", "C", "D"];
-  const s = make(parts.map((p, i) => sec("MATH", String(100 + i), "A", { TermPart: p, Faculty: `Prof ${p}`, ...mt("MWF", "09:00", "50", `NH ${i}`) })));
+  const s = make(parts.map((p, i) => sec("MUSC", String(100 + i), "A", { TermPart: p, Faculty: `Prof ${p}`, ...mt("MWF", "09:00", "50", `NH ${i}`) })));
   const shown = (part?: string) =>
-    [...new Set(weekGrids(s, opts(part ? { part } : {})).grids[0]!.blocks.map((b) => b.title.replace(/ A.*$/, "").replace("MATH ", "")))]
+    [...new Set(weekGrids(s, opts(part ? { part } : {})).grids[0]!.blocks.map((b) => b.title.replace(/ A.*$/, "").replace("MUSC ", "")))]
       .map((n) => parts[Number(n) - 100]!)
       .sort();
 
@@ -254,8 +254,8 @@ describe("filtering by part of the term", () => {
     const room = weekGrids(s, opts({ kind: "room", part: "A" }));
     expect(room.choices).toHaveLength(7);
     expect(room.grids).toHaveLength(3);
-    const un = make([sec("MATH", "1", "A", { TermPart: "C" }), sec("MATH", "2", "A", { TermPart: "A" })]);
-    expect(weekGrids(un, opts({ part: "A" })).grids[0]!.unscheduled.map((u) => u.label)).toEqual(["MATH 2 A"]);
+    const un = make([sec("MUSC", "1", "A", { TermPart: "C" }), sec("MUSC", "2", "A", { TermPart: "A" })]);
+    expect(weekGrids(un, opts({ part: "A" })).grids[0]!.unscheduled.map((u) => u.label)).toEqual(["MUSC 2 A"]);
   });
   it("uses each term's own parts", () => {
     const custom = make([sec("X", "1", "A", { Term: "XT", TermPart: "S1", ...mt("M", "9:00", "50") }), sec("X", "2", "A", { Term: "XT", TermPart: "S2", ...mt("M", "9:00", "50") })], {
@@ -270,8 +270,8 @@ describe("filtering by part of the term", () => {
 });
 
 describe("groupGrids", () => {
-  const a = make([sec("MATH", "1", "A", { Faculty: "Ada", ...mt("M", "9:00", "50", "NH 1") }), sec("MATH", "2", "A", { Faculty: "Ben", ...mt("T", "9:00", "50", "NH 2") })]);
-  const b = make([sec("MATH", "1", "A", { Faculty: "Ada", ...mt("W", "9:00", "50", "NH 1") }), sec("MATH", "3", "A", { Faculty: "Cy", ...mt("T", "9:00", "50", "NH 3") })]);
+  const a = make([sec("MUSC", "1", "A", { Faculty: "Ada", ...mt("M", "9:00", "50", "NH 1") }), sec("MUSC", "2", "A", { Faculty: "Ben", ...mt("T", "9:00", "50", "NH 2") })]);
+  const b = make([sec("MUSC", "1", "A", { Faculty: "Ada", ...mt("W", "9:00", "50", "NH 1") }), sec("MUSC", "3", "A", { Faculty: "Cy", ...mt("T", "9:00", "50", "NH 3") })]);
   const results = (kind: "dept" | "faculty" | "room") => [
     { id: "a", name: "Draft A", result: weekGrids(a, opts({ kind })) },
     { id: "b", name: "Draft B", result: weekGrids(b, opts({ kind })) },
@@ -300,7 +300,7 @@ describe("groupGrids", () => {
 });
 
 describe("quarter dots", () => {
-  const quarters = (part: string) => weekGrids(make([sec("MATH", "1", "A", { TermPart: part, ...mt("M", "9:00", "50") })]), opts()).grids[0]!.blocks[0]!.quarters;
+  const quarters = (part: string) => weekGrids(make([sec("MUSC", "1", "A", { TermPart: part, ...mt("M", "9:00", "50") })]), opts()).grids[0]!.blocks[0]!.quarters;
   it("fills the quarters a section meets in", () => {
     expect(quarters("Full")).toEqual([true, true, true, true]);
     expect(quarters("First")).toEqual([true, true, false, false]);
@@ -313,12 +313,12 @@ describe("quarter dots", () => {
 describe("order by part of term", () => {
   it("puts blocks that start together left to right: full, first, A, B, second, C, D", () => {
     const shuffled = ["D", "Second", "A", "Full", "C", "B", "First"];
-    const g = weekGrids(make(shuffled.map((p, i) => sec("MATH", String(100 + i), "A", { TermPart: p, ...mt("M", "9:00", "50", `NH ${i}`) }))), opts());
+    const g = weekGrids(make(shuffled.map((p, i) => sec("MUSC", String(100 + i), "A", { TermPart: p, ...mt("M", "9:00", "50", `NH ${i}`) }))), opts());
     const byLane = [...g.grids[0]!.blocks].sort((a, b) => a.lane - b.lane).map((b) => shuffled[Number(b.title.split(" ")[1]) - 100]);
     expect(byLane).toEqual(["Full", "First", "A", "B", "Second", "C", "D"]);
   });
   it("lists unscheduled sections in the same order", () => {
-    const g = weekGrids(make(["B", "Full", "First"].map((p, i) => sec("MATH", String(200 + i), "A", { TermPart: p }))), opts());
+    const g = weekGrids(make(["B", "Full", "First"].map((p, i) => sec("MUSC", String(200 + i), "A", { TermPart: p }))), opts());
     expect(g.grids[0]!.unscheduled.map((u) => u.label.split(" ")[1])).toEqual(["201", "202", "200"]);
   });
 });
