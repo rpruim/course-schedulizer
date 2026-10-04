@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { conflictedSessions, nonStandardSessions } from "./conflicts.js";
 import { recordsFromCsv } from "./csv.js";
 import { importConstraints, importRecords } from "./import.js";
-import { deleteRule, describeRule, emptyRule, findRuleViolations, rulesOf, rulesToRows, ruleSubject, saveRule, validateRule, type Rule } from "./rules.js";
+import { mergeSchedules } from "./merge.js";
+import { copyRule, deleteRule, describeRule, emptyRule, findRuleViolations, rulesOf, rulesToRows, ruleSubject, saveRule, validateRule, type Rule } from "./rules.js";
 import { fixtureText } from "./testutil.js";
 import { readWorkbook, writeWorkbook } from "./xlsx.js";
 
@@ -494,5 +495,31 @@ describe("subset of standard times", () => {
     const back = (await readWorkbook(await writeWorkbook(s))).schedule;
     expect(rulesOf(back).map((r) => r.type)).toEqual(["subset"]);
     expect(allMsgs(back)).toEqual([]);
+  });
+});
+
+describe("rules belong to the schedule they came from", () => {
+  const custom = (s: Parameters<typeof findRuleViolations>[0]) => findRuleViolations(s).filter((v) => !v.builtin);
+  const a = () => importRecords({ sessions: [sec("MUSC", "1", "A", "MWF", "9:00"), sec("MUSC", "2", "A", "MWF", "9:00")], constraints: [{ Constraint: "Both", Course: "MUSC 1" }, { Constraint: "Both", Course: "MUSC 2" }] }).schedule;
+  const b = () => importRecords({ sessions: [sec("MUSC", "1", "A", "TR", "9:00"), sec("MUSC", "2", "A", "TR", "11:00")], constraints: [] }).schedule;
+  it("a rule of one schedule is not checked against the sections of another when they are merged", () => {
+    expect(custom(a()).map((v) => v.rule)).toEqual(["Both"]);
+    const merged = mergeSchedules([{ id: "a", name: "A", schedule: a() }, { id: "b", name: "B", schedule: b() }]).schedule;
+    expect(custom(merged).map((v) => [v.rule, v.sectionIds])).toEqual([["Both", expect.arrayContaining(["Y-FA-MUSC1-A"])]]);
+    // B has no rules, so its (clashing) sections are not drawn into A's rule: only A's two sections are involved
+    expect(custom(merged)[0]!.sectionIds).toHaveLength(2);
+    const reversed = mergeSchedules([{ id: "b", name: "B", schedule: b() }, { id: "a", name: "A", schedule: a() }]).schedule;
+    expect(custom(reversed).map((v) => v.rule)).toEqual(["Both"]);
+  });
+  it("copies a rule to another schedule, renaming it when the name is taken and skipping an identical one", () => {
+    const first = copyRule(a(), b(), "Both");
+    expect(first).toMatchObject({ name: "Both", result: "added" });
+    expect(rulesOf(first.schedule).map((r) => r.name)).toEqual(["Both"]);
+    expect(copyRule(a(), first.schedule, "Both")).toMatchObject({ result: "already" });
+    const other = importRecords({ sessions: [], constraints: [{ Constraint: "Both", Course: "MUSC 9" }, { Constraint: "Both", Course: "MUSC 8" }] }).schedule;
+    const renamed = copyRule(a(), other, "Both");
+    expect(renamed).toMatchObject({ name: "Both (2)", result: "renamed" });
+    expect(rulesOf(renamed.schedule).map((r) => r.name)).toEqual(["Both", "Both (2)"]);
+    expect(copyRule(a(), b(), "Nope").result).toBe("missing");
   });
 });

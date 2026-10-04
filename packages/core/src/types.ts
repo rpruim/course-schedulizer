@@ -54,6 +54,8 @@ export const sessionSchema = z
     room: str,
     /** Unrecognized columns, preserved on round trip. */
     extra: z.record(z.string(), z.string()).default({}),
+    /** Only on the copies in a merged schedule: the schedule the section came from. Rules apply within one scope. Never saved. */
+    scope: z.string().optional(),
   })
   .refine(
     (s) => (s.days === "") === (s.start === undefined) && (s.days === "") === (s.duration === undefined),
@@ -135,6 +137,8 @@ export const constraintSchema = z.object({
   /** Window rules: "meets in the interval" means overlapping it, or lying entirely within it. Blank: overlapping for "should not", within for "should". */
   meets: z.enum(["", "overlaps", "within"]).default(""),
   comment: str,
+  /** Only on the copies in a merged schedule: the schedule the rule came from. It applies to sections of the same scope. Never saved. */
+  scope: z.string().optional(),
 });
 export type Constraint = z.infer<typeof constraintSchema>;
 

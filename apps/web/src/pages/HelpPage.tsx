@@ -275,6 +275,13 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           says the rule in words and checks it against your schedule as you type.
           There are two types of constraint rules.
         </p>
+        <p>
+          A rule belongs to the schedule it is saved in, and applies only to that schedule’s sections, even when several schedules are
+          viewed merged. When two or more schedules are ticked, the Constraints tab marks the current schedule with a border and has a
+          button on each rule: <em>Copy to current schedule</em> on the other schedules’ rules, and <em>Copy to all schedules</em> on the
+          current schedule’s. A copy is named “name (2)” if the schedule already has a different rule of that name, and is skipped if
+          it already has the same rule. Only a schedule’s own rules are saved when you export it.
+        </p>
         <h3>Take together</h3>
         <p>
           “A student must be able to take <em>any</em> or <em>some</em> <em>n</em> of the listed courses.” A student takes one section of each course, and sections that overlap cannot be taken together.

@@ -14,6 +14,8 @@ interface EditorApi {
   openNonTeaching(index?: number, defaults?: Partial<NonTeachingDraft>, scheduleId?: string): void;
   /** Open a constraint rule for editing (by name), or a new one when no name is given. */
   openConstraint(name?: string, scheduleId?: string): void;
+  /** Show a short message at the top of the page, as the editors do after a save. */
+  notify(message: string): void;
 }
 
 const Ctx = createContext<EditorApi | undefined>(undefined);
@@ -68,7 +70,7 @@ export function EditorProvider({ children, onNotice }: { children: ReactNode; on
     },
     [ws, target],
   );
-  const api = useMemo(() => ({ openSection, openNew, openNonTeaching, openConstraint }), [openSection, openNew, openNonTeaching, openConstraint]);
+  const api = useMemo(() => ({ openSection, openNew, openNonTeaching, openConstraint, notify: onNotice }), [openSection, openNew, openNonTeaching, openConstraint, onNotice]);
 
   return (
     <Ctx.Provider value={api}>

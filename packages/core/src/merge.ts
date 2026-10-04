@@ -25,7 +25,8 @@ export interface Merged {
  * Lay several schedules over one another as if they were a single schedule, so conflicts
  * and loads are found across them. The inputs are not changed. A section id already taken
  * by an earlier schedule is given a `~n` suffix in the merged copy (cross-listings follow);
- * settings are the first schedule's, plus any terms only later ones define.
+ * settings are the first schedule's, plus any terms only later ones define. Each rule keeps to the schedule it came from:
+ * the copies carry a `scope`, and rules are checked only against sections of the same scope.
  */
 export function mergeSchedules(inputs: MergeInput[]): Merged {
   const out = emptySchedule();
@@ -50,7 +51,7 @@ export function mergeSchedules(inputs: MergeInput[]): Merged {
         origin.sections.set(merged, { scheduleId: id, sectionId: s.sectionId });
       }
       // The merged schedule has no default of its own, so each section carries the department it had.
-      out.sessions.push({ ...s, sectionId: merged, department: departmentOf(schedule.meta, s) });
+      out.sessions.push({ ...s, sectionId: merged, department: departmentOf(schedule.meta, s), scope: id });
     }
     for (const c of schedule.crossListings) out.crossListings.push({ ...c, sectionId: rename.get(c.sectionId) ?? c.sectionId });
     schedule.nonTeaching.forEach((n, index) => {
@@ -67,7 +68,7 @@ export function mergeSchedules(inputs: MergeInput[]): Merged {
         ruleNames.set(c.constraint, merged);
         origin.rules.set(merged, { scheduleId: id, name: c.constraint });
       }
-      out.constraints.push({ ...c, constraint: merged });
+      out.constraints.push({ ...c, constraint: merged, scope: id });
     }
   }
   return { schedule: out, origin };

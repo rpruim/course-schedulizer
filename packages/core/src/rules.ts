@@ -147,6 +147,22 @@ export function saveRule(schedule: Schedule, original: string | undefined, rule:
   return { ...schedule, constraints: rest };
 }
 
+/**
+ * Copy the rule called `name` from one schedule to another. A rule with that name already in the target is
+ * left alone when it says the same thing (`already`); otherwise the copy is named `name (2)` and so on if
+ * the name is taken (`renamed`), or keeps its name (`added`). `missing`: the source has no such rule.
+ */
+export function copyRule(from: Schedule, to: Schedule, name: string): { schedule: Schedule; name: string; result: "added" | "renamed" | "already" | "missing" } {
+  const rows = from.constraints.filter((c) => c.constraint === name).map(({ scope: _scope, ...c }) => c);
+  if (rows.length === 0) return { schedule: to, name, result: "missing" };
+  const mine = to.constraints.filter((c) => c.constraint === name).map(({ scope: _scope, ...c }) => c);
+  if (mine.length > 0 && JSON.stringify(mine) === JSON.stringify(rows)) return { schedule: to, name, result: "already" };
+  const taken = new Set(to.constraints.map((c) => c.constraint.toLowerCase()));
+  let copy = name;
+  for (let n = 2; taken.has(copy.toLowerCase()); n++) copy = `${name} (${n})`;
+  return { schedule: { ...to, constraints: [...to.constraints, ...rows.map((c) => ({ ...c, constraint: copy }))] }, name: copy, result: copy === name ? "added" : "renamed" };
+}
+
 export const deleteRule = (schedule: Schedule, name: string): Schedule => ({ ...schedule, constraints: schedule.constraints.filter((c) => c.constraint !== name) });
 
 export interface RuleProblem {
@@ -325,6 +341,17 @@ const sameLetter = (a: string, b: string) => a.trim().toLowerCase() === b.trim()
  *   section must satisfy the rule, or, with `count`, that many of them.
  */
 export function findRuleViolations(schedule: Schedule): RuleViolation[] {
+  // In a merged schedule each rule belongs to the schedule it came from and applies only to that schedule's sections.
+  const scopes = [...new Set([...schedule.sessions, ...schedule.constraints].map((x) => x.scope).filter((x): x is string => x !== undefined))];
+  if (scopes.length === 0) return violationsIn(schedule);
+  return scopes.flatMap((scope) => {
+    const sessions = schedule.sessions.filter((s) => s.scope === scope);
+    const ids = new Set(sessions.map((s) => s.sectionId));
+    return violationsIn({ ...schedule, sessions, constraints: schedule.constraints.filter((c) => c.scope === scope), crossListings: schedule.crossListings.filter((c) => ids.has(c.sectionId)) });
+  });
+}
+
+function violationsIn(schedule: Schedule): RuleViolation[] {
   const names = displayNames(schedule);
   const bySection = new Map<string, Session[]>();
   for (const s of schedule.sessions) bySection.set(s.sectionId, [...(bySection.get(s.sectionId) ?? []), s]);
