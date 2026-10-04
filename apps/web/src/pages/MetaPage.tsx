@@ -19,7 +19,7 @@ export function MetaPage() {
       {ordered.map((e) => {
         const isOpen = !many || open.has(e.id);
         return (
-          <section key={e.id} className="sched-section meta-card">
+          <section key={e.id} className={`sched-section meta-card${many && e.id === ws.currentId ? " current" : ""}`}>
             {many && (
               <h2 className="sched-heading">
                 <button type="button" className="meta-toggle" aria-expanded={isOpen} onClick={() => metaOpen.toggle(e.id)} title={isOpen ? "Collapse" : "Open"}>

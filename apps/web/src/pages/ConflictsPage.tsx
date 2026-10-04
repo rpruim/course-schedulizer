@@ -16,8 +16,8 @@ export function ConflictsPage() {
       {ws.viewEntries[0]?.id === MERGED_ID && <p className="muted small">Showing {ws.includedEntries.length} schedules merged, so conflicts between them are included.</p>}
       {several && <p className="muted small">Conflicts are found within each schedule, never between schedules.</p>}
       {ws.viewEntries.map((e) => (
-        <section key={e.id} className="sched-section">
-          {several && <h2 className="sched-heading">{e.name}</h2>}
+        <section key={e.id} className={`sched-section${several && e.id === ws.currentId ? " current" : ""}`}>
+          {several && <h2 className="sched-heading">{e.name}{e.id === ws.currentId && <span className="badge">Current</span>}</h2>}
           <ConflictsTable entry={e} />
         </section>
       ))}

@@ -32,8 +32,8 @@ export function LoadsPage() {
         <Link to="/nonteaching">Edit non-teaching load</Link>
       </div>
       {ws.viewEntries.map((e) => (
-        <section key={e.id} className="sched-section">
-          {several && <h2 className="sched-heading">{e.name}</h2>}
+        <section key={e.id} className={`sched-section${several && e.id === ws.currentId ? " current" : ""}`}>
+          {several && <h2 className="sched-heading">{e.name}{e.id === ws.currentId && <span className="badge">Current</span>}</h2>}
           <LoadTableView entry={e} year={year} />
         </section>
       ))}
