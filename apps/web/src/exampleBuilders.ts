@@ -34,10 +34,10 @@ export const EXAMPLE_FILES: Record<string, () => ImportResult> = {
     const is = (s: { term: string; prefix: string; courseNumber: string; section: string }, term: string, course: string, section: string) =>
       s.term === term && `${s.prefix} ${s.courseNumber}` === course && s.section === section;
     const sessions = result.schedule.sessions
-      .filter((s) => !is(s, "FA", "STAT 143", "B"))
+      .filter((s) => !is(s, "FA", "BHAV 112", "B"))
       .map((s) => {
-        if (is(s, "FA", "MATH 143", "B")) return { ...s, start: 12 * 60 + 15 };
-        if (is(s, "FA", "MATH 351", "A")) return { ...s, faculty: [{ name: "Cy Fictional" }] };
+        if (is(s, "FA", "AMUS 112", "B")) return { ...s, start: 12 * 60 + 15 };
+        if (is(s, "FA", "AMUS 368", "A")) return { ...s, faculty: [{ name: "Cy Fictional" }] };
         return s;
       });
     return { ...result, schedule: { ...result.schedule, sessions } };

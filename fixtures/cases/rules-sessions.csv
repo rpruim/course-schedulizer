@@ -1,23 +1,23 @@
 AcademicYear,Term,TermPart,Prefix,CourseNumber,Section,Faculty,FacultyLoad,MinimumCredits,MeetingDays,StartTime,MeetingDuration,Classroom,ShortTitle,InstructionalMethod,DeliveryMode,Comment
-R2,FA,Full,MATH,231,A,Ada Example,4,4,TR,10:20,100,NH 103,Linear Algebra,Lecture,In-Person,Cohort course: clashes with STAT 243 A
-R2,FA,Full,MATH,231,B,Ada Example,4,4,MWF,11:00,65,NH 103,Linear Algebra,Lecture,In-Person,The second section is what lets the cohort rule be met
-R2,FA,Full,STAT,243,A,Eli Specimen,4,4,TR,10:20,100,NH 105,Statistical Methods,Lecture,In-Person,
-R2,FA,Full,MATH,250,A,Cy Fictional,4,4,MWF,09:15,65,NH 104,Discrete Mathematics,Lecture,In-Person,
-R2,FA,Full,DATA,202,A,Fay Mockson,4,4,MWF,11:00,65,SB 110,Data Computing,Lecture,In-Person,
-R2,FA,Full,DATA,301,A,Ben Sample,4,4,TR,12:15,100,NH 106,Data Science Topics,Lecture,In-Person,Same time as STAT 343 A
-R2,FA,Full,STAT,343,A,Eli Specimen,4,4,TR,12:15,100,NH 105,Probability,Lecture,In-Person,Same time as DATA 301 A
-R2,FA,Full,CS,262,A,Kim,4,4,MWF,13:30,65,SB 120,Data Structures,Lecture,In-Person,Kim teaches three in a row on MWF
-R2,FA,Full,CS,108,A,Kim,4,4,MWF,14:45,65,SB 120,Introduction to Computing,Lecture,In-Person,
-R2,FA,Full,CS,372,A,Kim,4,4,MWF,16:00,60,SB 122,Algorithms,Lecture,In-Person,
-R2,FA,Full,CS,108,B,Gus Testwell,4,4,MWF,08:00,65,SB 121,Introduction to Computing,Lecture,In-Person,8:00 MWF is standard for the university but disallowed by this department's rule
-R2,FA,Full,MATH,301,A,Ben Sample,4,4,TR,14:10,100,NH 104,Real Analysis I,Lecture,In-Person,Runs into the colloquium hour (R 15:05)
-R2,FA,Full,MATH,290,A,Ada Example,1,1,R,15:05,50,NH 276,Colloquium,Seminar,In-Person,Not a standard time; allowed by this department's rule
-R2,FA,Full,STAT,143,A,Lee,4,4,MWF,09:15,65,NH 106,Introduction to Statistics,Lecture,In-Person,Lee's two sections are not back to back
-R2,FA,Full,STAT,143,B,Lee,4,4,MWF,11:00,65,NH 106,Introduction to Statistics,Lecture,In-Person,
-R2,FA,Full,STAT,143,C,Dee Placeholder,4,4,MWF,10:30,65,NH 107,Introduction to Statistics,Lecture,In-Person,10:30 is not a standard start (shown in orange)
-R2,FA,Full,CORE,100,A,Hal Fakename,4,4,MWF,09:15,65,HH 210,Core 100,Lecture,In-Person,There is no evening section yet
-R2,FA,Full,CORE,100,B,Hal Fakename,4,4,TR,12:15,100,HH 210,Core 100,Lecture,In-Person,
-R2,SP,Full,MATH,232,A,Cy Fictional,4,4,TR,10:20,100,NH 103,Multivariable Calculus,Lecture,In-Person,
-R2,SP,Full,STAT,244,A,Eli Specimen,4,4,TR,10:20,100,NH 105,Regression Models,Lecture,In-Person,
-R2,SP,Full,MATH,255,A,Cy Fictional,4,4,T,08:00,100,NH 103,Introductory Linear Algebra,Lecture,In-Person,Tuesday only: some of the days of TR at 8:00; allowed by this department's subset rule
-R2,SP,Full,STAT,245,A,Eli Specimen,4,4,F,09:15,65,NH 105,Applied Data Analysis,Lecture,In-Person,Friday only: some of the days of MWF at 9:15; not covered by the subset rule
+R2,FA,Full,AMUS,228,A,Ada Example,4,4,TR,10:20,100,NH 103,Harmonic Structures,Lecture,In-Person,Cohort course: clashes with BHAV 212 A
+R2,FA,Full,AMUS,228,B,Ada Example,4,4,MWF,11:00,65,NH 103,Harmonic Structures,Lecture,In-Person,The second section is what lets the cohort rule be met
+R2,FA,Full,BHAV,212,A,Eli Specimen,4,4,TR,10:20,100,NH 105,Behavioral Methods,Lecture,In-Person,
+R2,FA,Full,AMUS,261,A,Cy Fictional,4,4,MWF,09:15,65,NH 104,Discrete Rhythm,Lecture,In-Person,
+R2,FA,Full,DIGI,225,A,Fay Mockson,4,4,MWF,11:00,65,SB 110,Information Computing,Lecture,In-Person,
+R2,FA,Full,DIGI,318,A,Ben Sample,4,4,TR,12:15,100,NH 106,Digital Information Topics,Lecture,In-Person,Same time as BHAV 312 A
+R2,FA,Full,BHAV,312,A,Eli Specimen,4,4,TR,12:15,100,NH 105,Stochastic Behavior,Lecture,In-Person,Same time as DIGI 318 A
+R2,FA,Full,CRUD,245,A,Kim,4,4,MWF,13:30,65,SB 120,Urban Data Structures,Lecture,In-Person,Kim teaches three in a row on MWF
+R2,FA,Full,CRUD,167,A,Kim,4,4,MWF,14:45,65,SB 120,Introduction to Urban Systems,Lecture,In-Person,
+R2,FA,Full,CRUD,315,A,Kim,4,4,MWF,16:00,60,SB 122,Planning Algorithms,Lecture,In-Person,
+R2,FA,Full,CRUD,167,B,Gus Testwell,4,4,MWF,08:00,65,SB 121,Introduction to Urban Systems,Lecture,In-Person,8:00 MWF is standard for the university but disallowed by this department's rule
+R2,FA,Full,AMUS,318,A,Ben Sample,4,4,TR,14:10,100,NH 104,Corpus Studies I,Lecture,In-Person,Runs into the colloquium hour (R 15:05)
+R2,FA,Full,AMUS,241,A,Ada Example,1,1,R,15:05,50,NH 276,Colloquium,Seminar,In-Person,Not a standard time; allowed by this department's rule
+R2,FA,Full,BHAV,112,A,Lee,4,4,MWF,09:15,65,NH 106,Introduction to Behavioral Dynamics,Lecture,In-Person,Lee's two sections are not back to back
+R2,FA,Full,BHAV,112,B,Lee,4,4,MWF,11:00,65,NH 106,Introduction to Behavioral Dynamics,Lecture,In-Person,
+R2,FA,Full,BHAV,112,C,Dee Placeholder,4,4,MWF,10:30,65,NH 107,Introduction to Behavioral Dynamics,Lecture,In-Person,10:30 is not a standard start (shown in orange)
+R2,FA,Full,HELP,111,A,Hal Fakename,4,4,MWF,09:15,65,HH 210,Ecology Core,Lecture,In-Person,There is no evening section yet
+R2,FA,Full,HELP,111,B,Hal Fakename,4,4,TR,12:15,100,HH 210,Ecology Core,Lecture,In-Person,
+R2,SP,Full,AMUS,235,A,Cy Fictional,4,4,TR,10:20,100,NH 103,Multivoice Analysis,Lecture,In-Person,
+R2,SP,Full,BHAV,219,A,Eli Specimen,4,4,TR,10:20,100,NH 105,Models of Change,Lecture,In-Person,
+R2,SP,Full,AMUS,296,A,Cy Fictional,4,4,T,08:00,100,NH 103,Introductory Harmonic Structures,Lecture,In-Person,Tuesday only: some of the days of TR at 8:00; allowed by this department's subset rule
+R2,SP,Full,BHAV,226,A,Eli Specimen,4,4,F,09:15,65,NH 105,Applied Field Analysis,Lecture,In-Person,Friday only: some of the days of MWF at 9:15; not covered by the subset rule

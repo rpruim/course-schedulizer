@@ -205,8 +205,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li><strong>Several meetings</strong> (for example MW at one time and F at another) are separate meetings in the same section: use <em>+ Add meeting</em> in the editor.</li>
           <li><strong>Instructors and load.</strong> List instructors separated by semicolons (names may contain commas, as in <code>Pruim, Randall</code>). A section’s load is split equally among them; write <code>Ada Example (3); Ben Sample</code> to
             give someone a specific share. The editor shows each person’s share, and warns if shares do not add up.</li>
-          <li><strong>Department and course level</strong> (under <em>More details</em>) are filled in for you when left blank, and shown in gray: the department from the Meta tab, the level from the first digit of the course number (<code>MATH 231</code> is 200-level). Type a value to override either.</li>
-          <li><strong>Cross-listings.</strong> For a course that is also listed under another prefix or number (<code>DATA 385</code> and <code>STAT 385</code>), add the other listings under <em>Also listed as</em> in <em>More details</em> (which opens by itself for a section that has some).
+          <li><strong>Department and course level</strong> (under <em>More details</em>) are filled in for you when left blank, and shown in gray: the department from the Meta tab, the level from the first digit of the course number (<code>AMUS 228</code> is 200-level). Type a value to override either.</li>
+          <li><strong>Cross-listings.</strong> For a course that is also listed under another prefix or number (<code>DIGI 306</code> and <code>BHAV 306</code>), add the other listings under <em>Also listed as</em> in <em>More details</em> (which opens by itself for a section that has some).
             The section is shown under all its names but its load is counted once.</li>
           <li><strong>Delivery mode</strong> is, for example, In-person, Online synchronous, Online asynchronous or Hybrid; check the registrar’s guidance if none fits. Use a room
             for in-person sections: the registrar asks for a draft room for each, and it lets conflicts be found. <em>Off Campus</em>, <em>Online</em> and <em>TBD</em> never count as a room clash.</li>
@@ -283,13 +283,13 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </p>
         <ul>
           <li><strong>some <em>n</em></strong>: at least one set of <em>n</em> courses can be taken together. “Some 2 of these courses” is met if there is at least one workable pair.</li>
-          <li><strong>any <em>n</em></strong>: every set of <em>n</em> courses can be taken together. “Any 2 300-level MATH courses” checks every pair, and lists the pairs that clash.</li>
+          <li><strong>any <em>n</em></strong>: every set of <em>n</em> courses can be taken together. “Any 2 300-level AMUS courses” checks every pair, and lists the pairs that clash.</li>
           <li>With the number blank (all courses), <em>any</em> and <em>some</em> mean the same thing.</li>
         </ul>
         <p>
-          A course is <code>MATH 231</code>; add a section letter to mean just that section. To name many courses at once, use a pattern: <code>*</code> matches any run of characters,
-          <code>?</code> any one character, and <code>[23]</code> either of the characters in brackets (<code>[2-4]</code> is a range, <code>[^5]</code> anything but 5). So <code>MATH 3*</code> stands for every
-          300-level MATH course, <code>STAT [23]4?</code> for 241, 243, 245, 341, 343, 344 and so on, and <code>MATH *</code> (or just <code>MATH</code>) for every MATH course. Each matching course counts as its own
+          A course is <code>AMUS 228</code>; add a section letter to mean just that section. To name many courses at once, use a pattern: <code>*</code> matches any run of characters,
+          <code>?</code> any one character, and <code>[23]</code> either of the characters in brackets (<code>[2-4]</code> is a range, <code>[^5]</code> anything but 5). So <code>AMUS 3*</code> stands for every
+          300-level AMUS course, <code>BHAV [23]1?</code> for 211, 212, 311, 312 and so on, and <code>AMUS *</code> (or just <code>AMUS</code>) for every AMUS course. Each matching course counts as its own
           course. A rule is checked separately in each term; choose a term to limit it to one.
         </p>
         <h3>Time window</h3>
@@ -300,7 +300,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <ul>
           <li><strong>Counts as meeting</strong>: <em>any overlap</em> (the default for “should not”: a class 9:30–10:20 breaks a 10:00–10:50 rule) or <em>entirely within</em> (the default for “should”). A class that ends exactly when the window starts does not overlap it.</li>
           <li><strong>Any or all of the days</strong>: with “any of M W F”, one meeting in the window is enough to count; with “all of”, the section must meet in the window on each of those days.</li>
-          <li><strong>Every section, or at least some</strong>: by default every section of those courses (or taught by those instructors) must satisfy the rule. Choose <em>at least some</em> for rules such as “at least one section of Core 100 should meet between 5pm and 10pm”, so a day-time section is fine as long as an evening one exists.</li>
+          <li><strong>Every section, or at least some</strong>: by default every section of those courses (or taught by those instructors) must satisfy the rule. Choose <em>at least some</em> for rules such as “at least one section of HELP 111 should meet between 5pm and 10pm”, so a day-time section is fine as long as an evening one exists.</li>
           <li>Sections with no scheduled time are not checked.</li>
         </ul>
         <h3>Standard times</h3>
@@ -340,21 +340,21 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </p>
         <dl>
           <dt>Take together: all</dt>
-          <dd><em>Math major, year 2.</em> Courses MATH 231, STAT 243, MATH 250; number blank. Met if a student can pick one section of each with no clash (a second section of MATH 231 makes it work).</dd>
+          <dd><em>AMUS major, year 2.</em> Courses AMUS 228, BHAV 212, AMUS 261; number blank. Met if a student can pick one section of each with no clash (a second section of AMUS 228 makes it work).</dd>
           <dt>Take together: any two</dt>
-          <dd><em>Data science minor.</em> Courses DATA 301, STAT 343, CS 262; <em>any</em> 2. Every pair must fit, so it lists the pair that clashes.</dd>
+          <dd><em>Digital information minor.</em> Courses DIGI 318, BHAV 312, CRUD 245; <em>any</em> 2. Every pair must fit, so it lists the pair that clashes.</dd>
           <dt>Take together: some pair</dt>
           <dd>The same courses with <em>some</em> 2: met as long as one pair fits.</dd>
           <dt>Time window: courses</dt>
-          <dd><em>Colloquium hour is free.</em> Courses MATH 3*, STAT 3*, DATA 3*; <em>should not</em> meet 15:05–15:55 on R; counts as meeting: any overlap.</dd>
+          <dd><em>Colloquium hour is free.</em> Courses AMUS 3*, BHAV 3*, DIGI 3*; <em>should not</em> meet 15:05–15:55 on R; counts as meeting: any overlap.</dd>
           <dt>Time window: an instructor</dt>
           <dd><em>Gus does not teach before 9:00.</em> Instructor Gus Testwell; <em>should not</em> meet 00:00–09:00 on any day.</dd>
           <dt>Time window: at least some sections</dt>
-          <dd><em>Core 100 needs an evening section.</em> Course CORE 100; <em>should</em> meet within 17:00–22:00; applies to at least 1 section.</dd>
+          <dd><em>Ecology Core needs an evening section.</em> Course HELP 111; <em>should</em> meet within 17:00–22:00; applies to at least 1 section.</dd>
           <dt>Modify standard times: allow</dt>
-          <dd><em>Colloquium time.</em> Course MATH 290; allow R, 50 minutes, starting 15:05.</dd>
+          <dd><em>Colloquium time.</em> Course AMUS 241; allow R, 50 minutes, starting 15:05.</dd>
           <dt>Subset of standard times</dt>
-          <dd><em>Linear algebra may meet one day of TR.</em> Course MATH 255, which meets on Tuesday alone at 8:00 for 100 minutes and is not flagged; STAT 245 on Friday alone at 9:15 is still flagged, because the rule does not name it.</dd>
+          <dd><em>Harmonic structures may meet one day of TR.</em> Course AMUS 296, which meets on Tuesday alone at 8:00 for 100 minutes and is not flagged; BHAV 226 on Friday alone at 9:15 is still flagged, because the rule does not name it.</dd>
           <dt>Modify standard times: disallow</dt>
           <dd><em>No 8:00 MWF.</em> Every course (<code>*</code>); disallow MWF, 65 minutes, starting 8:00.</dd>
           <dt>Back-to-back: at most</dt>

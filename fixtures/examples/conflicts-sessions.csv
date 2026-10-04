@@ -1,12 +1,12 @@
 AcademicYear,Term,TermPart,Prefix,CourseNumber,Section,Faculty,FacultyLoad,MinimumCredits,MeetingDays,StartTime,MeetingDuration,Classroom,ShortTitle,InstructionalMethod,DeliveryMode,Comment
-AY25,FA,Full,MATH,143,A,Ada Example,4,4,MWF,09:15,65,NH 101,Calculus I,Lecture,In-Person,Ada Example is booked in two rooms at once
-AY25,FA,Full,MATH,143,B,Ada Example,4,4,MWF,09:15,65,NH 102,Calculus I,Lecture,In-Person,
-AY25,FA,Full,MATH,231,A,Cy Fictional,4,4,TR,10:20,100,NH 103,Linear Algebra,Lecture,In-Person,Same room as STAT 243: a room conflict
-AY25,FA,Full,STAT,243,A,Eli Specimen,4,4,TR,10:20,100,NH 103,Statistical Methods,Lecture,In-Person,
-AY25,FA,Full,MATH,256,A,Cy Fictional,4,4,MWF,10:30,65,NH 104,Discrete Mathematics,Lecture,In-Person,10:30 is not a standard start time on MWF
-AY25,FA,Full,MATH,351,A,Ben Sample,4,4,TR,14:10,100,NH 105,Real Analysis I,Lecture,In-Person,Overlaps Ben Sample's other course for part of the time (and 15:05 is not a standard start for 100 minutes)
-AY25,FA,Full,DATA,380,A,Ben Sample,4,4,TR,15:05,100,SB 110,Data Ethics,Lecture,In-Person,
-AY25,FA,Full,STAT,343,A,Eli Specimen; Dee Placeholder,4,4,MWF,13:30,65,NH 105,Probability,Lecture,In-Person,Co-taught: Dee Placeholder is also in STAT 143 at this time
-AY25,FA,Full,STAT,143,A,Dee Placeholder,4,4,MWF,13:30,65,NH 106,Introduction to Statistics,Lecture,In-Person,
-AY25,SP,Full,MATH,144,A,Ada Example,4,4,MWF,09:15,65,NH 101,Calculus I (second semester),Lecture,In-Person,Different term: no conflict with the fall courses
-AY25,SP,Full,STAT,244,A,Eli Specimen,4,4,TR,10:20,100,NH 103,Regression,Lecture,In-Person,
+AY25,FA,Full,AMUS,112,A,Ada Example,4,4,MWF,09:15,65,NH 101,Musical Patterns I,Lecture,In-Person,Ada Example is booked in two rooms at once
+AY25,FA,Full,AMUS,112,B,Ada Example,4,4,MWF,09:15,65,NH 102,Musical Patterns I,Lecture,In-Person,
+AY25,FA,Full,AMUS,228,A,Cy Fictional,4,4,TR,10:20,100,NH 103,Harmonic Structures,Lecture,In-Person,Same room as BHAV 212: a room conflict
+AY25,FA,Full,BHAV,212,A,Eli Specimen,4,4,TR,10:20,100,NH 103,Behavioral Methods,Lecture,In-Person,
+AY25,FA,Full,AMUS,203,A,Cy Fictional,4,4,MWF,10:30,65,NH 104,Discrete Rhythm,Lecture,In-Person,10:30 is not a standard start time on MWF
+AY25,FA,Full,AMUS,368,A,Ben Sample,4,4,TR,14:10,100,NH 105,Corpus Studies I,Lecture,In-Person,Overlaps Ben Sample's other course for part of the time (and 15:05 is not a standard start for 100 minutes)
+AY25,FA,Full,DIGI,371,A,Ben Sample,4,4,TR,15:05,100,SB 110,Information Ethics,Lecture,In-Person,
+AY25,FA,Full,BHAV,312,A,Eli Specimen; Dee Placeholder,4,4,MWF,13:30,65,NH 105,Stochastic Behavior,Lecture,In-Person,Co-taught: Dee Placeholder is also in BHAV 112 at this time
+AY25,FA,Full,BHAV,112,A,Dee Placeholder,4,4,MWF,13:30,65,NH 106,Introduction to Behavioral Dynamics,Lecture,In-Person,
+AY25,SP,Full,AMUS,119,A,Ada Example,4,4,MWF,09:15,65,NH 101,Musical Patterns I (second semester),Lecture,In-Person,Different term: no conflict with the fall courses
+AY25,SP,Full,BHAV,219,A,Eli Specimen,4,4,TR,10:20,100,NH 103,Models of Change,Lecture,In-Person,

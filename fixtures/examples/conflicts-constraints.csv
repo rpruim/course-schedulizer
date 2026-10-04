@@ -1,4 +1,4 @@
 Constraint,Type,Course,Section,Instructor,Count,Choose,Bound,Gap,Action,Duration,Starts,Term,Days,DayRule,From,To,Should,Meets,Comment
-"Math major, year 2",takeable,MATH 231,,,,,,,,,,,,,,,,,A student in this cohort should be able to take all three courses. MATH 231 and STAT 243 each have one section and meet at the same time, so the rule is not met.
-"Math major, year 2",takeable,STAT 243,,,,,,,,,,,,,,,,,
-"Math major, year 2",takeable,MATH 256,,,,,,,,,,,,,,,,,
+"AMUS major, year 2",takeable,AMUS 228,,,,,,,,,,,,,,,,,A student in this cohort should be able to take all three courses. AMUS 228 and BHAV 212 each have one section and meet at the same time, so the rule is not met.
+"AMUS major, year 2",takeable,BHAV 212,,,,,,,,,,,,,,,,,
+"AMUS major, year 2",takeable,AMUS 203,,,,,,,,,,,,,,,,,
