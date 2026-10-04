@@ -23,7 +23,7 @@
 ## Branches and releases
 
 - Do new work on the **`dev`** branch. Do not commit to `main`, and do not merge into it.
-- `main` is the released version, and Netlify deploys it. The owner releases by fast-forwarding `main` to
+- `main` is the released version, and Netlify deploys it (`course-schedulizer.netlify.app`); `dev` is deployed too, at `dev--course-schedulizer.netlify.app`. The owner releases by fast-forwarding `main` to
   `dev`:
 
   ```bash

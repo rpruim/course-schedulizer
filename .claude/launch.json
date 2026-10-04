@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "web", "dev", "--port", "5173"],
+      "port": 5173
+    },
+    {
+      "name": "prod-preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["check:prod"],
+      "port": 5174
+    }
+  ]
+}

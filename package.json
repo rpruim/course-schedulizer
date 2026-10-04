@@ -14,6 +14,7 @@
     "notices": "node tools/third-party-notices.mjs",
     "settings": "node tools/gen-settings.mjs",
     "examples": "node tools/make-examples.mjs",
+    "check:prod": "pnpm build && pnpm --filter web exec vite preview --port 5174 --strictPort",
     "hooks": "git config core.hooksPath .githooks",
     "prepare": "git config core.hooksPath .githooks || true"
   },
