@@ -148,6 +148,21 @@ describe("department grid", () => {
     expect(ids({ by: "prefix", values: ["URBS", "DIGI"] }).blocks).toHaveLength(2);
     expect(ids().blocks).toHaveLength(4);
   });
+  it("filters by room and by delivery, with the sections that have none as the missing value", () => {
+    const s = make([
+      sec("MUSC", "231", "A", { DeliveryMode: "In-Person", ...mt("M", "9:00", "50", "NH 1") }),
+      sec("MUSC", "231", "B", { DeliveryMode: "Online", ...mt("T", "9:00", "50", "NH 2") }),
+      sec("URBS", "143", "A", { ...mt("W", "9:00", "50", "NH 1") }),
+      sec("DIGI", "301", "A", { DeliveryMode: "Online" }),
+    ]);
+    const grid = (by: WeekOptions["colorBy"], values: string[]) => weekGrids(s, opts({ filter: { by, values } }));
+    expect(grid("room", []).filterValues).toEqual(["NH 1", "NH 2"]);
+    expect(grid("room", []).filterMissing).toBe(true); // the section with no meeting has no room
+    expect(grid("room", ["NH 1"]).grids[0]!.blocks.map((b) => b.title)).toEqual(["MUSC 231 A", "URBS 143 A"]);
+    expect(grid("delivery", []).filterValues).toEqual(["In-Person", "Online"]);
+    expect(grid("delivery", ["Online"]).grids[0]!.blocks.map((b) => b.title)).toEqual(["MUSC 231 B"]);
+    expect(grid("delivery", [""]).grids[0]!.blocks.map((b) => b.title)).toEqual(["URBS 143 A"]);
+  });
   it("draws a meeting listed twice only once, so block keys are unique", () => {
     const twice = make([sec("MUSC", "1", "A", { ...mt("R\nR", "9:00\n9:00", "50\n50", "NH 1\nNH 1") })]);
     const blocks = weekGrids(twice, opts()).grids[0]!.blocks;

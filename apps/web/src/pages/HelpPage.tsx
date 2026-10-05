@@ -397,7 +397,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <ul>
           <li><strong>Weeks</strong> chooses a part of the term. Choosing <em>First half</em> shows everything meeting in the first half: full-term, first-half, and A and B intensive 
           courses, for example.</li>
-          <li><strong>Color by</strong> prefix, course level, instructor, department, group or instructional method. A section with nothing in that field is drawn gray. The choice is shared by the three week tabs and remembered.</li>
+          <li><strong>Color by</strong> prefix, course level, instructor, department, group, instructional method, delivery or room. A section with nothing in that field is drawn gray. The choice is shared by the three week tabs and remembered.</li>
           <li><strong>Show color key</strong> opens a small separate window listing what each color means for what is on the grid. You can move it and close it. It updates when you change <em>Color by</em> or visit another week tab, and clicking the button again brings it to the front. (If nothing opens, allow pop-ups for this site.)</li>
           <li>The four <strong>dots</strong> at the left of each block are the four quarters of the term, top to bottom. A filled dot means the section meets then: a full-term
             course is <Dots on={[true, true, true, true]} />, a first-half course <Dots on={[true, true, false, false]} />, a second-half course <Dots on={[false, false, true, true]} />.</li>

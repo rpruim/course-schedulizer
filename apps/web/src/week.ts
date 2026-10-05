@@ -17,7 +17,7 @@ import {
 import { timeRange } from "./model";
 
 export type GridKind = "dept" | "faculty" | "room";
-export type ColorBy = "prefix" | "level" | "instructor" | "group" | "method" | "department";
+export type ColorBy = "prefix" | "level" | "instructor" | "group" | "method" | "department" | "room" | "delivery";
 
 /** What each way of coloring is called, in the order the menu lists them. */
 export const COLOR_BY: { value: ColorBy; label: string }[] = [
@@ -27,6 +27,8 @@ export const COLOR_BY: { value: ColorBy; label: string }[] = [
   { value: "department", label: "Department" },
   { value: "group", label: "Group" },
   { value: "method", label: "Instructional method" },
+  { value: "delivery", label: "Delivery" },
+  { value: "room", label: "Room" },
 ];
 
 export interface Block {
@@ -124,6 +126,8 @@ export function colorValueOf(schedule: Schedule, by: ColorBy, s: Session): strin
     case "instructor": return s.faculty[0]?.name ?? "";
     case "group": return s.group.trim();
     case "method": return s.instructionalMethod.trim();
+    case "delivery": return s.deliveryMode.trim();
+    case "room": return s.room.trim();
     case "department": return departmentOf(schedule.meta, s);
     default: return s.prefix;
   }
