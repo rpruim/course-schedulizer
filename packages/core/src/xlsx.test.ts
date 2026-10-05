@@ -154,3 +154,25 @@ describe("workbook round trips", () => {
     }
   });
 });
+
+describe("the halves of a term in an export", () => {
+  it("are written as 1 and 2 on the Sessions and registrar sheets, and read back as First and Second", async () => {
+    const s = importRecords({ sessions: [
+      { AcademicYear: "AY1", Term: "FA", TermPart: "First", Prefix: "MUSC", CourseNumber: "104", Section: "A", MeetingDays: "MWF", StartTime: "09:15", MeetingDuration: "65" },
+      { AcademicYear: "AY1", Term: "FA", TermPart: "Second", Prefix: "MUSC", CourseNumber: "105", Section: "A", MeetingDays: "MWF", StartTime: "09:15", MeetingDuration: "65" },
+      { AcademicYear: "AY1", Term: "FA", TermPart: "A", Prefix: "MUSC", CourseNumber: "106", Section: "A" },
+    ] }).schedule;
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load((await writeWorkbook(s)) as unknown as ArrayBuffer);
+    const column = (sheet: string, header: string) => {
+      const ws = wb.getWorksheet(sheet)!;
+      const at = (ws.getRow(1).values as unknown[]).indexOf(header);
+      return Array.from({ length: ws.rowCount - 1 }, (_, i) => String(ws.getRow(i + 2).getCell(at).value));
+    };
+    expect(column("Sessions", "TermPart")).toEqual(["1", "2", "A"]);
+    expect(column("Registrar Schedule", "TermAndPart")).toEqual(["FA-1", "FA-2", "FA-A"]);
+    const back = await readWorkbook(await writeWorkbook(s));
+    expect(back.issues).toEqual([]);
+    expect(back.schedule.sessions.map((x) => x.termPart)).toEqual(["First", "Second", "A"]);
+  });
+});

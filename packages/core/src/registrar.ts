@@ -1,5 +1,6 @@
 import { formatNumber } from "./format.js";
 import type { Table } from "./export.js";
+import { partForExport } from "./terms.js";
 import type { Schedule, Session } from "./types.js";
 import { AY } from "./types.js";
 
@@ -89,8 +90,8 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
       MeetingDays: scheduled || ms.length > 1 ? compact(ms.map((m) => m.days)) : "",
       MeetingTime: scheduled ? compact(ms.map((m) => { const w = when(m); return w ? `${clock(w.start!)} - ${clock(w.start! + w.duration!)}` : ""; })) : "",
       BuildingAndRoom: ms.some((m) => m.room !== "") ? compact(ms.map((m) => m.room)) : "",
-      TermPart: head.termPart,
-      TermAndPart: `${head.term}-${head.termPart}`,
+      TermPart: partForExport(schedule.settings, head.term, head.termPart),
+      TermAndPart: `${head.term}-${partForExport(schedule.settings, head.term, head.termPart)}`,
       Duration: scheduled ? compact(ms.map((m) => formatNumber(when(m)?.duration))) : "",
       ShortTitle: head.shortTitle,
       Faculty: head.faculty.map((f) => f.name).join(", "),

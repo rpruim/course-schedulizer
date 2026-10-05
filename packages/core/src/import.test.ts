@@ -3,6 +3,7 @@ import { recordsFromCsv } from "./csv.js";
 import { importCrossListings, importNonTeaching, importRecords, importSessions } from "./import.js";
 import { fixtureText } from "./testutil.js";
 import { defaultSettings, type Settings } from "./types.js";
+import { partForExport, partNamed } from "./terms.js";
 
 const rec = (o: Record<string, string>) => ({ AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: "104", Section: "A", ...o });
 
@@ -261,5 +262,27 @@ describe("fixtures: cases", () => {
     });
     expect(l.issues).toEqual([]);
     expect(l.schedule.nonTeaching).toHaveLength(2);
+  });
+});
+
+describe("the halves of a term as 1 and 2", () => {
+  const parts = (...p: string[]) => importSessions(p.map((TermPart, i) => rec({ TermPart, Section: "ABCDEFG"[i]! })));
+  it("reads 1 and 2 as First and Second, and First and Second as themselves, in any case", () => {
+    const { sessions, issues } = parts("1", "2", "First", "second", "Full", "A");
+    expect(issues).toEqual([]);
+    expect(sessions.map((s) => s.termPart)).toEqual(["First", "Second", "First", "Second", "Full", "A"]);
+  });
+  it("still rejects a part the term does not have", () => {
+    expect(parts("3").issues.map((i) => i.message)).toEqual([expect.stringContaining('TermPart: "3" is not defined for term FA')]);
+  });
+  it("prefers a part of the term that is coded 1 or 2", () => {
+    const settings = { ...defaultSettings(), parts: [...defaultSettings().parts, { term: "XT", code: "1", name: "Block 1", startWeek: 1, endWeek: 3 }] };
+    expect(partNamed(settings, "XT", "1")).toBe("1");
+    expect(partNamed(settings, "FA", "1")).toBe("First");
+    expect(partNamed(settings, "FA", "3")).toBeUndefined();
+    expect(partForExport(settings, "XT", "First")).toBe("First"); // XT has its own 1, so First is not renamed
+    expect(partForExport(settings, "FA", "First")).toBe("1");
+    expect(partForExport(settings, "FA", "Second")).toBe("2");
+    expect(partForExport(settings, "FA", "A")).toBe("A");
   });
 });

@@ -1,5 +1,6 @@
 import { formatFaculty, formatNumber, formatTime } from "./format.js";
 import { CONSTRAINT_COLUMNS, CROSSLISTING_COLUMNS, NONTEACHING_COLUMNS, SESSION_COLUMNS } from "./import.js";
+import { partForExport } from "./terms.js";
 import type { Rec, Schedule, Session } from "./types.js";
 
 export interface ExportOptions {
@@ -15,12 +16,12 @@ export interface Table {
   rows: string[][];
 }
 
-const sessionCells = (s: Session): Rec => ({
+const sessionCells = (s: Session, settings: Schedule["settings"]): Rec => ({
   SectionId: s.sectionId,
   Department: s.department,
   AcademicYear: s.academicYear,
   Term: s.term,
-  TermPart: s.termPart,
+  TermPart: partForExport(settings, s.term, s.termPart),
   Prefix: s.prefix,
   CourseNumber: s.courseNumber,
   Section: s.section,
@@ -52,15 +53,15 @@ export function sessionsTable(schedule: Schedule, opts: ExportOptions = {}): Tab
   const extraKeys = [...new Set(schedule.sessions.flatMap((s) => Object.keys(s.extra)))].sort();
   const withExtra = (s: Session, cells: Rec): Rec => ({ ...cells, ...s.extra });
   if (!opts.packed) {
-    return table(SESSION_COLUMNS, schedule.sessions.map((s) => withExtra(s, sessionCells(s))), extraKeys);
+    return table(SESSION_COLUMNS, schedule.sessions.map((s) => withExtra(s, sessionCells(s, schedule.settings))), extraKeys);
   }
   const bySection = new Map<string, Session[]>();
   for (const s of schedule.sessions) bySection.set(s.sectionId, [...(bySection.get(s.sectionId) ?? []), s]);
   const recs: Rec[] = [];
   for (const [id, ms] of bySection) {
     const head = ms[0]!;
-    const cells = withExtra(head, sessionCells(head));
-    const join = (f: (c: Rec) => string) => ms.map((m) => f(sessionCells(m))).join("\n");
+    const cells = withExtra(head, sessionCells(head, schedule.settings));
+    const join = (f: (c: Rec) => string) => ms.map((m) => f(sessionCells(m, schedule.settings))).join("\n");
     if (ms.length > 1) {
       for (const c of ["MeetingDays", "StartTime", "MeetingDuration", "Classroom"]) cells[c] = join((x) => x[c] ?? "");
     }

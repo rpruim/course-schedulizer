@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { parseDays, parseFaculty, parseTime } from "./format.js";
 import { sectionShares } from "./load.js";
-import { partsFor, splitTermCode } from "./terms.js";
+import { partNamed, partsFor, splitTermCode } from "./terms.js";
 import {
   AY,
   DEFAULT_PARTS,
@@ -228,7 +228,7 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
     const partCodes = partsFor(settings, term).map((p) => p.code);
     let part = impliedPart ?? "Full";
     if (k.TermPart) {
-      const hit = partCodes.find((c) => c.toLowerCase() === k.TermPart!.toLowerCase());
+      const hit = partNamed(settings, term, k.TermPart);
       if (hit) part = hit;
       else {
         part = k.TermPart;

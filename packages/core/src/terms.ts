@@ -13,6 +13,29 @@ export function partsFor(settings: Settings, term: string): PartDef[] {
   return [...parts].sort((a, b) => a.startWeek - b.startWeek || b.endWeek - a.endWeek);
 }
 
+/** The numbers the registrar's reports use for the two halves of a term, and the parts they mean. */
+const NUMBERED_PARTS: Record<string, string> = { "1": "First", "2": "Second" };
+
+/**
+ * The part of `term` that `text` names: its code in any case, or, when the term has no part with that code,
+ * `1` / `2` for the First / Second half. `undefined` if the term has no such part.
+ */
+export function partNamed(settings: Settings, term: string, text: string): string | undefined {
+  const codes = partsFor(settings, term).map((p) => p.code);
+  const t = text.trim().toLowerCase();
+  const exact = codes.find((c) => c.toLowerCase() === t);
+  if (exact) return exact;
+  const numbered = NUMBERED_PARTS[t];
+  return numbered && codes.includes(numbered) ? numbered : undefined;
+}
+
+/** How a part is written in an export: First and Second as 1 and 2 (unless the term has parts coded 1 or 2 of its own). */
+export function partForExport(settings: Settings, term: string, code: string): string {
+  const number = Object.keys(NUMBERED_PARTS).find((n) => NUMBERED_PARTS[n] === code);
+  if (!number) return code;
+  return partsFor(settings, term).some((p) => p.code === number) ? code : number;
+}
+
 /** Inclusive week range of a part within a term, or `undefined` if the part is not defined for it. */
 export function weeksOf(settings: Settings, term: string, part: string): [number, number] | undefined {
   const p = partsFor(settings, term).find((x) => x.code.toLowerCase() === part.toLowerCase());
