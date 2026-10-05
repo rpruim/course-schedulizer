@@ -117,7 +117,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           that is already open.</li>
           <li><strong>Academic year</strong> is used only when the file has no academic year of its own (for example <code>AY25</code>). If a report says some rows have no
             academic year, type one here and open the file again, choosing the schedule to replace.</li>
-          <li><strong>Examples</strong> is a list of small made-up schedules, handy for trying things out. Choosing one puts its address in the address box below; <em>Open address</em> opens it. <em>Example with constraint rules</em> shows each kind of rule, some met and some not (a cohort that must be able to take its courses together, “any two” and “some pair” of electives, a time window, back-to-back classes, and changes to the standard times); open the Constraints and Conflicts pages to see them. <em>Two drafts, to compare</em> opens two versions of a schedule, for the Compare tab.</li>
+          <li><strong>Examples</strong> is a list of small made-up schedules, handy for trying things out. Choosing one puts its address in the address box below; <em>Open address</em> opens it. <em>Example with constraint rules</em> shows each kind of rule, some met and some not (a cohort that must be able to take its courses together, “any two” and “some pair” of electives, a time window, back-to-back classes, and changes to the standard times); open the Constraint rules and Conflicts pages to see them. <em>Two drafts, to compare</em> opens two versions of a schedule, for the Compare tab.</li>
         </ul>
         <p>
           <strong>Open from a web address.</strong> If a file is on a web server that lets other pages read it (a GitHub repository, a Dropbox share link, or any
@@ -167,7 +167,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dd>Load for things other than teaching: chair duties, release time, sabbaticals, etc.</dd>
           <dt><Link to="/conflicts">Conflicts</Link></dt>
           <dd>Pairs of sections that clash, and rules that are not met. See <a href="#conflicts" onClick={jump("conflicts")}>Conflicts</a> below.</dd>
-          <dt><Link to="/constraints">Constraints</Link></dt>
+          <dt><Link to="/constraints">Constraint rules</Link></dt>
           <dd>Rules the schedule should meet, such as courses a student must be able to take together. See <a href="#rules" onClick={jump("rules")}>Custom constraints</a>.</dd>
           <dt><Link to="/compare">Compare</Link></dt>
           <dd>Side-by-side comparison of schedules. See <a href="#compare" onClick={jump("compare")}>Comparing schedules</a>.</dd>
@@ -181,7 +181,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
               <li><strong>Choose what to show.</strong> <em>Filter by</em> offers the same things as <em>Color by</em>. The <em>Show</em> list beside it lets you tick several values, including <em>(missing)</em>; with nothing ticked, everything is shown.</li>
               <li><strong>Build the selection.</strong> Click sections, or use <em>Add visible courses to selection</em> and <em>Remove visible courses from selection</em>, which work only on the sections shown, so a selection can be built up across several filters. <em>Clear selection</em> deselects everything, shown or not. The count says how many sections are selected in all and how many of those are shown.</li>
               <li><strong>Edit.</strong> <em>Edit selected…</em> opens an editor with every box blank. Fill in only what you want to set (prefix, department, title, instructors, load, credits, instructional method, course level, group, delivery, enrollment, comment). Choose <em>Replace missing values only</em> (the default) or <em>Overwrite existing values</em>. If some selected sections are hidden by the filters, two more choices let you edit only the ones shown (the default) or those hidden too; your choice is remembered for the session. The editor says how many sections will be edited and how many values would change before you apply, and the whole edit can be undone.</li>
-              <li><strong>Rename a prefix.</strong> Filter by prefix, select the sections, put the new prefix in the <em>Prefix</em> box and choose <em>Overwrite existing values</em>: a department that changes its name can be renamed in one step. A section is left alone if the new prefix would give two sections the same number and letter. Rules on the Constraints tab that name the old prefix are not changed; the editor tells you how many there are.</li>
+              <li><strong>Rename a prefix.</strong> Filter by prefix, select the sections, put the new prefix in the <em>Prefix</em> box and choose <em>Overwrite existing values</em>: a department that changes its name can be renamed in one step. A section is left alone if the new prefix would give two sections the same number and letter. Rules on the Constraint rules tab that name the old prefix are not changed; the editor tells you how many there are.</li>
               <li>Course numbers, section letters, meeting days, times and rooms are not part of a mass edit.</li>
             </ul>
           </dd>
@@ -200,7 +200,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <ul>
           <li><strong>Add a section</strong> with the <em>Add section</em> button on the Schedule tab or on any of the week tabs. On a week tab it starts from what you are looking at: the year and term, the part of the term, and the prefix, instructor or room if you have picked one. It goes into the <em>current</em> schedule (see <a href="#several" onClick={jump("several")}>Several schedules</a>).</li>
           <li><strong>Edit a section</strong> by clicking it: a row on the Schedule tab, a block on a week grid, or a section named in the Conflicts list.</li>
-          <li><strong>Warnings while you edit.</strong> A pale red note lists the sections this one would conflict with; a pale orange note says when a meeting is at a time that is not standard (taking into account any <em>Standard times</em> rules on the Constraints tab). The <em>Meetings</em> box is outlined in the same pale red or orange while either applies. All of these update as you edit, before you save, and none stops you from saving.</li>
+          <li><strong>Warnings while you edit.</strong> A pale red note lists the sections this one would conflict with; a pale orange note says when a meeting is at a time that is not standard (taking into account any <em>Standard times</em> rules on the Constraint rules tab). The <em>Meetings</em> box is outlined in the same pale red or orange while either applies. All of these update as you edit, before you save, and none stops you from saving.</li>
           <li><strong>Make several similar sections</strong> by editing one and choosing <em>Add another section of this course</em>: it opens a copy with the next free letter. Change what differs and save.</li>
           <li><strong>Several meetings</strong> (for example MW at one time and F at another) are separate meetings in the same section: use <em>+ Add meeting</em> in the editor.</li>
           <li><strong>Instructors and load.</strong> List instructors separated by semicolons (names may contain commas, as in <code>Pruim, Randall</code>). A section’s load is split equally among them; write <code>Ada Example (3); Ben Sample</code> to
@@ -270,14 +270,14 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <p>
           You can construct rules that say what the schedule should look like beyond plain clashes. 
           They are warnings only: a rule that is not met is listed on the <Link to="/conflicts">Conflicts</Link> tab 
-          (and its sections are outlined in red), and the <Link to="/constraints">Constraints</Link> tab shows each rule 
+          (and its sections are outlined in red), and the <Link to="/constraints">Constraint rules</Link> tab shows each rule 
           and whether it is met. Click a rule, or <em>Add rule</em>, to edit it; the editor
           says the rule in words and checks it against your schedule as you type.
           There are several types of constraint rules.
         </p>
         <p>
           A rule belongs to the schedule it is saved in, and applies only to that schedule’s sections, even when several schedules are
-          viewed merged. When two or more schedules are ticked, the Constraints tab marks the current schedule with a border and has a
+          viewed merged. When two or more schedules are ticked, the Constraint rules tab marks the current schedule with a border and has a
           button on each rule: <em>Copy to current schedule</em> on the other schedules’ rules, and <em>Copy to all schedules</em> on the
           current schedule’s. A copy is named “name (2)” if the schedule already has a different rule of that name, and is skipped if
           it already has the same rule. Only a schedule’s own rules are saved when you export it.
@@ -350,7 +350,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </ul>
         <h3>Examples</h3>
         <p>
-          Each of these is in the <em>Example with constraint rules</em> schedule (on the <Link to="/import">Import</Link> tab); open its Constraints and Conflicts pages and click a rule to see how it is set up.
+          Each of these is in the <em>Example with constraint rules</em> schedule (on the <Link to="/import">Import</Link> tab); open its Constraint rules and Conflicts pages and click a rule to see how it is set up.
         </p>
         <dl>
           <dt>Take together: all</dt>
