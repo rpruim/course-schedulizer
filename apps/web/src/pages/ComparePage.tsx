@@ -15,6 +15,7 @@ import {
   type ColumnRole,
   type ComparisonRow,
   type RowKind,
+  type Schedule,
 } from "@schedulizer/core";
 import { aggregateDiffers, collectSaved, comparisonSheets, describeSetup, diffMembers, hueFor, loadBrowserComparisons, loadCustomSetup, loadSaveWhere, loadSettings, PRESETS, rememberSaveWhere, sameSetup, saveBrowserComparisons, saveCustomSetup, saveSettings, tableColumns, toneColor, type MemberField, type Roles, type SaveWhere, whereText } from "../compareView";
 import { useEditor } from "../editor/context";
@@ -211,7 +212,7 @@ export function ComparePage() {
     const next = rolesToSaved(clean, roles, rowKind);
     if (old && !sameSetup({ roles: savedToRoles(old), rows: old.rows }, { roles, rows: rowKind }) && !window.confirm(`Replace the saved comparison “${old.name}”?`)) return;
     const target = new Set(where === "browser" ? [] : where === "current" ? (ws.current ? [ws.current.id] : []) : entries.map((e) => e.id));
-    for (const h of holders) ws.applyTo(h.id, (sc) => ({ ...sc, comparisons: without(sc.comparisons ?? [], clean, target.has(h.id) ? next : undefined) }));
+    ws.applyToMany(holders.map((h) => ({ id: h.id, fn: (sc: Schedule) => ({ ...sc, comparisons: without(sc.comparisons ?? [], clean, target.has(h.id) ? next : undefined) }) })));
     const toBrowser = where === "browser";
     if (toBrowser || browserSaved.some((c) => c.name.toLowerCase() === clean.toLowerCase())) {
       const list = without(browserSaved, clean, toBrowser ? next : undefined);
@@ -227,7 +228,7 @@ export function ComparePage() {
   const deleteSaved = (name: string) => {
     const here = savedHere.find((h) => h.comparison.name === name);
     if (!window.confirm(`Delete the saved comparison “${name}”${here ? ` (saved in ${whereText(here)})` : ""}? Changes to schedules can be undone.`)) return;
-    for (const h of holders) ws.applyTo(h.id, (sc) => ({ ...sc, comparisons: without(sc.comparisons ?? [], name) }));
+    ws.applyToMany(holders.map((h) => ({ id: h.id, fn: (sc: Schedule) => ({ ...sc, comparisons: without(sc.comparisons ?? [], name) }) })));
     const list = without(browserSaved, name);
     setBrowserSaved(list);
     saveBrowserComparisons(list);

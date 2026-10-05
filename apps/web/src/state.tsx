@@ -43,6 +43,7 @@ export type Action =
   | { type: "remove"; id: string }
   | { type: "rename"; id: string; name: string }
   | { type: "edit"; id: string; fn: (s: Schedule) => Schedule }
+  | { type: "editMany"; edits: { id: string; fn: (s: Schedule) => Schedule }[] }
   | { type: "move"; id: string; before: string | undefined }
   | { type: "setCurrent"; id: string }
   | { type: "setIncluded"; ids: string[] }
@@ -124,6 +125,16 @@ export function reducer(state: State, action: Action): State {
       const schedule = action.fn(target.schedule);
       return schedule === target.schedule ? state : change(state, state.present.map((e) => (e.id === action.id ? { ...e, schedule } : e)));
     }
+    case "editMany": {
+      // Several schedules edited together are one step to undo.
+      const fns = new Map(action.edits.map((e) => [e.id, e.fn] as const));
+      const next = state.present.map((e) => {
+        const fn = fns.get(e.id);
+        const schedule = fn ? fn(e.schedule) : e.schedule;
+        return schedule === e.schedule ? e : { ...e, schedule };
+      });
+      return next.every((e, i) => e === state.present[i]) ? state : change(state, next);
+    }
     case "move": {
       // Put a schedule just before another one (undefined: last). Views and `included` follow workspace order.
       const moving = state.present.find((e) => e.id === action.id);
@@ -192,6 +203,8 @@ export interface Workspace {
   renameSchedule(id: string, name: string): void;
   /** Edit one schedule; undoable. */
   applyTo(id: string, fn: (s: Schedule) => Schedule): void;
+  /** Edit several schedules as one undoable step. */
+  applyToMany(edits: { id: string; fn: (s: Schedule) => Schedule }[]): void;
   /** Put a schedule just before another one, or last when `before` is undefined; undoable. */
   moveSchedule(id: string, before: string | undefined): void;
   setCurrent(id: string): void;
@@ -287,6 +300,7 @@ export function WorkspaceProvider({ children, store }: { children: ReactNode; st
       removeSchedule: (id) => dispatch({ type: "remove", id }),
       renameSchedule: (id, name) => dispatch({ type: "rename", id, name }),
       applyTo: (id, fn) => dispatch({ type: "edit", id, fn }),
+      applyToMany: (edits) => dispatch({ type: "editMany", edits }),
       moveSchedule: (id, before) => dispatch({ type: "move", id, before }),
       setCurrent: (id) => dispatch({ type: "setCurrent", id }),
       setIncluded: (ids) => dispatch({ type: "setIncluded", ids }),

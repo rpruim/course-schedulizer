@@ -163,3 +163,15 @@ describe("move", () => {
     expect(ids(run(s, { type: "undo" }))).toEqual(["a", "b", "c"]);
   });
 });
+
+describe("editMany", () => {
+  it("edits several schedules as one step to undo", () => {
+    const s = run(two(), { type: "editMany", edits: [{ id: "a", fn: rename("A2") }, { id: "b", fn: rename("B2") }] });
+    expect(s.present.map(label)).toEqual(["A2", "B2"]);
+    expect(run(s, { type: "undo" }).present.map(label)).toEqual(["a", "b"]);
+  });
+  it("changes nothing when no schedule changes, and skips unknown ones", () => {
+    const s = two();
+    expect(run(s, { type: "editMany", edits: [{ id: "a", fn: (x) => x }, { id: "zzz", fn: rename("Q") }] })).toBe(s);
+  });
+});

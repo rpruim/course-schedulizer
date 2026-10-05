@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { copyRule, describeRule, findRuleViolations, rulesOf } from "@schedulizer/core";
+import { copyRule, describeRule, findRuleViolations, rulesOf, type Schedule } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
 import { useWorkspace, type Entry } from "../state";
 import { Empty, NoneShown } from "./SchedulePage";
@@ -40,13 +40,15 @@ function RuleList({ entry, copying }: { entry: Entry; copying: boolean }) {
   function copy(name: string) {
     const done: string[] = [];
     const had: string[] = [];
+    const edits: { id: string; fn: (s: Schedule) => Schedule }[] = [];
     for (const t of targets) {
       const r = copyRule(entry.schedule, t.schedule, name);
       if (r.result === "missing") continue;
       if (r.result === "already") { had.push(t.name); continue; }
-      ws.applyTo(t.id, (s) => copyRule(entry.schedule, s, name).schedule);
+      edits.push({ id: t.id, fn: (s) => copyRule(entry.schedule, s, name).schedule });
       done.push(r.result === "renamed" ? `${t.name} (as “${r.name}”, since it has another rule of that name)` : t.name);
     }
+    ws.applyToMany(edits);
     const said = [done.length > 0 ? `Copied the rule “${name}” to ${done.join("; ")}. You can undo this.` : "", had.length > 0 ? `${had.join(", ")} already ${had.length === 1 ? "has" : "have"} it.` : ""];
     notify(said.filter(Boolean).join(" "));
   }

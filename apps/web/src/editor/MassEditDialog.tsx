@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { formatTime, massEdit, parseFaculty, parseTime, sharedValues, type MassEdits, type MassMode, type Session } from "@schedulizer/core";
+import { formatTime, massEdit, parseFaculty, parseTime, sharedValues, type MassEdits, type MassMode, type Schedule, type Session } from "@schedulizer/core";
 import { useWorkspace } from "../state";
 import { DAYS } from "./form";
 
@@ -160,7 +160,7 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
 
   const apply = () => {
     if (hasErrors || filled === 0) return;
-    for (const [id, ids] of bySchedule) ws.applyTo(id, (s) => massEdit(s, ids, edits, mode).schedule);
+    ws.applyToMany([...bySchedule].map(([id, ids]) => ({ id, fn: (s: Schedule) => massEdit(s, ids, edits, mode).schedule })));
     onDone(`${preview.sections === 0 ? "No section needed a change." : `Changed ${preview.values} value${preview.values === 1 ? "" : "s"} in ${preview.sections} of the ${picks.length} section${picks.length === 1 ? "" : "s"} edited.`}${notes(preview)} You can undo this.`);
     onClose();
   };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { copyAsNewSection, deleteSection, draftShares, draftToSessions, newSectionDraft, saveDraft, sectionToDraft, validateDraft, type SaveResult, type SectionDraft } from "./editing.js";
+import { copyAsNewSection, deleteSection, deleteSections, keepSections, draftShares, draftToSessions, newSectionDraft, saveDraft, sectionToDraft, validateDraft, type SaveResult, type SectionDraft } from "./editing.js";
 import { importRecords } from "./import.js";
 import type { Schedule } from "./types.js";
 
@@ -211,6 +211,19 @@ describe("deleteSection / draftShares", () => {
     const r = deleteSection(base, "Y-FA-MUSC101-A");
     expect(r.sessions.map((x) => x.sectionId)).toEqual(["Y-FA-MUSC101-B"]);
     expect(r.crossListings).toEqual([]);
+  });
+  it("removes several sections, or keeps only some, with their listings", () => {
+    const base = { ...make(sec("A"), sec("B"), sec("C")), crossListings: [{ sectionId: "Y-FA-MUSC101-A", prefix: "URBS", courseNumber: "101" }, { sectionId: "Y-FA-MUSC101-C", prefix: "URBS", courseNumber: "103" }] };
+    const ids = (s: typeof base) => [...new Set(s.sessions.map((x) => x.sectionId))];
+    const gone = deleteSections(base, ["Y-FA-MUSC101-A", "Y-FA-MUSC101-B"]);
+    expect(ids(gone)).toEqual(["Y-FA-MUSC101-C"]);
+    expect(gone.crossListings.map((l) => l.sectionId)).toEqual(["Y-FA-MUSC101-C"]);
+    const kept = keepSections(base, ["Y-FA-MUSC101-A", "Y-FA-MUSC101-B"]);
+    expect(ids(kept)).toEqual(["Y-FA-MUSC101-A", "Y-FA-MUSC101-B"]);
+    expect(kept.crossListings.map((l) => l.sectionId)).toEqual(["Y-FA-MUSC101-A"]);
+    expect(deleteSections(base, [])).toBe(base);
+    expect(ids(keepSections(base, []))).toEqual([]);
+    expect(base.sessions).toHaveLength(3); // the input is not changed
   });
   it("shows how the load divides", () => {
     const d = { ...newSectionDraft(make()), facultyLoad: 4, faculty: [{ name: "A", load: 3 }, { name: "B" }] };

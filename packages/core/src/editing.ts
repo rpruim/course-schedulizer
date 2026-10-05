@@ -341,5 +341,23 @@ export function deleteSection(schedule: Schedule, sectionId: string): Schedule {
   };
 }
 
+/** Remove several sections (all their meetings and cross-listings). The input is not changed. */
+export function deleteSections(schedule: Schedule, sectionIds: Iterable<string>): Schedule {
+  const gone = new Set(sectionIds);
+  if (gone.size === 0) return schedule;
+  return {
+    ...schedule,
+    sessions: schedule.sessions.filter((s) => !gone.has(s.sectionId)),
+    crossListings: schedule.crossListings.filter((l) => !gone.has(l.sectionId)),
+  };
+}
+
+/** Keep only the given sections, removing every other one (to cut a department's export down to the part you schedule). */
+export function keepSections(schedule: Schedule, sectionIds: Iterable<string>): Schedule {
+  const keep = new Set(sectionIds);
+  const gone = new Set(schedule.sessions.map((s) => s.sectionId).filter((id) => !keep.has(id)));
+  return deleteSections(schedule, gone);
+}
+
 /** How a draft's load would be divided, for showing next to the instructor field. */
 export const draftShares = (d: SectionDraft) => sectionShares(d.facultyLoad ?? 0, d.faculty);

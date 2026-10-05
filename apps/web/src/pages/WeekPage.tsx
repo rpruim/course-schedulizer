@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
-import { partsFor } from "@schedulizer/core";
+import { deleteSections, keepSections, partsFor, type Schedule } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
-import { Check, Clock, Warn } from "../icons";
+import { Check, Clock, Trash, Warn } from "../icons";
 import { MassEditDialog, type Pick } from "../editor/MassEditDialog";
 import { MultiSelect } from "../MultiSelect";
 import { useRemembered } from "../remember";
@@ -147,6 +147,31 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
       const [scheduleId = "", sectionId = ""] = k.split("\u0001");
       return { scheduleId, sectionId };
     });
+  // Removing sections: all the selected ones, or every section but the selected ones (in each schedule that has a selection).
+  const selectedBySchedule = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    for (const k of selected) {
+      if (!everySection.has(k)) continue;
+      const [scheduleId = "", sectionId = ""] = k.split("\u0001");
+      m.set(scheduleId, (m.get(scheduleId) ?? new Set()).add(sectionId));
+    }
+    return m;
+  }, [selected, everySection]);
+  const sectionCount = (scheduleId: string) => new Set(ws.get(scheduleId)?.schedule.sessions.map((s) => s.sectionId)).size;
+  const toRemove = (retain: boolean) => [...selectedBySchedule].reduce((n, [id, ids]) => n + (retain ? sectionCount(id) - ids.size : ids.size), 0);
+  const removeSections = (retain: boolean) => {
+    const n = toRemove(retain);
+    if (n === 0) return;
+    const names = [...selectedBySchedule.keys()].map((id) => `“${ws.get(id)?.name ?? ""}”`).join(", ");
+    const hiddenSelected = hiddenPicks.length;
+    const text = retain
+      ? `Remove ${n} section${n === 1 ? "" : "s"} from ${names}, keeping only the ${selectedTotal} selected? Schedules with nothing selected are not changed. You can undo this.`
+      : `Remove the ${selectedTotal} selected section${selectedTotal === 1 ? "" : "s"}${hiddenSelected > 0 ? ` (including ${hiddenSelected} that the filters are hiding)` : ""} from ${names}? You can undo this.`;
+    if (!window.confirm(text)) return;
+    ws.applyToMany([...selectedBySchedule].map(([id, ids]) => ({ id, fn: (s: Schedule) => (retain ? keepSections(s, ids) : deleteSections(s, ids)) })));
+    if (!retain) setSelected(new Set());
+    setMassMessage(`Removed ${n} section${n === 1 ? "" : "s"}. You can undo this.`);
+  };
   const pick = (scheduleId: string, sectionId: string) => {
     const p = resolve(scheduleId, sectionId);
     if (!p) return;
@@ -257,6 +282,8 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
             </span>
             <button onClick={() => { setSelected(new Set()); setMassMessage(""); }} disabled={selected.size === 0} title="Deselects every section, including any that the filters are hiding">Clear selection</button>
             <button className="primary" onClick={() => setMassOpen(true)} disabled={picks.length + hiddenPicks.length === 0}>Edit selected…</button>
+            <button className="danger" onClick={() => removeSections(false)} disabled={selectedTotal === 0} title="Delete the selected sections from their schedules"><Trash /> Remove all selected</button>
+            <button className="danger" onClick={() => removeSections(true)} disabled={toRemove(true) === 0} title="Delete every section that is not selected, in each schedule that has a selection (for example to cut a department's export down to the part you schedule)"><Trash /> Retain only selected</button>
             <span className="muted">{selectedTotal} of {everySection.size} section{everySection.size === 1 ? "" : "s"} selected, including {picks.length} of {visible.length} visible section{visible.length === 1 ? "" : "s"}</span>
             {massMessage && <span className="note ok" role="status">{massMessage}</span>}
           </div>
