@@ -179,6 +179,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
     </label>
   );
 
+  const addMeeting = <button type="button" onClick={() => set("meetings", [...form.meetings, emptyMeetingForm()])}>+ Add meeting</button>;
   return (
     <dialog ref={dialog} className="editor" onCancel={(e) => { e.preventDefault(); onClose(); }} aria-label={isNew ? "Add section" : "Edit section"}>
       <form method="dialog" onSubmit={(e) => { e.preventDefault(); save(); }}>
@@ -236,7 +237,13 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
           {/* The outline follows the live preview below: red for a conflict (which wins), orange for a non-standard time. */}
           <fieldset className={preview && (preview.conflicts.length > 0 || preview.ruleBreaks.length > 0) ? "meetings-conflict" : preview && preview.nonStandard.length > 0 ? "meetings-nonstandard" : undefined}>
             <legend>Meetings</legend>
-            {form.meetings.length === 0 && <p className="muted">No scheduled time (for example an internship or an online section).</p>}
+            {/* The add button sits at the bottom right of the box: on the last meeting's row of fields, or beside the note that there is none. */}
+            {form.meetings.length === 0 && (
+              <div className="days-row">
+                <p className="muted">No scheduled time (for example an internship or an online section).</p>
+                <div className="days-right">{addMeeting}</div>
+              </div>
+            )}
             {form.meetings.map((m, i) => {
               const summary = meetingSummary(m);
               return (
@@ -268,12 +275,12 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
                     </span>
                     <label className="f"><span>Room</span><input value={m.room} list="dl-rooms" size={10} onChange={(e) => setMeeting(i, { room: e.target.value })} /></label>
                     <button type="button" className="link" onClick={() => set("meetings", form.meetings.filter((_, j) => j !== i))}><Trash /> Remove</button>
+                    {i === form.meetings.length - 1 && <span className="add-meeting">{addMeeting}</span>}
                   </div>
                   {["days", "start", "duration"].map((k) => err(`meetings.${i}.${k}`))}
                 </div>
               );
             })}
-            <button type="button" onClick={() => set("meetings", [...form.meetings, emptyMeetingForm()])}>+ Add meeting</button>
           </fieldset>
 
           <details className="more-details" open={moreOpen} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>
