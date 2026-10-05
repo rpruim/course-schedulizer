@@ -18,3 +18,16 @@
   [headers.values]
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
+
+# OneDrive sign-in: the app registration (made by Calvin IT) lists the redirect.html of each address the site is served
+# from (course-schedulizer.netlify.app, schedulizer.pruim.co, dev--course-schedulizer.netlify.app, and
+# http://localhost:5174 for local builds). The address is taken from the page, so the same build works on all of them.
+# Production and branch deploys (the dev branch) get the ids; without them the OneDrive features stay hidden.
+# These ids are not secrets.
+[context.production.environment]
+  VITE_MS_CLIENT_ID = "829e1c5d-a9be-4674-9d4f-3c8d35280b7c"
+  VITE_MS_TENANT = "756349b9-0610-4b01-917b-2a4ac10df947"
+
+[context.branch-deploy.environment]
+  VITE_MS_CLIENT_ID = "829e1c5d-a9be-4674-9d4f-3c8d35280b7c"
+  VITE_MS_TENANT = "756349b9-0610-4b01-917b-2a4ac10df947"
