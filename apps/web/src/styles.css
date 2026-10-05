@@ -430,3 +430,18 @@ table.cmp > tbody > tr.clickable:hover > td:first-child, table.cmp > tbody > tr.
 table.cmp > tbody > tr.clickable:hover > td:last-child, table.cmp > tbody > tr.clickable:focus-visible > td:last-child { box-shadow: inset 0 2px 0 var(--hover-outline), inset 0 -2px 0 var(--hover-outline), inset -2px 0 0 var(--hover-outline); }
 table.cmp.freezing > tbody > tr.clickable:hover > td.frozen-first, table.cmp.freezing > tbody > tr.clickable:focus-visible > td.frozen-first { box-shadow: inset 0 2px 0 var(--hover-outline), inset 0 -2px 0 var(--hover-outline), -1px 0 0 var(--line); }
 table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
+
+/* the OneDrive file picker on the Import page */
+.od-picker { margin: 4px 0 8px; }
+.od-panel { margin-top: 8px; border: 1px solid var(--line); border-radius: 8px; padding: 4px 12px 10px; }
+.od-tabs { display: inline-flex; gap: 2px; }
+.od-tabs button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.od-path { font-size: .9rem; margin: 2px 0 6px; }
+.od-list { list-style: none; margin: 4px 0 0; padding: 0; max-height: 22rem; overflow-y: auto; border: 1px solid var(--line); border-radius: 6px; }
+.od-list li + li { border-top: 1px solid var(--line); }
+.od-list button { all: unset; box-sizing: border-box; width: 100%; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; padding: 6px 10px; cursor: pointer; }
+.od-list button:hover:not(:disabled), .od-list button:focus-visible { background: var(--panel); }
+.od-list button:disabled { opacity: .6; cursor: default; }
+.od-name { font-weight: 600; }
+.od-where { flex: 1; }
+.od-meta { margin-left: auto; white-space: nowrap; }

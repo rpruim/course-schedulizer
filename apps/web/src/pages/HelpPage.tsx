@@ -133,6 +133,9 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
             (<em>Share → Copy link</em> in OneDrive) into the same box, or open a link containing one. The first time, a <em>Sign in and open</em> button appears (Microsoft’s
             sign-in window needs a click); after that, links open directly. You can open only files that have been shared with you. A schedule opened this way
             remembers its file, so the Export tab can save it back (see below).
+            <em> Open from OneDrive…</em>, under the address box, lists the Excel files in your own OneDrive instead: sign in with Microsoft, then pick one from <em>Recent</em>,
+            <em>Browse</em> folder by folder, or search by name. Click a file to open it (as a new schedule, or in place of one, as the <em>Open as</em> choice says); it remembers its file, as above.
+            Only your own OneDrive is listed; a file in SharePoint or Teams, or one someone shared with you, is opened with its link.
           </p>
         )}
         <p>

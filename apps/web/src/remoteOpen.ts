@@ -60,11 +60,15 @@ async function fetchShared(file: LinkRequest, academicYear: string | undefined, 
     if (e instanceof GraphError && e.kind === "signin") return { ...failed(name, e.message), needsSignIn: true };
     return failed(name, e instanceof Error ? e.message : String(e));
   }
-  const shown = file.name ?? got.source.name.replace(/\.xlsx$/i, "");
+  return readOneDrive(got.source, got.bytes, file.academicYear ?? academicYear, file.name);
+}
+
+/** Read the bytes of a workbook that came from OneDrive. Never throws: problems come back in the report. */
+export async function readOneDrive(source: OneDriveSource, bytes: Uint8Array, academicYear?: string, name?: string): Promise<Fetched> {
+  const shown = name ?? source.name.replace(/\.xlsx$/i, "");
   try {
-    const year = file.academicYear ?? academicYear;
-    const result = await readWorkbook(got.bytes, year ? { academicYear: year } : {});
-    return { name: shown, schedule: result.schedule, source: got.source, report: { name: shown, issues: allIssues(result.schedule, result.issues) } };
+    const result = await readWorkbook(bytes, academicYear ? { academicYear } : {});
+    return { name: shown, schedule: result.schedule, source, report: { name: shown, issues: allIssues(result.schedule, result.issues) } };
   } catch (e) {
     return failed(shown, `could not read this as an Excel workbook (${e instanceof Error ? e.message : String(e)})`);
   }

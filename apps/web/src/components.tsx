@@ -12,11 +12,12 @@ import {
 import { useLocation } from "react-router-dom";
 import { loadExamples, type Example } from "./examples";
 import { downloadBytes, XLSX_TYPE } from "./download";
-import { sharedOpener } from "./onedrive/auth";
-import type { OneDriveSource } from "./onedrive/graph";
+import { graphClient, sharedOpener } from "./onedrive/auth";
+import { OneDrivePicker } from "./onedrive/OneDrivePicker";
+import type { DriveEntry, OneDriveSource } from "./onedrive/graph";
 import { OneDrivePanel } from "./onedrive/OneDrivePanel";
 import { parseAddress, shareLink } from "./remote";
-import { fetchSchedule } from "./remoteOpen";
+import { fetchSchedule, readOneDrive, type Fetched } from "./remoteOpen";
 import { allIssues, errorsOf, issueText, needsAcademicYear } from "./issues";
 import { useWorkspace } from "./state";
 
@@ -104,6 +105,27 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
     }
   }
 
+  /** Open a workbook chosen in the OneDrive list. */
+  async function openEntry(entry: DriveEntry) {
+    setBusy(true);
+    const reports: OpenReport[] = [];
+    try {
+      let got: Fetched;
+      try {
+        const file = await graphClient(true).openEntry(entry);
+        got = await readOneDrive(file.source, file.bytes, year.trim() || undefined);
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        got = { name: entry.name, report: { name: entry.name, issues: [{ severity: "error", sheet: entry.name, message }] } };
+      }
+      if (got.schedule) place(got.name, got.schedule, true, got.source);
+      reports.push(got.report);
+    } finally {
+      setBusy(false);
+      onReports(reports);
+    }
+  }
+
   async function openAddress() {
     const { files, academicYear } = parseAddress(address);
     if (files.length === 0) return;
@@ -159,6 +181,7 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
       </label>
       <button onClick={() => void openAddress()} disabled={busy || !address.trim()}>Open address</button>
     </div>
+    <OneDrivePicker onOpen={openEntry} busy={busy} />
     <ShareLink address={address} year={year} />
     </>
   );

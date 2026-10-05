@@ -53,9 +53,61 @@ interface DriveItem {
   name: string;
   eTag?: string;
   webUrl?: string;
-  parentReference?: { driveId?: string };
+  size?: number;
+  lastModifiedDateTime?: string;
+  folder?: { childCount?: number };
+  /** In "recent" lists, a file that lives in someone else's drive appears as a pointer to it. */
+  remoteItem?: DriveItem;
+  parentReference?: { driveId?: string; path?: string };
   "@microsoft.graph.downloadUrl"?: string;
 }
+
+/** One line of a list of files: a folder to go into or a workbook to open. */
+export interface DriveEntry {
+  driveId: string;
+  itemId: string;
+  name: string;
+  folder: boolean;
+  size?: number;
+  /** ISO date of the last change. */
+  modified?: string;
+  /** The folder it is in, as a path (when OneDrive says), to tell files with the same name apart. */
+  where?: string;
+}
+
+/** Folders, and the Excel workbooks (`.xlsx`) the app can open; nothing else is listed. */
+const isWorkbook = (name: string) => /\.xlsx$/i.test(name);
+
+/** `/drive/root:/Documents/Schedules` → `Documents/Schedules` (blank for the top). */
+const whereOf = (path: string | undefined) => {
+  const at = path?.indexOf("root:");
+  if (path === undefined || at === undefined || at < 0) return undefined;
+  try {
+    return decodeURIComponent(path.slice(at + 5)).replace(/^\//, "");
+  } catch {
+    return path.slice(at + 5).replace(/^\//, "");
+  }
+};
+
+const toEntry = (raw: DriveItem): DriveEntry | undefined => {
+  const item = raw.remoteItem ?? raw;
+  const driveId = item.parentReference?.driveId ?? raw.parentReference?.driveId;
+  const folder = item.folder !== undefined;
+  if (!driveId || (!folder && !isWorkbook(item.name))) return undefined;
+  const where = whereOf(item.parentReference?.path ?? raw.parentReference?.path);
+  return {
+    driveId,
+    itemId: item.id,
+    name: item.name,
+    folder,
+    ...(item.size !== undefined ? { size: item.size } : {}),
+    ...((item.lastModifiedDateTime ?? raw.lastModifiedDateTime) ? { modified: (item.lastModifiedDateTime ?? raw.lastModifiedDateTime)! } : {}),
+    ...(where !== undefined ? { where } : {}),
+  };
+};
+
+/** Every page is at most this many entries; a longer folder is cut off (the person can search instead). */
+const MAX_LISTED = 1000;
 
 const toSource = (item: DriveItem): OneDriveSource => ({
   driveId: item.parentReference?.driveId ?? "",
@@ -107,6 +159,48 @@ export class GraphClient {
     const res = url ? await this.fetcher(url) : await this.call("read", `/drives/${item.parentReference?.driveId}/items/${item.id}/content`);
     if (!res.ok) throw explain(res.status, "");
     return new Uint8Array(await res.arrayBuffer());
+  }
+
+  /** The pages of a list of items, as entries (folders first, then workbooks by name unless `keepOrder`). */
+  private async list(path: string, keepOrder = false): Promise<DriveEntry[]> {
+    const out: DriveEntry[] = [];
+    let next: string | undefined = path;
+    while (next && out.length < MAX_LISTED) {
+      const res: Response = await this.call("read", next);
+      const page = (await res.json()) as { value?: DriveItem[]; "@odata.nextLink"?: string };
+      for (const raw of page.value ?? []) {
+        const e = toEntry(raw);
+        if (e) out.push(e);
+      }
+      next = page["@odata.nextLink"];
+    }
+    if (keepOrder) return out;
+    return out.sort((a, b) => Number(b.folder) - Number(a.folder) || a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }));
+  }
+
+  /** What is in a folder of the signed-in person's OneDrive (the top level when no folder is given). */
+  folder(folder?: { driveId: string; itemId: string }): Promise<DriveEntry[]> {
+    const base = folder ? `/drives/${folder.driveId}/items/${folder.itemId}/children` : "/me/drive/root/children";
+    return this.list(`${base}?$top=200&$select=id,name,size,folder,lastModifiedDateTime,parentReference,webUrl`);
+  }
+
+  /** The workbooks the person used lately, most recent first. */
+  recent(): Promise<DriveEntry[]> {
+    return this.list("/me/drive/recent?$top=100", true).then((all) => all.filter((e) => !e.folder));
+  }
+
+  /** Workbooks whose name or contents match `text`. */
+  search(text: string): Promise<DriveEntry[]> {
+    const q = encodeURIComponent(text.trim().replace(/'/g, "''"));
+    return this.list(`/me/drive/root/search(q='${q}')?$top=100&$select=id,name,size,folder,lastModifiedDateTime,parentReference,webUrl`, true).then((all) => all.filter((e) => !e.folder));
+  }
+
+  /** A file chosen from a list, and its bytes. */
+  async openEntry(entry: Pick<DriveEntry, "driveId" | "itemId">): Promise<{ source: OneDriveSource; bytes: Uint8Array }> {
+    const res = await this.call("read", `/drives/${entry.driveId}/items/${entry.itemId}`);
+    const item = (await res.json()) as DriveItem;
+    const withDrive = { ...item, parentReference: { ...item.parentReference, driveId: item.parentReference?.driveId ?? entry.driveId } };
+    return { source: toSource(withDrive), bytes: await this.download(withDrive) };
   }
 
   /** Replace the contents of the file this schedule came from. Unless `force`, refuses if the file changed meanwhile. */
