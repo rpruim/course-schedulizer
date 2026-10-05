@@ -5,6 +5,7 @@ import { useEditor } from "../editor/context";
 import { Check, Clock, Warn } from "../icons";
 import { MassEditDialog, type Pick } from "../editor/MassEditDialog";
 import { MultiSelect } from "../MultiSelect";
+import { useRemembered } from "../remember";
 import { keyFor, openColorKey, setColorKey, useColorBy } from "../colorKey";
 import { termsAcross, yearsAcross } from "../model";
 import { MERGED_ID, useWorkspace } from "../state";
@@ -30,15 +31,17 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
   const { openSection, openNew } = useEditor();
   // Arriving from a link (the loads table) can name the person, year and term to show.
   const [params] = useSearchParams();
-  const [pickedYear, setPickedYear] = useState(params.get("year") ?? "");
-  const [pickedTerm, setPickedTerm] = useState(params.get("term") ?? "");
-  const [pickedPart, setPickedPart] = useState("Full");
+  // The drop-down choices are remembered per page, so coming back to a view finds it as it was left.
+  const page = mass ? "mass" : kind;
+  const [pickedYear, setPickedYear] = useRemembered(`${page}:year`, "", params.get("year") ?? undefined);
+  const [pickedTerm, setPickedTerm] = useRemembered(`${page}:term`, "", params.get("term") ?? undefined);
+  const [pickedPart, setPickedPart] = useRemembered(`${page}:part`, "Full");
   const [colorBy, setColorBy] = useColorBy();
-  const [only, setOnly] = useState(kind === "faculty" ? (params.get("who") ?? "") : "");
+  const [only, setOnly] = useRemembered(`${page}:only`, "", kind === "faculty" && params.get("who") ? params.get("who")! : undefined);
   // Mass edit: what is selected (as "schedule id, section id"), the filter, and the dialog.
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
-  const [filterBy, setFilterByState] = useState<ColorBy>("prefix");
-  const [filterValues, setFilterValues] = useState<string[]>([]);
+  const [filterBy, setFilterByState] = useRemembered<ColorBy>("mass:filterBy", "prefix");
+  const [filterValues, setFilterValues] = useRemembered<string[]>("mass:filterValues", []);
   const [massOpen, setMassOpen] = useState(false);
   const [massMessage, setMassMessage] = useState("");
   const setFilterBy = (by: ColorBy) => {
