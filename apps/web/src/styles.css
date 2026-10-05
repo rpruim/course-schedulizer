@@ -97,7 +97,8 @@ legend { padding: 0 6px; font-size: .8rem; text-transform: uppercase; letter-spa
 .row.top { align-items: flex-start; }
 .also-listed { margin-top: 10px; }
 /* an open "More details" is boxed like the other sections */
-dialog.editor details.more-details[open] { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px 12px; }
+dialog.editor details.more-details { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+dialog.editor details.more-details[open] { padding-bottom: 12px; }
 .more-details > label.f { margin-top: 8px; }
 .also-listed > button { margin-top: 6px; }
 .also-listed h4 { margin: 0 0 4px; font-size: .85rem; }

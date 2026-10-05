@@ -1,6 +1,6 @@
 # Course Schedulizer 2.0.3.9000
 
-* Changes since 2.0.3 will be listed here.
+* In the section editor, *More details* has its border when it is folded as well as when it is open.
 
 # Course Schedulizer 2.0.3
 
