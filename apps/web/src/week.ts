@@ -270,7 +270,9 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
   if (o.kind === "dept") {
     const by = o.filter?.by ?? o.colorBy;
     const wantedValues = o.filter && o.filter.values.length > 0 ? new Set(o.filter.values) : undefined;
-    const sessions = inTerm.filter((s) => (!o.prefix || s.prefix === o.prefix) && (!wantedValues || wantedValues.has(colorValueOf(schedule, by, s))));
+    // A prefix this term does not have (one remembered from another schedule) means all prefixes, as the drop-down shows.
+    const prefix = o.prefix && termAll.some((s) => s.prefix === o.prefix) ? o.prefix : undefined;
+    const sessions = inTerm.filter((s) => (!prefix || s.prefix === prefix) && (!wantedValues || wantedValues.has(colorValueOf(schedule, by, s))));
     const ids = [...new Set(sessions.map((s) => s.sectionId))];
     const everyValue = termAll.map((s) => colorValueOf(schedule, by, s));
     return {

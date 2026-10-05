@@ -163,6 +163,13 @@ describe("department grid", () => {
     expect(grid("delivery", ["Online"]).grids[0]!.blocks.map((b) => b.title)).toEqual(["MUSC 231 B"]);
     expect(grid("delivery", [""]).grids[0]!.blocks.map((b) => b.title)).toEqual(["URBS 143 A"]);
   });
+  it("treats a prefix the term does not have as all prefixes, instead of showing an empty grid", () => {
+    const s = make([sec("MUSC", "231", "A", { ...mt("M", "9:00", "50") }), sec("URBS", "143", "A", { ...mt("T", "9:00", "50") })]);
+    const titles = (prefix?: string) => weekGrids(s, opts({ ...(prefix ? { prefix } : {}) })).grids[0]!.blocks.map((b) => b.title);
+    expect(titles("URBS")).toEqual(["URBS 143 A"]);
+    expect(titles("AMUS")).toEqual(["MUSC 231 A", "URBS 143 A"]);
+    expect(titles()).toEqual(["MUSC 231 A", "URBS 143 A"]);
+  });
   it("draws a meeting listed twice only once, so block keys are unique", () => {
     const twice = make([sec("MUSC", "1", "A", { ...mt("R\nR", "9:00\n9:00", "50\n50", "NH 1\nNH 1") })]);
     const blocks = weekGrids(twice, opts()).grids[0]!.blocks;
