@@ -334,7 +334,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <p>
           Two sections that share an instructor, or a room, at overlapping times are reported as a conflict. An <em>Allow collisions</em> rule says that some courses are meant to: for example a seminar
           run as both a 200- and a 300-level course, with identical class sessions. List the courses (one per line, with <code>*</code> and the other patterns, and a section letter if only one section is meant);
-          sections that are both named by the rule are never reported as conflicting with each other, whatever they share. Sections the rule does not name conflict as usual, and a rule can be limited to some terms.
+          sections that are both named by the rule are never reported as conflicting with each other, whatever they share. A course listed once is enough for its own sections: that is how to allow two sections of the same course to meet at the same time. Sections the rule does not name conflict as usual, and a rule can be limited to some terms.
           It silences only the conflicts reported in the Conflicts tab: a <em>Take together</em> rule still treats the courses as clashing.
         </p>
         <h3>Back-to-back classes</h3>

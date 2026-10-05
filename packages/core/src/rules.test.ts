@@ -541,6 +541,13 @@ describe("allow collisions", () => {
     expect(conflicts(sessions)).toHaveLength(2);
     expect(conflicts(sessions, [allow("MUSC 200"), allow("MUSC 300")])).toEqual([]);
   });
+  it("lets the sections of one course collide with each other when the course is listed once", () => {
+    const same = [seminar("200"), seminar("200", { Section: "B" })];
+    expect(conflicts(same)).toHaveLength(2);
+    expect(conflicts(same, [allow("MUSC 200")])).toEqual([]);
+    expect(conflicts(same, [allow("MUSC 200"), allow("MUSC 200")])).toEqual([]);
+    expect(conflicts(same, [allow("MUSC 200", { Section: "A" })]).length).toBe(2); // B is not named, so it still collides with A
+  });
   it("allows only pairs that the same rule names, with patterns and a section letter", () => {
     const sessions = [seminar("200"), seminar("300"), seminar("301", { Section: "B" }), seminar("400")];
     expect(new Set(conflicts(sessions, [allow("MUSC 2*"), allow("MUSC 3*")]).map(([, a, b]) => `${a}|${b}`)).size).toBe(3); // 400 still collides with each, and 200/300 are only allowed with a rule naming both

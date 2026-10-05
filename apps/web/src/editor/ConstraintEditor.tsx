@@ -394,7 +394,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
           ) : form.type === "collide" ? (
             <p className="muted small">
               Two sections that are both named by this list are never reported as conflicting, even when they share an instructor or a room at the same time.
-              A section the list does not name conflicts with others as usual. List every course that takes part, for example both the 200- and the 300-level number of a seminar.
+              A course listed once is enough for its own sections to collide with one another (two sections of the same course at the same time). A section the list does not name conflicts with others as usual. List every course that takes part, for example both the 200- and the 300-level number of a seminar.
               Nothing else changes: a <em>Take together</em> rule still treats these courses as clashing.
             </p>
           ) : form.type === "subset" ? (
