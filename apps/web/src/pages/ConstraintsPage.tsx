@@ -80,7 +80,7 @@ function RuleList({ entry, copying }: { entry: Entry; copying: boolean }) {
               <tr key={r.name} className="clickable" tabIndex={0} onClick={() => openConstraint(r.name, entry.id)} onKeyDown={(e) => e.key === "Enter" && openConstraint(r.name, entry.id)} title="Click to edit">
                 <td><strong>{r.name}</strong></td>
                 <td>{describeRule(r)}{r.comment && <div className="muted small">{r.comment}</div>}</td>
-                <td className="nowrap">{r.type === "standard" ? <span className="muted">changes the standard times</span> : r.type === "subset" ? <span className="muted">allows subsets of standard times</span> : n === 0 ? <span className="ok-text">✓ met</span> : <span className="err">⚠ not met ({n})</span>}</td>
+                <td className="nowrap">{r.type === "standard" ? <span className="muted">changes the standard times</span> : r.type === "subset" ? <span className="muted">allows subsets of standard times</span> : r.type === "collide" ? <span className="muted">allows collisions</span> : n === 0 ? <span className="ok-text">✓ met</span> : <span className="err">⚠ not met ({n})</span>}</td>
                 {showCopy && (
                   <td className="nowrap">
                     <button type="button" onClick={(ev) => { ev.stopPropagation(); copy(r.name); }} onKeyDown={(ev) => ev.stopPropagation()}

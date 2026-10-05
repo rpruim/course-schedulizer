@@ -198,7 +198,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
         items,
         from: type === "window" && f.from === "" ? "10:00" : f.from,
         to: type === "window" && f.to === "" ? "11:00" : f.to,
-        count: type === "consecutive" && f.count.trim() === "" ? "3" : type === "standard" || type === "subset" ? "" : f.count,
+        count: type === "consecutive" && f.count.trim() === "" ? "3" : type === "standard" || type === "subset" || type === "collide" ? "" : f.count,
         changes: type === "standard" && f.changes.length === 0 ? [{ action: "allow", days: "", duration: "", starts: "" }] : f.changes,
       };
     });
@@ -229,6 +229,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
             <label className="choice"><input type="radio" checked={form.type === "window"} onChange={() => switchType("window")} /> <strong>Time window.</strong> These courses or instructors should (or should not) meet during a time of day.</label>
             <label className="choice"><input type="radio" checked={form.type === "standard"} onChange={() => switchType("standard")} /> <strong>Modify standard times.</strong> Normally courses should meet only at standard days, start times and durations, as defined by the university. Add a custom rule to modify the list for some or all courses.</label>
             <label className="choice"><input type="radio" checked={form.type === "subset"} onChange={() => switchType("subset")} /> <strong>Subset of standard times.</strong> Normally courses should meet for all of the times in a standard meeting. Add this rule to allow a section to meet for only some of the allowed times.</label>
+            <label className="choice"><input type="radio" checked={form.type === "collide"} onChange={() => switchType("collide")} /> <strong>Allow collisions.</strong> These courses may share an instructor, a room or a time without being reported as a conflict, for example a seminar run as both a 200- and a 300-level course.</label>
             <label className="choice"><input type="radio" checked={form.type === "consecutive"} onChange={() => switchType("consecutive")} /> <strong>Back-to-back classes.</strong> These instructors should teach at most (or at least) some number of consecutive classes.</label>
           </fieldset>
 
@@ -268,7 +269,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
             })}
             {!(form.type === "consecutive" || (form.type === "window" && form.subject === "instructors")) ? (
               <p className="muted small">
-                {(form.type === "standard" || form.type === "subset") && <>Use <code>*</code> alone for every course. </>}
+                {(form.type === "standard" || form.type === "subset" || form.type === "collide") && <>Use <code>*</code> alone for every course. </>}
                 Patterns: <code>*</code> any run of characters, <code>?</code> any one character, <code>[23]</code> either of those. <code>MUSC 3*</code> is every 300-level MUSC course, <code>URBS [23]4?</code> is 241, 243, 345 and so on, <code>MUSC *</code> every MUSC course. Leave Section blank for every section.
               </p>
             ) : (
@@ -390,6 +391,12 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                 </ul>
               </details>
             </fieldset>
+          ) : form.type === "collide" ? (
+            <p className="muted small">
+              Two sections that are both named by this list are never reported as conflicting, even when they share an instructor or a room at the same time.
+              A section the list does not name conflicts with others as usual. List every course that takes part, for example both the 200- and the 300-level number of a seminar.
+              Nothing else changes: a <em>Take together</em> rule still treats these courses as clashing.
+            </p>
           ) : form.type === "subset" ? (
             <p className="muted small">
               Every meeting is checked against the university’s standard times (as changed by any <em>Modify standard times</em> rules), and a meeting on only some of the days of a standard time is flagged in orange,

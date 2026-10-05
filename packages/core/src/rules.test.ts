@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { conflictedSessions, nonStandardSessions } from "./conflicts.js";
+import { conflictedSessions, findConflicts, nonStandardSessions } from "./conflicts.js";
 import { recordsFromCsv } from "./csv.js";
 import { importConstraints, importRecords } from "./import.js";
 import { mergeSchedules } from "./merge.js";
@@ -423,6 +423,7 @@ describe("the demo schedule with constraint rules (fixtures/cases/rules-*.csv)",
       ["Colloquium time", "standard"],
       ["No 8:00 MWF", "standard"],
       ["Harmonic structures may meet one day of TR", "subset"],
+      ["The seminar runs at two levels", "collide"],
     ]);
     expect(violations(demo()).map((v) => [v.rule, v.message])).toEqual([
       ["Digital information minor: any two electives", "Not every 2 of the 3 courses can be taken together: BHAV 312 + DIGI 318"],
@@ -438,6 +439,12 @@ describe("the demo schedule with constraint rules (fixtures/cases/rules-*.csv)",
   it("names every section a rule violation involves, so the section editor can list it", () => {
     const rule = findRuleViolations(demo()).filter((v) => !v.builtin && v.rule.startsWith("Kim"));
     expect(new Set(rule.flatMap((v) => v.sectionIds))).toEqual(new Set(["R2-FA-CRUD167-A", "R2-FA-CRUD245-A", "R2-FA-CRUD315-A"]));
+  });
+  it("does not report the seminar listed at two levels as a conflict, because a rule allows it", () => {
+    const s = demo();
+    expect(findConflicts(s).filter((c) => c.sectionIdA.includes("CRUD290") || c.sectionIdB.includes("CRUD290"))).toEqual([]);
+    const without = { ...s, constraints: s.constraints.filter((c) => c.type !== "collide") };
+    expect(findConflicts(without).map((c) => c.type)).toEqual(["Instructor", "Room"]);
   });
   it("flags only the standard-time exceptions the rules do not cover", () => {
     const odd = findRuleViolations(demo()).filter((v) => v.builtin);
@@ -521,5 +528,48 @@ describe("rules belong to the schedule they came from", () => {
     expect(renamed).toMatchObject({ name: "Both (2)", result: "renamed" });
     expect(rulesOf(renamed.schedule).map((r) => r.name)).toEqual(["Both", "Both (2)"]);
     expect(copyRule(a(), b(), "Nope").result).toBe("missing");
+  });
+});
+
+describe("allow collisions", () => {
+  const seminar = (n: string, o: Rec = {}) => sec("MUSC", n, "A", "TR", "9:15", { Faculty: "Kim", Classroom: "SB 1", ...o });
+  const conflicts = (sessions: Rec[], constraints: Rec[] = []) => findConflicts(build(sessions, constraints)).map((c) => [c.type, c.sectionIdA, c.sectionIdB]);
+  const allow = (course: string, extra: Rec = {}): Rec => ({ Constraint: "Seminar", Type: "collide", Course: course, ...extra });
+
+  it("reports two sections that share an instructor, a room and a time, until a rule allows it", () => {
+    const sessions = [seminar("200"), seminar("300")];
+    expect(conflicts(sessions)).toHaveLength(2);
+    expect(conflicts(sessions, [allow("MUSC 200"), allow("MUSC 300")])).toEqual([]);
+  });
+  it("allows only pairs that the same rule names, with patterns and a section letter", () => {
+    const sessions = [seminar("200"), seminar("300"), seminar("301", { Section: "B" }), seminar("400")];
+    expect(new Set(conflicts(sessions, [allow("MUSC 2*"), allow("MUSC 3*")]).map(([, a, b]) => `${a}|${b}`)).size).toBe(3); // 400 still collides with each, and 200/300 are only allowed with a rule naming both
+    expect(conflicts(sessions, [allow("MUSC [234]*")])).toEqual([]);
+    const lettered = [seminar("200"), seminar("300", { Section: "A" }), seminar("300", { Section: "B", TermPart: "Full" })];
+    expect(conflicts(lettered, [allow("MUSC 200"), allow("MUSC 300", { Section: "A" })]).every(([, a, b]) => a.includes("300-B") || b.includes("300-B"))).toBe(true);
+  });
+  it("does not allow collisions with a course the rule leaves out, nor in another term", () => {
+    expect(conflicts([seminar("200"), seminar("300"), seminar("400")], [allow("MUSC 200"), allow("MUSC 300")]).length).toBeGreaterThan(0);
+    const spring = [seminar("200", { Term: "SP" }), seminar("300", { Term: "SP" })];
+    expect(conflicts(spring, [allow("MUSC *", { Term: "FA" })])).toHaveLength(2);
+    expect(conflicts(spring, [allow("MUSC *", { Term: "SP" })])).toEqual([]);
+  });
+  it("is described, validated and flags nothing itself", () => {
+    const s = build([seminar("200"), seminar("300")], [allow("MUSC 200"), allow("MUSC 300")]);
+    const rule = rulesOf(s)[0]!;
+    expect(rule.type).toBe("collide");
+    expect(describeRule(rule)).toBe("MUSC 200, MUSC 300 may collide with one another in time, room or instructor.");
+    expect(validateRule(s, { ...rule, items: [] }, rule.name).map((p) => p.field)).toEqual(["items"]);
+    expect(validateRule(s, { ...rule, items: [{ course: "", section: "", instructor: "Kim" }] }, rule.name).length).toBeGreaterThan(0);
+    expect(findRuleViolations(s).filter((v) => !v.builtin)).toEqual([]);
+  });
+  it("applies only inside the schedule it came from when schedules are merged", () => {
+    const a = importRecords({ sessions: [seminar("200"), seminar("300")], constraints: [allow("MUSC 200"), allow("MUSC 300")] }).schedule;
+    const b = importRecords({ sessions: [seminar("200"), seminar("300")], constraints: [] }).schedule;
+    const merged = mergeSchedules([{ id: "a", name: "A", schedule: a }, { id: "b", name: "B", schedule: b }]).schedule;
+    const found = findConflicts(merged);
+    expect(found.every((c) => c.sectionIdA.includes("~") || c.sectionIdB.includes("~"))).toBe(true); // clashes between A's allowed sections are silent; B's and cross-schedule ones are reported
+    expect(found.length).toBeGreaterThan(0);
+    expect(found.some((c) => !c.sectionIdA.includes("~") && !c.sectionIdB.includes("~"))).toBe(false);
   });
 });

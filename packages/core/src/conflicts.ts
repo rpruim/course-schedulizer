@@ -1,4 +1,5 @@
 import { meetingsOverlap, scheduled } from "./overlap.js";
+import { allowedCollisions } from "./rules.js";
 import type { Schedule, Session } from "./types.js";
 
 export type ConflictType = "Instructor" | "Room" | "Wildcard";
@@ -19,7 +20,8 @@ const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 /**
  * All conflicts in a schedule (spec §6): for every pair of different sections
  * that are concurrent and have meetings overlapping in time, one conflict per
- * (pair, type, detail) — instructor, room or wildcard. (Constraint rules are checked by
+ * (pair, type, detail) — instructor, room or wildcard, except for pairs an “Allow collisions” rule names.
+ * (Constraint rules are checked by
  * `findRuleViolations`, which is not about pairs.)
  */
 export function findConflicts(schedule: Schedule): Conflict[] {
@@ -42,6 +44,7 @@ export function findConflicts(schedule: Schedule): Conflict[] {
     people.set(id, names);
   }
 
+  const mayCollide = allowedCollisions(schedule);
   const found = new Map<string, Conflict>();
   const record = (type: ConflictType, a: Session, b: Session, detail: string) => {
     const [x, y] = a.sectionId < b.sectionId ? [a, b] : [b, a];
@@ -58,6 +61,7 @@ export function findConflicts(schedule: Schedule): Conflict[] {
       const b = meetings[j]!;
       if (a.sectionId === b.sectionId) continue;
       if (!meetingsOverlap(schedule, a, b)) continue;
+      if (mayCollide(a.sectionId, b.sectionId)) continue;
 
       const pa = people.get(a.sectionId)!;
       const shared = [...people.get(b.sectionId)!].filter((n) => pa.has(n));

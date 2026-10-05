@@ -273,7 +273,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           (and its sections are outlined in red), and the <Link to="/constraints">Constraints</Link> tab shows each rule 
           and whether it is met. Click a rule, or <em>Add rule</em>, to edit it; the editor
           says the rule in words and checks it against your schedule as you type.
-          There are two types of constraint rules.
+          There are several types of constraint rules.
         </p>
         <p>
           A rule belongs to the schedule it is saved in, and applies only to that schedule’s sections, even when several schedules are
@@ -330,6 +330,13 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           it can be limited to some terms) as long as its start time and length are those of a standard time and its days are some, but not all, of that time’s days. A meeting that matches no standard time at all is still flagged.
           The flag says when a subset rule would allow the meeting.
         </p>
+        <h3>Allow collisions</h3>
+        <p>
+          Two sections that share an instructor, or a room, at overlapping times are reported as a conflict. An <em>Allow collisions</em> rule says that some courses are meant to: for example a seminar
+          run as both a 200- and a 300-level course, with identical class sessions. List the courses (one per line, with <code>*</code> and the other patterns, and a section letter if only one section is meant);
+          sections that are both named by the rule are never reported as conflicting with each other, whatever they share. Sections the rule does not name conflict as usual, and a rule can be limited to some terms.
+          It silences only the conflicts reported in the Conflicts tab: a <em>Take together</em> rule still treats the courses as clashing.
+        </p>
         <h3>Back-to-back classes</h3>
         <p>
           “Each of these instructors should teach <em>at most</em> (or <em>at least</em>) <em>n</em> consecutive classes.” One class follows another when it starts within 20 minutes of the other’s end
@@ -362,6 +369,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dd><em>Colloquium time.</em> Course AMUS 241; allow R, 50 minutes, starting 15:05.</dd>
           <dt>Subset of standard times</dt>
           <dd><em>Harmonic structures may meet one day of TR.</em> Course AMUS 296, which meets on Tuesday alone at 8:00 for 100 minutes and is not flagged; BHAV 226 on Friday alone at 9:15 is still flagged, because the rule does not name it.</dd>
+          <dt>Allow collisions</dt>
+          <dd><em>The seminar runs at two levels.</em> Courses CRUD 290, CRUD 390; the two listings of one seminar share an instructor, a room and a time and are not reported.</dd>
           <dt>Modify standard times: disallow</dt>
           <dd><em>No 8:00 MWF.</em> Every course (<code>*</code>); disallow MWF, 65 minutes, starting 8:00.</dd>
           <dt>Back-to-back: at most</dt>

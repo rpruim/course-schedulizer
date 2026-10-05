@@ -21,3 +21,5 @@ R2,SP,Full,AMUS,235,A,Cy Fictional,4,4,TR,10:20,100,NH 103,Multivoice Analysis,L
 R2,SP,Full,BHAV,219,A,Eli Specimen,4,4,TR,10:20,100,NH 105,Models of Change,Lecture,In-Person,
 R2,SP,Full,AMUS,296,A,Cy Fictional,4,4,T,08:00,100,NH 103,Introductory Harmonic Structures,Lecture,In-Person,Tuesday only: some of the days of TR at 8:00; allowed by this department's subset rule
 R2,SP,Full,BHAV,226,A,Eli Specimen,4,4,F,09:15,65,NH 105,Applied Field Analysis,Lecture,In-Person,Friday only: some of the days of MWF at 9:15; not covered by the subset rule
+R2,FA,Full,CRUD,290,A,Hal Fakename,4,4,TR,14:10,100,SB 123,Urban Seminar,Lecture,In-Person,"A seminar run as a 200- and a 300-level course: same instructor, room and time; allowed by this department's rule"
+R2,FA,Full,CRUD,390,A,Hal Fakename,0,4,TR,14:10,100,SB 123,Urban Seminar,Lecture,In-Person,The 300-level listing of the seminar; its load is counted with CRUD 290
