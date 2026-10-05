@@ -16,8 +16,12 @@ describe("presets", () => {
   it("name only real columns, and the instructor one compares per instructor", () => {
     const keys = new Set(tableColumns(cmp(A, B)).map((c) => c.key));
     expect(keys.size).toBeGreaterThan(0);
-    expect(PRESETS.map((p) => p.id)).toEqual(["mismatches", "sections", "courseLoad", "termLoad", "instructorLoad"]);
+    expect(PRESETS.map((p) => p.id)).toEqual(["mismatches", "sections", "courseLoad", "termLoad", "instructorLoad", "submittedRegistrar"]);
     expect(PRESETS.find((p) => p.id === "instructorLoad")!.rows).toBe("instructor");
+    const sr = PRESETS.find((p) => p.id === "submittedRegistrar")!;
+    expect(Object.keys(sr.roles)).toEqual(["Term", "TermPart", "Prefix", "CourseNumber", "Section", "Faculty", "FacultyLoad", "MeetingDays", "StartTime", "MeetingDuration", "Classroom"]);
+    expect(Object.values(sr.roles).every((r) => r === "group")).toBe(true);
+    expect(sr.rows).toBe("section");
     expect(Object.values(PRESETS[0]!.roles).every((r) => r === "group")).toBe(true);
   });
 });

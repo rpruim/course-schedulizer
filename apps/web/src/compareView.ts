@@ -75,6 +75,13 @@ export const PRESETS: Preset[] = [
     roles: { ...group("Term", "Faculty"), FacultyLoad: "aggregate" },
     rows: "instructor",
   },
+  {
+    id: "submittedRegistrar",
+    label: "Submitted vs Registrar",
+    description: "Check a schedule against what the registrar has: every column that says when, where and by whom a section is taught is a grouping column (term, part, course, section, instructor, load, days, start time, length, room), and the rest are ignored, so a section that differs in any of them shows up as a row for each schedule.",
+    roles: group("Term", "TermPart", "Prefix", "CourseNumber", "Section", "Faculty", "FacultyLoad", "MeetingDays", "StartTime", "MeetingDuration", "Classroom"),
+    rows: "section",
+  },
 ];
 
 export const DEFAULT_PRESET = PRESETS[2]!;
