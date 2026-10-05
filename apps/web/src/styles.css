@@ -361,7 +361,7 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 
 /* a drop-down with check boxes */
 .multi { position: relative; }
-.multi-button { min-width: 8rem; max-width: 16rem; height: 32px; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 8px; text-align: left; font-weight: normal; }
+.multi-button { min-width: 8rem; max-width: 16rem; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 8px; text-align: left; font-weight: normal; }
 .multi-summary { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .multi-list { position: absolute; z-index: 20; top: 100%; left: 0; min-width: 100%; max-height: 18rem; overflow-y: auto; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); box-shadow: 0 6px 18px rgba(0, 0, 0, .3); }
 .multi-item { display: flex; align-items: center; gap: 6px; padding: 2px 0; white-space: nowrap; cursor: pointer; }
@@ -402,3 +402,7 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 .tip-first { font-weight: 600; }
 .tip-flag { display: flex; align-items: center; gap: 6px; margin: 6px -4px 0; padding: 3px 6px; border-left: 4px solid #D55E00; background: var(--conflict); }
 .tip-flag.nonstandard { border-left-color: #E69F00; background: var(--nonstandard); }
+
+/* drop-downs, check-box drop-downs (.multi-button) and text boxes in a bar of filters are one height, whatever the browser makes of a native select */
+.bar select, .bar input:not([type=checkbox]):not([type=radio]), .bar .multi-button { height: 28px; box-sizing: border-box; }
+.bar .multi-button { padding-top: 0; padding-bottom: 0; }
