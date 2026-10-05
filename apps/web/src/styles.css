@@ -409,3 +409,5 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 
 /* a day that every selected section has, suggested in gray in the mass editor until a day is clicked */
 .day.suggested { background: var(--panel); color: var(--muted); border-style: dashed; }
+
+.modify-selection { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }

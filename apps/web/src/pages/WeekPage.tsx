@@ -10,7 +10,7 @@ import { useRemembered } from "../remember";
 import { keyFor, openColorKey, setColorKey, useColorBy } from "../colorKey";
 import { inPartOrder, termsAcross, yearsAcross } from "../model";
 import { MERGED_ID, useWorkspace } from "../state";
-import { COLOR_BY, groupGrids, hourLabel, termsFor, weekGrids, type Block, type ColorBy, type Grid, type GridKind } from "../week";
+import { COLOR_BY, colorValueOf, groupGrids, hourLabel, termsFor, weekGrids, type Block, type ColorBy, type Grid, type GridKind } from "../week";
 import { Empty, NoneShown } from "./SchedulePage";
 
 const DAY_NAMES: Record<string, string> = { M: "Mon", T: "Tue", W: "Wed", R: "Thu", F: "Fri", S: "Sat", U: "Sun" };
@@ -123,6 +123,21 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
     if (mass) for (const e of ws.includedEntries) for (const sec of e.schedule.sessions) keys.add(`${e.id}\u0001${sec.sectionId}`);
     return keys;
   }, [mass, ws.includedEntries]);
+  // Every section that matches the filter, in every year, term and part of the term (not only the ones on this grid).
+  const filteredKeys = useMemo(() => {
+    const keys: string[] = [];
+    if (!mass) return keys;
+    const values = new Set(filterValues);
+    for (const e of ws.includedEntries) {
+      const seen = new Set<string>();
+      for (const s of e.schedule.sessions) {
+        if (seen.has(s.sectionId) || (values.size > 0 && !values.has(colorValueOf(e.schedule, filterBy, s)))) continue;
+        seen.add(s.sectionId);
+        keys.push(`${e.id}\u0001${s.sectionId}`);
+      }
+    }
+    return keys;
+  }, [mass, ws.includedEntries, filterBy, filterValues]);
   const selectedTotal = [...selected].filter((k) => everySection.has(k)).length;
   // Selected sections that the filters hide: counted above, offered (but not assumed) by the edit dialog.
   const shownKeys = new Set(visible.map(keyOf));
@@ -233,8 +248,13 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
         <>
           <p className="muted small">Click sections to select or deselect them: selected sections have a green outline. Use the filter to narrow what is shown, then choose <em>Edit selected</em>.</p>
           <div className="bar">
-            <button onClick={() => setSelected((cur) => new Set([...cur, ...visible.map(keyOf)]))} disabled={picks.length === visible.length}>Add visible courses to selection</button>
-            <button onClick={() => { const shown = new Set(visible.map(keyOf)); setSelected((cur) => new Set([...cur].filter((k) => !shown.has(k)))); }} disabled={picks.length === 0}>Remove visible courses from selection</button>
+            <span className="modify-selection" role="group" aria-label="Modify selection">
+              <span className="muted">Modify selection:</span>
+              <button onClick={() => setSelected((cur) => new Set([...cur, ...visible.map(keyOf)]))} disabled={picks.length === visible.length} title="Select every section on this grid">+ Add visible</button>
+              <button onClick={() => { const shown = new Set(visible.map(keyOf)); setSelected((cur) => new Set([...cur].filter((k) => !shown.has(k)))); }} disabled={picks.length === 0} title="Deselect every section on this grid">− Remove visible</button>
+              <button onClick={() => setSelected((cur) => new Set([...cur, ...filteredKeys]))} disabled={filteredKeys.every((k) => selected.has(k))} title={`Select every section that matches the filter, in every year, term and part of the term (${filteredKeys.length})`}>+ Add filtered</button>
+              <button onClick={() => { const all = new Set(filteredKeys); setSelected((cur) => new Set([...cur].filter((k) => !all.has(k)))); }} disabled={!filteredKeys.some((k) => selected.has(k))} title="Deselect every section that matches the filter, in every year, term and part of the term">− Remove filtered</button>
+            </span>
             <button onClick={() => { setSelected(new Set()); setMassMessage(""); }} disabled={selected.size === 0} title="Deselects every section, including any that the filters are hiding">Clear selection</button>
             <button className="primary" onClick={() => setMassOpen(true)} disabled={picks.length + hiddenPicks.length === 0}>Edit selected…</button>
             <span className="muted">{selectedTotal} of {everySection.size} section{everySection.size === 1 ? "" : "s"} selected, including {picks.length} of {visible.length} visible section{visible.length === 1 ? "" : "s"}</span>
