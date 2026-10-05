@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import { partsFor } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
@@ -9,7 +10,7 @@ import { useRemembered } from "../remember";
 import { keyFor, openColorKey, setColorKey, useColorBy } from "../colorKey";
 import { termsAcross, yearsAcross } from "../model";
 import { MERGED_ID, useWorkspace } from "../state";
-import { COLOR_BY, groupGrids, hourLabel, termsFor, weekGrids, type ColorBy, type Grid, type GridKind } from "../week";
+import { COLOR_BY, groupGrids, hourLabel, termsFor, weekGrids, type Block, type ColorBy, type Grid, type GridKind } from "../week";
 import { Empty, NoneShown } from "./SchedulePage";
 
 const DAY_NAMES: Record<string, string> = { M: "Mon", T: "Tue", W: "Wed", R: "Thu", F: "Fri", S: "Sat", U: "Sun" };
@@ -297,6 +298,22 @@ function WeekGrid({ grid, onOpen, selected }: { grid: Grid; onOpen: (sectionId: 
     return w >= 100 ? 0 : w >= 74 ? 1 : 2;
   };
   const size = (lanes: number) => ["", " small", " tiny"][level(lanes)]!;
+  // The hover text is drawn here, not as a title, so a conflict can have its icon and color: the details first, the flag last.
+  const [tip, setTip] = useState<{ block: Block; left: number; top: number; above: boolean } | undefined>();
+  const timer = useRef<number | undefined>(undefined);
+  const showTip = (block: Block, el: HTMLElement) => {
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => {
+      const r = el.getBoundingClientRect();
+      const above = r.bottom + 170 > window.innerHeight && r.top > 170;
+      setTip({ block, left: Math.max(8, Math.min(r.left, window.innerWidth - 300)), top: above ? r.top - 4 : r.bottom + 4, above });
+    }, 250);
+  };
+  const hideTip = () => {
+    window.clearTimeout(timer.current);
+    setTip(undefined);
+  };
+  useEffect(() => () => window.clearTimeout(timer.current), []);
   return (
     <div className="week" ref={ref} style={{ ["--days" as string]: grid.days.length, ["--hour" as string]: `${HOUR_PX}px` }}>
       <div className="week-head">
@@ -314,8 +331,12 @@ function WeekGrid({ grid, onOpen, selected }: { grid: Grid; onOpen: (sectionId: 
                 key={b.key}
                 className={`block${size(b.lanes)}${b.conflict ? " conflict" : b.nonStandard ? " nonstandard" : ""}${b.hue === undefined ? " nocolor" : ""}${selected?.(b.sectionId) ? " selected" : ""}`}
                 aria-pressed={selected ? selected(b.sectionId) : undefined}
-                title={[b.conflict ? "Conflict" : b.nonStandard ? "Not a standard time" : "", b.detail].filter(Boolean).join("\n")}
-                onClick={() => onOpen(b.sectionId)}
+                aria-label={[b.detail.replace(/\n/g, ", "), b.conflict ? "Conflict" : b.nonStandard ? "Not a standard time" : ""].filter(Boolean).join(". ")}
+                onMouseEnter={(e) => showTip(b, e.currentTarget)}
+                onMouseLeave={hideTip}
+                onFocus={(e) => showTip(b, e.currentTarget)}
+                onBlur={hideTip}
+                onClick={() => { hideTip(); onOpen(b.sectionId); }}
                 style={{
                   top: px(b.start),
                   height: Math.max(18, px(b.end) - px(b.start) - 1),
@@ -340,6 +361,13 @@ function WeekGrid({ grid, onOpen, selected }: { grid: Grid; onOpen: (sectionId: 
           </div>
         ))}
       </div>
+      {tip && createPortal(
+        <div className={`tip${tip.above ? " above" : ""}`} role="tooltip" style={{ left: tip.left, top: tip.top }}>
+          {tip.block.detail.split("\n").map((line, i) => <div key={i} className={i === 0 ? "tip-first" : undefined}>{line}</div>)}
+          {tip.block.conflict ? <div className="tip-flag conflict"><Warn /> <strong>Conflict</strong></div> : tip.block.nonStandard ? <div className="tip-flag nonstandard"><Clock /> <strong>Not a standard time</strong></div> : null}
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }
