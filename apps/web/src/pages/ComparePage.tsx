@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   COMPARE_COLUMNS,
   COUNT_KEY,
@@ -101,11 +101,43 @@ export function ComparePage() {
   const only = onlyDiff ?? defaultOnlyDifferences(comparison);
   const rows = useMemo(() => visibleRows(comparison, only), [comparison, only]);
   const columns = useMemo(() => tableColumns(comparison), [comparison]);
+  // With exactly one aggregate, its columns (a value for each schedule, and the difference) stay in view at the right
+  // while the grouping columns scroll under them.
+  const frozen = useMemo(
+    () => (comparison.aggregates.length === 1 ? columns.flatMap((c, i) => (c.key.startsWith("a") || c.key.startsWith("d") ? [i] : [])) : []),
+    [comparison, columns],
+  );
+  const frozenAt = (i: number) => (frozen.includes(i) ? ` frozen${i === frozen[0] ? " frozen-first" : ""}` : "");
+  const frozenStyle = (i: number, tone?: string): CSSProperties | undefined =>
+    frozen.includes(i) ? { ["--r" as string]: `var(--fr-${i})`, ...(tone ? { backgroundImage: `linear-gradient(${tone}, ${tone})` } : {}) } : undefined;
+  // How far from the right edge each frozen column sits: the widths of the frozen columns after it.
+  useLayoutEffect(() => {
+    const t = table.current;
+    const head = t?.tHead?.rows[0];
+    if (!t || !head) return;
+    const box = t.parentElement;
+    const place = () => {
+      let right = 0;
+      for (let k = frozen.length - 1; k >= 0; k--) {
+        const i = frozen[k]!;
+        t.style.setProperty(`--fr-${i}`, `${right}px`);
+        right += head.cells[i + 1]?.offsetWidth ?? 0;
+      }
+      // Frozen columns that would take more than 60% of the box (many schedules, a narrow window) are left to scroll.
+      t.classList.toggle("freezing", frozen.length > 0 && right <= (box?.clientWidth ?? 0) * 0.6);
+    };
+    place();
+    const watch = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(place);
+    watch?.observe(t);
+    if (box) watch?.observe(box);
+    return () => watch?.disconnect();
+  }, [frozen, columns, rows.length]);
   const tones = useMemo(() => {
     const t = rowTones(comparison);
     return t ? new Map(comparison.rows.map((r, i) => [r, t[i]] as const)) : undefined;
   }, [comparison]);
   const fillViewport = useFillViewport();
+  const table = useRef<HTMLTableElement>(null);
   const sorting = useSort(rows, (r: ComparisonRow, key: string) => columns.find((c) => c.key === key)?.sort(r));
   const { countForced } = resolvePartition({ roles });
   const summary = describeSetup(roles, rowKind);
@@ -355,12 +387,12 @@ export function ComparePage() {
         <p className="note ok">{comparison.rows.length === 0 ? "Nothing to compare with these columns." : "No differences: the schedules agree on everything compared."}</p>
       ) : (
         <div className="table-wrap cmp-wrap" ref={fillViewport}>
-          <table className="cmp">
+          <table className="cmp" ref={table}>
             <thead>
               <tr>
                 <th className="caret" aria-label="Show the sections behind each row" />
-                {columns.map((c) => (
-                  <SortTh key={c.key} sorting={sorting} sortKey={c.key} className={c.numeric ? "num" : undefined}>
+                {columns.map((c, ci) => (
+                  <SortTh key={c.key} sorting={sorting} sortKey={c.key} className={`${c.numeric ? "num" : ""}${frozenAt(ci)}`.trim() || undefined} style={frozenStyle(ci)}>
                     <span className="cmp-head">{c.label}{c.sub && <small>{c.sub}</small>}</span>
                   </SortTh>
                 ))}
@@ -383,11 +415,11 @@ export function ComparePage() {
                     title={isOpen ? "Hide the sections behind this row" : "Show the sections behind this row"}
                   >
                     <td className="caret" aria-hidden="true">{isOpen ? "▾" : "▸"}</td>
-                    {columns.map((c) => {
+                    {columns.map((c, ci) => {
                       const absent = c.aggregate !== undefined && c.key.startsWith("a") && c.text(r) === "—";
                       const cellDiffers = c.aggregate !== undefined && !c.key.startsWith("d") && aggregateDiffers(r, c.aggregate);
                       return (
-                        <td key={c.key} className={`${c.numeric ? "num" : ""}${absent ? " absent" : ""}${cellDiffers ? " diff" : ""}`}>{c.text(r)}</td>
+                        <td key={c.key} className={`${c.numeric ? "num" : ""}${absent ? " absent" : ""}${cellDiffers ? " diff" : ""}${frozenAt(ci)}`} style={frozenStyle(ci, color)}>{c.text(r)}</td>
                       );
                     })}
                   </tr>

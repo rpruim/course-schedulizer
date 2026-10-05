@@ -416,3 +416,9 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 .cmp-wrap { max-height: calc(100vh - 150px); min-height: 12rem; overflow: auto; }
 table.cmp > thead > tr > th { z-index: 2; box-shadow: 0 1px 0 var(--line); }
 table.mini th { position: static; }
+
+/* Compare, with one aggregate: its columns stay at the right edge while the others scroll under them */
+table.cmp.freezing .frozen { position: sticky; right: var(--r, 0); background-color: var(--bg); }
+table.cmp.freezing th.frozen { z-index: 3; }
+table.cmp.freezing td.frozen { z-index: 1; }
+table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }

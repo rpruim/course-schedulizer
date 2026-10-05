@@ -158,11 +158,9 @@ export function tableColumns(c: Comparison): TableColumn[] {
       });
     });
     if (c.schedules.length === 2 && a.kind === "number") {
-      const [first, second] = c.schedules;
       cols.push({
         key: `d${ai}`,
         label: "Difference",
-        sub: `${second!.name} − ${first!.name}`,
         numeric: true,
         value: (r) => difference(r, ai),
         text: (r) => {

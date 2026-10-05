@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 
 export type SortValue = string | number | null | undefined;
 export interface Sort {
@@ -59,10 +59,10 @@ export function useSort<T>(rows: T[], get: (row: T, key: string) => SortValue): 
 }
 
 /** A column header that sorts the table when clicked; click again to reverse. */
-export function SortTh<T>({ sorting, sortKey, children, className }: { sorting: Sorting<T>; sortKey: string; children: ReactNode; className?: string }) {
+export function SortTh<T>({ sorting, sortKey, children, className, style }: { sorting: Sorting<T>; sortKey: string; children: ReactNode; className?: string; style?: CSSProperties }) {
   const s = sorting.state(sortKey);
   return (
-    <th className={className} aria-sort={s === 0 ? "none" : s === 1 ? "ascending" : "descending"}>
+    <th className={className} style={style} aria-sort={s === 0 ? "none" : s === 1 ? "ascending" : "descending"}>
       <button type="button" className="sort" onClick={() => sorting.click(sortKey)} title="Click to sort; click again to reverse">
         {children}
         <span className="arrow" aria-hidden="true">{s === 1 ? "▲" : s === -1 ? "▼" : ""}</span>

@@ -31,7 +31,7 @@ describe("tableColumns", () => {
     const cols = tableColumns(cmp(A, B));
     expect(cols.map((c) => [c.key, c.label, c.sub ?? ""])).toEqual([
       ["g0", "Prefix", ""], ["g1", "CourseNumber", ""],
-      ["a0_0", "FacultyLoad", "Plan A"], ["a0_1", "FacultyLoad", "Plan B"], ["d0", "Difference", "Plan B − Plan A"],
+      ["a0_0", "FacultyLoad", "Plan A"], ["a0_1", "FacultyLoad", "Plan B"], ["d0", "Difference", ""],
     ]);
   });
   it("has no difference column for three schedules or a text aggregate", () => {
@@ -124,7 +124,7 @@ describe("comparisonSheets", () => {
   it("has the columns and rows as shown, with numbers as numbers and a blank where a schedule lacks the group", () => {
     const [main] = comparisonSheets(c, columns, c.rows, tones, info);
     expect(main!.name).toBe("Comparison");
-    expect(main!.header).toEqual(["Prefix", "CourseNumber", "FacultyLoad\nPlan A", "FacultyLoad\nPlan B", "Difference\nPlan B − Plan A"]);
+    expect(main!.header).toEqual(["Prefix", "CourseNumber", "FacultyLoad\nPlan A", "FacultyLoad\nPlan B", "Difference"]);
     expect(main!.rows).toEqual([["DIGI", "100", null, 2, 2], ["MUSC", "101", 4, 6, 2], ["URBS", "200", 3, null, -3]]);
     expect(main!.filter).toBe(true);
   });
