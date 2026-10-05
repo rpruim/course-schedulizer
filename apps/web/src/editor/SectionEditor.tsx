@@ -39,6 +39,12 @@ interface Props {
 
 type Collision = Extract<SaveResult, { kind: "collision" }>;
 
+/** The parts of a term for a drop-down: the whole term, then the halves together, then the quarters and the rest as they are listed. */
+const inPartOrder = <P extends { code: string }>(parts: P[]): P[] => {
+  const first = ["Full", "First", "Second"].map((c) => parts.find((p) => p.code === c)).filter((p): p is P => p !== undefined);
+  return [...first, ...parts.filter((p) => !first.includes(p))];
+};
+
 export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }: Props) {
   const ws = useWorkspace();
   const entry = scheduleId ? ws.get(scheduleId) : undefined;
@@ -191,8 +197,8 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
           <fieldset>
             <legend>Course</legend>
             <div className="row top">
-              {field("prefix", "Prefix", { list: "dl-prefix", size: 8 })}
-              {field("courseNumber", "Number", { size: 8 })}
+              {field("prefix", "Prefix", { list: "dl-prefix", size: 6 })}
+              {field("courseNumber", "Number", { size: 6 })}
               {field("section", "Section", { size: 4, hint: "? if the registrar assigns it" })}
               <div className="grow">{field("shortTitle", "Title")}</div>
             </div>
@@ -204,24 +210,22 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
               </label>
               <label className="f">
                 <span>Term</span>
-                <select value={form.term} onChange={(e) => { set("term", e.target.value); set("termPart", "Full"); }}>
-                  {terms.map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
+                <select value={form.term} title={terms.find((t) => t.code === form.term)?.name} onChange={(e) => { set("term", e.target.value); set("termPart", "Full"); }}>
+                  {terms.map((t) => <option key={t.code} value={t.code} title={t.name}>{t.code}</option>)}
                   {!terms.some((t) => t.code === form.term) && <option value={form.term}>{form.term || "—"}</option>}
                 </select>
                 {err("term")}
               </label>
               <label className="f">
                 <span>Part of term</span>
-                <select value={form.termPart} onChange={(e) => set("termPart", e.target.value)}>
-                  {parts.map((p) => <option key={p.code} value={p.code}>{p.name} (weeks {p.startWeek}–{p.endWeek})</option>)}
+                <select value={form.termPart} title={(() => { const p = parts.find((x) => x.code === form.termPart); return p ? `${p.name} (weeks ${p.startWeek}–${p.endWeek})` : undefined; })()} onChange={(e) => set("termPart", e.target.value)}>
+                  {inPartOrder(parts).map((p) => <option key={p.code} value={p.code} title={`${p.name} (weeks ${p.startWeek}–${p.endWeek})`}>{p.name}</option>)}
                   {!parts.some((p) => p.code === form.termPart) && <option value={form.termPart}>{form.termPart}</option>}
                 </select>
                 {err("termPart")}
               </label>
-            </div>
-            <div className="row top">
-              {field("instructionalMethod", "Instructional method", { list: "dl-method" })}
-              {field("deliveryMode", "Delivery", { list: "dl-delivery", size: 10 })}
+              <div className="grow">{field("instructionalMethod", "Instructional method", { list: "dl-method" })}</div>
+              {field("deliveryMode", "Delivery", { list: "dl-delivery", size: 9 })}
             </div>
           </fieldset>
 
@@ -246,6 +250,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
               const summary = meetingSummary(m);
               return (
                 <div className="meeting" key={i}>
+                  <div className="days-row">
                   <div className="days" role="group" aria-label="Days">
                     {DAYS.map((d) => (
                       <button
@@ -259,6 +264,8 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
                       </button>
                     ))}
                   </div>
+                  {summary && <div className="meeting-summary">{summary}</div>}
+                  </div>
                   <div className="meeting-fields">
                     <label className="f"><span>Start</span><input type="time" value={m.start} onChange={(e) => setMeeting(i, { start: e.target.value })} /></label>
                     <label className="f">
@@ -271,7 +278,6 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
                     <label className="f"><span>Room</span><input value={m.room} list="dl-rooms" size={10} onChange={(e) => setMeeting(i, { room: e.target.value })} /></label>
                     <button type="button" className="link" onClick={() => set("meetings", form.meetings.filter((_, j) => j !== i))}><Trash /> Remove</button>
                   </div>
-                  {summary && <div className="meeting-summary">{summary}</div>}
                   {["days", "start", "duration"].map((k) => err(`meetings.${i}.${k}`))}
                 </div>
               );

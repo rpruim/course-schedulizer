@@ -1,5 +1,6 @@
 # Course Schedulizer 2.0.3.9000
 
+* The section editor is wider and shorter: the year, term, part of term, instructional method and delivery share one line (terms show their codes, and parts their names without the weeks, with the second half right after the first), the prefix and number boxes are smaller, and a meeting's summary sits on the line of the day buttons.
 * In the section editor, *More details* has its border when it is folded as well as when it is open.
 
 # Course Schedulizer 2.0.3
