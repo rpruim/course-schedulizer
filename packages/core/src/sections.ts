@@ -153,7 +153,7 @@ export function changeLetter(
   }
 }
 
-export type RelabelScope = { kind: "schedule" } | { kind: "course"; offering: Offering };
+export type RelabelScope = { kind: "schedule" } | { kind: "course"; offering: Offering } | { kind: "sections"; ids: Iterable<string> };
 
 export interface LetterChange {
   sectionId: string;
@@ -177,15 +177,23 @@ function firstMeetingTime(meetings: Session[]): number {
  * current relative order). Sections lettered `?` are left alone and do not use up a
  * letter. Section ids are untouched. Returns the new schedule
  * and the list of changes, so a UI can preview by discarding the schedule.
+ *
+ * With `{ kind: "sections", ids }` only those sections are re-lettered, among themselves: in an offering where they are
+ * all of its sections they get A, B, C…; where other sections are not chosen, they trade the letters they already
+ * hold, so a letter an unchosen section has is never taken.
  */
 export function relabelByTime(schedule: Schedule, scope: RelabelScope = { kind: "schedule" }): { schedule: Schedule; changes: LetterChange[] } {
   const only = scope.kind === "course" ? offeringKey(scope.offering) : undefined;
+  const chosen = scope.kind === "sections" ? new Set(scope.ids) : undefined;
+  const sizes = new Map<string, number>(); // sections in each offering that take part in lettering at all
+  for (const s of firstSessions(schedule.sessions).values()) if (!isUnassignedLetter(s.section)) sizes.set(offeringKey(s), (sizes.get(offeringKey(s)) ?? 0) + 1);
   const groups = new Map<string, { id: string; letter: string; time: number; order: number }[]>();
   const meetings = new Map<string, Session[]>();
   for (const s of schedule.sessions) meetings.set(s.sectionId, [...(meetings.get(s.sectionId) ?? []), s]);
   [...firstSessions(schedule.sessions).values()].forEach((s, order) => {
     const key = offeringKey(s);
     if (only !== undefined && key !== only) return;
+    if (chosen && !chosen.has(s.sectionId)) return;
     if (isUnassignedLetter(s.section)) return; // left for the registrar: neither re-lettered nor counted
     const g = groups.get(key) ?? [];
     g.push({ id: s.sectionId, letter: s.section, time: firstMeetingTime(meetings.get(s.sectionId)!), order });
@@ -193,7 +201,9 @@ export function relabelByTime(schedule: Schedule, scope: RelabelScope = { kind: 
   });
   const next = new Map<string, string>();
   const changes: LetterChange[] = [];
-  for (const g of groups.values()) {
+  for (const [key, g] of groups) {
+    // Chosen sections that are only some of an offering trade the letters they hold; otherwise it is A, B, C…
+    const held = chosen && g.length < (sizes.get(key) ?? 0) ? g.map((x) => x.letter).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })) : undefined;
     // Unscheduled sections last, in their current letter order; scheduled by time.
     const sorted = [...g].sort((a, b) =>
       a.time !== b.time
@@ -201,7 +211,7 @@ export function relabelByTime(schedule: Schedule, scope: RelabelScope = { kind: 
         : a.letter.localeCompare(b.letter, undefined, { numeric: true, sensitivity: "base" }) || a.order - b.order,
     );
     sorted.forEach((x, i) => {
-      const to = toLetters(i + 1);
+      const to = held ? held[i]! : toLetters(i + 1);
       next.set(x.id, to);
       if (to !== x.letter) changes.push({ sectionId: x.id, from: x.letter, to });
     });

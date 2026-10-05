@@ -4,7 +4,7 @@ import { Move, Trash } from "./icons";
 
 /**
  * The open schedules: tick the ones to show in the views, click a name to make it the
- * current one (what Add, Re-letter and Export act on), rename, or remove.
+ * current one (what Add and Export act on), rename, or remove.
  */
 export function SchedulePicker() {
   const ws = useWorkspace();
@@ -90,7 +90,7 @@ export function SchedulePicker() {
                 }}
               />
             ) : (
-              <button className="name" onClick={() => ws.setCurrent(e.id)} title={isCurrent ? "The current schedule: Add, Re-letter and Export act on it" : "Make this the current schedule"}>
+              <button className="name" onClick={() => ws.setCurrent(e.id)} title={isCurrent ? "The current schedule: Add and Export act on it" : "Make this the current schedule"}>
                 {e.name}
               </button>
             )}

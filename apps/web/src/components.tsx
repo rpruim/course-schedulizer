@@ -1,15 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  constraintsNaming,
   exportFileName,
-  isUnassignedLetter,
   readWorkbook,
-  relabelByTime,
   writeWorkbook,
   type Issue,
   type Schedule,
 } from "@schedulizer/core";
-import { useLocation } from "react-router-dom";
 import { loadExamples, type Example } from "./examples";
 import { downloadBytes, XLSX_TYPE } from "./download";
 import { graphClient, sharedOpener } from "./onedrive/auth";
@@ -213,37 +209,13 @@ function ShareLink({ address, year }: { address: string; year: string }) {
   );
 }
 
-/** Undo/redo (for everything in the workspace) and re-letter by time for the current schedule. */
+/** Undo and redo, for everything in the workspace. */
 export function Toolbar() {
   const ws = useWorkspace();
-  // Section letters only appear on the Schedule tab and the week tabs.
-  const { pathname } = useLocation();
-  const showsLetters = ["/", "/dept", "/faculty", "/rooms"].includes(pathname);
-  const current = ws.current;
-  const schedule = current?.schedule;
-  const empty = !schedule || (schedule.sessions.length === 0 && schedule.nonTeaching.length === 0);
-
-  function reletter() {
-    if (!current) return;
-    const s = current.schedule;
-    const { changes } = relabelByTime(s);
-    if (changes.length === 0) return window.alert("Section letters are already in time order.");
-    const stale = changes.reduce((n, c) => n + constraintsNaming(s, c.sectionId).filter((k) => k.section !== "").length, 0);
-    const sample = changes.slice(0, 5).map((c) => `${c.sectionId}: ${c.from} → ${c.to}`).join("\n");
-    const warn = stale ? `\n\nWarning: ${stale} cohort-constraint row(s) name a section by letter and may stop matching it.` : "";
-    // sections lettered ? are left for the registrar to assign
-    const left = new Set(s.sessions.filter((x) => isUnassignedLetter(x.section)).map((x) => x.sectionId)).size;
-    const leftNote = left ? `\n\n${left} section${left === 1 ? "" : "s"} lettered ? ${left === 1 ? "is" : "are"} left alone (the registrar assigns those).` : "";
-    if (window.confirm(`Re-letter ${changes.length} section(s) of “${current.name}” by first class time, for all courses?\n\n${sample}${changes.length > 5 ? "\n…" : ""}${leftNote}${warn}\n\nYou can undo this.`)) {
-      ws.applyTo(current.id, (x: Schedule) => relabelByTime(x).schedule);
-    }
-  }
-
   return (
     <div className="toolbar">
       <button onClick={ws.undo} disabled={!ws.canUndo}>Undo</button>
       <button onClick={ws.redo} disabled={!ws.canRedo}>Redo</button>
-      {showsLetters && <button onClick={reletter} disabled={empty} title={current ? `Re-letter the sections of “${current.name}”` : ""}>Re-letter by time…</button>}
     </div>
   );
 }

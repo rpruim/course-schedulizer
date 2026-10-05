@@ -225,7 +225,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
             section a different letter, delete the other section, or cancel.</li>
           <li>A section lettered <strong>?</strong> is one the registrar will assign a letter to (common for courses taught across many departments). Any number of sections
             can be <code>?</code>; they never clash with each other and are never re-lettered.</li>
-          <li><strong>Re-letter by time</strong> (shown on the Schedule and week tabs) re-letters every section so letters follow the order of first class meeting, course by course.
+          <li><strong>Re-letter by time</strong> is on the <Link to="/massedit">Mass edit</Link> page and re-letters the <em>selected</em> sections so letters follow the order of first class meeting, course by course
+            (A, B, C… when all of a course’s sections are selected; if only some are, they trade the letters they already have, so no other section’s letter is taken). To re-letter everything, select all sections first.
             You see what will change first, and you can undo it.</li>
         </ul>
       </>
@@ -424,7 +425,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </p>
         <ul>
           <li>The <strong>Schedules</strong> row lists them. The <strong>tick box</strong> chooses which ones the views show. Click a name to make that schedule the <strong>current</strong> one:
-            <em> Add section</em>, <em>Add non-teaching load</em>, <em>Re-letter</em> and <em>Export</em> act on the current schedule, while clicking a section edits whichever schedule it belongs to.</li>
+            <em> Add section</em>, <em>Add non-teaching load</em> and <em>Export</em> act on the current schedule, while clicking a section edits whichever schedule it belongs to.</li>
           <li>Drag a schedule by the four-arrow handle at the left of its pill to change the <strong>order</strong> of the schedules (or focus the handle and press the left or right arrow key). The order is the order of the views, and of the merged names; the first schedule’s terms and parts are the ones a merged view uses. You can undo a move.</li>
           <li>The <strong>✎</strong> sets a short <strong>nickname</strong> that is shown instead of the file name (also on the Meta tab). If two or more schedules would be shown under the same name, each gets a number — <em>My Schedule (1)</em>, <em>My Schedule (2)</em> — so you can tell them apart. <strong>✕</strong> removes a schedule from the workspace; you can undo it.</li>
           <li><strong>View as merged / separate</strong> (it appears when two or more are ticked). <em>Merged</em>, the default, lays the ticked schedules over one another as if they were one, which is

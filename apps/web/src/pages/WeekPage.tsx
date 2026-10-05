@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
-import { deleteSections, keepSections, partsFor, type Schedule } from "@schedulizer/core";
+import { constraintsNaming, deleteSections, isUnassignedLetter, keepSections, partsFor, relabelByTime, type Schedule } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
 import { Check, Clock, Pencil, Trash, Warn } from "../icons";
 import { MassEditDialog, type Pick } from "../editor/MassEditDialog";
@@ -172,6 +172,25 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
     if (!retain) setSelected(new Set());
     setMassMessage(`Removed ${n} section${n === 1 ? "" : "s"}. You can undo this.`);
   };
+  // Re-lettering the selected sections by their first class time, within each course (see `relabelByTime`).
+  const reletterSelected = () => {
+    const plans = [...selectedBySchedule].flatMap(([id, ids]) => {
+      const e = ws.get(id);
+      return e ? [{ id, ids, name: e.name, before: e.schedule, ...relabelByTime(e.schedule, { kind: "sections", ids }) }] : [];
+    });
+    const changes = plans.flatMap((p) => p.changes.map((c) => ({ ...c, name: p.name })));
+    if (changes.length === 0) return window.alert("The letters of the selected sections are already in time order.");
+    const stale = plans.reduce((n, p) => n + p.changes.reduce((m, c) => m + constraintsNaming(p.before, c.sectionId).filter((k) => k.section !== "").length, 0), 0);
+    const left = plans.reduce((n, p) => n + new Set(p.before.sessions.filter((x) => p.ids.has(x.sectionId) && isUnassignedLetter(x.section)).map((x) => x.sectionId)).size, 0);
+    const several = plans.length > 1;
+    const sample = changes.slice(0, 5).map((c) => `${several ? `${c.name}: ` : ""}${c.sectionId}: ${c.from} → ${c.to}`).join("\n");
+    const warn = stale ? `\n\nWarning: ${stale} cohort-constraint row(s) name a section by letter and may stop matching it.` : "";
+    const note = left ? `\n\n${left} selected section${left === 1 ? "" : "s"} lettered ? ${left === 1 ? "is" : "are"} left alone (the registrar assigns those).` : "";
+    const how = "Within each course, the selected sections are lettered in order of their first class time (A, B, C… when all of a course's sections are selected; otherwise they trade the letters they have).";
+    if (!window.confirm(`Re-letter ${changes.length} of the selected sections?\n\n${how}\n\n${sample}${changes.length > 5 ? "\n…" : ""}${note}${warn}\n\nYou can undo this.`)) return;
+    ws.applyToMany(plans.map((p) => ({ id: p.id, fn: (s: Schedule) => relabelByTime(s, { kind: "sections", ids: p.ids }).schedule })));
+    setMassMessage(`Re-lettered ${changes.length} section${changes.length === 1 ? "" : "s"}. You can undo this.`);
+  };
   const pick = (scheduleId: string, sectionId: string) => {
     const p = resolve(scheduleId, sectionId);
     if (!p) return;
@@ -285,6 +304,7 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
           </div>
           <div className="bar">
             <button className="primary" onClick={() => setMassOpen(true)} disabled={picks.length + hiddenPicks.length === 0}><Pencil /> Edit selected…</button>
+            <button onClick={reletterSelected} disabled={selectedTotal === 0} title="Re-letter the selected sections A, B, C… in order of their first class time, within each course">Re-letter by time…</button>
             <button className="danger" onClick={() => removeSections(false)} disabled={selectedTotal === 0} title="Delete the selected sections from their schedules"><Trash /> Remove all selected</button>
             <button className="danger" onClick={() => removeSections(true)} disabled={toRemove(true) === 0} title="Delete every section that is not selected, in each schedule that has a selection (for example to cut a department's export down to the part you schedule)"><Trash /> Retain only selected</button>
             {massMessage && <span className="note ok" role="status">{massMessage}</span>}

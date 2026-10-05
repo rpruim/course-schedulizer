@@ -127,6 +127,25 @@ describe("relabelByTime", () => {
     expect(letters(schedule)["AY1-FA-MUSC101-A"]).toBe("A");
     expect(letters(schedule)["AY1-FA-MUSC102-A"]).toBe("B");
   });
+  it("can be limited to chosen sections: all of an offering get A, B, C…; some of it trade the letters they hold", () => {
+    // all four sections of MUSC 101 chosen: lettered A–D by time (the unscheduled one last)
+    const whole = relabelByTime(s(), { kind: "sections", ids: ["AY1-FA-MUSC101-A", "AY1-FA-MUSC101-B", "AY1-FA-MUSC101-C", "AY1-FA-MUSC101-D"] });
+    expect(letters(whole.schedule)).toMatchObject({ "AY1-FA-MUSC101-A": "C", "AY1-FA-MUSC101-B": "B", "AY1-FA-MUSC101-C": "A", "AY1-FA-MUSC101-D": "D", "AY1-FA-MUSC102-A": "A", "AY1-FA-MUSC102-B": "B" });
+    // only A (TR 9:00) and C (MWF 8:00) chosen: C is earlier, so they swap, and B and D keep their letters
+    const some = relabelByTime(s(), { kind: "sections", ids: ["AY1-FA-MUSC101-A", "AY1-FA-MUSC101-C"] });
+    expect(letters(some.schedule)).toMatchObject({ "AY1-FA-MUSC101-A": "C", "AY1-FA-MUSC101-B": "B", "AY1-FA-MUSC101-C": "A", "AY1-FA-MUSC101-D": "D" });
+    expect(some.changes.map((c) => [c.sectionId, c.from, c.to])).toEqual([["AY1-FA-MUSC101-A", "A", "C"], ["AY1-FA-MUSC101-C", "C", "A"]]);
+    // a lone chosen section has nothing to trade with; other courses are not touched
+    expect(relabelByTime(s(), { kind: "sections", ids: ["AY1-FA-MUSC102-A"] }).changes).toEqual([]);
+    // chosen sections of one course never touch another
+    expect(relabelByTime(s(), { kind: "sections", ids: ["AY1-FA-MUSC102-A", "AY1-FA-MUSC102-B"] }).changes.map((c) => c.sectionId)).toEqual(["AY1-FA-MUSC102-A", "AY1-FA-MUSC102-B"]);
+  });
+  it("leaves a chosen section lettered ? alone, and counts the rest as the whole offering", () => {
+    const sched = make(rec("?", meets("MWF", "8:00")), rec("B", meets("TR", "9:00")), rec("C", meets("MWF", "9:00")));
+    const r = relabelByTime(sched, { kind: "sections", ids: ["AY1-FA-MUSC101-?", "AY1-FA-MUSC101-B", "AY1-FA-MUSC101-C"] });
+    expect(r.changes.map((c) => [c.from, c.to])).toEqual([["C", "A"]]); // C meets before B; B is already second
+    expect(letters(r.schedule)["AY1-FA-MUSC101-?"]).toBe("?");
+  });
   it("is idempotent and does nothing to an already-ordered schedule", () => {
     const once = relabelByTime(s()).schedule;
     expect(relabelByTime(once).changes).toEqual([]);
