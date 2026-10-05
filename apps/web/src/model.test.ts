@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { importRecords, type Schedule } from "@schedulizer/core";
-import { filterRows, multiSectionRows, sectionRows, termsInUse, termsInUseAcross, timeRange, yearsAcross, yearsOf } from "./model";
+import { filterRows, inPartOrder, multiSectionRows, sectionRows, termsInUse, termsInUseAcross, timeRange, yearsAcross, yearsOf } from "./model";
 
 const sec = (prefix: string, n: string, letter: string, o: Record<string, string> = {}) => ({
   AcademicYear: "Y1", Term: "FA", Prefix: prefix, CourseNumber: n, Section: letter, ShortTitle: `${prefix} ${n}`, ...o,
@@ -103,4 +103,12 @@ describe("multiSectionRows", () => {
     expect(termsInUseAcross(entries).map((t) => t.code)).toEqual(["FA", "SP"]);
   });
   it("is empty for no schedules", () => expect(multiSectionRows([])).toEqual([]));
+});
+
+describe("inPartOrder", () => {
+  it("puts the whole term first, then the halves together, then the rest in their order", () => {
+    const parts = ["Full", "First", "A", "B", "Second", "C", "D"].map((code) => ({ code }));
+    expect(inPartOrder(parts).map((p) => p.code)).toEqual(["Full", "First", "Second", "A", "B", "C", "D"]);
+    expect(inPartOrder([{ code: "S1" }, { code: "Full" }]).map((p) => p.code)).toEqual(["Full", "S1"]);
+  });
 });

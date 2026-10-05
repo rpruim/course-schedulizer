@@ -168,3 +168,9 @@ export function termsInUseAcross(entries: Named[]): { code: string; name: string
   const used = new Set(entries.flatMap((e) => e.schedule.sessions.map((s) => s.term)));
   return termsAcross(entries).filter((t) => used.has(t.code));
 }
+
+/** The parts of a term for a drop-down: the whole term, then the halves together, then the quarters and the rest as they are listed. */
+export const inPartOrder = <P extends { code: string }>(parts: P[]): P[] => {
+  const first = ["Full", "First", "Second"].map((c) => parts.find((p) => p.code === c)).filter((p): p is P => p !== undefined);
+  return [...first, ...parts.filter((p) => !first.includes(p))];
+};

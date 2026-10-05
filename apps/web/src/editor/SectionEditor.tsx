@@ -1,3 +1,4 @@
+import { inPartOrder } from "../model";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   constraintsNaming,
@@ -38,12 +39,6 @@ interface Props {
 }
 
 type Collision = Extract<SaveResult, { kind: "collision" }>;
-
-/** The parts of a term for a drop-down: the whole term, then the halves together, then the quarters and the rest as they are listed. */
-const inPartOrder = <P extends { code: string }>(parts: P[]): P[] => {
-  const first = ["Full", "First", "Second"].map((c) => parts.find((p) => p.code === c)).filter((p): p is P => p !== undefined);
-  return [...first, ...parts.filter((p) => !first.includes(p))];
-};
 
 export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }: Props) {
   const ws = useWorkspace();

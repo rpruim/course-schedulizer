@@ -8,7 +8,7 @@ import { MassEditDialog, type Pick } from "../editor/MassEditDialog";
 import { MultiSelect } from "../MultiSelect";
 import { useRemembered } from "../remember";
 import { keyFor, openColorKey, setColorKey, useColorBy } from "../colorKey";
-import { termsAcross, yearsAcross } from "../model";
+import { inPartOrder, termsAcross, yearsAcross } from "../model";
 import { MERGED_ID, useWorkspace } from "../state";
 import { COLOR_BY, groupGrids, hourLabel, termsFor, weekGrids, type Block, type ColorBy, type Grid, type GridKind } from "../week";
 import { Empty, NoneShown } from "./SchedulePage";
@@ -171,7 +171,7 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
         {termParts.length > 1 && (
           <label className="field" title="Show the sections that meet during these weeks">Weeks
             <select value={part} onChange={(e) => setPickedPart(e.target.value)}>
-              {termParts.map((p) => (
+              {inPartOrder(termParts).map((p) => (
                 <option key={p.code} value={p.code}>{p.code === "Full" ? "Full term (all sections)" : `${p.name} (weeks ${p.startWeek}–${p.endWeek})`}</option>
               ))}
             </select>
