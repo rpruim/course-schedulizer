@@ -108,8 +108,7 @@ export function ComparePage() {
     [comparison, columns],
   );
   const frozenAt = (i: number) => (frozen.includes(i) ? ` frozen${i === frozen[0] ? " frozen-first" : ""}` : "");
-  const frozenStyle = (i: number, tone?: string): CSSProperties | undefined =>
-    frozen.includes(i) ? { ["--r" as string]: `var(--fr-${i})`, ...(tone ? { backgroundImage: `linear-gradient(${tone}, ${tone})` } : {}) } : undefined;
+  const frozenStyle = (i: number): CSSProperties | undefined => (frozen.includes(i) ? { ["--r" as string]: `var(--fr-${i})` } : undefined);
   // How far from the right edge each frozen column sits: the widths of the frozen columns after it.
   useLayoutEffect(() => {
     const t = table.current;
@@ -406,7 +405,7 @@ export function ComparePage() {
                 return (
                   <Fragment key={key}>
                   <tr
-                    style={color ? { background: color } : undefined}
+                    style={color ? { background: color, ["--tint" as string]: color } : undefined}
                     className={`clickable${r.differs ? " differs" : ""}${color ? " toned" : ""}`}
                     tabIndex={0}
                     aria-expanded={isOpen}
@@ -419,7 +418,7 @@ export function ComparePage() {
                       const absent = c.aggregate !== undefined && c.key.startsWith("a") && c.text(r) === "—";
                       const cellDiffers = c.aggregate !== undefined && !c.key.startsWith("d") && aggregateDiffers(r, c.aggregate);
                       return (
-                        <td key={c.key} className={`${c.numeric ? "num" : ""}${absent ? " absent" : ""}${cellDiffers ? " diff" : ""}${frozenAt(ci)}`} style={frozenStyle(ci, color)}>{c.text(r)}</td>
+                        <td key={c.key} className={`${c.numeric ? "num" : ""}${absent ? " absent" : ""}${cellDiffers ? " diff" : ""}${frozenAt(ci)}`} style={frozenStyle(ci)}>{c.text(r)}</td>
                       );
                     })}
                   </tr>

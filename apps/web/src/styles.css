@@ -13,12 +13,13 @@
   --nonstandard: #fdf0dc;
   --conflict-line: #efb98f;
   --nonstandard-line: #f2cf80;
+  --hover-outline: #0072B2;
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #14171a; --fg: #e8eaed; --muted: #9aa3ad; --line: #2e343b; --panel: #1d2126;
-    --accent: #d65a6e; --accent-fg: #14171a; --warn-bg: #3a3118; --err-bg: #3b1d20; --ok-bg: #1b3326; --conflict: #3b1d20; --nonstandard: #3a2d17; --conflict-line: #8f4a1c; --nonstandard-line: #8a6a1c;
+    --accent: #d65a6e; --accent-fg: #14171a; --warn-bg: #3a3118; --err-bg: #3b1d20; --ok-bg: #1b3326; --conflict: #3b1d20; --nonstandard: #3a2d17; --conflict-line: #8f4a1c; --nonstandard-line: #8a6a1c; --hover-outline: #56B4E9;
   }
 }
 * { box-sizing: border-box; }
@@ -77,9 +78,9 @@ tr.conflict td { background: var(--conflict); }
 
 /* section editor */
 tr.clickable { cursor: pointer; }
-tr.clickable:hover td, tr.clickable:focus td { background: var(--panel); outline: none; }
+tr.clickable:hover td, tr.clickable:focus-visible td { background: var(--panel); outline: none; }
 /* a row colored by its difference (Compare) keeps its color when hovered or focused */
-tr.clickable.toned:hover td, tr.clickable.toned:focus td { background: transparent; }
+tr.clickable.toned:hover td, tr.clickable.toned:focus-visible td { background: transparent; }
 tr.clickable.conflict:hover td { background: var(--conflict); filter: brightness(1.1); }
 dialog.editor { width: min(900px, calc(100vw - 24px)); max-height: calc(100vh - 24px); padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--fg); }
 dialog.editor::backdrop { background: rgba(0, 0, 0, .5); }
@@ -420,5 +421,12 @@ table.mini th { position: static; }
 /* Compare, with one aggregate: its columns stay at the right edge while the others scroll under them */
 table.cmp.freezing .frozen { position: sticky; right: var(--r, 0); background-color: var(--bg); }
 table.cmp.freezing th.frozen { z-index: 3; }
-table.cmp.freezing td.frozen { z-index: 1; }
+/* a frozen cell is opaque (the columns scrolling under it must not show through), with its row's tone painted on top; this has to
+   out-rank the rules that make a hovered row's cells transparent */
+table.cmp.freezing tr.clickable td.frozen { z-index: 1; background: linear-gradient(var(--tint, transparent), var(--tint, transparent)) var(--bg); }
+/* the row under the pointer (or with the keyboard on it) is outlined, whatever its color, in every column, frozen or not */
+table.cmp > tbody > tr.clickable:hover > td, table.cmp > tbody > tr.clickable:focus-visible > td { background: transparent; box-shadow: inset 0 2px 0 var(--hover-outline), inset 0 -2px 0 var(--hover-outline); }
+table.cmp > tbody > tr.clickable:hover > td:first-child, table.cmp > tbody > tr.clickable:focus-visible > td:first-child { box-shadow: inset 0 2px 0 var(--hover-outline), inset 0 -2px 0 var(--hover-outline), inset 2px 0 0 var(--hover-outline); }
+table.cmp > tbody > tr.clickable:hover > td:last-child, table.cmp > tbody > tr.clickable:focus-visible > td:last-child { box-shadow: inset 0 2px 0 var(--hover-outline), inset 0 -2px 0 var(--hover-outline), inset -2px 0 0 var(--hover-outline); }
+table.cmp.freezing > tbody > tr.clickable:hover > td.frozen-first, table.cmp.freezing > tbody > tr.clickable:focus-visible > td.frozen-first { box-shadow: inset 0 2px 0 var(--hover-outline), inset 0 -2px 0 var(--hover-outline), -1px 0 0 var(--line); }
 table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
