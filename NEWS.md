@@ -1,4 +1,4 @@
-# Course Schedulizer 2.0.2.9003
+# Course Schedulizer 2.0.3
 
 * New constraint rule, *Subset of standard times*: a course it names is not flagged for meeting on only some of the days of a standard time (for example Tuesday alone at 8:00 for 100 minutes, where Tuesday and Thursday together is standard). Without the rule such meetings are still flagged, which is often useful for catching a slip in choosing days, and the flag now says when this rule would allow it.
 * New constraint rule, *Allow collisions*: it lists courses (with the usual patterns and section letters) whose sections may share an instructor, a room or a time without being reported as conflicts, for example a seminar run as both a 200- and a 300-level course. Sections that are both named by the rule are not reported against each other; everything else is checked as before.
