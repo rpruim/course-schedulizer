@@ -224,7 +224,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
               {field("deliveryMode", "Delivery", { list: "dl-delivery", size: 9 })}
             </div>
             <div className="row top">
-              <div className="grow">{field("faculty", "Instructors", { hint: "Separate with semicolons. Give a share as Name (3); the rest is split equally." })}</div>
+              <div className="grow">{field("faculty", "Instructors", { hint: "Separate with commas or semicolons. Give a share as Name (3); the rest is split equally." })}</div>
               {field("facultyLoad", "Load", { size: 5 })}
               {field("minimumCredits", "Credits", { size: 5 })}
               {field("maximumCredits", "Max credits", { size: 5 })}

@@ -12,8 +12,9 @@ describe("readEdits", () => {
     expect(readEdits({ ...blank, enrollment: "0", facultyLoad: "3.5" }).edits).toEqual({ enrollment: 0, facultyLoad: 3.5 });
     expect(Object.keys(readEdits({ ...blank, enrollment: "many", facultyLoad: "-1" }).errors).sort()).toEqual(["enrollment", "facultyLoad"]);
   });
-  it("reads instructors separated by semicolons, with shares", () => {
+  it("reads instructors separated by semicolons or commas, with shares; a semicolon lets a name contain a comma", () => {
     expect(readEdits({ ...blank, faculty: "Pruim, Randall (3); Ada Example" }).edits.faculty).toEqual([{ name: "Pruim, Randall", load: 3 }, { name: "Ada Example" }]);
+    expect(readEdits({ ...blank, faculty: "Ada Example (3), Ben Sample" }).edits.faculty).toEqual([{ name: "Ada Example", load: 3 }, { name: "Ben Sample" }]);
   });
 });
 

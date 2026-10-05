@@ -12,7 +12,7 @@ const draft = sectionToDraft(schedule, "Y-FA-MUSC101-A")!;
 describe("draftToForm / formToDraft", () => {
   it("round-trips a section through the dialog's strings", () => {
     const f = draftToForm(draft);
-    expect(f).toMatchObject({ faculty: "Ada (3); Ben", facultyLoad: "4", enrollment: "20", maximumCredits: "" });
+    expect(f).toMatchObject({ faculty: "Ada (3), Ben", facultyLoad: "4", enrollment: "20", maximumCredits: "" });
     expect(f.meetings).toEqual([
       { days: ["M", "W"], start: "09:15", duration: "65", room: "NH 1" },
       { days: ["F"], start: "10:20", duration: "50", room: "NH 2" },

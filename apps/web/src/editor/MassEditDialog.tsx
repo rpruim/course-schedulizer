@@ -31,7 +31,7 @@ export function readEdits(form: Record<Field, string>): { edits: MassEdits; erro
     else (edits as Record<string, number>)[k] = n;
   }
   if (form.faculty.trim()) {
-    const faculty = parseFaculty(form.faculty, { commas: false });
+    const faculty = parseFaculty(form.faculty);
     if (faculty.length > 0) edits.faculty = faculty;
   }
   return { edits, errors };
@@ -205,7 +205,7 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
               {box("deliveryMode", "Delivery", 9)}
             </div>
             <div className="row top">
-              <div className="grow">{box("faculty", "Instructors", undefined, "Separate with semicolons. Give a share as Name (3).")}</div>
+              <div className="grow">{box("faculty", "Instructors", undefined, "Separate with commas or semicolons. Give a share as Name (3).")}</div>
               {box("facultyLoad", "Load", 5)}
               {box("minimumCredits", "Credits", 5)}
               {box("maximumCredits", "Max credits", 5)}
