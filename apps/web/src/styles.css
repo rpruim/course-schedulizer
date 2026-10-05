@@ -406,3 +406,6 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 /* drop-downs, check-box drop-downs (.multi-button) and text boxes in a bar of filters are one height, whatever the browser makes of a native select */
 .bar select, .bar input:not([type=checkbox]):not([type=radio]), .bar .multi-button { height: 28px; box-sizing: border-box; }
 .bar .multi-button { padding-top: 0; padding-bottom: 0; }
+
+/* a day that every selected section has, suggested in gray in the mass editor until a day is clicked */
+.day.suggested { background: var(--panel); color: var(--muted); border-style: dashed; }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { massEdit } from "./massEdit.js";
+import { massEdit, sharedValues } from "./massEdit.js";
 import { emptySchedule, type Schedule, type Session } from "./types.js";
 
 const session = (over: Partial<Session>): Session =>
@@ -103,5 +103,51 @@ describe("massEdit", () => {
       const r = massEdit(t, ["a", "b"], { prefix: "AMUS" }, "overwrite");
       expect(r.renamedFrom).toEqual([{ prefix: "MUSC", rules: 2 }]);
     });
+  });
+});
+
+describe("massEdit: meetings", () => {
+  const base = () => sched({ sectionId: "a", room: "NH 1" }, { sectionId: "a", days: "R", room: "" }, { sectionId: "b", days: "", start: undefined, duration: undefined, room: "" });
+  it("sets the parts of a meeting that are given on every meeting of the sections, leaving the others alone", () => {
+    const r = massEdit(base(), ["a"], { meeting: { start: 600 } }, "overwrite");
+    expect(field(r.schedule, "a", "start")).toEqual([600, 600]);
+    expect(field(r.schedule, "a", "days")).toEqual(["MWF", "R"]);
+    expect(field(r.schedule, "b", "start")).toEqual([undefined]); // not chosen
+    expect([r.sections, r.values]).toEqual([1, 2]);
+  });
+  it("fills only blank parts in missing mode", () => {
+    const r = massEdit(base(), ["a"], { meeting: { room: "NH 9" } }, "missing");
+    expect(field(r.schedule, "a", "room")).toEqual(["NH 1", "NH 9"]);
+    expect([r.sections, r.values]).toEqual([1, 1]);
+  });
+  it("gives an unscheduled meeting a time only when days, start and length all end up given; otherwise it is left alone and counted", () => {
+    const partial = massEdit(base(), ["b"], { meeting: { start: 600 } }, "missing");
+    expect(field(partial.schedule, "b", "start")).toEqual([undefined]);
+    expect([partial.sections, partial.skippedMeetings]).toEqual([0, 1]);
+    const whole = massEdit(base(), ["b"], { meeting: { days: "TR", start: 600, duration: 75 } }, "missing");
+    expect(field(whole.schedule, "b", "days")).toEqual(["TR"]);
+    expect([whole.sections, whole.values, whole.skippedMeetings]).toEqual([1, 3, 0]);
+  });
+  it("combines with the section-level fields in one count", () => {
+    const r = massEdit(base(), ["a"], { group: "G", meeting: { duration: 75 } }, "overwrite");
+    expect(r.sections).toBe(1);
+    expect(r.values).toBe(3);
+  });
+});
+
+describe("sharedValues", () => {
+  const rows = (...s: Partial<Session>[]) => s.map(session);
+  it("reports what every chosen section has the same, and nothing where they differ or are blank", () => {
+    const v = sharedValues([
+      rows({ group: "Core", department: "Music", facultyLoad: 4, faculty: [{ name: "Kim" }], room: "NH 1", days: "MWF", start: 540, duration: 50, comment: "" }),
+      rows({ group: "Core", department: "Art", facultyLoad: 4, faculty: [{ name: "Kim" }], room: "NH 2", days: "MWF", start: 540, duration: 50, comment: "" }, { room: "NH 1", days: "MWF", start: 540, duration: 50 }),
+    ]);
+    expect(v.fields).toMatchObject({ group: "Core", facultyLoad: "4", faculty: "Kim" });
+    expect(v.fields.department).toBeUndefined();
+    expect(v.fields.comment).toBeUndefined();
+    expect(v.meeting).toEqual({ days: "MWF", start: 540, duration: 50 }); // the rooms differ
+  });
+  it("has nothing to say for no sections", () => {
+    expect(sharedValues([])).toEqual({ fields: {}, meeting: {} });
   });
 });
