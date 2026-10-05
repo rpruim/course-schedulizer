@@ -190,7 +190,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
 
         <div className="editor-body">
           <fieldset>
-            <legend>Course</legend>
+            <legend>Course and instructor(s)</legend>
             <div className="row top">
               {field("prefix", "Prefix", { list: "dl-prefix", size: 6 })}
               {field("courseNumber", "Number", { size: 6 })}
@@ -222,10 +222,6 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
               <div className="grow">{field("instructionalMethod", "Instructional method", { list: "dl-method" })}</div>
               {field("deliveryMode", "Delivery", { list: "dl-delivery", size: 9 })}
             </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>Instructors and load</legend>
             <div className="row top">
               <div className="grow">{field("faculty", "Instructors", { hint: "Separate with semicolons. Give a share as Name (3); the rest is split equally." })}</div>
               {field("facultyLoad", "Load", { size: 5 })}
