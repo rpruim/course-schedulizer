@@ -7,7 +7,7 @@ import { readWorkbook, writeWorkbook } from "./xlsx.js";
 describe("saved comparisons", () => {
   it("turn roles into a saved comparison (columns in display order) and back", () => {
     const saved = rolesToSaved(" Mine ", { Prefix: "group", Term: "group", FacultyLoad: "aggregate", Rows: "aggregate", Comment: "ignore" }, "instructor");
-    expect(saved).toEqual({ name: "Mine", rows: "instructor", group: ["Term", "Prefix"], aggregate: ["FacultyLoad", "Rows"] });
+    expect(saved).toEqual({ name: "Mine", rows: "instructor", group: ["Prefix", "Term"], aggregate: ["FacultyLoad", "Rows"] });
     expect(savedToRoles(saved)).toEqual({ Term: "group", Prefix: "group", FacultyLoad: "aggregate", Rows: "aggregate" });
   });
 

@@ -45,14 +45,17 @@ export interface CompareColumn {
 }
 
 /** The columns of a comparison row, in the order of the old app's export tab (plus cross-listings). */
+/** In the order of the section editor: the course, when it is taught, who teaches it, when and where it meets, then the details. */
 export const COMPARE_COLUMNS: CompareColumn[] = [
-  { key: "Department", label: "Department", kind: "text" },
-  { key: "AcademicYear", label: "AcademicYear", kind: "text" },
-  { key: "Term", label: "Term", kind: "text" },
-  { key: "TermPart", label: "TermPart", kind: "text" },
   { key: "Prefix", label: "Prefix", kind: "text" },
   { key: "CourseNumber", label: "CourseNumber", kind: "text" },
   { key: "Section", label: "Section", kind: "text" },
+  { key: "ShortTitle", label: "ShortTitle", kind: "text" },
+  { key: "AcademicYear", label: "AcademicYear", kind: "text" },
+  { key: "Term", label: "Term", kind: "text" },
+  { key: "TermPart", label: "TermPart", kind: "text" },
+  { key: "InstructionalMethod", label: "InstructionalMethod", kind: "text" },
+  { key: "DeliveryMode", label: "DeliveryMode", kind: "text" },
   { key: "Faculty", label: "Faculty", kind: "text" },
   { key: "FacultyLoad", label: "FacultyLoad", kind: "number" },
   { key: "MinimumCredits", label: "MinimumCredits", kind: "number" },
@@ -61,14 +64,12 @@ export const COMPARE_COLUMNS: CompareColumn[] = [
   { key: "StartTime", label: "StartTime", kind: "text" },
   { key: "MeetingDuration", label: "MeetingDuration", kind: "text" },
   { key: "Classroom", label: "Classroom", kind: "text" },
-  { key: "ShortTitle", label: "ShortTitle", kind: "text" },
-  { key: "InstructionalMethod", label: "InstructionalMethod", kind: "text" },
+  { key: "Department", label: "Department", kind: "text" },
   { key: "CourseLevel", label: "CourseLevel", kind: "text" },
   { key: "Group", label: "Group", kind: "text" },
-  { key: "DeliveryMode", label: "DeliveryMode", kind: "text" },
-  { key: "Comment", label: "Comment", kind: "text" },
   { key: "Enrollment", label: "Enrollment", kind: "number" },
   { key: "EnrollmentDay10", label: "EnrollmentDay10", kind: "number" },
+  { key: "Comment", label: "Comment", kind: "text" },
   { key: "CrossListings", label: "CrossListings", kind: "text" },
 ];
 

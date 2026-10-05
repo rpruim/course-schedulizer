@@ -215,8 +215,8 @@ describe("pairMembers / diffMembers: marking differing fields", () => {
     const a = row([{ Enrollment: 20, Comment: "" }]);
     const b = row([{ Enrollment: 25, Comment: "moved" }]);
     expect(marks(diffMembers(group(a, b), "section"))).toEqual([
-      [[[], ["Comment: (blank)", "Enrollment: 20"], false]], // in column order
-      [[[], ["Comment: moved", "Enrollment: 25"], false]],
+      [[[], ["Enrollment: 20", "Comment: (blank)"], false]], // in column order
+      [[[], ["Enrollment: 25", "Comment: moved"], false]],
     ]);
   });
   it("pairs sections by letter, and calls a section with no counterpart 'solo' when the other schedule has rows", () => {
@@ -262,7 +262,7 @@ describe("pairMembers / diffMembers: marking differing fields", () => {
 describe("describeSetup", () => {
   const all = Object.fromEntries(COMPARE_COLUMNS.map((c) => [c.key, "group" as const]));
   it("calls the biggest role everything else, last, and leaves out empty roles", () => {
-    expect(describeSetup({ Term: "group", Prefix: "group", CourseNumber: "group", FacultyLoad: "aggregate" }, "section")).toBe("Group by term, prefix, course number; aggregate by faculty load; ignore everything else");
+    expect(describeSetup({ Term: "group", Prefix: "group", CourseNumber: "group", FacultyLoad: "aggregate" }, "section")).toBe("Group by prefix, course number, term; aggregate by faculty load; ignore everything else");
     expect(describeSetup({ ...all, Term: "ignore" }, "section")).toBe("Ignore term; group by everything else");
     expect(describeSetup(all, "section")).toBe("Group by everything");
   });

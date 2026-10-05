@@ -73,7 +73,7 @@ describe("comparisonRows: non-teaching load", () => {
 describe("resolvePartition", () => {
   it("lists group and aggregate columns in column order", () => {
     const p = resolvePartition(roles({ Term: "group", Prefix: "group", FacultyLoad: "aggregate", Faculty: "aggregate" }));
-    expect(p.groups.map((c) => c.key)).toEqual(["Term", "Prefix"]);
+    expect(p.groups.map((c) => c.key)).toEqual(["Prefix", "Term"]);
     expect(p.aggregates.map((c) => c.key)).toEqual(["Faculty", "FacultyLoad"]);
     expect(p.countForced).toBe(false);
   });
@@ -132,7 +132,7 @@ describe("compareTables: the use cases in design/schedule-comparisons.qmd", () =
     const c = compareTables(inputs(), roles(all));
     expect(c.aggregates.map((x) => x.key)).toEqual([COUNT_KEY]);
     // the moved MUSC 101 A appears twice (one row per schedule); sections that match exactly appear once with 1 and 1
-    const matching = c.rows.filter((r) => r.present[0] && r.present[1]).map((r) => `${r.group[4]} ${r.group[5]} ${r.group[6]}`);
+    const matching = c.rows.filter((r) => r.present[0] && r.present[1]).map((r) => `${r.group[0]} ${r.group[1]} ${r.group[2]}`);
     expect(matching).toEqual(["URBS 200 A"]);
     expect(c.rows.filter((r) => r.differs)).toHaveLength(c.rows.length - 1);
   });
@@ -155,9 +155,9 @@ describe("compareTables: the use cases in design/schedule-comparisons.qmd", () =
 
   it("4. group by prefix and term, aggregate load: hours per prefix per term", () => {
     const c = compareTables(inputs(), roles({ ...group("Prefix", "Term"), FacultyLoad: "aggregate" }));
-    // grouping columns appear in column order, so Term comes before Prefix
-    expect(c.groups.map((g) => g.key)).toEqual(["Term", "Prefix"]);
-    expect(flat(c)).toEqual([["FA", "DIGI", "–", 2], ["FA", "MUSC", 8, 4], ["FA", "URBS", 3, 6], ["SP", "URBS", 3, "–"]]);
+    // grouping columns appear in column order (the section editor's), so Prefix comes before Term
+    expect(c.groups.map((g) => g.key)).toEqual(["Prefix", "Term"]);
+    expect(flat(c)).toEqual([["DIGI", "FA", "–", 2], ["MUSC", "FA", 8, 4], ["URBS", "FA", 3, 6], ["URBS", "SP", 3, "–"]]);
     expect(c.rows.map((r) => r.differs)).toEqual([true, true, true, true]);
   });
 
