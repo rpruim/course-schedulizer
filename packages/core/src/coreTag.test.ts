@@ -23,6 +23,12 @@ describe("normalizeCoreTag", () => {
 
 describe("CoreTag in files", () => {
   const rec = (CoreTag: string) => ({ AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: "104", Section: "A", CoreTag });
+  it("may be missing altogether: a file without the column reads with no issues and no tags", () => {
+    const { CoreTag: _gone, ...without } = rec("");
+    const r = importSessions([without]);
+    expect(r.issues).toEqual([]);
+    expect(r.sessions[0]!.coreTag).toBe("");
+  });
   it("is read the registrar's way, and an unknown one is kept with a warning", () => {
     expect(importSessions([rec("global regions")]).sessions[0]!.coreTag).toBe("Global Regions and Cultures");
     expect(importSessions([rec("")]).sessions[0]!.coreTag).toBe("");
