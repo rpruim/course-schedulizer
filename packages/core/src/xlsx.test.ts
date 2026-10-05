@@ -182,14 +182,15 @@ describe("instructors in an export", () => {
     const s = importRecords({ sessions: [
       { AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: "104", Section: "A", Faculty: "Ada Example (3); Ben Sample" },
       { AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: "105", Section: "A", Faculty: "Pruim, Randall; Ben Sample" },
+      { AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: "106", Section: "A", Faculty: "John Smith, Jr;" },
     ] }).schedule;
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load((await writeWorkbook(s)) as unknown as ArrayBuffer);
     const ws = wb.getWorksheet("Sessions")!;
     const at = (ws.getRow(1).values as unknown[]).indexOf("Faculty");
-    expect([ws.getRow(2).getCell(at).value, ws.getRow(3).getCell(at).value]).toEqual(["Ada Example (3), Ben Sample", "Pruim, Randall; Ben Sample"]);
+    expect([2, 3, 4].map((r) => ws.getRow(r).getCell(at).value)).toEqual(["Ada Example (3), Ben Sample", "Pruim, Randall; Ben Sample", "John Smith, Jr;"]);
     const back = await readWorkbook(await writeWorkbook(s));
     expect(back.issues).toEqual([]);
-    expect(back.schedule.sessions.map((x) => x.faculty)).toEqual([[{ name: "Ada Example", load: 3 }, { name: "Ben Sample" }], [{ name: "Pruim, Randall" }, { name: "Ben Sample" }]]);
+    expect(back.schedule.sessions.map((x) => x.faculty)).toEqual([[{ name: "Ada Example", load: 3 }, { name: "Ben Sample" }], [{ name: "Pruim, Randall" }, { name: "Ben Sample" }], [{ name: "John Smith, Jr" }]]);
   });
 });

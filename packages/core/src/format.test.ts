@@ -42,6 +42,13 @@ describe("faculty", () => {
     expect(formatFaculty([{ name: "Ada" }, { name: "Ben", load: 1 }])).toBe("Ada, Ben (1)");
     expect(formatFaculty([{ name: "Ada" }, { name: "Ben", load: 1 }], { semicolons: true })).toBe("Ada; Ben (1)");
     expect(formatFaculty([{ name: "Pruim, Randall" }, { name: "Ben" }])).toBe("Pruim, Randall; Ben");
+    // a semicolon anywhere makes it the only separator, so a trailing one marks a single name that has a comma
+    expect(parseFaculty("John Smith, Jr")).toEqual([{ name: "John Smith" }, { name: "Jr" }]);
+    expect(parseFaculty("John Smith, Jr;")).toEqual([{ name: "John Smith, Jr" }]);
+    expect(parseFaculty("John Smith, Jr (3);")).toEqual([{ name: "John Smith, Jr", load: 3 }]);
+    expect(parseFaculty("John Smith, Jr; Ada Example, Ben Sample")).toEqual([{ name: "John Smith, Jr" }, { name: "Ada Example, Ben Sample" }]);
+    expect(formatFaculty([{ name: "John Smith, Jr" }])).toBe("John Smith, Jr;");
+    expect(parseFaculty(formatFaculty([{ name: "John Smith, Jr", load: 2 }]))).toEqual([{ name: "John Smith, Jr", load: 2 }]);
     expect(parseFaculty("Smith (Chair)")).toEqual([{ name: "Smith (Chair)" }]);
     expect(parseFaculty("")).toEqual([]);
     expect(parseFaculty("*")).toEqual([{ name: "*" }]);
