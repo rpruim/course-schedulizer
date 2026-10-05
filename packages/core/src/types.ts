@@ -42,6 +42,8 @@ export const sessionSchema = z
     courseLevel: str,
     group: str,
     deliveryMode: str,
+    /** One of the core tags (`CORE_TAGS`), or blank. */
+    coreTag: str,
     comment: str,
     enrollment: optInt,
     enrollmentDay10: optInt,

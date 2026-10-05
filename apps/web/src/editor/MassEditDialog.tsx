@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { DELIVERY_MODES, formatTime, massEdit, parseFaculty, parseTime, sharedValues, type MassEdits, type MassMode, type Schedule, type Session } from "@schedulizer/core";
+import { CORE_TAGS, DELIVERY_MODES, formatTime, massEdit, parseFaculty, parseTime, sharedValues, type MassEdits, type MassMode, type Schedule, type Session } from "@schedulizer/core";
 import { useWorkspace } from "../state";
 import { DAYS } from "./form";
 import { Optional, OptionalNote } from "./optional";
@@ -10,9 +10,9 @@ export interface Pick {
   sectionId: string;
 }
 
-type Field = "prefix" | "department" | "shortTitle" | "faculty" | "facultyLoad" | "minimumCredits" | "maximumCredits" | "instructionalMethod" | "courseLevel" | "group" | "deliveryMode" | "enrollment" | "enrollmentDay10" | "comment";
+type Field = "prefix" | "department" | "shortTitle" | "faculty" | "facultyLoad" | "minimumCredits" | "maximumCredits" | "instructionalMethod" | "coreTag" | "courseLevel" | "group" | "deliveryMode" | "enrollment" | "enrollmentDay10" | "comment";
 const BLANK: Record<Field, string> = {
-  prefix: "", department: "", shortTitle: "", faculty: "", facultyLoad: "", minimumCredits: "", maximumCredits: "", instructionalMethod: "", courseLevel: "", group: "", deliveryMode: "", enrollment: "", enrollmentDay10: "", comment: "",
+  prefix: "", department: "", shortTitle: "", faculty: "", facultyLoad: "", minimumCredits: "", maximumCredits: "", instructionalMethod: "", coreTag: "", courseLevel: "", group: "", deliveryMode: "", enrollment: "", enrollmentDay10: "", comment: "",
 };
 const NUMERIC: Field[] = ["facultyLoad", "minimumCredits", "maximumCredits", "enrollment", "enrollmentDay10"];
 
@@ -20,7 +20,7 @@ const NUMERIC: Field[] = ["facultyLoad", "minimumCredits", "maximumCredits", "en
 export function readEdits(form: Record<Field, string>): { edits: MassEdits; errors: Partial<Record<Field, string>> } {
   const edits: MassEdits = {};
   const errors: Partial<Record<Field, string>> = {};
-  for (const k of ["prefix", "department", "shortTitle", "instructionalMethod", "courseLevel", "group", "deliveryMode", "comment"] as const) {
+  for (const k of ["prefix", "department", "shortTitle", "instructionalMethod", "courseLevel", "group", "deliveryMode", "coreTag", "comment"] as const) {
     const v = form[k].trim();
     if (v) edits[k] = v;
   }
@@ -268,10 +268,17 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
             <summary>More details</summary>
             <div className="row top">
               {box("department", "Department", 30)}
-              {box("courseLevel", <>Course level<Optional /></>, 6)}
-              {box("group", <>Group<Optional /></>, 8)}
+              <label className="f">
+                <span>Core tag</span>
+                <select className={form.coreTag === "" && shared.fields.coreTag ? "suggest" : undefined} value={form.coreTag} onChange={(e) => set("coreTag", e.target.value)}>
+                  <option value="">{shared.fields.coreTag ?? ""}</option>
+                  {CORE_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </label>
             </div>
             <div className="row top">
+              {box("courseLevel", <>Course level<Optional /></>, 6)}
+              {box("group", <>Group<Optional /></>, 8)}
               {box("enrollment", <>Enrollment<Optional /></>, 6)}
               {box("enrollmentDay10", <>Day-10 enrollment<Optional /></>, 6)}
             </div>

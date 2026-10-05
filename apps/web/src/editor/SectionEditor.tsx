@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   constraintsNaming,
   copyAsNewSection,
+  CORE_TAGS,
   courseDisplayName,
   DELIVERY_MODES,
   deleteSection,
@@ -295,11 +296,19 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
             <div className="row top">
               {/* A blank box means "the schedule's default": it is shown, in gray, as the placeholder. */}
               {field("department", "Department", { list: "dl-dept", size: 30, ...(schedule.meta.defaultDepartment?.trim() ? { placeholder: schedule.meta.defaultDepartment.trim(), ...(form.department.trim() === "" ? { hint: "Default from the Meta tab" } : {}) } : {}) })}
+              <label className="f">
+                <span>Core tag</span>
+                <select value={form.coreTag} onChange={(e) => set("coreTag", e.target.value)}>
+                  <option value="">—</option>
+                  {CORE_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
+                  {form.coreTag && !(CORE_TAGS as readonly string[]).includes(form.coreTag) && <option value={form.coreTag}>{form.coreTag}</option>}
+                </select>
+              </label>
+            </div>
+            <div className="row top">
               {/* A blank box means "what the course number implies" (231 → 200), shown in gray as the placeholder. */}
               {field("courseLevel", <>Course level<Optional /></>, { size: 6, ...(inferredLevel(form.courseNumber) ? { placeholder: inferredLevel(form.courseNumber), ...(form.courseLevel.trim() === "" ? { hint: "From the course number" } : {}) } : {}) })}
               {field("group", <>Group<Optional /></>, { size: 8 })}
-            </div>
-            <div className="row top">
               {field("enrollment", <>Enrollment<Optional /></>, { size: 6 })}
               {field("enrollmentDay10", <>Day-10 enrollment<Optional /></>, { size: 6 })}
             </div>

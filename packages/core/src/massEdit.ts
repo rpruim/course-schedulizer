@@ -16,6 +16,7 @@ export interface MassEdits {
   courseLevel?: string;
   group?: string;
   deliveryMode?: string;
+  coreTag?: string;
   comment?: string;
   faculty?: Instructor[];
   facultyLoad?: number;
@@ -44,7 +45,7 @@ export interface MassResult {
   renamedFrom: { prefix: string; rules: number }[];
 }
 
-const TEXT = ["department", "shortTitle", "instructionalMethod", "courseLevel", "group", "deliveryMode", "comment"] as const;
+const TEXT = ["department", "shortTitle", "instructionalMethod", "courseLevel", "group", "deliveryMode", "coreTag", "comment"] as const;
 const NUMBERS = ["facultyLoad", "minimumCredits", "maximumCredits", "enrollment", "enrollmentDay10"] as const;
 
 const offeringKey = (s: Pick<Session, "academicYear" | "term" | "prefix" | "courseNumber" | "section">, prefix = s.prefix) =>
@@ -152,7 +153,7 @@ export function massEdit(schedule: Schedule, sectionIds: Iterable<string>, edits
 
 /** The fields of a section whose value, when it is the same in every section chosen, can be shown as a suggestion. */
 export type SharedField = Exclude<keyof MassEdits, "meeting">;
-const SHARED_FIELDS: SharedField[] = ["prefix", "department", "shortTitle", "instructionalMethod", "courseLevel", "group", "deliveryMode", "comment", "faculty", "facultyLoad", "minimumCredits", "maximumCredits", "enrollment", "enrollmentDay10"];
+const SHARED_FIELDS: SharedField[] = ["prefix", "department", "shortTitle", "instructionalMethod", "courseLevel", "group", "deliveryMode", "coreTag", "comment", "faculty", "facultyLoad", "minimumCredits", "maximumCredits", "enrollment", "enrollmentDay10"];
 
 export interface SharedValues {
   /** Each field the chosen sections all have, the same, as text for a box. */

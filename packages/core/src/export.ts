@@ -41,6 +41,7 @@ const sessionCells = (s: Session, settings: Schedule["settings"]): Rec => ({
   Comment: s.comment,
   Enrollment: formatNumber(s.enrollment),
   EnrollmentDay10: formatNumber(s.enrollmentDay10),
+  CoreTag: s.coreTag,
 });
 
 function table(columns: readonly string[], recs: Rec[], extraKeys: string[] = []): Table {

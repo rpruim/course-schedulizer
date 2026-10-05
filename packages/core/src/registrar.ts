@@ -6,13 +6,13 @@ import { AY } from "./types.js";
 
 /**
  * The registrar's tab ("Registrar Schedule"): the old app's 17 columns in the
- * same order, then `CrossListings` next to the notes (`Comment`) column. One row
+ * same order, then `CrossListings` next to the notes (`Comment`) column and the `CoreTag`. One row
  * per section.
  */
 export const REGISTRAR_COLUMNS = [
   "Term", "Prefix", "CourseNumber", "Section", "StudentCredits", "FacultyLoad", "MeetingDays",
   "MeetingTime", "BuildingAndRoom", "TermPart", "TermAndPart", "Duration", "ShortTitle", "Faculty",
-  "InstructionalMethod", "DeliveryMode", "Comment", "CrossListings",
+  "InstructionalMethod", "DeliveryMode", "Comment", "CrossListings", "CoreTag",
 ] as const;
 
 export const REGISTRAR_SHEET = "Registrar Schedule";
@@ -55,7 +55,7 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
         FacultyLoad: formatNumber(Math.round((n.load / terms.length) * 1e6) / 1e6),
         MeetingDays: "", MeetingTime: "", BuildingAndRoom: "", TermPart: "Full", TermAndPart: `${term}-Full`,
         Duration: "", ShortTitle: "", Faculty: n.faculty, InstructionalMethod: n.activity,
-        DeliveryMode: "", Comment: n.comment, CrossListings: "",
+        DeliveryMode: "", Comment: n.comment, CrossListings: "", CoreTag: "",
       }));
     }
   }
@@ -99,6 +99,7 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
       DeliveryMode: head.deliveryMode,
       Comment: head.comment,
       CrossListings: others.map((l) => `${l.prefix} ${l.courseNumber}`).join(", "),
+      CoreTag: head.coreTag,
     }));
   }
   return { header: [...REGISTRAR_COLUMNS], rows };

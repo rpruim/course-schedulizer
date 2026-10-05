@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { readEdits, readMeeting } from "./MassEditDialog";
 
-const blank = { prefix: "", department: "", shortTitle: "", faculty: "", facultyLoad: "", minimumCredits: "", maximumCredits: "", instructionalMethod: "", courseLevel: "", group: "", deliveryMode: "", enrollment: "", enrollmentDay10: "", comment: "" };
+const blank = { prefix: "", department: "", shortTitle: "", faculty: "", facultyLoad: "", minimumCredits: "", maximumCredits: "", instructionalMethod: "", courseLevel: "", group: "", deliveryMode: "", coreTag: "", enrollment: "", enrollmentDay10: "", comment: "" };
 
 describe("readEdits", () => {
+  it("reads a core tag like the other text boxes", () => {
+    expect(readEdits({ ...blank, coreTag: "Global Regions and Cultures" }).edits).toEqual({ coreTag: "Global Regions and Cultures" });
+  });
   it("leaves out blank boxes and trims the rest", () => {
     expect(readEdits(blank)).toEqual({ edits: {}, errors: {} });
     expect(readEdits({ ...blank, prefix: " AMUS ", group: " Core " }).edits).toEqual({ prefix: "AMUS", group: "Core" });

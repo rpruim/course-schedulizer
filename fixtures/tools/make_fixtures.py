@@ -12,7 +12,7 @@ COLS = ["SectionId", "Department", "AcademicYear", "Term", "TermPart", "Prefix",
         "CourseNumber", "Section", "Faculty", "FacultyLoad", "MinimumCredits",
         "MaximumCredits", "MeetingDays", "StartTime", "MeetingDuration", "Classroom",
         "ShortTitle", "InstructionalMethod", "CourseLevel", "Group", "DeliveryMode", "Comment",
-        "Enrollment", "EnrollmentDay10"]
+        "Enrollment", "EnrollmentDay10", "CoreTag"]
 
 def col_index(ref):
     n = 0

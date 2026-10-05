@@ -15,11 +15,11 @@ const schedule = () => {
 };
 
 describe("registrar tab", () => {
-  it("has the old app's 17 columns in order, then CrossListings next to Comment", () => {
+  it("has the old app's 17 columns in order, then CrossListings next to Comment and the CoreTag", () => {
     expect(REGISTRAR_COLUMNS).toEqual([
       "Term", "Prefix", "CourseNumber", "Section", "StudentCredits", "FacultyLoad", "MeetingDays", "MeetingTime",
       "BuildingAndRoom", "TermPart", "TermAndPart", "Duration", "ShortTitle", "Faculty", "InstructionalMethod",
-      "DeliveryMode", "Comment", "CrossListings",
+      "DeliveryMode", "Comment", "CrossListings", "CoreTag",
     ]);
     expect(registrarTable(schedule()).header).toEqual([...REGISTRAR_COLUMNS]);
   });

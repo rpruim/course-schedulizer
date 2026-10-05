@@ -2,6 +2,7 @@ import { z } from "zod";
 import { parseDays, parseFaculty, parseTime } from "./format.js";
 import { sectionShares } from "./load.js";
 import { partNamed, partsFor, splitTermCode } from "./terms.js";
+import { normalizeCoreTag } from "./coreTag.js";
 import { normalizeDelivery } from "./delivery.js";
 import {
   AY,
@@ -31,7 +32,7 @@ export const SESSION_COLUMNS = [
   "SectionId", "Department", "AcademicYear", "Term", "TermPart", "Prefix", "CourseNumber", "Section",
   "Faculty", "FacultyLoad", "MinimumCredits", "MaximumCredits", "MeetingDays", "StartTime",
   "MeetingDuration", "Classroom", "ShortTitle", "InstructionalMethod", "CourseLevel", "Group", "DeliveryMode",
-  "Comment", "Enrollment", "EnrollmentDay10",
+  "Comment", "Enrollment", "EnrollmentDay10", "CoreTag",
 ] as const;
 export const CROSSLISTING_COLUMNS = ["SectionId", "Prefix", "CourseNumber"] as const;
 export const NONTEACHING_COLUMNS = ["AcademicYear", "Faculty", "Activity", "Term", "Load", "Comment"] as const;
@@ -79,6 +80,17 @@ function delivery(r: Reporter, row: number, text: string | undefined): string {
     return given;
   }
   return mode;
+}
+
+/** The core tag as the registrar writes it; text that is not recognizably one of them is kept, with a warning. */
+function coreTag(r: Reporter, row: number, text: string | undefined): string {
+  const given = (text ?? "").trim();
+  const tag = normalizeCoreTag(given);
+  if (tag === undefined) {
+    r.add("warning", row, `CoreTag: "${given}" is not Diversity and Difference, Environmental Sustainability or Global Regions and Cultures; kept as it is`);
+    return given;
+  }
+  return tag;
 }
 
 function num(r: Reporter, row: number, label: string, text: string | undefined): number | undefined {
@@ -288,6 +300,7 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
       courseLevel: k.CourseLevel ?? "",
       group: k.Group ?? "",
       deliveryMode: delivery(r, row, k.DeliveryMode),
+      coreTag: coreTag(r, row, k.CoreTag),
       comment: k.Comment ?? "",
       enrollment: num(r, row, "Enrollment", k.Enrollment),
       enrollmentDay10: num(r, row, "EnrollmentDay10", k.EnrollmentDay10),

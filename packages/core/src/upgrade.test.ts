@@ -10,4 +10,11 @@ describe("upgradeSchedule", () => {
     expect(up.constraints[0]).toMatchObject({ type: "takeable", dayRule: "any", should: "should not", instructor: "", term: "" });
     expect(upgradeSchedule(up)).toEqual(up);
   });
+  it("gives sections saved before core tags an empty one, so nothing downstream meets undefined", () => {
+    const sess = { sectionId: "a", department: "", academicYear: "AY1", term: "FA", termPart: "Full", prefix: "MUSC", courseNumber: "1", section: "A", faculty: [], shortTitle: "", instructionalMethod: "", courseLevel: "", group: "", deliveryMode: "", comment: "", days: "", room: "", extra: {} };
+    const old = { ...emptySchedule(), sessions: [sess] } as never;
+    const up = upgradeSchedule(old);
+    expect(up.sessions[0]!.coreTag).toBe("");
+    expect(upgradeSchedule(up).sessions).toBe(up.sessions); // a current schedule keeps its own list
+  });
 });
