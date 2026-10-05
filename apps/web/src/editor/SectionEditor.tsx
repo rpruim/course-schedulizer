@@ -1,9 +1,10 @@
 import { inPartOrder } from "../model";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   constraintsNaming,
   copyAsNewSection,
   courseDisplayName,
+  DELIVERY_MODES,
   deleteSection,
   displayNames,
   draftShares,
@@ -22,9 +23,9 @@ import {
 import { useWorkspace } from "../state";
 import { byField, DAYS, draftToForm, emptyMeetingForm, formToDraft, meetingSummary, type Form, type MeetingForm } from "./form";
 import { Trash } from "../icons";
+import { Optional, OptionalNote } from "./optional";
 
 const STANDARD_DURATIONS = [50, 65, 100];
-const DELIVERY_MODES = ["In-Person", "Online", "Hybrid"];
 
 const EMPTY = emptySchedule();
 
@@ -125,7 +126,6 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
       rooms: uniq(schedule.sessions.map((s) => s.room)),
       departments: uniq(schedule.sessions.map((s) => s.department)),
       methods: uniq(schedule.sessions.map((s) => s.instructionalMethod)),
-      delivery: uniq([...DELIVERY_MODES, ...schedule.sessions.map((s) => s.deliveryMode)]),
     };
   }, [schedule]);
 
@@ -163,7 +163,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
   const otherLabel = collision ? `${displayNames(schedule).get(collision.other.sectionId) ?? ""} ${collision.other.letter}` : "";
   const staleConstraints = (id: string | undefined) => (id ? constraintsNaming(schedule, id).filter((c) => c.section !== "").length : 0);
 
-  const field = (key: keyof Form, label: string, opts: { list?: string; size?: number; placeholder?: string; hint?: string } = {}) => (
+  const field = (key: keyof Form, label: ReactNode, opts: { list?: string; size?: number; placeholder?: string; hint?: string } = {}) => (
     <label className="f">
       <span>{label}</span>
       <input
@@ -220,8 +220,15 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
                 </select>
                 {err("termPart")}
               </label>
-              <div className="grow">{field("instructionalMethod", "Instructional method", { list: "dl-method" })}</div>
-              {field("deliveryMode", "Delivery", { list: "dl-delivery", size: 9 })}
+              <label className="f">
+                <span>Delivery</span>
+                <select value={form.deliveryMode} onChange={(e) => set("deliveryMode", e.target.value)}>
+                  <option value="">—</option>
+                  {DELIVERY_MODES.map((m) => <option key={m} value={m}>{m}</option>)}
+                  {form.deliveryMode && !(DELIVERY_MODES as readonly string[]).includes(form.deliveryMode) && <option value={form.deliveryMode}>{form.deliveryMode}</option>}
+                </select>
+              </label>
+              <div className="grow">{field("instructionalMethod", <>Instructional method<Optional /></>, { list: "dl-method" })}</div>
             </div>
             <div className="row top">
               <div className="grow">{field("faculty", "Instructors", { hint: "Separate with commas or semicolons. Give a share as Name (3); the rest is split equally." })}</div>
@@ -289,12 +296,12 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
               {/* A blank box means "the schedule's default": it is shown, in gray, as the placeholder. */}
               {field("department", "Department", { list: "dl-dept", size: 30, ...(schedule.meta.defaultDepartment?.trim() ? { placeholder: schedule.meta.defaultDepartment.trim(), ...(form.department.trim() === "" ? { hint: "Default from the Meta tab" } : {}) } : {}) })}
               {/* A blank box means "what the course number implies" (231 → 200), shown in gray as the placeholder. */}
-              {field("courseLevel", "Course level", { size: 6, ...(inferredLevel(form.courseNumber) ? { placeholder: inferredLevel(form.courseNumber), ...(form.courseLevel.trim() === "" ? { hint: "From the course number" } : {}) } : {}) })}
-              {field("group", "Group", { size: 8 })}
+              {field("courseLevel", <>Course level<Optional /></>, { size: 6, ...(inferredLevel(form.courseNumber) ? { placeholder: inferredLevel(form.courseNumber), ...(form.courseLevel.trim() === "" ? { hint: "From the course number" } : {}) } : {}) })}
+              {field("group", <>Group<Optional /></>, { size: 8 })}
             </div>
             <div className="row top">
-              {field("enrollment", "Enrollment", { size: 6 })}
-              {field("enrollmentDay10", "Day-10 enrollment", { size: 6 })}
+              {field("enrollment", <>Enrollment<Optional /></>, { size: 6 })}
+              {field("enrollmentDay10", <>Day-10 enrollment<Optional /></>, { size: 6 })}
             </div>
             <label className="f"><span>Comment</span><textarea rows={2} value={form.comment} onChange={(e) => set("comment", e.target.value)} /></label>
             <div className="also-listed">
@@ -311,6 +318,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
               {form.crossListings.length > 0 && name && <p className="preview">Shown as {name}</p>}
             </div>
           </details>
+          <OptionalNote />
 
           {preview && preview.conflicts.length > 0 && (
             <div className="note conflict-note" role="status">
@@ -385,7 +393,6 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
         <datalist id="dl-rooms">{lists.rooms.map((v) => <option key={v} value={v} />)}</datalist>
         <datalist id="dl-dept">{lists.departments.map((v) => <option key={v} value={v} />)}</datalist>
         <datalist id="dl-method">{lists.methods.map((v) => <option key={v} value={v} />)}</datalist>
-        <datalist id="dl-delivery">{lists.delivery.map((v) => <option key={v} value={v} />)}</datalist>
       </form>
     </dialog>
   );

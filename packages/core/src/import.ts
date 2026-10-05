@@ -2,6 +2,7 @@ import { z } from "zod";
 import { parseDays, parseFaculty, parseTime } from "./format.js";
 import { sectionShares } from "./load.js";
 import { partNamed, partsFor, splitTermCode } from "./terms.js";
+import { normalizeDelivery } from "./delivery.js";
 import {
   AY,
   DEFAULT_PARTS,
@@ -67,6 +68,17 @@ class Reporter {
       this.add("error", row, path ? `${path}: ${i.message}` : i.message);
     }
   }
+}
+
+/** The delivery mode as the registrar writes it; text that is not recognizably one of them is kept, with a warning. */
+function delivery(r: Reporter, row: number, text: string | undefined): string {
+  const given = (text ?? "").trim();
+  const mode = normalizeDelivery(given);
+  if (mode === undefined) {
+    r.add("warning", row, `DeliveryMode: "${given}" is not In-Person, Online or Hybrid; kept as it is`);
+    return given;
+  }
+  return mode;
 }
 
 function num(r: Reporter, row: number, label: string, text: string | undefined): number | undefined {
@@ -275,7 +287,7 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
       instructionalMethod: k.InstructionalMethod ?? "",
       courseLevel: k.CourseLevel ?? "",
       group: k.Group ?? "",
-      deliveryMode: k.DeliveryMode ?? "",
+      deliveryMode: delivery(r, row, k.DeliveryMode),
       comment: k.Comment ?? "",
       enrollment: num(r, row, "Enrollment", k.Enrollment),
       enrollmentDay10: num(r, row, "EnrollmentDay10", k.EnrollmentDay10),

@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { formatTime, massEdit, parseFaculty, parseTime, sharedValues, type MassEdits, type MassMode, type Schedule, type Session } from "@schedulizer/core";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { DELIVERY_MODES, formatTime, massEdit, parseFaculty, parseTime, sharedValues, type MassEdits, type MassMode, type Schedule, type Session } from "@schedulizer/core";
 import { useWorkspace } from "../state";
 import { DAYS } from "./form";
+import { Optional, OptionalNote } from "./optional";
 
 /** The sections to change: each in the schedule that owns it. */
 export interface Pick {
@@ -167,7 +168,7 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
 
   const set = (k: Field, v: string) => setForm((f) => ({ ...f, [k]: v }));
   const setM = (patch: Partial<MeetingBoxes>) => setMeetingForm((m) => ({ ...m, ...patch }));
-  const box = (k: Field, label: string, size?: number, hint?: string) => (
+  const box = (k: Field, label: ReactNode, size?: number, hint?: string) => (
     <label className="f">
       <span>{label}</span>
       <input value={form[k]} size={size} placeholder={shared.fields[k]} onChange={(e) => set(k, e.target.value)} aria-invalid={errors[k] ? true : undefined} />
@@ -201,8 +202,14 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
               <div className="grow">{box("shortTitle", "Title")}</div>
             </div>
             <div className="row top">
-              <div className="grow">{box("instructionalMethod", "Instructional method")}</div>
-              {box("deliveryMode", "Delivery", 9)}
+              <label className="f">
+                <span>Delivery</span>
+                <select className={form.deliveryMode === "" && shared.fields.deliveryMode ? "suggest" : undefined} value={form.deliveryMode} onChange={(e) => set("deliveryMode", e.target.value)}>
+                  <option value="">{shared.fields.deliveryMode ?? ""}</option>
+                  {DELIVERY_MODES.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </label>
+              <div className="grow">{box("instructionalMethod", <>Instructional method<Optional /></>)}</div>
             </div>
             <div className="row top">
               <div className="grow">{box("faculty", "Instructors", undefined, "Separate with commas or semicolons. Give a share as Name (3).")}</div>
@@ -261,15 +268,16 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
             <summary>More details</summary>
             <div className="row top">
               {box("department", "Department", 30)}
-              {box("courseLevel", "Course level", 6)}
-              {box("group", "Group", 8)}
+              {box("courseLevel", <>Course level<Optional /></>, 6)}
+              {box("group", <>Group<Optional /></>, 8)}
             </div>
             <div className="row top">
-              {box("enrollment", "Enrollment", 6)}
-              {box("enrollmentDay10", "Day-10 enrollment", 6)}
+              {box("enrollment", <>Enrollment<Optional /></>, 6)}
+              {box("enrollmentDay10", <>Day-10 enrollment<Optional /></>, 6)}
             </div>
             <label className="f"><span>Comment</span><textarea rows={2} value={form.comment} placeholder={shared.fields.comment} onChange={(e) => set("comment", e.target.value)} /></label>
           </details>
+          <OptionalNote />
         </div>
         <div className="editor-apply">
           {hidden.length > 0 && (

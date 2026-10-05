@@ -1,5 +1,7 @@
 # Course Schedulizer 2.0.4.9000
 
+* Delivery is a drop-down of the registrar's three choices (In-Person, Online, Hybrid) in the section editor and the Mass edit window, and now comes before Instructional method (which the registrar's office does not use). When a file is read, the delivery is written the registrar's way whatever the capitalization or spacing, and for common alternatives such as *face to face* or *async* and for small misspellings such as *hybird*; something it cannot recognize is kept as it is, with a warning.
+* Fields the registrar's office does not use to build the schedule (instructional method, course level, group, enrollment and day-10 enrollment) are marked with a small raised circle (°) in the section editor and the Mass edit window, with a note saying what it means. The Compare columns follow the editor's new order too.
 * *Re-letter by time…* has moved from the top of the Schedule and week tabs to the Mass edit page, where it re-letters only the selected sections (by first class time, within each course). When only some of a course's sections are selected, they trade the letters they already have, so other sections keep theirs.
 
 # Course Schedulizer 2.0.4

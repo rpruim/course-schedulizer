@@ -445,3 +445,8 @@ table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
 .od-name { font-weight: 600; }
 .od-where { flex: 1; }
 .od-meta { margin-left: auto; white-space: nowrap; }
+
+/* the raised circle that marks an optional field (one the registrar's office does not use) */
+.opt { color: var(--muted); font-weight: 600; margin-left: 1px; cursor: help; }
+.opt-note { margin: 4px 0 0; }
+.f select.suggest { color: var(--muted); }

@@ -10,6 +10,7 @@ export * from "./names.js";
 export * from "./load.js";
 export * from "./conflicts.js";
 export * from "./constraints.js";
+export * from "./delivery.js";
 export * from "./registrar.js";
 export * from "./crosslistings.js";
 export * from "./editing.js";
