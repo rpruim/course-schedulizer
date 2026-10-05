@@ -411,3 +411,8 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 .day.suggested { background: var(--panel); color: var(--muted); border-style: dashed; }
 
 .modify-selection { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+/* Compare: the table scrolls inside its own box, so the headings stay in view (sticky headings need a box that scrolls) */
+.cmp-wrap { max-height: calc(100vh - 150px); min-height: 12rem; overflow: auto; }
+table.cmp > thead > tr > th { z-index: 2; box-shadow: 0 1px 0 var(--line); }
+table.mini th { position: static; }

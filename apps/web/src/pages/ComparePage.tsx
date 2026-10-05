@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   COMPARE_COLUMNS,
   COUNT_KEY,
@@ -39,6 +39,32 @@ const CUSTOM = "custom";
  * Compare the included schedules: give each column a role (ignore, group by, or aggregate),
  * and each schedule is reduced to one row per group and the results are joined side by side.
  */
+/**
+ * A ref callback for a box that scrolls on its own: the box is made as tall as what is left of the window below its top
+ * edge (at least a few rows), so the table scrolls inside it and its sticky headings stay in view.
+ */
+function useFillViewport(): (el: HTMLDivElement | null) => void {
+  const stop = useRef<(() => void) | undefined>(undefined);
+  return useCallback((el: HTMLDivElement | null) => {
+    stop.current?.();
+    stop.current = undefined;
+    if (!el) return;
+    const fit = () => {
+      el.style.maxHeight = `${Math.max(224, window.innerHeight - el.getBoundingClientRect().top - 16)}px`;
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    window.addEventListener("scroll", fit, { passive: true });
+    const watch = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(fit);
+    watch?.observe(document.body);
+    stop.current = () => {
+      window.removeEventListener("resize", fit);
+      window.removeEventListener("scroll", fit);
+      watch?.disconnect();
+    };
+  }, []);
+}
+
 export function ComparePage() {
   const ws = useWorkspace();
   const entries = ws.includedEntries;
@@ -79,6 +105,7 @@ export function ComparePage() {
     const t = rowTones(comparison);
     return t ? new Map(comparison.rows.map((r, i) => [r, t[i]] as const)) : undefined;
   }, [comparison]);
+  const fillViewport = useFillViewport();
   const sorting = useSort(rows, (r: ComparisonRow, key: string) => columns.find((c) => c.key === key)?.sort(r));
   const { countForced } = resolvePartition({ roles });
   const summary = describeSetup(roles, rowKind);
@@ -327,7 +354,7 @@ export function ComparePage() {
       {rows.length === 0 ? (
         <p className="note ok">{comparison.rows.length === 0 ? "Nothing to compare with these columns." : "No differences: the schedules agree on everything compared."}</p>
       ) : (
-        <div className="table-wrap">
+        <div className="table-wrap cmp-wrap" ref={fillViewport}>
           <table className="cmp">
             <thead>
               <tr>
