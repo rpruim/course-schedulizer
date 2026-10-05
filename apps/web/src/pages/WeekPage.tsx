@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import { deleteSections, keepSections, partsFor, type Schedule } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
-import { Check, Clock, Trash, Warn } from "../icons";
+import { Check, Clock, Pencil, Trash, Warn } from "../icons";
 import { MassEditDialog, type Pick } from "../editor/MassEditDialog";
 import { MultiSelect } from "../MultiSelect";
 import { useRemembered } from "../remember";
@@ -281,10 +281,12 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
               <button onClick={() => { const all = new Set(filteredKeys); setSelected((cur) => new Set([...cur].filter((k) => !all.has(k)))); }} disabled={!filteredKeys.some((k) => selected.has(k))} title="Deselect every section that matches the filter, in every year, term and part of the term">− Remove filtered</button>
             </span>
             <button onClick={() => { setSelected(new Set()); setMassMessage(""); }} disabled={selected.size === 0} title="Deselects every section, including any that the filters are hiding">Clear selection</button>
-            <button className="primary" onClick={() => setMassOpen(true)} disabled={picks.length + hiddenPicks.length === 0}>Edit selected…</button>
+            <span className="muted">{selectedTotal} of {everySection.size} section{everySection.size === 1 ? "" : "s"} selected, including {picks.length} of {visible.length} visible section{visible.length === 1 ? "" : "s"}</span>
+          </div>
+          <div className="bar">
+            <button className="primary" onClick={() => setMassOpen(true)} disabled={picks.length + hiddenPicks.length === 0}><Pencil /> Edit selected…</button>
             <button className="danger" onClick={() => removeSections(false)} disabled={selectedTotal === 0} title="Delete the selected sections from their schedules"><Trash /> Remove all selected</button>
             <button className="danger" onClick={() => removeSections(true)} disabled={toRemove(true) === 0} title="Delete every section that is not selected, in each schedule that has a selection (for example to cut a department's export down to the part you schedule)"><Trash /> Retain only selected</button>
-            <span className="muted">{selectedTotal} of {everySection.size} section{everySection.size === 1 ? "" : "s"} selected, including {picks.length} of {visible.length} visible section{visible.length === 1 ? "" : "s"}</span>
             {massMessage && <span className="note ok" role="status">{massMessage}</span>}
           </div>
           {massOpen && <MassEditDialog picks={picks} hidden={hiddenPicks} onClose={() => setMassOpen(false)} onDone={setMassMessage} />}

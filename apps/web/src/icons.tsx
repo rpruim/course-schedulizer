@@ -71,3 +71,12 @@ export function Move() {
     </svg>
   );
 }
+
+/** A pencil: edit. */
+export function Pencil() {
+  return (
+    <svg {...svg} className="pencil-icon">
+      <path fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" d="M2 14l.8-3.2 7.9-7.9a1.4 1.4 0 0 1 2 0l.4.4a1.4 1.4 0 0 1 0 2L5.2 13.2zM9.6 4l2.4 2.4" />
+    </svg>
+  );
+}
