@@ -1,3 +1,7 @@
+# Course Schedulizer 2.0.6.9000
+
+* Changes since 2.0.6 will be listed here.
+
 # Course Schedulizer 2.0.6
 
 * The user guide no longer has the *More help and other resources* section, and *Editing the file in Excel* now starts with a red *Editors beware!* callout: avoid editing the Excel file if at all possible, because it is easy to break its formatting in ways that lose information when it is read back.
