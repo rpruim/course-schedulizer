@@ -1,4 +1,4 @@
-# Course Schedulizer 2.0.5.9001
+# Course Schedulizer 2.0.6
 
 * The user guide no longer has the *More help and other resources* section, and *Editing the file in Excel* now starts with a red *Editors beware!* callout: avoid editing the Excel file if at all possible, because it is easy to break its formatting in ways that lose information when it is read back.
 * The registrar tab has a new last column, `Colocations`: for each section, the other sections that really meet with it under a *Colocate* rule (they overlap in time and share a room or an instructor, so they would otherwise have been flagged as a conflict), such as `MUSC 243 A, MUSC 343 A`. Colocations a rule would allow but that do not happen are not listed.
