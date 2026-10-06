@@ -13,6 +13,7 @@ import {
   findConflicts,
   findRuleViolations,
   inferredLevel,
+  normCourse,
   partsFor,
   saveDraft,
   validateDraft,
@@ -80,10 +81,22 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
   const fieldErrors = byField(errors);
   const err = (field: string) => (attempted ? fieldErrors[field]?.map((m, i) => <span key={i} className="err">{m}</span>) : null);
 
+  // A section new to a course (a new section, or one whose course was changed) takes on the listings its course already has.
+  const inherited = useMemo(() => {
+    const course = (x: { prefix: string; courseNumber: string }) => normCourse(`${x.prefix} ${x.courseNumber}`);
+    const mine = course(form.prefix ? { prefix: form.prefix, courseNumber: form.courseNumber } : { prefix: "", courseNumber: "" });
+    if (!form.prefix.trim() || !form.courseNumber.trim() || (!isNew && mine === course(initial))) return [];
+    const ids = new Set(schedule.sessions.filter((s) => course(s) === mine && s.sectionId !== initial.sectionId).map((s) => s.sectionId));
+    const have = new Set(form.crossListings.map(course));
+    const out = new Map<string, string>();
+    for (const l of schedule.crossListings) if (ids.has(l.sectionId) && !have.has(course(l)) && course(l) !== mine) out.set(course(l), `${l.prefix} ${l.courseNumber}`);
+    return [...out.values()];
+  }, [form.prefix, form.courseNumber, form.crossListings, isNew, initial, schedule]);
+
   // Live preview of what saving would do: the course name, load shares, and any conflicts or non-standard times it would create.
   const preview = useMemo(() => {
     if (errors.length) return undefined;
-    const r = saveDraft(schedule, draft, { kind: "swap" });
+    const r = saveDraft(schedule, draft, { kind: "swap" }, { deleteListed: true });
     if (r.kind !== "saved") return undefined;
     const names = displayNames(r.schedule);
     const conflicts = findConflicts(r.schedule)
@@ -137,15 +150,28 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
     let msg = `${isNew ? "Added" : "Saved"} ${mine}.`;
     if (r.other?.deleted) msg += ` The other section ${r.other.from} was deleted.`;
     else if (r.other) msg += ` The other section is now ${r.other.to}.`;
+    if (r.removedSections) msg += ` ${r.removedSections} section${r.removedSections === 1 ? "" : "s"} of the courses it is now also listed as ${r.removedSections === 1 ? "was" : "were"} removed.`;
     onNotice(msg);
     onClose();
   }
 
-  function save(resolution?: LetterResolution) {
+  function save(resolution?: LetterResolution, deleteListed = false) {
     setAttempted(true);
     if (errors.length) return;
-    const r = saveDraft(schedule, draft, resolution);
+    const r = saveDraft(schedule, draft, resolution, { deleteListed });
     if (r.kind === "saved") return finish(r);
+    if (r.kind === "listingConflict") {
+      // A cross-listed course is one course with several names, so sections of the other name would be duplicates.
+      const courses = [...new Set(r.sections.map((s) => s.course))];
+      const list = r.sections.slice(0, 8).map((s) => `${s.course} ${s.letter} (${s.term} ${s.academicYear})`).join("\n");
+      const more = r.sections.length > 8 ? `\n…and ${r.sections.length - 8} more` : "";
+      const ok = window.confirm(
+        `${courses.join(" and ")} ${courses.length === 1 ? "has" : "have"} ${r.sections.length} section${r.sections.length === 1 ? "" : "s"} of its own:\n\n${list}${more}\n\n` +
+          `Cross-listed courses are one course with several names, so ${r.sections.length === 1 ? "this section" : "these sections"} would be deleted and the cross-listing created.\n\nDelete ${r.sections.length === 1 ? "it" : "them"} and create the cross-listing? You can undo this.`,
+      );
+      if (ok) save(resolution, true);
+      return;
+    }
     if (r.kind === "collision") {
       setCollision(r);
       setChoice("swap");
@@ -324,7 +350,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
             <label className="f"><span>Comment</span><textarea rows={2} value={form.comment} onChange={(e) => set("comment", e.target.value)} /></label>
             <div className="also-listed">
               <h4>Also listed as</h4>
-              <p className="muted small">Cross-listed courses are one course with multiple names. This is different from co-located courses, which are different courses that meet together.</p>
+              <p className="muted small">Cross-listed courses are one course with multiple names. This is different from co-located courses, which are different courses that meet together. A listing applies to every section of the course, in every term; if the other course has sections of its own, you are asked first and they are removed.</p>
               {form.crossListings.map((l, i) => (
                 <div className="row" key={i}>
                   <label className="f"><span>Prefix</span><input value={l.prefix} list="dl-prefix" size={8} onChange={(e) => set("crossListings", form.crossListings.map((x, j) => (j === i ? { ...x, prefix: e.target.value } : x)))} /></label>
@@ -334,6 +360,9 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
                 </div>
               ))}
               <button type="button" onClick={() => set("crossListings", [...form.crossListings, { prefix: "", courseNumber: "" }])}>+ Add listing</button>
+              {inherited.length > 0 && (
+                <p className="muted small">The other sections of this course are also listed as {inherited.join(", ")}; this section will be too when you save.</p>
+              )}
               {form.crossListings.length > 0 && name && <p className="preview">Shown as {name}</p>}
             </div>
           </details>

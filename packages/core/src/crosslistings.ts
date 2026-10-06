@@ -55,6 +55,38 @@ export function setCrossListings(schedule: Schedule, sectionId: string, listings
 }
 
 /**
+ * Make the cross-listings of a course the same on every one of its sections (every term and year, by prefix and number):
+ * each section gets every listing that any section of the course has. A cross-listing belongs to the course, so a file or an
+ * edit that leaves a section out is put right. Order is kept (a section's own listings first). Returns the same object when
+ * nothing needs to change.
+ */
+export function unifyCrossListings(schedule: Schedule): Schedule {
+  const course = (x: { prefix: string; courseNumber: string }) => normCourse(`${x.prefix} ${x.courseNumber}`);
+  const firstOf = new Map<string, Session>();
+  for (const s of schedule.sessions) if (!firstOf.has(s.sectionId)) firstOf.set(s.sectionId, s);
+  const byCourse = new Map<string, string[]>();
+  for (const s of firstOf.values()) byCourse.set(course(s), [...(byCourse.get(course(s)) ?? []), s.sectionId]);
+  const wanted = new Map<string, Listing[]>(); // course -> union of its sections' listings, in the order met
+  for (const l of schedule.crossListings) {
+    const s = firstOf.get(l.sectionId);
+    if (!s) continue;
+    const list = wanted.get(course(s)) ?? [];
+    if (!list.some((x) => same(x, l))) list.push({ prefix: l.prefix, courseNumber: l.courseNumber });
+    wanted.set(course(s), list);
+  }
+  const added: CrossListing[] = [];
+  for (const [key, ids] of byCourse) {
+    for (const l of wanted.get(key) ?? []) {
+      for (const id of ids) {
+        if (same(l, firstOf.get(id)!)) continue; // a section is not listed as its own course
+        if (!schedule.crossListings.some((x) => x.sectionId === id && same(x, l))) added.push({ sectionId: id, prefix: l.prefix, courseNumber: l.courseNumber });
+      }
+    }
+  }
+  return added.length === 0 ? schedule : { ...schedule, crossListings: [...schedule.crossListings, ...added] };
+}
+
+/**
  * A listing that would produce two sections with the same course and letter in a
  * term: `DIGI 388 A` also listed as `URBS 388`, while `URBS 388 A` exists as a
  * separate section of its own.

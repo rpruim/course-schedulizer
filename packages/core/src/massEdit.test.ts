@@ -151,3 +151,17 @@ describe("sharedValues", () => {
     expect(sharedValues([])).toEqual({ fields: {}, meeting: {} });
   });
 });
+
+describe("massEdit: renaming into a course that has cross-listings", () => {
+  it("gives the renamed sections that course's cross-listings, and it theirs", () => {
+    const base = sched({ sectionId: "a", prefix: "MUSC", courseNumber: "101", section: "A" }, { sectionId: "b", prefix: "URBS", courseNumber: "101", section: "B" });
+    const withListing = { ...base, crossListings: [{ sectionId: "a", prefix: "DIGI", courseNumber: "101" }] };
+    const r = massEdit(withListing, ["b"], { prefix: "MUSC" }, "overwrite");
+    expect(r.schedule.sessions.map((x) => x.prefix)).toEqual(["MUSC", "MUSC"]);
+    expect(r.schedule.crossListings.map((l) => [l.sectionId, l.prefix]).sort()).toEqual([["a", "DIGI"], ["b", "DIGI"]]);
+    // no rename, no change to listings
+    const untouched = massEdit(withListing, ["b"], { group: "G" }, "overwrite");
+    expect(untouched.schedule.crossListings).toBe(withListing.crossListings);
+  });
+});
+

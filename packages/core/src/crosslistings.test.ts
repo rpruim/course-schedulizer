@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addCrossListing, crossListingsOf, crossListingWarnings, removeCrossListing, setCrossListings } from "./crosslistings.js";
+import { addCrossListing, crossListingsOf, crossListingWarnings, removeCrossListing, setCrossListings, unifyCrossListings } from "./crosslistings.js";
 import { displayNames } from "./names.js";
 import { importRecords } from "./import.js";
 import type { Schedule } from "./types.js";
@@ -65,3 +65,24 @@ describe("crossListingWarnings", () => {
     }
   });
 });
+
+describe("unifyCrossListings: a listing belongs to the course", () => {
+  const sec2 = (o: Record<string, string>) => ({ AcademicYear: "Y", Term: "FA", Prefix: "MUSC", CourseNumber: "101", Section: "A", ...o });
+  it("gives every section of a course the listings any of them has, across terms and years, and only that course", () => {
+    const r = importRecords({
+      sessions: [sec2({}), sec2({ Section: "B" }), sec2({ Term: "SP" }), sec2({ AcademicYear: "Z" }), sec2({ CourseNumber: "102" })],
+      crossListings: [{ SectionId: "Y-FA-MUSC101-A", Prefix: "URBS", CourseNumber: "101" }, { SectionId: "Y-SP-MUSC101-A", Prefix: "DIGI", CourseNumber: "101" }],
+    });
+    expect(r.issues).toEqual([]);
+    const listed = r.schedule.crossListings.map((l) => `${l.sectionId}>${l.prefix} ${l.courseNumber}`).sort();
+    expect(listed).toEqual([
+      "Y-FA-MUSC101-A>DIGI 101", "Y-FA-MUSC101-A>URBS 101", "Y-FA-MUSC101-B>DIGI 101", "Y-FA-MUSC101-B>URBS 101",
+      "Y-SP-MUSC101-A>DIGI 101", "Y-SP-MUSC101-A>URBS 101", "Z-FA-MUSC101-A>DIGI 101", "Z-FA-MUSC101-A>URBS 101",
+    ]);
+  });
+  it("returns the same schedule when it is already consistent", () => {
+    const r = importRecords({ sessions: [sec2({}), sec2({ Section: "B" })], crossListings: [{ SectionId: "Y-FA-MUSC101-A", Prefix: "URBS", CourseNumber: "101" }, { SectionId: "Y-FA-MUSC101-B", Prefix: "URBS", CourseNumber: "101" }] }).schedule;
+    expect(unifyCrossListings(r)).toBe(r);
+  });
+});
+

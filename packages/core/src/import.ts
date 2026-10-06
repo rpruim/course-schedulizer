@@ -3,6 +3,7 @@ import { parseDays, parseFaculty, parseTime } from "./format.js";
 import { sectionShares } from "./load.js";
 import { partNamed, partsFor, splitTermCode } from "./terms.js";
 import { normalizeCoreTag } from "./coreTag.js";
+import { unifyCrossListings } from "./crosslistings.js";
 import { normalizeDelivery } from "./delivery.js";
 import {
   AY,
@@ -11,6 +12,7 @@ import {
   constraintSchema,
   crossListingSchema,
   defaultSettings,
+  emptySchedule,
   emptyMeta,
   nonTeachingSchema,
   sessionSchema,
@@ -615,7 +617,7 @@ export function importRecords(input: ImportInput): ImportResult {
       meta: input.meta ?? emptyMeta(),
       settings,
       sessions: s.sessions,
-      crossListings: cl.crossListings,
+      crossListings: unifyCrossListings({ ...emptySchedule(), sessions: s.sessions, crossListings: cl.crossListings }).crossListings,
       nonTeaching: [...s.nonTeaching, ...nt.nonTeaching],
       constraints: co.constraints,
       comparisons: cmp.comparisons,

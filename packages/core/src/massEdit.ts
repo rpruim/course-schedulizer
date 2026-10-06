@@ -1,3 +1,4 @@
+import { unifyCrossListings } from "./crosslistings.js";
 import { formatFaculty, formatNumber } from "./format.js";
 import type { Instructor, Schedule, Session } from "./types.js";
 
@@ -148,7 +149,9 @@ export function massEdit(schedule: Schedule, sectionIds: Iterable<string>, edits
     prefix,
     rules: schedule.constraints.filter((c) => new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![A-Za-z])`, "i").test(c.course.trim())).length,
   }));
-  return { schedule: { ...schedule, sessions }, sections, values, skipped, skippedMeetings, renamedFrom };
+  // Sections renamed into another course take on that course's cross-listings, and it theirs.
+  const result = { ...schedule, sessions };
+  return { schedule: renamed.size > 0 ? unifyCrossListings(result) : result, sections, values, skipped, skippedMeetings, renamedFrom };
 }
 
 /** The fields of a section whose value, when it is the same in every section chosen, can be shown as a suggestion. */

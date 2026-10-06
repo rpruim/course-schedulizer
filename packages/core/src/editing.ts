@@ -1,4 +1,5 @@
-import { crossListingsOf, setCrossListings } from "./crosslistings.js";
+import { normCourse } from "./constraints.js";
+import { addCrossListing, crossListingsOf, removeCrossListing, setCrossListings } from "./crosslistings.js";
 import { parseDays } from "./format.js";
 import { sectionShares } from "./load.js";
 import type { Listing } from "./names.js";
@@ -248,7 +249,11 @@ export type SaveResult =
       sectionId: string;
       /** What happened to the other section that held the letter, if there was one. */
       other?: { sectionId: string; from: string; to?: string; deleted?: boolean };
+      /** Sections of a course that this section is now also listed as, removed from the schedule (the caller asked for that). */
+      removedSections?: number;
     }
+  /** A new listing names a course that has sections of its own; they would be removed. Ask the user, then save again with `deleteListed`. */
+  | { kind: "listingConflict"; sections: { sectionId: string; course: string; letter: string; academicYear: string; term: string }[] }
   /** The letter is taken in that course and term: ask the user, then save again with a resolution. */
   | { kind: "collision"; other: { sectionId: string; letter: string }; options: ("swap" | "relabel" | "delete" | "cancel")[]; defaultOption: "swap" }
   | { kind: "canceled"; schedule: Schedule }
@@ -268,7 +273,7 @@ const sameOffering = (a: Offering, b: Offering) =>
  * relabel the other section, delete it, or cancel); a swap gives the other
  * section this section's previous letter in that course, or else the first free one.
  */
-export function saveDraft(schedule: Schedule, draft: SectionDraft, resolution?: LetterResolution): SaveResult {
+export function saveDraft(schedule: Schedule, draft: SectionDraft, resolution?: LetterResolution, options: { deleteListed?: boolean } = {}): SaveResult {
   const errors = validateDraft(schedule, draft);
   if (errors.length) return { kind: "invalid", errors };
 
@@ -334,10 +339,54 @@ export function saveDraft(schedule: Schedule, draft: SectionDraft, resolution?: 
     }
   }
 
+  // Cross-listings belong to a course: a listing added here is added to every section of the course, in every term (and one removed
+  // here is removed from all), and a course that is now listed under this one loses its sections of its own.
   const cl = setCrossListings(next, id, d.crossListings);
   if (cl.kind === "invalid") return { kind: "invalid", errors: [{ field: "crossListings", message: cl.message }] };
   next = cl.schedule;
-  return { kind: "saved", schedule: next, sectionId: id, ...(report ? { other: report } : {}) };
+  const courseKey = (x: { prefix: string; courseNumber: string }) => normCourse(`${x.prefix} ${x.courseNumber}`);
+  const mine = courseKey(d);
+  const sameCourseBefore = existing !== undefined && courseKey(existing) === mine;
+  const before = new Set((sameCourseBefore ? crossListingsOf(schedule, id) : []).map(courseKey));
+  const now = crossListingsOf(next, id);
+  const added = now.filter((l) => !before.has(courseKey(l)));
+  const removed = [...before].filter((k) => !now.some((l) => courseKey(l) === k));
+  const firstOfEach = [...new Map(next.sessions.map((s) => [s.sectionId, s])).values()];
+
+  // Sections of a course that is now listed under this one are removed, once the user agrees.
+  const gone = firstOfEach.filter((s) => s.sectionId !== id && courseKey(s) !== mine && added.some((l) => courseKey(l) === courseKey(s)));
+  if (gone.length > 0 && !options.deleteListed) {
+    return { kind: "listingConflict", sections: gone.map((s) => ({ sectionId: s.sectionId, course: `${s.prefix} ${s.courseNumber}`, letter: s.section, academicYear: s.academicYear, term: s.term })) };
+  }
+  if (gone.length > 0) {
+    const out = new Set(gone.map((s) => s.sectionId));
+    next = { ...next, sessions: next.sessions.filter((s) => !out.has(s.sectionId)), crossListings: next.crossListings.filter((l) => !out.has(l.sectionId)) };
+  }
+
+  // The other sections of this course follow: they get what was added and lose what was removed; a section new to the course
+  // (a new section, or one whose course changed) also takes on the listings its course already has.
+  const others = firstOfEach.filter((s) => s.sectionId !== id && courseKey(s) === mine && !(gone.length > 0 && gone.some((g) => g.sectionId === s.sectionId)));
+  for (const o of others) {
+    for (const l of added) {
+      const r = addCrossListing(next, o.sectionId, l);
+      if (r.kind === "changed") next = r.schedule;
+    }
+    for (const k of removed) {
+      const l = crossListingsOf(next, o.sectionId).find((x) => courseKey(x) === k);
+      if (!l) continue;
+      const r = removeCrossListing(next, o.sectionId, l);
+      if (r.kind === "changed") next = r.schedule;
+    }
+  }
+  if (!sameCourseBefore) {
+    for (const o of others) {
+      for (const l of crossListingsOf(next, o.sectionId)) {
+        const r = addCrossListing(next, id, l);
+        if (r.kind === "changed") next = r.schedule;
+      }
+    }
+  }
+  return { kind: "saved", schedule: next, sectionId: id, ...(report ? { other: report } : {}), ...(gone.length > 0 ? { removedSections: gone.length } : {}) };
 }
 
 /** Remove a section: its rows and its additional listings. (Cohort-constraint rows naming it are left, and then reported by `constraintWarnings`.) */

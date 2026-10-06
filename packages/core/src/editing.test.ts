@@ -106,7 +106,53 @@ describe("saveDraft: editing in place", () => {
   it("replaces a section's cross-listings", () => {
     const withCl = saved(saveDraft(s, { ...draft(s, "Y-FA-MUSC101-A"), crossListings: [{ prefix: "URBS", courseNumber: "101" }] })).schedule;
     const swapped = saved(saveDraft(withCl, { ...draft(withCl, "Y-FA-MUSC101-A"), crossListings: [{ prefix: "DIGI", courseNumber: "101" }] })).schedule;
-    expect(swapped.crossListings.map((l) => l.prefix)).toEqual(["DIGI"]);
+    // the listing belongs to the course, so every section of it follows (A, B and C of MUSC 101)
+    expect(swapped.crossListings.map((l) => [l.sectionId, l.prefix])).toEqual([["Y-FA-MUSC101-A", "DIGI"], ["Y-FA-MUSC101-B", "DIGI"], ["Y-FA-MUSC101-C", "DIGI"]]);
+  });
+});
+
+describe("saveDraft: cross-listings belong to the course", () => {
+  const base = () => make(
+    sec("A", meets("MW", "9:15")), sec("B", meets("TR", "9:15")),
+    sec("A", { Term: "SP", ...meets("MW", "9:15") }), sec("A", { AcademicYear: "Z", ...meets("MW", "9:15") }),
+    sec("A", { CourseNumber: "102", ...meets("MW", "11:00") }),
+  );
+  const listed = (s: Schedule) => s.crossListings.map((l) => `${l.sectionId}>${l.prefix} ${l.courseNumber}`).sort();
+
+  it("adds a new listing to every section of the course, in every term and year, and no other course", () => {
+    const s = base();
+    const r = saved(saveDraft(s, { ...draft(s, "Y-FA-MUSC101-A"), crossListings: [{ prefix: "URBS", courseNumber: "101" }] }));
+    expect(listed(r.schedule)).toEqual(["Y-FA-MUSC101-A>URBS 101", "Y-FA-MUSC101-B>URBS 101", "Y-SP-MUSC101-A>URBS 101", "Z-FA-MUSC101-A>URBS 101"]);
+    expect(r.removedSections).toBeUndefined();
+  });
+  it("removes a listing from every section of the course when it is removed from one", () => {
+    const s = base();
+    const withCl = saved(saveDraft(s, { ...draft(s, "Y-FA-MUSC101-A"), crossListings: [{ prefix: "URBS", courseNumber: "101" }, { prefix: "DIGI", courseNumber: "101" }] })).schedule;
+    expect(withCl.crossListings).toHaveLength(8);
+    const r = saved(saveDraft(withCl, { ...draft(withCl, "Y-SP-MUSC101-A"), crossListings: [{ prefix: "DIGI", courseNumber: "101" }] }));
+    expect(listed(r.schedule)).toEqual(["Y-FA-MUSC101-A>DIGI 101", "Y-FA-MUSC101-B>DIGI 101", "Y-SP-MUSC101-A>DIGI 101", "Z-FA-MUSC101-A>DIGI 101"]);
+  });
+  it("asks first when the listed course has sections of its own: nothing changes until the caller agrees", () => {
+    const s = make(sec("A", meets("MW", "9:15")), sec("B"), sec("A", { Prefix: "URBS", ...meets("MW", "9:15") }), sec("B", { Prefix: "URBS", Term: "SP" }), sec("A", { Prefix: "URBS", CourseNumber: "102" }));
+    const d = { ...draft(s, "Y-FA-MUSC101-A"), crossListings: [{ prefix: "URBS", courseNumber: "101" }] };
+    const ask = saveDraft(s, d);
+    expect(ask.kind).toBe("listingConflict");
+    if (ask.kind === "listingConflict") expect(ask.sections.map((x) => [x.sectionId, x.course, x.letter, x.term])).toEqual([["Y-FA-URBS101-A", "URBS 101", "A", "FA"], ["Y-SP-URBS101-B", "URBS 101", "B", "SP"]]);
+    expect(s.sessions).toHaveLength(5); // the input is untouched
+    const done = saved(saveDraft(s, d, undefined, { deleteListed: true }));
+    expect(done.removedSections).toBe(2);
+    expect([...new Set(done.schedule.sessions.map((x) => x.sectionId))].sort()).toEqual(["Y-FA-MUSC101-A", "Y-FA-MUSC101-B", "Y-FA-URBS102-A"]);
+    expect(listed(done.schedule)).toEqual(["Y-FA-MUSC101-A>URBS 101", "Y-FA-MUSC101-B>URBS 101"]);
+  });
+  it("does not ask about a listing that is already there, and a section new to the course takes on its listings", () => {
+    const s = base();
+    const withCl = saved(saveDraft(s, { ...draft(s, "Y-FA-MUSC101-A"), crossListings: [{ prefix: "URBS", courseNumber: "101" }] })).schedule;
+    // an edit that leaves the listing alone never asks, even if URBS 101 sections appeared since
+    const again = saveDraft(withCl, { ...draft(withCl, "Y-FA-MUSC101-A"), shortTitle: "New title" });
+    expect(again.kind).toBe("saved");
+    // a new section of MUSC 101 inherits URBS 101
+    const fresh = saved(saveDraft(withCl, { ...newSectionDraft(withCl), prefix: "MUSC", courseNumber: "101", term: "SU", academicYear: "Y", section: "A", shortTitle: "Calc" }));
+    expect(listed(fresh.schedule)).toContain("Y-SU-MUSC101-A>URBS 101");
   });
 });
 
