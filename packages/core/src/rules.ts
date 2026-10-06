@@ -34,7 +34,7 @@ export const termList = (setting: string): string[] => setting.split(/[,;\s]+/).
 /** A constraint as the editor sees it: the rows that share a name, gathered into one object. */
 export interface Rule {
   name: string;
-  type: "takeable" | "window" | "standard" | "subset" | "collide" | "consecutive";
+  type: "takeable" | "window" | "standard" | "subset" | "colocate" | "colocateDifferent" | "consecutive";
   items: RuleItem[];
   /** `standard` rules: the changes to the standard times. */
   changes: StandardChange[];
@@ -178,14 +178,14 @@ export function validateRule(schedule: Schedule, rule: Rule, original?: string):
   if (!name) out.push({ field: "name", message: "Give the rule a name." });
   else if (schedule.constraints.some((c) => c.constraint.toLowerCase() === name.toLowerCase() && c.constraint !== original)) out.push({ field: "name", message: `Another rule is already called “${name}”.` });
   if (rule.items.length === 0) {
-    const message = { takeable: "List at least two courses.", window: "Say which courses or instructors the rule is about.", standard: "Say which courses it applies to (* means every course).", subset: "Say which courses it applies to (* means every course).", collide: "Say which courses may collide (* means every course).", consecutive: "List at least one instructor." }[rule.type];
+    const message = { takeable: "List at least two courses.", window: "Say which courses or instructors the rule is about.", standard: "Say which courses it applies to (* means every course).", subset: "Say which courses it applies to (* means every course).", colocate: "Say which course is colocated.", colocateDifferent: "Say which course is colocated.", consecutive: "List at least one instructor." }[rule.type];
     out.push({ field: "items", message });
   }
   rule.items.forEach((it, i) => {
     if (!it.course.trim() && !it.instructor.trim()) out.push({ field: `items.${i}`, message: "Name a course or an instructor." });
     if (it.course.trim() && it.instructor.trim()) out.push({ field: `items.${i}`, message: "Use a course or an instructor on a line, not both." });
     if (rule.type === "window" && ruleSubject(rule) === "courses" && it.instructor.trim() && !it.course.trim()) out.push({ field: `items.${i}`, message: "A rule is about courses or about instructors, not both." });
-    if ((rule.type === "takeable" || rule.type === "standard" || rule.type === "subset" || rule.type === "collide") && it.instructor.trim()) out.push({ field: `items.${i}`, message: `A “${rule.type === "standard" ? "standard times" : rule.type === "subset" ? "subset of standard times" : rule.type === "collide" ? "allow collisions" : "take together"}” rule lists courses.` });
+    if ((rule.type === "takeable" || rule.type === "standard" || rule.type === "subset" || rule.type === "colocate" || rule.type === "colocateDifferent") && it.instructor.trim()) out.push({ field: `items.${i}`, message: `A “${rule.type === "standard" ? "standard times" : rule.type === "subset" ? "subset of standard times" : rule.type === "colocate" ? "colocate (same instructor)" : rule.type === "colocateDifferent" ? "colocate (different instructors)" : "take together"}” rule lists courses.` });
     if (rule.type === "consecutive" && it.course.trim()) out.push({ field: `items.${i}`, message: "A back-to-back rule lists instructors." });
     if (rule.type !== "consecutive" && it.course.trim() && !/^\S+(\s+\S+)?$/.test(it.course.trim())) out.push({ field: `items.${i}`, message: "Write a course as PREFIX NUMBER, for example MUSC 234 or MUSC 3*." });
   });
@@ -243,9 +243,9 @@ export function describeRule(r: Rule): string {
     const everything = r.items.length > 0 && r.items.every((it) => it.course.trim() === "*");
     return `${everything ? "Every course" : items} may meet on only some of the days of a standard time (for example Tuesday alone when TR is standard)${when}.`;
   }
-  if (r.type === "collide") {
+  if (r.type === "colocate" || r.type === "colocateDifferent") {
     const everything = r.items.length > 0 && r.items.every((it) => it.course.trim() === "*");
-    return `${everything ? "Any courses" : items} may collide with one another in time, room or instructor${when}.`;
+    return `${everything ? "Any courses" : items} ${r.items.length > 1 || everything ? "are" : "is"} colocated${r.type === "colocate" ? " (same instructor)" : " (different instructors)"}: ${r.items.length > 1 || everything ? "they" : "its sections"} may share a room at the same or overlapping times without a conflict${when}.`;
   }
   if (r.type === "consecutive") {
     const who = r.items.length > 1 ? `Each of ${items}` : items;
@@ -388,7 +388,7 @@ function violationsIn(schedule: Schedule): RuleViolation[] {
       consecutive(rule);
       continue;
     }
-    if (rule.type === "collide") continue; // it only silences conflicts (`allowedCollisions`)
+    if (rule.type === "colocate" || rule.type === "colocateDifferent") continue; // they only silence conflicts (`allowedCollisions`)
     if (rule.type === "standard" || rule.type === "subset") continue; // they change what the standard-times check accepts, below
     for (const g of groups.values()) {
       if (!termMatches(rule.term, g.term)) continue;
@@ -686,26 +686,27 @@ function violationsIn(schedule: Schedule): RuleViolation[] {
 }
 
 /**
- * Which pairs of sections may collide: a pair does when some “Allow collisions” rule names both sections
- * (within its terms, and, in a merged schedule, within the schedule the rule came from). Collisions are shared
- * instructors, rooms and the wildcard instructor; `findConflicts` leaves such pairs out.
+ * Which kinds of conflict a pair of sections may have: a pair may when some colocate rule names both sections (within its terms,
+ * and, in a merged schedule, within the schedule the rule came from). “Colocate (same instructor)” silences shared rooms,
+ * shared instructors and the wildcard instructor; “Colocate (different instructors)” silences shared rooms only, since a shared
+ * instructor would be a real clash. `findConflicts` leaves such conflicts out.
  */
-export function allowedCollisions(schedule: Schedule): (sectionIdA: string, sectionIdB: string) => boolean {
-  const rows = schedule.constraints.filter((c) => c.type === "collide");
+export function allowedCollisions(schedule: Schedule): (sectionIdA: string, sectionIdB: string, type: "Instructor" | "Room" | "Wildcard") => boolean {
+  const rows = schedule.constraints.filter((c) => c.type === "colocate" || c.type === "colocateDifferent");
   if (rows.length === 0) return () => false;
   const first = new Map<string, Session>();
   for (const s of schedule.sessions) if (!first.has(s.sectionId)) first.set(s.sectionId, s);
-  const byRule = new Map<string, Set<string>>();
+  const byRule = new Map<string, { sections: Set<string>; sameInstructor: boolean }>();
   for (const c of rows) {
     const key = `${c.scope ?? ""}\u0000${c.constraint}`;
-    const set = byRule.get(key) ?? new Set<string>();
+    const rule = byRule.get(key) ?? { sections: new Set<string>(), sameInstructor: c.type === "colocate" };
     for (const p of first.values()) {
       if (c.scope !== undefined && p.scope !== c.scope) continue;
       if (!termMatches(c.term, p.term)) continue;
-      if (constraintNames({ course: c.course, section: c.section } as Constraint, listingKeys(schedule, p), p.section)) set.add(p.sectionId);
+      if (constraintNames({ course: c.course, section: c.section } as Constraint, listingKeys(schedule, p), p.section)) rule.sections.add(p.sectionId);
     }
-    byRule.set(key, set);
+    byRule.set(key, rule);
   }
-  const sets = [...byRule.values()];
-  return (a, b) => sets.some((s) => s.has(a) && s.has(b));
+  const rules = [...byRule.values()];
+  return (a, b, type) => rules.some((r) => r.sections.has(a) && r.sections.has(b) && (type === "Room" || r.sameInstructor));
 }

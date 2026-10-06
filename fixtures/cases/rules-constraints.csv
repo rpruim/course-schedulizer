@@ -20,5 +20,5 @@ Colloquium time,standard,,,,,,,,allow,50,15:05,,R,,,,,,
 No 8:00 MWF,standard,*,,,,,,,,,,,,,,,,,This department does not use 8:00 on MWF.
 No 8:00 MWF,standard,,,,,,,,disallow,65,8:00,,MWF,,,,,,
 Harmonic structures may meet one day of TR,subset,AMUS 296,,,,,,,,,,,,,,,,,"AMUS 296 is meant to meet on only one of the standard days, so it is not flagged for that."
-The seminar runs at two levels,collide,CRUD 290,,,,,,,,,,,,,,,,,"CRUD 290 and CRUD 390 are one class, so they share an instructor, a room and a time on purpose."
-The seminar runs at two levels,collide,CRUD 390,,,,,,,,,,,,,,,,,
+The seminar runs at two levels,colocate,CRUD 290,,,,,,,,,,,,,,,,,"CRUD 290 and CRUD 390 are one class, so they share an instructor, a room and a time on purpose."
+The seminar runs at two levels,colocate,CRUD 390,,,,,,,,,,,,,,,,,

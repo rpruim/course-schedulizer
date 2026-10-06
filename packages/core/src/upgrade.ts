@@ -13,7 +13,9 @@ export function upgradeSchedule(s: Schedule): Schedule {
     sessions: s.sessions.some((x) => x.coreTag === undefined || x.specialTopic === undefined)
       ? s.sessions.map((x) => (x.coreTag === undefined || x.specialTopic === undefined ? { ...x, coreTag: x.coreTag ?? "", specialTopic: x.specialTopic ?? false } : x))
       : s.sessions,
-    constraints: (s.constraints ?? []).map((c) => {
+    constraints: (s.constraints ?? []).map((raw) => {
+      // the rule type before there were two colocate versions
+      const c = (raw as { type?: string }).type === "collide" ? { ...raw, type: "colocate" as const } : raw;
       const r = constraintSchema.safeParse(c);
       return r.success ? r.data : c;
     }),

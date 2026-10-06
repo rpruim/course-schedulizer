@@ -20,7 +20,7 @@ const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 /**
  * All conflicts in a schedule (spec §6): for every pair of different sections
  * that are concurrent and have meetings overlapping in time, one conflict per
- * (pair, type, detail) — instructor, room or wildcard, except for pairs an “Allow collisions” rule names.
+ * (pair, type, detail) — instructor, room or wildcard, except what a colocate rule allows for the pairs it names.
  * (Constraint rules are checked by
  * `findRuleViolations`, which is not about pairs.)
  */
@@ -61,16 +61,15 @@ export function findConflicts(schedule: Schedule): Conflict[] {
       const b = meetings[j]!;
       if (a.sectionId === b.sectionId) continue;
       if (!meetingsOverlap(schedule, a, b)) continue;
-      if (mayCollide(a.sectionId, b.sectionId)) continue;
 
       const pa = people.get(a.sectionId)!;
       const shared = [...people.get(b.sectionId)!].filter((n) => pa.has(n));
-      if (shared.length) record("Instructor", a, b, shared.map((n) => display.get(n) ?? n).sort().join(", "));
+      if (shared.length && !mayCollide(a.sectionId, b.sectionId, "Instructor")) record("Instructor", a, b, shared.map((n) => display.get(n) ?? n).sort().join(", "));
 
       const ra = norm(a.room);
-      if (ra !== "" && ra === norm(b.room) && !nonRooms.has(ra)) record("Room", a, b, a.room.trim());
+      if (ra !== "" && ra === norm(b.room) && !nonRooms.has(ra) && !mayCollide(a.sectionId, b.sectionId, "Room")) record("Room", a, b, a.room.trim());
 
-      if (wildcard.has(a.sectionId) || wildcard.has(b.sectionId)) record("Wildcard", a, b, "*");
+      if ((wildcard.has(a.sectionId) || wildcard.has(b.sectionId)) && !mayCollide(a.sectionId, b.sectionId, "Wildcard")) record("Wildcard", a, b, "*");
     }
   }
   return [...found.values()].sort(

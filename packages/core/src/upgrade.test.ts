@@ -18,4 +18,8 @@ describe("upgradeSchedule", () => {
     expect(up.sessions[0]!.specialTopic).toBe(false);
     expect(upgradeSchedule(up).sessions).toBe(up.sessions); // a current schedule keeps its own list
   });
+  it("renames the old collide rule type to colocate (same instructor)", () => {
+    const old = { ...emptySchedule(), constraints: [{ constraint: "C", type: "collide", course: "MUSC 1", section: "", comment: "" }] } as never;
+    expect(upgradeSchedule(old).constraints[0]!.type).toBe("colocate");
+  });
 });

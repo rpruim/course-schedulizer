@@ -98,8 +98,10 @@ export type NonTeaching = z.infer<typeof nonTeachingSchema>;
  * - `subset`: lets the courses it names meet on only some of the days of a standard time (T alone where TR is standard)
  *   (`DEFAULT_STANDARD_TIMES`, which every section is always checked against) for the sections named by
  *   `course` patterns (`*` = every course). Rows with an `action` are the changes; the rest name the courses.
- * - `collide`: the sections the `course` patterns name (with an optional `section`) may overlap one another in
- *   instructor, room or time without being reported as a conflict (a seminar run as a 200- and a 300-level course)
+ * - `colocate`: the sections the `course` patterns name (with an optional `section`) are colocated with the same instructor:
+ *   they may share a room, and an instructor, at the same or overlapping times without being reported as a conflict (a seminar
+ *   run as a 200- and a 300-level course). `colocateDifferent`: colocated with different instructors, so they may share a room
+ *   only; a shared instructor is still a conflict. (Files written before the two versions have `collide`, read as `colocate`.)
  * - `consecutive`: each instructor named should teach at most (or at least) `count` consecutive
  *   classes; one class follows another when it starts 0 to `gap` minutes after the other ends.
  * - `window`: the sections named (by `course` pattern or `instructor`) should / should not meet
@@ -108,7 +110,7 @@ export type NonTeaching = z.infer<typeof nonTeachingSchema>;
  */
 export const constraintSchema = z.object({
   constraint: z.string().min(1),
-  type: z.enum(["takeable", "window", "standard", "subset", "collide", "consecutive"]).default("takeable"),
+  type: z.enum(["takeable", "window", "standard", "subset", "colocate", "colocateDifferent", "consecutive"]).default("takeable"),
   /** `Prefix CourseNumber` pattern, where `*` matches anything: `MUSC 234`, `MUSC 3*`, `MUSC *`. */
   course: str,
   /** A section letter to name one section of the course; blank = every section. */

@@ -340,11 +340,14 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           it can be limited to some terms) as long as its start time and length are those of a standard time and its days are some, but not all, of that time’s days. A meeting that matches no standard time at all is still flagged.
           The flag says when a subset rule would allow the meeting.
         </p>
-        <h3>Allow collisions</h3>
+        <h3>Colocate</h3>
         <p>
-          Two sections that share an instructor, or a room, at overlapping times are reported as a conflict. An <em>Allow collisions</em> rule says that some courses are meant to: for example a seminar
-          run as both a 200- and a 300-level course, with identical class sessions. List the courses (one per line, with <code>*</code> and the other patterns, and a section letter if only one section is meant);
-          sections that are both named by the rule are never reported as conflicting with each other, whatever they share. A course listed once is enough for its own sections: that is how to allow two sections of the same course to meet at the same time. Sections the rule does not name conflict as usual, and a rule can be limited to some terms.
+          Two sections that share an instructor, or a room, at overlapping times are reported as a conflict. A <em>Colocate</em> rule says that some courses are meant to meet together in one room, for example a seminar
+          run as both a 200- and a 300-level course, with identical class sessions, or two courses taught together. The registrar is notified that the course should be colocated in Workday.
+          There are two versions. <em>Colocate (same instructor)</em> is for sections taught by the same instructor(s): they will not be reported as conflicting even if they share a room and an instructor at the same time,
+          and loads should be specified so that the sum of the loads across the colocated sessions is correct for the instructor(s). <em>Colocate (different instructors)</em> is for sections with different instructors:
+          they will not be reported as conflicting for sharing a room, but a shared instructor is still a conflict.
+          List the courses (one per line, with <code>*</code> and the other patterns, and a section letter if only one section is meant); a course listed once is enough for its own sections to be colocated.
           It silences only the conflicts reported in the Conflicts tab: a <em>Take together</em> rule still treats the courses as clashing.
         </p>
         <h3>Back-to-back classes</h3>
@@ -379,7 +382,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dd><em>Colloquium time.</em> Course AMUS 241; allow R, 50 minutes, starting 15:05.</dd>
           <dt>Subset of standard times</dt>
           <dd><em>Harmonic structures may meet one day of TR.</em> Course AMUS 296, which meets on Tuesday alone at 8:00 for 100 minutes and is not flagged; BHAV 226 on Friday alone at 9:15 is still flagged, because the rule does not name it.</dd>
-          <dt>Allow collisions</dt>
+          <dt>Colocate (same instructor)</dt>
           <dd><em>The seminar runs at two levels.</em> Courses CRUD 290, CRUD 390; the two listings of one seminar share an instructor, a room and a time and are not reported.</dd>
           <dt>Modify standard times: disallow</dt>
           <dd><em>No 8:00 MWF.</em> Every course (<code>*</code>); disallow MWF, 65 minutes, starting 8:00.</dd>

@@ -423,7 +423,7 @@ describe("the demo schedule with constraint rules (fixtures/cases/rules-*.csv)",
       ["Colloquium time", "standard"],
       ["No 8:00 MWF", "standard"],
       ["Harmonic structures may meet one day of TR", "subset"],
-      ["The seminar runs at two levels", "collide"],
+      ["The seminar runs at two levels", "colocate"],
     ]);
     expect(violations(demo()).map((v) => [v.rule, v.message])).toEqual([
       ["Digital information minor: any two electives", "Not every 2 of the 3 courses can be taken together: BHAV 312 + DIGI 318"],
@@ -443,7 +443,7 @@ describe("the demo schedule with constraint rules (fixtures/cases/rules-*.csv)",
   it("does not report the seminar listed at two levels as a conflict, because a rule allows it", () => {
     const s = demo();
     expect(findConflicts(s).filter((c) => c.sectionIdA.includes("CRUD290") || c.sectionIdB.includes("CRUD290"))).toEqual([]);
-    const without = { ...s, constraints: s.constraints.filter((c) => c.type !== "collide") };
+    const without = { ...s, constraints: s.constraints.filter((c) => c.type !== "colocate") };
     expect(findConflicts(without).map((c) => c.type)).toEqual(["Instructor", "Room"]);
   });
   it("flags only the standard-time exceptions the rules do not cover", () => {
@@ -531,10 +531,10 @@ describe("rules belong to the schedule they came from", () => {
   });
 });
 
-describe("allow collisions", () => {
+describe("colocated courses (the allow-collisions rule)", () => {
   const seminar = (n: string, o: Rec = {}) => sec("MUSC", n, "A", "TR", "9:15", { Faculty: "Kim", Classroom: "SB 1", ...o });
   const conflicts = (sessions: Rec[], constraints: Rec[] = []) => findConflicts(build(sessions, constraints)).map((c) => [c.type, c.sectionIdA, c.sectionIdB]);
-  const allow = (course: string, extra: Rec = {}): Rec => ({ Constraint: "Seminar", Type: "collide", Course: course, ...extra });
+  const allow = (course: string, extra: Rec = {}): Rec => ({ Constraint: "Seminar", Type: "colocate", Course: course, ...extra });
 
   it("reports two sections that share an instructor, a room and a time, until a rule allows it", () => {
     const sessions = [seminar("200"), seminar("300")];
@@ -564,8 +564,9 @@ describe("allow collisions", () => {
   it("is described, validated and flags nothing itself", () => {
     const s = build([seminar("200"), seminar("300")], [allow("MUSC 200"), allow("MUSC 300")]);
     const rule = rulesOf(s)[0]!;
-    expect(rule.type).toBe("collide");
-    expect(describeRule(rule)).toBe("MUSC 200, MUSC 300 may collide with one another in time, room or instructor.");
+    expect(rule.type).toBe("colocate");
+    expect(describeRule(rule)).toBe("MUSC 200, MUSC 300 are colocated (same instructor): they may share a room at the same or overlapping times without a conflict.");
+    expect(describeRule({ ...rule, type: "colocateDifferent", items: [rule.items[0]!] })).toBe("MUSC 200 is colocated (different instructors): its sections may share a room at the same or overlapping times without a conflict.");
     expect(validateRule(s, { ...rule, items: [] }, rule.name).map((p) => p.field)).toEqual(["items"]);
     expect(validateRule(s, { ...rule, items: [{ course: "", section: "", instructor: "Kim" }] }, rule.name).length).toBeGreaterThan(0);
     expect(findRuleViolations(s).filter((v) => !v.builtin)).toEqual([]);
@@ -580,3 +581,30 @@ describe("allow collisions", () => {
     expect(found.some((c) => !c.sectionIdA.includes("~") && !c.sectionIdB.includes("~"))).toBe(false);
   });
 });
+
+describe("colocate (different instructors)", () => {
+  const talk = (n: string, who: string, o: Rec = {}) => sec("MUSC", n, "A", "TR", "9:15", { Faculty: who, Classroom: "SB 1", ...o });
+  const kinds = (sessions: Rec[], constraints: Rec[] = []) => findConflicts(build(sessions, constraints)).map((c) => c.type);
+  const rule = (type: string, ...courses: string[]): Rec[] => courses.map((Course) => ({ Constraint: "Together", Type: type, Course }));
+
+  it("lets sections with different instructors share a room, but a shared instructor is still a conflict", () => {
+    const sessions = [talk("200", "Kim"), talk("300", "Lee")];
+    expect(kinds(sessions)).toEqual(["Room"]);
+    expect(kinds(sessions, rule("colocateDifferent", "MUSC 200", "MUSC 300"))).toEqual([]);
+    const sameWho = [talk("200", "Kim"), talk("300", "Kim")];
+    expect(kinds(sameWho, rule("colocateDifferent", "MUSC 200", "MUSC 300"))).toEqual(["Instructor"]);
+  });
+  it("(same instructor) lets them share the instructor as well", () => {
+    const sameWho = [talk("200", "Kim"), talk("300", "Kim")];
+    expect(kinds(sameWho)).toEqual(["Instructor", "Room"]);
+    expect(kinds(sameWho, rule("colocate", "MUSC 200", "MUSC 300"))).toEqual([]);
+  });
+  it("is read from a file under either name, and the old name means same instructor", () => {
+    const types = (t: string) => importRecords({ sessions: [talk("200", "Kim")], constraints: [{ Constraint: "C", Type: t, Course: "MUSC 200" }] }).schedule.constraints[0]!.type;
+    expect(types("Colocate (same instructor)")).toBe("colocate");
+    expect(types("Colocate (different instructors)")).toBe("colocateDifferent");
+    expect(types("allow collisions")).toBe("colocate");
+    expect(types("collide")).toBe("colocate");
+  });
+});
+
