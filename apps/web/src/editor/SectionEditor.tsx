@@ -201,7 +201,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
                 <div className="f">
                   <div className="label-row">
                     <label htmlFor="se-title">Title</label>
-                    <label className="topic-check"><input type="checkbox" checked={form.specialTopic} onChange={(e) => set("specialTopic", e.target.checked)} /> Special Topic, etc.?</label>
+                    <label className="topic-check" title="Use this to indicate course titles that vary across sections or terms. Special topics and shell courses are examples. This will notify the registrar's office to update the course title accordingly."><input type="checkbox" checked={form.specialTopic} onChange={(e) => set("specialTopic", e.target.checked)} /> Special Topic, etc.?</label>
                   </div>
                   <input id="se-title" value={form.shortTitle} aria-invalid={attempted && !!fieldErrors.shortTitle ? true : undefined} onChange={(e) => set("shortTitle", e.target.value)} />
                   {err("shortTitle")}
