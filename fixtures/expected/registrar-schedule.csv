@@ -1,24 +1,24 @@
-Term,Prefix,CourseNumber,Section,StudentCredits,FacultyLoad,MeetingDays,MeetingTime,BuildingAndRoom,TermPart,TermAndPart,Duration,ShortTitle,Faculty,InstructionalMethod,DeliveryMode,Comment,CrossListings,CoreTag,SpecialTopic
-FA,,,,0,1.5,,,,Full,FA-Full,,,Ada Example,Chair release,,"SYNTHETIC: AY, one row per spread term",,,
-SP,,,,0,1.5,,,,Full,SP-Full,,,Ada Example,Chair release,,"SYNTHETIC: AY, one row per spread term",,,
-SP,,,,0,4,,,,Full,SP-Full,,,Ben Sample,Sabbatical,,,,,
-SP,DIGI,304,A,4,4,TR,14:10:00 - 15:50:00,NH 104,Full,SP-Full,100,Special Topics,Ben Sample,Lecture,In-Person,,"URBS 308, MUSC 310",,
-FA,DIGI,388,A,4,4,MWF,11:00:00 - 12:05:00,NH 103,Full,FA-Full,65,Network Optimization,Lee,Lecture,In-Person,,URBS 388,,
-FA,HELP,349,J,12,1.8,,,Off Campus,Full,FA-Full,,Field Internship,Kim,Internship,,Might be 1.8 hours,,,
-FA,MUSC,104,A,4,4,MWF,09:15:00 - 10:20:00,NH 101,Full,FA-Full,65,Musical Patterns,Smith,Lecture,In-Person,,,,
+Term,Prefix,CourseNumber,Section,StudentCredits,FacultyLoad,MeetingDays,MeetingTime,BuildingAndRoom,TermPart,TermAndPart,Duration,ShortTitle,Faculty,InstructionalMethod,DeliveryMode,Comment,CrossListings,CoreTag,SpecialTopic,Level
+FA,,,,0,1.5,,,,Full,FA-Full,,,Ada Example,Chair release,,"SYNTHETIC: AY, one row per spread term",,,,
+SP,,,,0,1.5,,,,Full,SP-Full,,,Ada Example,Chair release,,"SYNTHETIC: AY, one row per spread term",,,,
+SP,,,,0,4,,,,Full,SP-Full,,,Ben Sample,Sabbatical,,,,,,
+SP,DIGI,304,A,4,4,TR,14:10:00 - 15:50:00,NH 104,Full,SP-Full,100,Special Topics,Ben Sample,Lecture,In-Person,,"URBS 308, MUSC 310",,,UGRAD
+FA,DIGI,388,A,4,4,MWF,11:00:00 - 12:05:00,NH 103,Full,FA-Full,65,Network Optimization,Lee,Lecture,In-Person,,URBS 388,,,UGRAD
+FA,HELP,349,J,12,1.8,,,Off Campus,Full,FA-Full,,Field Internship,Kim,Internship,,Might be 1.8 hours,,,,UGRAD
+FA,MUSC,104,A,4,4,MWF,09:15:00 - 10:20:00,NH 101,Full,FA-Full,65,Musical Patterns,Smith,Lecture,In-Person,,,,,UGRAD
 SP,MUSC,105,A,4,4,"MW
 F","09:15:00 - 10:20:00
 10:20:00 - 11:10:00","NH 101
 NH 102",Full,SP-Full,"65
-50",Harmonic Structures,"Ada Example, Ben Sample",Lecture,In-Person,,,,
+50",Harmonic Structures,"Ada Example, Ben Sample",Lecture,In-Person,,,,,UGRAD
 SU,MUSC,153,A,2,2,"MWF
 ","08:00:00 - 09:05:00
 ","NH 105
 Online",Full,SU-Full,"65
-",Summer Topics,Smith,Lecture,In-Person,,,,
-SU,MUSC,163,A,2,2,MTWRF,13:00:00 - 13:50:00,NH 106,1,SU-1,50,Half Term,Smith,Lecture,,,,,
+",Summer Topics,Smith,Lecture,In-Person,,,,,UGRAD
+SU,MUSC,163,A,2,2,MTWRF,13:00:00 - 13:50:00,NH 106,1,SU-1,50,Half Term,Smith,Lecture,,,,,,UGRAD
 FA,URBS,204,A,4,4,"TR
 TR","10:20:00 - 12:00:00
 10:20:00 - 12:00:00","NH 1
 NH 2",Full,FA-Full,"100
-100",Statistics,Lee,Lecture,Online,,,,
+100",Statistics,Lee,Lecture,Online,,,,,UGRAD

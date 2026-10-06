@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { recordsFromCsv } from "./csv.js";
 import { importRecords } from "./import.js";
-import { REGISTRAR_COLUMNS, registrarTable } from "./registrar.js";
+import { gradLevelOf, REGISTRAR_COLUMNS, registrarTable } from "./registrar.js";
 import { fixtureText } from "./testutil.js";
 
 const schedule = () => {
@@ -19,7 +19,7 @@ describe("registrar tab", () => {
     expect(REGISTRAR_COLUMNS).toEqual([
       "Term", "Prefix", "CourseNumber", "Section", "StudentCredits", "FacultyLoad", "MeetingDays", "MeetingTime",
       "BuildingAndRoom", "TermPart", "TermAndPart", "Duration", "ShortTitle", "Faculty", "InstructionalMethod",
-      "DeliveryMode", "Comment", "CrossListings", "CoreTag", "SpecialTopic",
+      "DeliveryMode", "Comment", "CrossListings", "CoreTag", "SpecialTopic", "Level",
     ]);
     expect(registrarTable(schedule()).header).toEqual([...REGISTRAR_COLUMNS]);
   });
@@ -72,3 +72,19 @@ describe("registrar tab", () => {
     for (const c of ["MeetingDays", "MeetingTime", "BuildingAndRoom", "Duration"]) expect(two[col(c)]!.split("\n")).toHaveLength(2);
   });
 });
+
+describe("Level column", () => {
+  it("is GRAD from 500 up and UGRAD below, ignoring a letter after the number, and blank without a number", () => {
+    expect(["100", "101", "499", "499A", " 182C"].map(gradLevelOf)).toEqual(["UGRAD", "UGRAD", "UGRAD", "UGRAD", "UGRAD"]);
+    expect(["500", "501", "699", "5000", "590L"].map(gradLevelOf)).toEqual(["GRAD", "GRAD", "GRAD", "GRAD", "GRAD"]);
+    expect(["", "?", "ABC"].map(gradLevelOf)).toEqual(["", "", ""]);
+  });
+  it("is the last column of the registrar tab, worked out from each section's course number", () => {
+    const sessions = [{ AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: "499", Section: "A" }, { AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: "500", Section: "A" }];
+    const t = registrarTable(importRecords({ sessions }).schedule);
+    expect(t.header[t.header.length - 1]).toBe("Level");
+    const at = t.header.indexOf("Level");
+    expect(t.rows.map((r) => r[at])).toEqual(["UGRAD", "GRAD"]);
+  });
+});
+

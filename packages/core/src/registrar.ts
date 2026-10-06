@@ -6,16 +6,23 @@ import { AY } from "./types.js";
 
 /**
  * The registrar's tab ("Registrar Schedule"): the old app's 17 columns in the
- * same order, then `CrossListings` next to the notes (`Comment`) column and the `CoreTag`, then `SpecialTopic` (blank, or "Special Topic"). One row
+ * same order, then `CrossListings` next to the notes (`Comment`) column and the `CoreTag`, then `SpecialTopic` (blank, or "Special Topic") and `Level` (`UGRAD` for a course numbered 499 or below, `GRAD` for 500 or above; worked out from the course number). One row
  * per section.
  */
 export const REGISTRAR_COLUMNS = [
   "Term", "Prefix", "CourseNumber", "Section", "StudentCredits", "FacultyLoad", "MeetingDays",
   "MeetingTime", "BuildingAndRoom", "TermPart", "TermAndPart", "Duration", "ShortTitle", "Faculty",
-  "InstructionalMethod", "DeliveryMode", "Comment", "CrossListings", "CoreTag", "SpecialTopic",
+  "InstructionalMethod", "DeliveryMode", "Comment", "CrossListings", "CoreTag", "SpecialTopic", "Level",
 ] as const;
 
 export const REGISTRAR_SHEET = "Registrar Schedule";
+
+/** `GRAD` for a course numbered 500 or above, `UGRAD` for 499 or below (a letter after the number, as in `182C`, is ignored); blank when there is no number. */
+export function gradLevelOf(courseNumber: string): "GRAD" | "UGRAD" | "" {
+  const n = /^\s*(\d+)/.exec(courseNumber);
+  if (!n) return "";
+  return Number(n[1]) >= 500 ? "GRAD" : "UGRAD";
+}
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 /** `HH:MM:00`, wrapping past midnight. */
@@ -55,7 +62,7 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
         FacultyLoad: formatNumber(Math.round((n.load / terms.length) * 1e6) / 1e6),
         MeetingDays: "", MeetingTime: "", BuildingAndRoom: "", TermPart: "Full", TermAndPart: `${term}-Full`,
         Duration: "", ShortTitle: "", Faculty: n.faculty, InstructionalMethod: n.activity,
-        DeliveryMode: "", Comment: n.comment, CrossListings: "", CoreTag: "", SpecialTopic: "",
+        DeliveryMode: "", Comment: n.comment, CrossListings: "", CoreTag: "", SpecialTopic: "", Level: "",
       }));
     }
   }
@@ -101,6 +108,7 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
       CrossListings: others.map((l) => `${l.prefix} ${l.courseNumber}`).join(", "),
       CoreTag: head.coreTag,
       SpecialTopic: head.specialTopic ? SPECIAL_TOPIC : "",
+      Level: gradLevelOf(head.courseNumber),
     }));
   }
   return { header: [...REGISTRAR_COLUMNS], rows };
