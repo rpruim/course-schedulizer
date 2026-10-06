@@ -500,8 +500,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           </p>
         </div>
         <p>
-          You can edit the exported file in Excel for large systematic changes (for example moving every 50-minute class to 65 minutes). Be careful with the sheet and column names, and keep
-          the original so you can go back. The <em>Sessions</em> sheet has one row per meeting, tied together by <code>SectionId</code>; a blank cell on a later row of a section repeats the value above it.
+          If you must edit the exported file in Excel, be careful with the sheet and column names, and keep the original so you can go back. The <em>Sessions</em> sheet has one row per meeting, tied together by <code>SectionId</code>; a blank cell on a later row of a section repeats the value above it.
           Instead of several rows, a section’s days, start times, durations and rooms can also be written as several lines in one cell (one value, or as many as there are meetings).
         </p>
       </>
