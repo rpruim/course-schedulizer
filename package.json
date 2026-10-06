@@ -1,6 +1,6 @@
 {
   "name": "course-schedulizer-2",
-  "version": "2.0.5.9000",
+  "version": "2.0.5.9001",
   "private": true,
   "license": "MIT",
   "description": "Course Schedulizer 2.0 (TypeScript)",

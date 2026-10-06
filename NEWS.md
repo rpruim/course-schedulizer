@@ -1,4 +1,4 @@
-# Course Schedulizer 2.0.5.9000
+# Course Schedulizer 2.0.5.9001
 
 * New *Special Topic, etc.?* check box above the Title in the section editor (unchecked by default). The registrar tab and the Sessions tab have a new last column, `SpecialTopic`, that says “Special Topic” when it is checked and is empty otherwise; files without the column read as unchecked. Hovering over the check box explains when to use it.
 * The registrar tab has another new last column, `Level`: `UGRAD` for a course numbered 499 or below and `GRAD` for 500 or above, worked out from the course number (not the 100-level, 200-level kind of level, which the registrar does not need).
