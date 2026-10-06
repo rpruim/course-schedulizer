@@ -1,5 +1,6 @@
 # Course Schedulizer 2.0.5.9000
 
+* New *Special Topic, etc.?* check box above the Title in the section editor (unchecked by default). The registrar tab and the Sessions tab have a new last column, `SpecialTopic`, that says “Special Topic” when it is checked and is empty otherwise; files without the column read as unchecked.
 * The *Core tag* box in *More details* is now labelled *Core tag (only if section specific)*, and hovering over it says not to indicate the tag here if it has already been approved for all sections of a course.
 
 # Course Schedulizer 2.0.5

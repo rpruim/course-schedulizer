@@ -44,6 +44,8 @@ export const sessionSchema = z
     deliveryMode: str,
     /** One of the core tags (`CORE_TAGS`), or blank. */
     coreTag: str,
+    /** The course title is a special topic, a seminar or the like that stands for different content each time it is offered. */
+    specialTopic: z.boolean().default(false),
     comment: str,
     enrollment: optInt,
     enrollmentDay10: optInt,

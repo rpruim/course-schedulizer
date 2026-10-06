@@ -38,7 +38,7 @@ describe("CoreTag in files", () => {
   });
   it("is written on the Sessions sheet and, after CrossListings, on the registrar sheet, and read back", async () => {
     const s = importRecords({ sessions: [rec("sustainability"), { ...rec(""), CourseNumber: "105" }] }).schedule;
-    expect(REGISTRAR_COLUMNS.slice(-2)).toEqual(["CrossListings", "CoreTag"]);
+    expect(REGISTRAR_COLUMNS.slice(-3)).toEqual(["CrossListings", "CoreTag", "SpecialTopic"]);
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load((await writeWorkbook(s)) as unknown as ArrayBuffer);
     const column = (sheet: string) => {
@@ -51,5 +51,30 @@ describe("CoreTag in files", () => {
     const back = await readWorkbook(await writeWorkbook(s));
     expect(back.issues).toEqual([]);
     expect(back.schedule.sessions.map((x) => x.coreTag)).toEqual(["Environmental Sustainability", ""]);
+  });
+});
+
+describe("SpecialTopic", () => {
+  const rec = (SpecialTopic?: string, over: Record<string, string> = {}) => ({ AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: "104", Section: "A", ...(SpecialTopic === undefined ? {} : { SpecialTopic }), ...over });
+  it("is off when the column is missing, blank or a no, and on for any other mark", () => {
+    for (const t of [undefined, "", " ", "no", "FALSE", "0"]) expect(importSessions([rec(t)]).sessions[0]!.specialTopic, String(t)).toBe(false);
+    for (const t of ["Special Topic", "special topic", "yes", "x", "TRUE", "1"]) expect(importSessions([rec(t)]).sessions[0]!.specialTopic, t).toBe(true);
+    expect(importSessions([rec("Special Topic")]).issues).toEqual([]);
+  });
+  it("is written as Special Topic, or nothing, on the registrar sheet and the Sessions sheet, and read back", async () => {
+    const s = importRecords({ sessions: [rec("Special Topic"), rec(undefined, { CourseNumber: "105" })] }).schedule;
+    expect(REGISTRAR_COLUMNS[REGISTRAR_COLUMNS.length - 1]).toBe("SpecialTopic");
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load((await writeWorkbook(s)) as unknown as ArrayBuffer);
+    const column = (sheet: string) => {
+      const ws = wb.getWorksheet(sheet)!;
+      const at = (ws.getRow(1).values as unknown[]).indexOf("SpecialTopic");
+      return [at > 0, ...Array.from({ length: ws.rowCount - 1 }, (_, i) => String(ws.getRow(i + 2).getCell(at).value ?? ""))];
+    };
+    expect(column("Sessions")).toEqual([true, "Special Topic", ""]);
+    expect(column("Registrar Schedule")).toEqual([true, "Special Topic", ""]);
+    const back = await readWorkbook(await writeWorkbook(s));
+    expect(back.issues).toEqual([]);
+    expect(back.schedule.sessions.map((x) => x.specialTopic)).toEqual([true, false]);
   });
 });

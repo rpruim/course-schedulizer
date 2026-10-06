@@ -39,6 +39,7 @@ export interface SectionDraft {
   group: string;
   deliveryMode: string;
   coreTag: string;
+  specialTopic: boolean;
   comment: string;
   faculty: Instructor[];
   facultyLoad?: number;
@@ -85,6 +86,7 @@ export function sectionToDraft(schedule: Schedule, sectionId: string): SectionDr
     group: h.group,
     deliveryMode: h.deliveryMode,
     coreTag: h.coreTag,
+    specialTopic: h.specialTopic,
     comment: h.comment,
     faculty: h.faculty.map((f) => ({ ...f })),
     ...(h.facultyLoad !== undefined ? { facultyLoad: h.facultyLoad } : {}),
@@ -114,6 +116,7 @@ export function newSectionDraft(schedule: Schedule, defaults: Partial<SectionDra
     group: "",
     deliveryMode: "",
     coreTag: "",
+    specialTopic: false,
     comment: "",
     faculty: [],
     meetings: [],
@@ -163,6 +166,7 @@ export function draftToSessions(d: SectionDraft, sectionId: string): Session[] {
     group: d.group.trim(),
     deliveryMode: d.deliveryMode.trim(),
     coreTag: d.coreTag.trim(),
+    specialTopic: d.specialTopic,
     comment: d.comment,
     ...(d.enrollment !== undefined ? { enrollment: d.enrollment } : {}),
     ...(d.enrollmentDay10 !== undefined ? { enrollmentDay10: d.enrollmentDay10 } : {}),

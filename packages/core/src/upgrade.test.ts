@@ -15,6 +15,7 @@ describe("upgradeSchedule", () => {
     const old = { ...emptySchedule(), sessions: [sess] } as never;
     const up = upgradeSchedule(old);
     expect(up.sessions[0]!.coreTag).toBe("");
+    expect(up.sessions[0]!.specialTopic).toBe(false);
     expect(upgradeSchedule(up).sessions).toBe(up.sessions); // a current schedule keeps its own list
   });
 });

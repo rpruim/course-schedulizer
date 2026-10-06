@@ -32,7 +32,7 @@ export const SESSION_COLUMNS = [
   "SectionId", "Department", "AcademicYear", "Term", "TermPart", "Prefix", "CourseNumber", "Section",
   "Faculty", "FacultyLoad", "MinimumCredits", "MaximumCredits", "MeetingDays", "StartTime",
   "MeetingDuration", "Classroom", "ShortTitle", "InstructionalMethod", "CourseLevel", "Group", "DeliveryMode",
-  "Comment", "Enrollment", "EnrollmentDay10", "CoreTag",
+  "Comment", "Enrollment", "EnrollmentDay10", "CoreTag", "SpecialTopic",
 ] as const;
 export const CROSSLISTING_COLUMNS = ["SectionId", "Prefix", "CourseNumber"] as const;
 export const NONTEACHING_COLUMNS = ["AcademicYear", "Faculty", "Activity", "Term", "Load", "Comment"] as const;
@@ -81,6 +81,9 @@ function delivery(r: Reporter, row: number, text: string | undefined): string {
   }
   return mode;
 }
+
+/** A "Special Topic" mark: anything but blank or a no (`no`, `false`, `0`, `none`) counts as marked. */
+const isSpecialTopic = (text: string | undefined): boolean => !["", "no", "n", "false", "0", "none", "unchecked"].includes((text ?? "").trim().toLowerCase());
 
 /** The core tag as the registrar writes it; text that is not recognizably one of them is kept, with a warning. */
 function coreTag(r: Reporter, row: number, text: string | undefined): string {
@@ -301,6 +304,7 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
       group: k.Group ?? "",
       deliveryMode: delivery(r, row, k.DeliveryMode),
       coreTag: coreTag(r, row, k.CoreTag),
+      specialTopic: isSpecialTopic(k.SpecialTopic),
       comment: k.Comment ?? "",
       enrollment: num(r, row, "Enrollment", k.Enrollment),
       enrollmentDay10: num(r, row, "EnrollmentDay10", k.EnrollmentDay10),

@@ -205,6 +205,18 @@ describe("validateDraft", () => {
   });
 });
 
+describe("special topic", () => {
+  it("is carried from a section to its draft and back to the section; unchecked by default", () => {
+    const base = make(sec("A"));
+    const d = sectionToDraft(base, "Y-FA-MUSC101-A")!;
+    expect(d.specialTopic).toBe(false);
+    expect(newSectionDraft(base).specialTopic).toBe(false);
+    const r = saveDraft(base, { ...d, specialTopic: true }, { kind: "swap" });
+    expect(r.kind).toBe("saved");
+    if (r.kind === "saved") expect(r.schedule.sessions.every((x) => x.specialTopic)).toBe(true);
+  });
+});
+
 describe("deleteSection / draftShares", () => {
   it("removes a section and its listings, leaving the rest", () => {
     const base = { ...make(sec("A"), sec("B")), crossListings: [{ sectionId: "Y-FA-MUSC101-A", prefix: "URBS", courseNumber: "101" }] };

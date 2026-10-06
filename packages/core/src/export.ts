@@ -16,6 +16,9 @@ export interface Table {
   rows: string[][];
 }
 
+/** What the registrar tab and the Sessions sheet say for a title that is a special topic; blank otherwise. */
+export const SPECIAL_TOPIC = "Special Topic";
+
 const sessionCells = (s: Session, settings: Schedule["settings"]): Rec => ({
   SectionId: s.sectionId,
   Department: s.department,
@@ -42,6 +45,7 @@ const sessionCells = (s: Session, settings: Schedule["settings"]): Rec => ({
   Enrollment: formatNumber(s.enrollment),
   EnrollmentDay10: formatNumber(s.enrollmentDay10),
   CoreTag: s.coreTag,
+  SpecialTopic: s.specialTopic ? SPECIAL_TOPIC : "",
 });
 
 function table(columns: readonly string[], recs: Rec[], extraKeys: string[] = []): Table {

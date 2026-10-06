@@ -56,6 +56,7 @@ export interface Form {
   group: string;
   deliveryMode: string;
   coreTag: string;
+  specialTopic: boolean;
   comment: string;
   /** `Ada Example (3), Ben Sample` */
   faculty: string;
@@ -89,6 +90,7 @@ export function draftToForm(d: SectionDraft): Form {
     group: d.group,
     deliveryMode: d.deliveryMode,
     coreTag: d.coreTag,
+    specialTopic: d.specialTopic,
     comment: d.comment,
     faculty: formatFaculty(d.faculty),
     facultyLoad: text(d.facultyLoad),
@@ -156,6 +158,7 @@ export function formToDraft(f: Form): { draft: SectionDraft; errors: DraftError[
     group: f.group,
     deliveryMode: f.deliveryMode,
     coreTag: f.coreTag,
+    specialTopic: f.specialTopic,
     comment: f.comment,
     faculty: parseFaculty(f.faculty),
     ...(facultyLoad !== undefined ? { facultyLoad } : {}),

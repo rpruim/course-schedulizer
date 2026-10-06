@@ -1,18 +1,18 @@
 import { formatNumber } from "./format.js";
-import type { Table } from "./export.js";
+import { SPECIAL_TOPIC, type Table } from "./export.js";
 import { partForExport } from "./terms.js";
 import type { Schedule, Session } from "./types.js";
 import { AY } from "./types.js";
 
 /**
  * The registrar's tab ("Registrar Schedule"): the old app's 17 columns in the
- * same order, then `CrossListings` next to the notes (`Comment`) column and the `CoreTag`. One row
+ * same order, then `CrossListings` next to the notes (`Comment`) column and the `CoreTag`, then `SpecialTopic` (blank, or "Special Topic"). One row
  * per section.
  */
 export const REGISTRAR_COLUMNS = [
   "Term", "Prefix", "CourseNumber", "Section", "StudentCredits", "FacultyLoad", "MeetingDays",
   "MeetingTime", "BuildingAndRoom", "TermPart", "TermAndPart", "Duration", "ShortTitle", "Faculty",
-  "InstructionalMethod", "DeliveryMode", "Comment", "CrossListings", "CoreTag",
+  "InstructionalMethod", "DeliveryMode", "Comment", "CrossListings", "CoreTag", "SpecialTopic",
 ] as const;
 
 export const REGISTRAR_SHEET = "Registrar Schedule";
@@ -55,7 +55,7 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
         FacultyLoad: formatNumber(Math.round((n.load / terms.length) * 1e6) / 1e6),
         MeetingDays: "", MeetingTime: "", BuildingAndRoom: "", TermPart: "Full", TermAndPart: `${term}-Full`,
         Duration: "", ShortTitle: "", Faculty: n.faculty, InstructionalMethod: n.activity,
-        DeliveryMode: "", Comment: n.comment, CrossListings: "", CoreTag: "",
+        DeliveryMode: "", Comment: n.comment, CrossListings: "", CoreTag: "", SpecialTopic: "",
       }));
     }
   }
@@ -100,6 +100,7 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
       Comment: head.comment,
       CrossListings: others.map((l) => `${l.prefix} ${l.courseNumber}`).join(", "),
       CoreTag: head.coreTag,
+      SpecialTopic: head.specialTopic ? SPECIAL_TOPIC : "",
     }));
   }
   return { header: [...REGISTRAR_COLUMNS], rows };

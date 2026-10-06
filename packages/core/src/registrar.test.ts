@@ -19,7 +19,7 @@ describe("registrar tab", () => {
     expect(REGISTRAR_COLUMNS).toEqual([
       "Term", "Prefix", "CourseNumber", "Section", "StudentCredits", "FacultyLoad", "MeetingDays", "MeetingTime",
       "BuildingAndRoom", "TermPart", "TermAndPart", "Duration", "ShortTitle", "Faculty", "InstructionalMethod",
-      "DeliveryMode", "Comment", "CrossListings", "CoreTag",
+      "DeliveryMode", "Comment", "CrossListings", "CoreTag", "SpecialTopic",
     ]);
     expect(registrarTable(schedule()).header).toEqual([...REGISTRAR_COLUMNS]);
   });

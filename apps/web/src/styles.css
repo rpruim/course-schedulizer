@@ -450,3 +450,8 @@ table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
 .opt { color: var(--muted); font-weight: 600; margin-left: 1px; cursor: help; }
 .opt-note { margin: 4px 0 0; }
 .f select.suggest { color: var(--muted); }
+
+/* above the Title box: its name at the left, and the "Special Topic, etc.?" check box at the right end of the box */
+.label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.label-row .topic-check { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; color: var(--fg); }
+.label-row .topic-check input { margin: 0; }
