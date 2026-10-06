@@ -20,7 +20,7 @@ const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 /**
  * All conflicts in a schedule (spec §6): for every pair of different sections
  * that are concurrent and have meetings overlapping in time, one conflict per
- * (pair, type, detail) — instructor, room or wildcard, except what a colocate rule allows for the pairs it names.
+ * (pair, type, detail) — instructor, room or wildcard, except for sections a colocate rule says are colocated.
  * (Constraint rules are checked by
  * `findRuleViolations`, which is not about pairs.)
  */
@@ -30,7 +30,7 @@ export function findConflicts(schedule: Schedule): Conflict[] {
 
 /**
  * The pairs of sections that really are colocated: they meet at overlapping times and share a room (or an instructor) so that
- * they would have been reported as a conflict, but a colocate rule allows it. Each pair once, ordered by section id. A colocation
+ * they would have been reported as a conflict, but a colocate rule (same instructor, or different instructors, as the pair is) allows it. Each pair once, ordered by section id. A colocation
  * a rule would allow but that does not occur (the sections are at different times, say) is not in the list.
  */
 export function colocatedPairs(schedule: Schedule): [string, string][] {
@@ -60,8 +60,8 @@ function scan(schedule: Schedule): { conflicts: Conflict[]; colocated: Set<strin
   const allowed = allowedCollisions(schedule);
   const colocated = new Set<string>();
   // A conflict the colocate rules allow is not recorded, but the pair is remembered as colocated.
-  const mayCollide = (idA: string, idB: string, type: ConflictType) => {
-    if (!allowed(idA, idB, type)) return false;
+  const mayCollide = (idA: string, idB: string, sharesInstructor: boolean) => {
+    if (!allowed(idA, idB, sharesInstructor)) return false;
     colocated.add(idA < idB ? `${idA}\u0000${idB}` : `${idB}\u0000${idA}`);
     return true;
   };
@@ -84,12 +84,12 @@ function scan(schedule: Schedule): { conflicts: Conflict[]; colocated: Set<strin
 
       const pa = people.get(a.sectionId)!;
       const shared = [...people.get(b.sectionId)!].filter((n) => pa.has(n));
-      if (shared.length && !mayCollide(a.sectionId, b.sectionId, "Instructor")) record("Instructor", a, b, shared.map((n) => display.get(n) ?? n).sort().join(", "));
+      if (shared.length && !mayCollide(a.sectionId, b.sectionId, shared.length > 0)) record("Instructor", a, b, shared.map((n) => display.get(n) ?? n).sort().join(", "));
 
       const ra = norm(a.room);
-      if (ra !== "" && ra === norm(b.room) && !nonRooms.has(ra) && !mayCollide(a.sectionId, b.sectionId, "Room")) record("Room", a, b, a.room.trim());
+      if (ra !== "" && ra === norm(b.room) && !nonRooms.has(ra) && !mayCollide(a.sectionId, b.sectionId, shared.length > 0)) record("Room", a, b, a.room.trim());
 
-      if ((wildcard.has(a.sectionId) || wildcard.has(b.sectionId)) && !mayCollide(a.sectionId, b.sectionId, "Wildcard")) record("Wildcard", a, b, "*");
+      if ((wildcard.has(a.sectionId) || wildcard.has(b.sectionId)) && !mayCollide(a.sectionId, b.sectionId, shared.length > 0)) record("Wildcard", a, b, "*");
     }
   }
   const conflicts = [...found.values()].sort(

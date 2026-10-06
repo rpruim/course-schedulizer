@@ -587,17 +587,24 @@ describe("colocate (different instructors)", () => {
   const kinds = (sessions: Rec[], constraints: Rec[] = []) => findConflicts(build(sessions, constraints)).map((c) => c.type);
   const rule = (type: string, ...courses: string[]): Rec[] => courses.map((Course) => ({ Constraint: "Together", Type: type, Course }));
 
-  it("lets sections with different instructors share a room, but a shared instructor is still a conflict", () => {
+  it("lets sections with different instructors share a room; with a shared instructor it does not apply, and both conflicts remain", () => {
     const sessions = [talk("200", "Kim"), talk("300", "Lee")];
     expect(kinds(sessions)).toEqual(["Room"]);
     expect(kinds(sessions, rule("colocateDifferent", "MUSC 200", "MUSC 300"))).toEqual([]);
     const sameWho = [talk("200", "Kim"), talk("300", "Kim")];
-    expect(kinds(sameWho, rule("colocateDifferent", "MUSC 200", "MUSC 300"))).toEqual(["Instructor"]);
+    expect(kinds(sameWho, rule("colocateDifferent", "MUSC 200", "MUSC 300"))).toEqual(["Instructor", "Room"]);
   });
-  it("(same instructor) lets them share the instructor as well", () => {
+  it("(same instructor) is for one instructor teaching the classes together: with different instructors it does not apply", () => {
     const sameWho = [talk("200", "Kim"), talk("300", "Kim")];
     expect(kinds(sameWho)).toEqual(["Instructor", "Room"]);
     expect(kinds(sameWho, rule("colocate", "MUSC 200", "MUSC 300"))).toEqual([]);
+    const different = [talk("200", "Kim"), talk("300", "Lee")];
+    expect(kinds(different, rule("colocate", "MUSC 200", "MUSC 300"))).toEqual(["Room"]);
+  });
+  it("a team-taught section that shares one instructor counts as sharing", () => {
+    const team = [talk("200", "Kim; Lee"), talk("300", "Kim")];
+    expect(kinds(team, rule("colocate", "MUSC 200", "MUSC 300"))).toEqual([]);
+    expect(kinds(team, rule("colocateDifferent", "MUSC 200", "MUSC 300"))).toEqual(["Instructor", "Room"]);
   });
   it("is read from a file under either name, and the old name means same instructor", () => {
     const types = (t: string) => importRecords({ sessions: [talk("200", "Kim")], constraints: [{ Constraint: "C", Type: t, Course: "MUSC 200" }] }).schedule.constraints[0]!.type;

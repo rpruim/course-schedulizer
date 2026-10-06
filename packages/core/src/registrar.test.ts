@@ -108,12 +108,11 @@ describe("Colocations column", () => {
     expect(colocations(sessions, rule("colocate", "MUSC 143", "MUSC 243", "MUSC 343"))).toEqual({ "143": "MUSC 243 A", "243": "MUSC 143 A", "343": "", "443": "" });
     expect(colocations(sessions)).toEqual({ "143": "", "243": "", "343": "", "443": "" });
   });
-  it("(different instructors) lists the sections that share the room; a shared instructor is still a conflict, reported on the Conflicts tab", () => {
+  it("(different instructors) lists only pairs whose instructors differ; a pair with a shared instructor is not colocated and stays a conflict", () => {
     const sessions = [sec("143", { Faculty: "Kim" }), sec("243", { Faculty: "Lee" }), sec("343", { Faculty: "Kim" })];
     const s = importRecords({ sessions, constraints: rule("colocateDifferent", "MUSC 143", "MUSC 243", "MUSC 343") }).schedule;
-    expect(colocatedPairs(s)).toEqual([["AY1-FA-MUSC143-A", "AY1-FA-MUSC243-A"], ["AY1-FA-MUSC143-A", "AY1-FA-MUSC343-A"], ["AY1-FA-MUSC243-A", "AY1-FA-MUSC343-A"]]);
-    expect(findConflicts(s).map((c) => [c.type, c.sectionIdA, c.sectionIdB])).toEqual([["Instructor", "AY1-FA-MUSC143-A", "AY1-FA-MUSC343-A"]]);
-    expect(colocations(sessions, rule("colocateDifferent", "MUSC 143", "MUSC 243", "MUSC 343"))).toEqual({ "143": "MUSC 243 A, MUSC 343 A", "243": "MUSC 143 A, MUSC 343 A", "343": "MUSC 143 A, MUSC 243 A" });
+    expect(colocatedPairs(s)).toEqual([["AY1-FA-MUSC143-A", "AY1-FA-MUSC243-A"], ["AY1-FA-MUSC243-A", "AY1-FA-MUSC343-A"]]);
+    expect(findConflicts(s).map((c) => [c.type, c.sectionIdA, c.sectionIdB])).toEqual([["Instructor", "AY1-FA-MUSC143-A", "AY1-FA-MUSC343-A"], ["Room", "AY1-FA-MUSC143-A", "AY1-FA-MUSC343-A"]]);
+    expect(colocations(sessions, rule("colocateDifferent", "MUSC 143", "MUSC 243", "MUSC 343"))).toEqual({ "143": "MUSC 243 A", "243": "MUSC 143 A, MUSC 343 A", "343": "MUSC 243 A" });
   });
 });
-

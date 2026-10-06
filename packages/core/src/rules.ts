@@ -686,12 +686,13 @@ function violationsIn(schedule: Schedule): RuleViolation[] {
 }
 
 /**
- * Which kinds of conflict a pair of sections may have: a pair may when some colocate rule names both sections (within its terms,
- * and, in a merged schedule, within the schedule the rule came from). “Colocate (same instructor)” silences shared rooms,
- * shared instructors and the wildcard instructor; “Colocate (different instructors)” silences shared rooms only, since a shared
- * instructor would be a real clash. `findConflicts` leaves such conflicts out.
+ * Whether a pair of sections is colocated: some colocate rule names both (within its terms, and, in a merged schedule, within the
+ * schedule the rule came from) and the instructors fit the rule. “Colocate (same instructor)” is for one instructor teaching several
+ * classes at once, so it applies to a pair that shares an instructor; “Colocate (different instructors)” is for classes sharing a large
+ * space (a gym, a pool), so it applies to a pair that shares none. `sharesInstructor` says which this pair is. Colocated sections are
+ * not reported as conflicting (`findConflicts`); a pair the rules do not fit is reported as usual.
  */
-export function allowedCollisions(schedule: Schedule): (sectionIdA: string, sectionIdB: string, type: "Instructor" | "Room" | "Wildcard") => boolean {
+export function allowedCollisions(schedule: Schedule): (sectionIdA: string, sectionIdB: string, sharesInstructor: boolean) => boolean {
   const rows = schedule.constraints.filter((c) => c.type === "colocate" || c.type === "colocateDifferent");
   if (rows.length === 0) return () => false;
   const first = new Map<string, Session>();
@@ -708,5 +709,5 @@ export function allowedCollisions(schedule: Schedule): (sectionIdA: string, sect
     byRule.set(key, rule);
   }
   const rules = [...byRule.values()];
-  return (a, b, type) => rules.some((r) => r.sections.has(a) && r.sections.has(b) && (type === "Room" || r.sameInstructor));
+  return (a, b, sharesInstructor) => rules.some((r) => r.sections.has(a) && r.sections.has(b) && r.sameInstructor === sharesInstructor);
 }
