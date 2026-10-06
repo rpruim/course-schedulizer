@@ -1,6 +1,6 @@
 # Course Schedulizer 2.0.5.9000
 
-* Changes since 2.0.5 will be listed here.
+* The *Core tag* box in *More details* is now labelled *Core tag (only if section specific)*, and hovering over it says not to indicate the tag here if it has already been approved for all sections of a course.
 
 # Course Schedulizer 2.0.5
 

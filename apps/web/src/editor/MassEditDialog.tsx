@@ -268,8 +268,8 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
             <summary>More details</summary>
             <div className="row top">
               {box("department", "Department", 30)}
-              <label className="f">
-                <span>Core tag</span>
+              <label className="f" title="If the tag has already been approved for all sections of a course, DO NOT indicate the tag here.">
+                <span>Core tag (only if section specific)</span>
                 <select className={form.coreTag === "" && shared.fields.coreTag ? "suggest" : undefined} value={form.coreTag} onChange={(e) => set("coreTag", e.target.value)}>
                   <option value="">{shared.fields.coreTag ?? ""}</option>
                   {CORE_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}

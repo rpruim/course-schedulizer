@@ -296,8 +296,8 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
             <div className="row top">
               {/* A blank box means "the schedule's default": it is shown, in gray, as the placeholder. */}
               {field("department", "Department", { list: "dl-dept", size: 30, ...(schedule.meta.defaultDepartment?.trim() ? { placeholder: schedule.meta.defaultDepartment.trim(), ...(form.department.trim() === "" ? { hint: "Default from the Meta tab" } : {}) } : {}) })}
-              <label className="f">
-                <span>Core tag</span>
+              <label className="f" title="If the tag has already been approved for all sections of a course, DO NOT indicate the tag here.">
+                <span>Core tag (only if section specific)</span>
                 <select value={form.coreTag} onChange={(e) => set("coreTag", e.target.value)}>
                   <option value="">—</option>
                   {CORE_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
