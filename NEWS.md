@@ -1,3 +1,7 @@
+# Course Schedulizer 2.0.5.9000
+
+* Changes since 2.0.5 will be listed here.
+
 # Course Schedulizer 2.0.5
 
 * *Re-letter by time…* has moved from the top of the Schedule and week tabs to the Mass edit page, where it re-letters only the selected sections (by first class time, within each course). When only some of a course's sections are selected, they trade the letters they already have, so other sections keep theirs.
