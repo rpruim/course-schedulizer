@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { recordsFromCsv } from "./csv.js";
 import { importRecords } from "./import.js";
+import { colocatedPairs, findConflicts } from "./conflicts.js";
 import { gradLevelOf, REGISTRAR_COLUMNS, registrarTable } from "./registrar.js";
 import { fixtureText } from "./testutil.js";
 
@@ -19,7 +20,7 @@ describe("registrar tab", () => {
     expect(REGISTRAR_COLUMNS).toEqual([
       "Term", "Prefix", "CourseNumber", "Section", "StudentCredits", "FacultyLoad", "MeetingDays", "MeetingTime",
       "BuildingAndRoom", "TermPart", "TermAndPart", "Duration", "ShortTitle", "Faculty", "InstructionalMethod",
-      "DeliveryMode", "Comment", "CrossListings", "CoreTag", "SpecialTopic", "Level",
+      "DeliveryMode", "Comment", "CrossListings", "CoreTag", "SpecialTopic", "Level", "Colocations",
     ]);
     expect(registrarTable(schedule()).header).toEqual([...REGISTRAR_COLUMNS]);
   });
@@ -82,9 +83,37 @@ describe("Level column", () => {
   it("is the last column of the registrar tab, worked out from each section's course number", () => {
     const sessions = [{ AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: "499", Section: "A" }, { AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: "500", Section: "A" }];
     const t = registrarTable(importRecords({ sessions }).schedule);
-    expect(t.header[t.header.length - 1]).toBe("Level");
+    expect(t.header[t.header.length - 2]).toBe("Level");
     const at = t.header.indexOf("Level");
     expect(t.rows.map((r) => r[at])).toEqual(["UGRAD", "GRAD"]);
+  });
+});
+
+describe("Colocations column", () => {
+  const sec = (n: string, o: Record<string, string> = {}) => ({ AcademicYear: "AY1", Term: "FA", Prefix: "MUSC", CourseNumber: n, Section: "A", Faculty: "Kim", MeetingDays: "MWF", StartTime: "09:15", MeetingDuration: "65", Classroom: "NH 1", ...o });
+  const rule = (type: string, ...courses: string[]) => courses.map((Course) => ({ Constraint: "Together", Type: type, Course }));
+  const colocations = (sessions: Record<string, string>[], constraints: Record<string, string>[] = []) => {
+    const t = registrarTable(importRecords({ sessions, constraints }).schedule);
+    const at = t.header.indexOf("Colocations");
+    return Object.fromEntries(t.rows.map((r) => [r[t.header.indexOf("CourseNumber")]!, r[at]]));
+  };
+
+  it("lists, on each section, the others that really meet with it under a colocate rule", () => {
+    const sessions = [sec("143"), sec("243"), sec("343")];
+    expect(colocations(sessions, rule("colocate", "MUSC 143", "MUSC 243", "MUSC 343"))).toEqual({ "143": "MUSC 243 A, MUSC 343 A", "243": "MUSC 143 A, MUSC 343 A", "343": "MUSC 143 A, MUSC 243 A" });
+  });
+  it("does not list a colocation that is allowed but does not happen, nor sections the rule does not name", () => {
+    const sessions = [sec("143"), sec("243"), sec("343", { StartTime: "13:30" }), sec("443", { Faculty: "Lee" })];
+    // 343 is allowed but meets at another time; 443 shares the room and time but is not named, so it is a conflict, not a colocation
+    expect(colocations(sessions, rule("colocate", "MUSC 143", "MUSC 243", "MUSC 343"))).toEqual({ "143": "MUSC 243 A", "243": "MUSC 143 A", "343": "", "443": "" });
+    expect(colocations(sessions)).toEqual({ "143": "", "243": "", "343": "", "443": "" });
+  });
+  it("(different instructors) lists the sections that share the room; a shared instructor is still a conflict, reported on the Conflicts tab", () => {
+    const sessions = [sec("143", { Faculty: "Kim" }), sec("243", { Faculty: "Lee" }), sec("343", { Faculty: "Kim" })];
+    const s = importRecords({ sessions, constraints: rule("colocateDifferent", "MUSC 143", "MUSC 243", "MUSC 343") }).schedule;
+    expect(colocatedPairs(s)).toEqual([["AY1-FA-MUSC143-A", "AY1-FA-MUSC243-A"], ["AY1-FA-MUSC143-A", "AY1-FA-MUSC343-A"], ["AY1-FA-MUSC243-A", "AY1-FA-MUSC343-A"]]);
+    expect(findConflicts(s).map((c) => [c.type, c.sectionIdA, c.sectionIdB])).toEqual([["Instructor", "AY1-FA-MUSC143-A", "AY1-FA-MUSC343-A"]]);
+    expect(colocations(sessions, rule("colocateDifferent", "MUSC 143", "MUSC 243", "MUSC 343"))).toEqual({ "143": "MUSC 243 A, MUSC 343 A", "243": "MUSC 143 A, MUSC 343 A", "343": "MUSC 143 A, MUSC 243 A" });
   });
 });
 

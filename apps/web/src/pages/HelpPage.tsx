@@ -348,7 +348,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           and loads should be specified so that the sum of the loads across the colocated sessions is correct for the instructor(s). <em>Colocate (different instructors)</em> is for sections with different instructors:
           they will not be reported as conflicting for sharing a room, but a shared instructor is still a conflict.
           List the courses (one per line, with <code>*</code> and the other patterns, and a section letter if only one section is meant); a course listed once is enough for its own sections to be colocated.
-          It silences only the conflicts reported in the Conflicts tab: a <em>Take together</em> rule still treats the courses as clashing.
+          It silences only the conflicts reported in the Conflicts tab: a <em>Take together</em> rule still treats the courses as clashing. The registrar tab has a <code>Colocations</code> column that lists, for each section, the other sections it really meets with under a colocate rule (they overlap in time and share a room, or an instructor, so they would otherwise have been flagged), for example <em>MUSC 243 A, MUSC 343 A</em>. A colocation a rule would allow but that does not happen is not listed.
         </p>
         <h3>Back-to-back classes</h3>
         <p>

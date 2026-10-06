@@ -38,7 +38,7 @@ describe("CoreTag in files", () => {
   });
   it("is written on the Sessions sheet and, after CrossListings, on the registrar sheet, and read back", async () => {
     const s = importRecords({ sessions: [rec("sustainability"), { ...rec(""), CourseNumber: "105" }] }).schedule;
-    expect(REGISTRAR_COLUMNS.slice(-4)).toEqual(["CrossListings", "CoreTag", "SpecialTopic", "Level"]);
+    expect(REGISTRAR_COLUMNS.slice(-5)).toEqual(["CrossListings", "CoreTag", "SpecialTopic", "Level", "Colocations"]);
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load((await writeWorkbook(s)) as unknown as ArrayBuffer);
     const column = (sheet: string) => {
@@ -63,7 +63,7 @@ describe("SpecialTopic", () => {
   });
   it("is written as Special Topic, or nothing, on the registrar sheet and the Sessions sheet, and read back", async () => {
     const s = importRecords({ sessions: [rec("Special Topic"), rec(undefined, { CourseNumber: "105" })] }).schedule;
-    expect(REGISTRAR_COLUMNS[REGISTRAR_COLUMNS.length - 2]).toBe("SpecialTopic");
+    expect(REGISTRAR_COLUMNS[REGISTRAR_COLUMNS.length - 3]).toBe("SpecialTopic");
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load((await writeWorkbook(s)) as unknown as ArrayBuffer);
     const column = (sheet: string) => {

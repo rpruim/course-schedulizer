@@ -25,6 +25,19 @@ const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
  * `findRuleViolations`, which is not about pairs.)
  */
 export function findConflicts(schedule: Schedule): Conflict[] {
+  return scan(schedule).conflicts;
+}
+
+/**
+ * The pairs of sections that really are colocated: they meet at overlapping times and share a room (or an instructor) so that
+ * they would have been reported as a conflict, but a colocate rule allows it. Each pair once, ordered by section id. A colocation
+ * a rule would allow but that does not occur (the sections are at different times, say) is not in the list.
+ */
+export function colocatedPairs(schedule: Schedule): [string, string][] {
+  return [...scan(schedule).colocated].map((k) => k.split("\u0000") as [string, string]);
+}
+
+function scan(schedule: Schedule): { conflicts: Conflict[]; colocated: Set<string> } {
   const nonRooms = new Set(schedule.settings.nonRooms.map(norm));
   const first = new Map<string, Session>();
   for (const s of schedule.sessions) if (!first.has(s.sectionId)) first.set(s.sectionId, s);
@@ -44,7 +57,14 @@ export function findConflicts(schedule: Schedule): Conflict[] {
     people.set(id, names);
   }
 
-  const mayCollide = allowedCollisions(schedule);
+  const allowed = allowedCollisions(schedule);
+  const colocated = new Set<string>();
+  // A conflict the colocate rules allow is not recorded, but the pair is remembered as colocated.
+  const mayCollide = (idA: string, idB: string, type: ConflictType) => {
+    if (!allowed(idA, idB, type)) return false;
+    colocated.add(idA < idB ? `${idA}\u0000${idB}` : `${idB}\u0000${idA}`);
+    return true;
+  };
   const found = new Map<string, Conflict>();
   const record = (type: ConflictType, a: Session, b: Session, detail: string) => {
     const [x, y] = a.sectionId < b.sectionId ? [a, b] : [b, a];
@@ -72,9 +92,10 @@ export function findConflicts(schedule: Schedule): Conflict[] {
       if ((wildcard.has(a.sectionId) || wildcard.has(b.sectionId)) && !mayCollide(a.sectionId, b.sectionId, "Wildcard")) record("Wildcard", a, b, "*");
     }
   }
-  return [...found.values()].sort(
+  const conflicts = [...found.values()].sort(
     (p, q) => (p.sectionIdA < q.sectionIdA ? -1 : p.sectionIdA > q.sectionIdA ? 1 : p.sectionIdB < q.sectionIdB ? -1 : p.sectionIdB > q.sectionIdB ? 1 : 0) || p.type.localeCompare(q.type) || p.detail.localeCompare(q.detail),
   );
+  return { conflicts, colocated };
 }
 
 /**

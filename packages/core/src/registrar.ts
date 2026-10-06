@@ -1,3 +1,4 @@
+import { colocatedPairs } from "./conflicts.js";
 import { formatNumber } from "./format.js";
 import { SPECIAL_TOPIC, type Table } from "./export.js";
 import { partForExport } from "./terms.js";
@@ -6,13 +7,13 @@ import { AY } from "./types.js";
 
 /**
  * The registrar's tab ("Registrar Schedule"): the old app's 17 columns in the
- * same order, then `CrossListings` next to the notes (`Comment`) column and the `CoreTag`, then `SpecialTopic` (blank, or "Special Topic") and `Level` (`UGRAD` for a course numbered 499 or below, `GRAD` for 500 or above; worked out from the course number). One row
+ * same order, then `CrossListings` next to the notes (`Comment`) column and the `CoreTag`, then `SpecialTopic` (blank, or "Special Topic") and `Level` (`UGRAD` for a course numbered 499 or below, `GRAD` for 500 or above; worked out from the course number), then `Colocations` (the other sections that actually meet with this one under a colocate rule, which would otherwise be flagged as a conflict). One row
  * per section.
  */
 export const REGISTRAR_COLUMNS = [
   "Term", "Prefix", "CourseNumber", "Section", "StudentCredits", "FacultyLoad", "MeetingDays",
   "MeetingTime", "BuildingAndRoom", "TermPart", "TermAndPart", "Duration", "ShortTitle", "Faculty",
-  "InstructionalMethod", "DeliveryMode", "Comment", "CrossListings", "CoreTag", "SpecialTopic", "Level",
+  "InstructionalMethod", "DeliveryMode", "Comment", "CrossListings", "CoreTag", "SpecialTopic", "Level", "Colocations",
 ] as const;
 
 export const REGISTRAR_SHEET = "Registrar Schedule";
@@ -53,6 +54,17 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
   const rows: string[][] = [];
   const row = (c: Record<(typeof REGISTRAR_COLUMNS)[number], string>) => REGISTRAR_COLUMNS.map((h) => c[h]);
 
+  // The sections each one is colocated with (only those that really meet together), as `PREFIX NUMBER LETTER`.
+  const byId = new Map<string, Session>();
+  for (const s of schedule.sessions) if (!byId.has(s.sectionId)) byId.set(s.sectionId, s);
+  const together = new Map<string, string[]>();
+  const nameOf = (id: string) => { const s = byId.get(id)!; return `${s.prefix} ${s.courseNumber} ${s.section}`; };
+  for (const [a, b] of colocatedPairs(schedule)) {
+    together.set(a, [...(together.get(a) ?? []), nameOf(b)]);
+    together.set(b, [...(together.get(b) ?? []), nameOf(a)]);
+  }
+  for (const [id, list] of together) together.set(id, list.sort((x, y) => x.localeCompare(y, undefined, { numeric: true, sensitivity: "base" })));
+
   const spread = schedule.settings.spreadTerms;
   for (const n of opts.includeNonTeaching === false ? [] : schedule.nonTeaching) {
     const terms = n.term === AY && spread.length ? spread : [n.term];
@@ -62,7 +74,7 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
         FacultyLoad: formatNumber(Math.round((n.load / terms.length) * 1e6) / 1e6),
         MeetingDays: "", MeetingTime: "", BuildingAndRoom: "", TermPart: "Full", TermAndPart: `${term}-Full`,
         Duration: "", ShortTitle: "", Faculty: n.faculty, InstructionalMethod: n.activity,
-        DeliveryMode: "", Comment: n.comment, CrossListings: "", CoreTag: "", SpecialTopic: "", Level: "",
+        DeliveryMode: "", Comment: n.comment, CrossListings: "", CoreTag: "", SpecialTopic: "", Level: "", Colocations: "",
       }));
     }
   }
@@ -109,6 +121,7 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
       CoreTag: head.coreTag,
       SpecialTopic: head.specialTopic ? SPECIAL_TOPIC : "",
       Level: gradLevelOf(head.courseNumber),
+      Colocations: (together.get(head.sectionId) ?? []).join(", "),
     }));
   }
   return { header: [...REGISTRAR_COLUMNS], rows };
