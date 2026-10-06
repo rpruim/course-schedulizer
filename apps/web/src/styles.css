@@ -457,3 +457,11 @@ table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
 .label-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; height: 1.45em; }
 .label-row .topic-check { display: inline-flex; align-items: center; gap: 4px; flex: none; white-space: nowrap; line-height: 1; cursor: pointer; color: var(--fg); }
 .label-row .topic-check input { margin: 0; }
+
+/* a callout in the user guide: a warning that should not be missed */
+.callout { border-left: 4px solid var(--muted); border-radius: 6px; padding: 8px 14px; margin: 8px 0 12px; background: var(--panel); }
+.callout > strong { display: block; margin-bottom: 2px; }
+.callout > p { margin: 0; }
+.callout.danger { border-left-color: #c0392b; background: var(--err-bg); }
+.callout.danger > strong { color: #c0392b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .callout.danger > strong { color: #ff8a80; } }

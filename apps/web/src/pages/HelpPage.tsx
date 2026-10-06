@@ -492,25 +492,17 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           </>
         )}
         <h3>Editing the file in Excel</h3>
+        <div className="callout danger" role="note">
+          <strong>Editors beware!</strong>
+          <p>
+            Avoid editing the Excel file if at all possible. There is intentionally redundant information and it is easy to mess up the required formatting of the file in ways that will lead to lost or missing
+            information if it is later read back into Course Schedulizer.
+          </p>
+        </div>
         <p>
           You can edit the exported file in Excel for large systematic changes (for example moving every 50-minute class to 65 minutes). Be careful with the sheet and column names, and keep
           the original so you can go back. The <em>Sessions</em> sheet has one row per meeting, tied together by <code>SectionId</code>; a blank cell on a later row of a section repeats the value above it.
           Instead of several rows, a section’s days, start times, durations and rooms can also be written as several lines in one cell (one value, or as many as there are meetings).
-        </p>
-      </>
-    ),
-  },
-  {
-    id: "more",
-    title: "More help and other resources",
-    body: () => (
-      <>
-        <ul>
-          <li><a href="https://rpruim.github.io/Schedulizer/" target="_blank" rel="noreferrer">Course Schedulizer Info</a>: introduction slides, the older user guide and <a href="https://rpruim.github.io/Schedulizer/scheduling-tips.html" target="_blank" rel="noreferrer">things to consider when scheduling</a>.</li>
-          <li>The help in the <a href="https://senior-knights.github.io/course-schedulizer/#/" target="_blank" rel="noreferrer">original Course Schedulizer</a>.</li>
-        </ul>
-        <p className="muted small">
-          Those pages were written for the previous version of the app. Where they differ from this guide, this guide describes the current version.
         </p>
       </>
     ),
