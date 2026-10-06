@@ -350,7 +350,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
             <label className="f"><span>Comment</span><textarea rows={2} value={form.comment} onChange={(e) => set("comment", e.target.value)} /></label>
             <div className="also-listed">
               <h4>Also listed as</h4>
-              <p className="muted small">Cross-listed courses are one course with multiple names. This is different from co-located courses, which are different courses that meet together. A listing applies to every section of the course, in every term; if the other course has sections of its own, you are asked first and they are removed.</p>
+              <p className="muted small">Cross-listed courses are one course with multiple names. This is different from co-located courses, which are different courses that meet together. A listing applies to every section of the course, in every term; if the other course has sections of its own, you are asked first and they are removed. To colocate sections, go to Check &gt; Constraint rules.</p>
               {form.crossListings.map((l, i) => (
                 <div className="row" key={i}>
                   <label className="f"><span>Prefix</span><input value={l.prefix} list="dl-prefix" size={8} onChange={(e) => set("crossListings", form.crossListings.map((x, j) => (j === i ? { ...x, prefix: e.target.value } : x)))} /></label>
