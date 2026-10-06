@@ -81,13 +81,13 @@ export function OneDrivePanel({ entry, build, fileName, disabled }: { entry: Ent
         </button>
         {entry.source && (
           <>
+            <button onClick={() => void makeLink()} disabled={busy}>Get link to share</button>
             <label className="field">Link lets people
               <select value={access} onChange={(e) => { setAccess(e.target.value as "edit" | "view"); setLink(""); }}>
                 <option value="edit">edit and save back</option>
                 <option value="view">only view (a copy)</option>
               </select>
             </label>
-            <button onClick={() => void makeLink()} disabled={busy}>Get link to share</button>
           </>
         )}
         <span className="spacer" />
