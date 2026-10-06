@@ -447,11 +447,13 @@ table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
 .od-meta { margin-left: auto; white-space: nowrap; }
 
 /* the raised circle that marks an optional field (one the registrar's office does not use) */
-.opt { color: var(--muted); font-weight: 600; margin-left: 1px; cursor: help; }
+/* raised with an offset, not vertical-align: super, which makes the line taller and pushes the box under the label down */
+.opt { color: var(--muted); font-weight: 600; margin-left: 1px; cursor: help; line-height: 0; vertical-align: baseline; position: relative; top: -.35em; }
 .opt-note { margin: 4px 0 0; }
 .f select.suggest { color: var(--muted); }
 
 /* above the Title box: its name at the left, and the "Special Topic, etc.?" check box at the right end of the box */
-.label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-.label-row .topic-check { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; color: var(--fg); }
+/* the row is exactly as tall as a plain label (1.45 is the page's line height), so the Title box lines up with its neighbors */
+.label-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; height: 1.45em; }
+.label-row .topic-check { display: inline-flex; align-items: center; gap: 4px; flex: none; white-space: nowrap; line-height: 1; cursor: pointer; color: var(--fg); }
 .label-row .topic-check input { margin: 0; }
