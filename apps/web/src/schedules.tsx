@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useWorkspace } from "./state";
 import { Move, Trash } from "./icons";
 
@@ -14,6 +14,10 @@ export function SchedulePicker() {
   // Dragging: the schedule being dragged, and the pill and side the pointer is over.
   const [dragging, setDragging] = useState<string | undefined>();
   const [over, setOver] = useState<{ id: string; after: boolean } | undefined>();
+  // The name starts selected: typing replaces it, and a click or an arrow key puts the cursor in it to amend it.
+  useEffect(() => {
+    if (renaming) input.current?.select();
+  }, [renaming]);
   if (ws.entries.length === 0) return null;
 
   const commit = () => {
