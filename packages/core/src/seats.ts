@@ -97,70 +97,138 @@ export function planSeats(elements: SeatElement[], overlap: (a: string, b: strin
     .map((n) => ({ label: n.label, needed: n.needed, seats: [...n.sections.values()].reduce((a, b) => a + b, 0) }))
     .filter((n) => n.seats < n.needed);
 
-  // after the quick checks, the search itself: can at least `target` students be seated?
-  const demandAfter: number[] = new Array(elements.length + 1).fill(0);
-  for (let i = elements.length - 1; i >= 0; i--) demandAfter[i] = demandAfter[i + 1]! + elements[i]!.students;
-  const cap = [...seats];
-  class OutOfSteps extends Error {}
+  // The search itself: choose how many students of each element take each clash-free choice of sections (x[j] for the choice j),
+  // so that no section gets more students than it has seats and no element more than its students, as many seated as possible.
+  // That is an integer program; its linear relaxation is solved by the simplex method and the rest by branch and bound.
+  const choices: { element: number; slots: number[] }[] = [];
+  combos.forEach((list, element) => list.forEach((slots) => choices.push({ element, slots })));
+  const sectionCount = seats.length;
+  let ops = 0;
+  const maxOps = budget * 200;
+  let placed = 0;
+  if (choices.length > 0) {
+    const bound = new Array<number>(choices.length).fill(Infinity);
+    const lower = new Array<number>(choices.length).fill(0);
+    const rows = sectionCount + elements.length;
+    class Cut extends Error {}
 
-  const can = (target: number, steps: number): boolean | undefined => {
-    const memo = new Map<string, boolean>();
-    let used = 0;
-    // `r` students of element `e` are still to be placed, starting at choice `c`; `need` more must be placed in all
-    const f = (e: number, c: number, r: number, need: number): boolean => {
-      if (need <= 0) return true;
-      if (e === elements.length) return false;
-      const list = combos[e]!;
-      if (c === list.length || r === 0) return e + 1 === elements.length ? false : f(e + 1, 0, elements[e + 1]!.students, need);
-      if (r + demandAfter[e + 1]! < need) return false;
-      if (++used > steps) throw new OutOfSteps();
-      const key = `${e}|${c}|${r}|${need}|${cap.join(",")}`;
-      const known = memo.get(key);
-      if (known !== undefined) return known;
-      const combo = list[c]!;
-      let most = Math.min(r, need);
-      for (const i of combo) most = Math.min(most, cap[i]!);
-      for (let k = most; k >= 0; k--) {
-        for (const i of combo) cap[i] = cap[i]! - k;
-        const ok = f(e, c + 1, r - k, need - k);
-        for (const i of combo) cap[i] = cap[i]! + k;
-        if (ok) {
-          memo.set(key, true);
-          return true;
-        }
+    /** Maximise the students seated for the lower and upper bounds given; the solution (or undefined when infeasible). */
+    const lp = (lo: number[], hi: number[]): { value: number; x: number[] } | undefined => {
+      const n = choices.length;
+      const limited = hi.map((u, j) => (u === Infinity ? -1 : j)).filter((j) => j >= 0);
+      const m = rows + limited.length;
+      const width = n + m + 1;
+      const t: Float64Array[] = [];
+      for (let r = 0; r < m; r++) t.push(new Float64Array(width));
+      const obj = new Float64Array(width);
+      choices.forEach((c, j) => {
+        for (const i of c.slots) t[i]![j] = 1;
+        t[sectionCount + c.element]![j] = 1;
+      });
+      for (let i = 0; i < sectionCount; i++) t[i]![width - 1] = seats[i]!;
+      elements.forEach((e, k) => (t[sectionCount + k]![width - 1] = e.students));
+      limited.forEach((j, k) => {
+        t[rows + k]![j] = 1;
+        t[rows + k]![width - 1] = hi[j]!;
+      });
+      // shift by the lower bounds: x = lo + y
+      let base = 0;
+      for (let j = 0; j < n; j++) {
+        if (lo[j]! === 0) continue;
+        base += lo[j]!;
+        for (let r = 0; r < m; r++) if (t[r]![j] !== 0) t[r]![width - 1]! -= lo[j]! * t[r]![j]!;
       }
-      memo.set(key, false);
-      return false;
+      for (let r = 0; r < m; r++) if (t[r]![width - 1]! < -1e-9) return undefined;
+      for (let r = 0; r < m; r++) t[r]![n + r] = 1;
+      for (let j = 0; j < n; j++) obj[j] = -1;
+      const basis = Array.from({ length: m }, (_, r) => n + r);
+      for (let iter = 0; ; iter++) {
+        // entering column: the most negative reduced cost (the first one, once many pivots have gone by, so that it cannot cycle)
+        let col = -1;
+        let best = -1e-9;
+        for (let j = 0; j < n + m; j++) {
+          if (obj[j]! < best) {
+            col = j;
+            best = obj[j]!;
+            if (iter > 2000) break;
+          }
+        }
+        if (col < 0) break;
+        let row = -1;
+        let ratio = Infinity;
+        for (let r = 0; r < m; r++) {
+          const a = t[r]![col]!;
+          if (a > 1e-9) {
+            const q = t[r]![width - 1]! / a;
+            if (q < ratio - 1e-12 || (Math.abs(q - ratio) <= 1e-12 && basis[r]! < basis[row]!)) {
+              ratio = q;
+              row = r;
+            }
+          }
+        }
+        if (row < 0) return undefined; // cannot happen: every variable is bounded by its element
+        const pivot = t[row]![col]!;
+        const pr = t[row]!;
+        for (let k = 0; k < width; k++) pr[k] = pr[k]! / pivot;
+        for (let r = 0; r < m; r++) {
+          if (r === row) continue;
+          const f = t[r]![col]!;
+          if (f === 0) continue;
+          const tr = t[r]!;
+          for (let k = 0; k < width; k++) tr[k] = tr[k]! - f * pr[k]!;
+        }
+        const f = obj[col]!;
+        for (let k = 0; k < width; k++) obj[k] = obj[k]! - f * pr[k]!;
+        basis[row] = col;
+        ops += m * width;
+        if (ops > maxOps) throw new Cut();
+      }
+      const x = lo.slice();
+      for (let r = 0; r < m; r++) if (basis[r]! < n) x[basis[r]!] = x[basis[r]!]! + t[r]![width - 1]!;
+      return { value: base + obj[width - 1]!, x };
+    };
+
+    const incumbent = (x: number[]) => {
+      // rounding every choice down keeps it feasible (no choice then uses more than the fractional one did)
+      const whole = x.map((v) => Math.floor(v + 1e-7));
+      return whole.reduce((a, b) => a + b, 0);
+    };
+    let nodes = 0;
+    const visit = (lo: number[], hi: number[]) => {
+      if (placed >= total) return;
+      if (++nodes > 5000) throw new Cut();
+      const r = lp(lo, hi);
+      if (r === undefined) return;
+      const top = Math.floor(r.value + 1e-7);
+      if (top <= placed) return;
+      placed = Math.max(placed, incumbent(r.x));
+      if (top <= placed) return;
+      // branch on the choice with the most fractional number of students
+      let j = -1;
+      let most = 1e-6;
+      r.x.forEach((v, k) => {
+        const frac = Math.abs(v - Math.round(v));
+        if (frac > most) {
+          most = frac;
+          j = k;
+        }
+      });
+      if (j < 0) {
+        placed = Math.max(placed, Math.round(r.value));
+        return;
+      }
+      const v = r.x[j]!;
+      visit(lo.map((x, k) => (k === j ? Math.ceil(v) : x)), hi);
+      visit(lo, hi.map((x, k) => (k === j ? Math.floor(v) : x)));
     };
     try {
-      return elements.length === 0 ? target <= 0 : f(0, 0, elements[0]!.students, target);
+      visit(lower, bound);
     } catch (e) {
-      if (e instanceof OutOfSteps) return undefined;
-      throw e;
-    }
-  };
-
-  // everyone first; if not, the most that fit, by halving the range (never more than the seats of any one course allow)
-  let upper = total;
-  for (const n of need.values()) upper = Math.min(upper, total - n.needed + [...n.sections.values()].reduce((a, b) => a + b, 0));
-  upper = Math.max(0, upper);
-  const per = Math.max(20000, Math.floor(budget / 8));
-  let lo = 0;
-  let hi = upper;
-  if (can(hi, per * 2) === true) lo = hi;
-  else {
-    hi -= 1;
-    while (lo < hi) {
-      const mid = Math.ceil((lo + hi) / 2);
-      const ok = can(mid, per);
-      if (ok === true) lo = mid;
-      else {
-        if (ok === undefined) exact = false;
-        hi = mid - 1;
-      }
+      if (!(e instanceof Cut)) throw e;
+      exact = false;
     }
   }
-  return { placed: lo, total, exact: exact || lo === total, noSchedule, short };
+  return { placed: Math.min(placed, total), total, exact: exact || placed === total, noSchedule, short };
 }
 
 /**
