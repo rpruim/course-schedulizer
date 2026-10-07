@@ -308,7 +308,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
               </fieldset>
               <fieldset>
                 <legend>Seats in each section</legend>
-                <p className="muted small">Every section of a course is taken to have this many seats. Give them for every course in a group; seats for a course no group uses are ignored.</p>
+                <p className="muted small">Every section of a course is taken to have this many seats. Provide them for every course mentioned in the rule; seats for a course no group uses are ignored.</p>
                 {usedCourses.map((c) => (
                   <div className="row" key={c}>
                     <span className="seat-course">{c}</span>
