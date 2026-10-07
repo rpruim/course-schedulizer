@@ -283,7 +283,7 @@ export function ExportPanel() {
       <button className="primary" onClick={() => void exportXlsx()} disabled={empty}>Export Excel</button>
     </div>
     <p className="muted small">Downloads as {names.map((n, i) => <span key={n}>{i > 0 && " and "}<code>{n}</code></span>)}. The name starts from the Meta tab (Save As and the time stamp setting); change it here for this export only.</p>
-    <OneDrivePanel entry={entry} build={() => build(true)} fileName={exportFileName({ saveAs: s.meta.saveAs, timestamp: stamp !== "without" }, new Date(), base)} disabled={empty} />
+    <OneDrivePanel entry={entry} build={() => build(true)} fileNames={stamp === "both" ? { current: names[1]!, archive: names[0]! } : { current: names[0]! }} disabled={empty} />
     </>
   );
 }

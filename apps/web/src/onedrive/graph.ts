@@ -218,6 +218,16 @@ export class GraphClient {
     return toSource((await res.json()) as DriveItem);
   }
 
+  /**
+   * Put a file with this exact name in the Schedulizer folder, replacing the one that is there (so its sharing links keep working), or
+   * creating it. For the current version of a schedule that is also kept as dated copies.
+   */
+  async saveNamed(fileName: string, bytes: Uint8Array): Promise<OneDriveSource> {
+    const path = `Schedulizer/${fileName}`.split("/").map(encodeURIComponent).join("/");
+    const res = await this.call("write", `/me/drive/root:/${path}:/content?@microsoft.graph.conflictBehavior=replace`, { method: "PUT", headers: { "Content-Type": XLSX }, body: bytes as BodyInit });
+    return toSource((await res.json()) as DriveItem);
+  }
+
   /** A link that lets people in the organization open (or edit) the file. */
   async shareLink(source: OneDriveSource, type: "view" | "edit"): Promise<string> {
     const res = await this.call("write", `/drives/${source.driveId}/items/${source.itemId}/createLink`, {

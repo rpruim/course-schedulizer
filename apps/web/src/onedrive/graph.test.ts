@@ -73,6 +73,12 @@ describe("GraphClient", () => {
     expect(calls[0]!.url).toContain("/me/drive/root:/Schedulizer/My%20file.xlsx:/content");
     expect(s.driveId).toBe("d9");
   });
+  it("saves a file under a fixed name, replacing the one that is there", async () => {
+    const { calls, client } = fake(json({ id: "n1", name: "plan.xlsx", eTag: "n", parentReference: { driveId: "d9" }, webUrl: "https://w" }));
+    await client.saveNamed("plan.xlsx", new Uint8Array([1]));
+    expect(calls[0]!.url).toContain("/me/drive/root:/Schedulizer/plan.xlsx:/content?@microsoft.graph.conflictBehavior=replace");
+    expect(calls[0]!.init!.method).toBe("PUT");
+  });
   it("asks for an organization link", async () => {
     const { calls, client } = fake(json({ link: { webUrl: "https://share/it" } }));
     expect(await client.shareLink(source, "edit")).toBe("https://share/it");

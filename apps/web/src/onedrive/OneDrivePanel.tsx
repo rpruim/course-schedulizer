@@ -7,7 +7,7 @@ import { GraphError } from "./graph";
 type Message = { kind: "ok" | "error"; text: string };
 
 /** Save the current schedule to OneDrive and get a link that opens it in the app. Hidden when the site has no app registration. */
-export function OneDrivePanel({ entry, build, fileName, disabled }: { entry: Entry; build: () => Promise<Uint8Array>; fileName: string; disabled: boolean }) {
+export function OneDrivePanel({ entry, build, fileNames, disabled }: { entry: Entry; build: () => Promise<Uint8Array>; fileNames: { current: string; archive?: string }; disabled: boolean }) {
   const ws = useWorkspace();
   const [account, setAccount] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
@@ -46,7 +46,20 @@ export function OneDrivePanel({ entry, build, fileName, disabled }: { entry: Ent
     run(async () => {
       const client = graphClient(true);
       const bytes = await build();
-      const source = entry.source ? await client.saveBack(entry.source, bytes, force) : await client.saveNew(fileName, bytes);
+      if (fileNames.archive) {
+        // Both names: the file with the fixed name is the current version (overwritten each time, so a link to it always shows the latest);
+        // the dated copy is a new file each time. The current version goes first, so a conflict stops the save before any dated copy is made.
+        const sameFile = entry.source && entry.source.name.toLowerCase() === fileNames.current.toLowerCase();
+        const current = sameFile ? await client.saveBack(entry.source!, bytes, force) : await client.saveNamed(fileNames.current, bytes);
+        const copy = await client.saveNew(fileNames.archive, bytes);
+        ws.setSource(entry.id, { ...current, name: fileNames.current });
+        setConflict(false);
+        setLink("");
+        setAccount((await signedInAccount())?.username);
+        setMessage({ kind: "ok", text: `Saved the current version as “${fileNames.current}” and a dated copy as “${copy.name}” in the Schedulizer folder of your OneDrive. A link to “${fileNames.current}” always shows the latest save.` });
+        return;
+      }
+      const source = entry.source ? await client.saveBack(entry.source, bytes, force) : await client.saveNew(fileNames.current, bytes);
       ws.setSource(entry.id, source);
       setConflict(false);
       setLink("");
@@ -77,7 +90,7 @@ export function OneDrivePanel({ entry, build, fileName, disabled }: { entry: Ent
       <div className="bar">
         <strong>OneDrive</strong>
         <button className="primary" onClick={() => void save(false)} disabled={busy || disabled}>
-          {entry.source ? "Save to OneDrive" : "Save a copy to OneDrive"}
+          {fileNames.archive ? "Save to OneDrive: current version and dated copy" : entry.source ? "Save to OneDrive" : "Save a copy to OneDrive"}
         </button>
         {entry.source && (
           <>
@@ -100,6 +113,11 @@ export function OneDrivePanel({ entry, build, fileName, disabled }: { entry: Ent
           <button onClick={() => void run(async () => { setAccount((await signIn("write")).username); })} disabled={busy}>Sign in with Microsoft</button>
         )}
       </div>
+      {fileNames.archive && (
+        <p className="muted small">
+          With <em>Both</em> chosen, each save writes the current version as <code>{fileNames.current}</code> (replaced each time, so a link to it always shows the latest save) and adds a dated copy, <code>{fileNames.archive}</code>, to keep earlier versions.
+        </p>
+      )}
       {entry.source ? (
         <p className="muted small">
           Opened from or saved to <a href={entry.source.webUrl} target="_blank" rel="noreferrer">{entry.source.name}</a> on OneDrive; <em>Save to OneDrive</em> writes back to it.{" "}

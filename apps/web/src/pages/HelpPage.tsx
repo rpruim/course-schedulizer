@@ -528,6 +528,12 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
               (they work on their own copy; good for circulating a draft). They open it and the app starts with the schedule loaded. If the file changed on OneDrive since you opened it,
               saving stops and asks before overwriting. A schedule opened from a OneDrive link is connected to that file in the same way (<em>Disconnect</em> undoes this).
             </p>
+            <p>
+              <strong>Keeping versions while sharing one file.</strong> With the time stamp set to <em>Both</em> (on the Meta tab, or for one export on the Export tab), <em>Save to OneDrive</em> writes two files in the <em>Schedulizer</em> folder:
+              the current version under the fixed name (for example <code>schedulizer.xlsx</code>), which is replaced each time and is the file the schedule stays connected to, and a new dated copy (<code>schedulizer_2026-10-07_1714.xlsx</code>) that keeps that moment.
+              Share the link to the fixed-name file once and everyone who opens it sees the latest save, while the dated copies give you the history. If someone else changed the current version since you opened it, saving stops and asks first;
+              if the current version was not the file you opened, a file with that name is replaced without that check.
+            </p>
           </>
         )}
         <h3>Editing the file in Excel</h3>
