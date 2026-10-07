@@ -135,7 +135,8 @@ function toRule(f: Form): { rule: Rule; problems: { field: string; message: stri
   };
   const cohort = f.type === "cohortPlan";
   const elements = cohort ? f.elements.map((e, i) => ({ students: whole(`elements.${i}`, e.students), courses: e.courses.map((c) => c.trim()) })) : [];
-  const capacities = cohort ? f.capacities.filter((c) => c.course.trim() || c.seats.trim()).map((c, i) => ({ course: c.course.trim(), seats: whole(`capacities.${i}`, c.seats) })) : [];
+  const usedNow = new Set(f.elements.flatMap((e) => e.courses.map((c) => normCourse(c))).filter(Boolean));
+  const capacities = cohort ? f.capacities.filter((c) => usedNow.has(normCourse(c.course))).map((c, i) => ({ course: c.course.trim(), seats: whole(`capacities.${i}`, c.seats) })) : [];
   const people = f.type === "consecutive" || (f.type === "window" && f.subject === "instructors");
   const rule: Rule = {
     elements, capacities,
@@ -249,7 +250,6 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
     const at = form.capacities.findIndex((c) => normCourse(c.course) === normCourse(course));
     set("capacities", at >= 0 ? form.capacities.map((c, j) => (j === at ? { ...c, seats } : c)) : [...form.capacities, { course, seats }]);
   };
-  const unusedCapacities = form.capacities.map((c, i) => ({ c, i })).filter(({ c }) => !usedCourses.some((u) => normCourse(u) === normCourse(c.course)));
 
   return (
     <dialog ref={dialog} className="editor" onCancel={(e) => { e.preventDefault(); onClose(); }} aria-label={isNew ? "Add constraint rule" : "Edit constraint rule"}>
@@ -308,22 +308,20 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
               </fieldset>
               <fieldset>
                 <legend>Seats in each section</legend>
-                <p className="muted small">Every section of a course is taken to have this many seats. Provide them for every course mentioned in the rule; seats for a course no group uses are ignored.</p>
-                {usedCourses.map((c) => (
-                  <div className="row" key={c}>
-                    <span className="seat-course">{c}</span>
-                    <label className="f"><span>Seats</span><input value={seatsOf(c)} size={5} inputMode="numeric" onChange={(ev) => setSeats(c, ev.target.value)} /></label>
-                  </div>
-                ))}
-                {unusedCapacities.map(({ c, i }) => (
-                  <div className="row" key={`extra-${i}`}>
-                    <label className="f"><span>Course</span><input value={c.course} list="rule-courses" placeholder="PHYS 101" onChange={(ev) => set("capacities", form.capacities.map((x, j) => (j === i ? { ...x, course: ev.target.value } : x)))} /></label>
-                    <label className="f"><span>Seats</span><input value={c.seats} size={5} inputMode="numeric" onChange={(ev) => set("capacities", form.capacities.map((x, j) => (j === i ? { ...x, seats: ev.target.value } : x)))} /></label>
-                    <button type="button" className="link" onClick={() => set("capacities", form.capacities.filter((_, j) => j !== i))}><Trash /> Remove</button>
-                    {err(`capacities.${form.capacities.filter((x) => x.course.trim() || x.seats.trim()).indexOf(c)}`)}
-                  </div>
-                ))}
-                <button type="button" onClick={() => set("capacities", [...form.capacities, { course: "", seats: "" }])}>+ Add seats for another course</button>
+                <p className="muted small">Every section of a course is taken to have this many seats. Provide them for every course mentioned in the rule. A course you take out of every group keeps the seats you gave it, in case you put it back.</p>
+                {usedCourses.length === 0 ? <p className="muted small">The courses of the groups above will be listed here.</p> : (
+                  <table className="seats-table">
+                    <thead><tr><th>Course</th><th>Seats</th></tr></thead>
+                    <tbody>
+                      {usedCourses.map((c) => (
+                        <tr key={normCourse(c)}>
+                          <td className="seat-course">{c}</td>
+                          <td><input value={seatsOf(c)} size={5} inputMode="numeric" aria-label={`Seats in each section of ${c}`} onChange={(ev) => setSeats(c, ev.target.value)} /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </fieldset>
             </>
           ) : (
