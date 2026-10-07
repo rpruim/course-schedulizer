@@ -1,3 +1,4 @@
+import { yearFromData } from "./academicYear.js";
 import type { DraftError } from "./editing.js";
 import { AY, nonTeachingSchema, type Issue, type NonTeaching, type Schedule } from "./types.js";
 
@@ -41,7 +42,7 @@ export function newNonTeachingDraft(schedule: Schedule, defaults: Partial<NonTea
 }
 
 const toRow = (d: NonTeachingDraft): NonTeaching => ({
-  academicYear: d.academicYear.trim(),
+  academicYear: yearFromData(d.academicYear),
   faculty: d.faculty.trim().replace(/\s+/g, " "),
   activity: d.activity.trim(),
   term: d.term.trim().toUpperCase(),

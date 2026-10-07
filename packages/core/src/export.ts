@@ -1,6 +1,7 @@
 import { formatFaculty, formatNumber, formatTime } from "./format.js";
 import { CONSTRAINT_COLUMNS, CROSSLISTING_COLUMNS, NONTEACHING_COLUMNS, SESSION_COLUMNS } from "./import.js";
-import { partForExport } from "./terms.js";
+import { yearToData } from "./academicYear.js";
+import { termForData } from "./terms.js";
 import type { Rec, Schedule, Session } from "./types.js";
 
 export interface ExportOptions {
@@ -19,12 +20,14 @@ export interface Table {
 /** What the registrar tab and the Sessions sheet say for a title that is a special topic; blank otherwise. */
 export const SPECIAL_TOPIC = "Special Topic";
 
-const sessionCells = (s: Session, settings: Schedule["settings"]): Rec => ({
+const sessionCells = (s: Session, settings: Schedule["settings"]): Rec => {
+  const when = termForData(settings, s.term, s.termPart);
+  return {
   SectionId: s.sectionId,
   Department: s.department,
-  AcademicYear: s.academicYear,
-  Term: s.term,
-  TermPart: partForExport(settings, s.term, s.termPart),
+  AcademicYear: yearToData(s.academicYear),
+  Term: when.term,
+  TermPart: when.part,
   Prefix: s.prefix,
   CourseNumber: s.courseNumber,
   Section: s.section,
@@ -46,7 +49,8 @@ const sessionCells = (s: Session, settings: Schedule["settings"]): Rec => ({
   EnrollmentDay10: formatNumber(s.enrollmentDay10),
   CoreTag: s.coreTag,
   SpecialTopic: s.specialTopic ? SPECIAL_TOPIC : "",
-});
+  };
+};
 
 function table(columns: readonly string[], recs: Rec[], extraKeys: string[] = []): Table {
   const header = [...columns, ...extraKeys];
@@ -91,7 +95,7 @@ export function nonTeachingTable(schedule: Schedule): Table {
   return table(
     NONTEACHING_COLUMNS,
     schedule.nonTeaching.map((n) => ({
-      AcademicYear: n.academicYear, Faculty: n.faculty, Activity: n.activity, Term: n.term,
+      AcademicYear: yearToData(n.academicYear), Faculty: n.faculty, Activity: n.activity, Term: n.term,
       Load: formatNumber(n.load), Comment: n.comment, ...n.extra,
     })),
     extraKeys,

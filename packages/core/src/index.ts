@@ -6,6 +6,7 @@ export * from "./export.js";
 export * from "./xlsx.js";
 export * from "./sections.js";
 export * from "./terms.js";
+export * from "./academicYear.js";
 export * from "./names.js";
 export * from "./load.js";
 export * from "./conflicts.js";

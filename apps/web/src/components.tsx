@@ -1,3 +1,4 @@
+import { ACADEMIC_YEAR_HELP } from "@schedulizer/core";
 import { useEffect, useRef, useState } from "react";
 import {
   exportFileName,
@@ -44,7 +45,7 @@ export function ImportReport({ reports, onDismiss }: { reports: OpenReport[]; on
       </div>
       {needsAcademicYear(all) && (
         <p>
-          Some rows have no academic year. Type one in <em>Academic year</em> above (for example <code>AY25</code>) and open the file again, choosing the schedule it opened as under <em>Open as</em> to replace it.
+          Some rows have no academic year. Type one in <em>Academic year</em> above (for example <code>25-26</code>) and open the file again, choosing the schedule it opened as under <em>Open as</em> to replace it.
         </p>
       )}
       {reports.filter((r) => r.issues.length > 0).map((r, i) => (
@@ -156,9 +157,9 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
           </select>
         </label>
       )}
-      <label className="field">
+      <label className="field" title={ACADEMIC_YEAR_HELP}>
         Academic year <small>(only if the file has none)</small>
-        <input value={year} onChange={(e) => setYear(e.target.value)} placeholder="AY25" size={6} />
+        <input value={year} onChange={(e) => setYear(e.target.value)} placeholder="25-26" size={6} />
       </label>
     </div>
     <div className="bar">

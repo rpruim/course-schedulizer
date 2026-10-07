@@ -109,7 +109,7 @@ describe("loadTable", () => {
     expect(teachingOnly.rows.map((r) => r.total)).toEqual([14, 11]); // teaching load only
   });
   it("sorts the old-app data by total load, descending", () => {
-    const t = loadTable(schedule("sessions.csv"), "AY24");
+    const t = loadTable(schedule("sessions.csv"), "24-25");
     expect(t.terms).toEqual(["FA", "SP"]);
     const totals = t.rows.map((r) => r.total);
     expect(totals).toEqual([...totals].sort((a, b) => b - a));

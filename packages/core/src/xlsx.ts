@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { yearToData } from "./academicYear.js";
 import { comparisonsTable } from "./savedComparisons.js";
 import { constraintsTable, crossListingsTable, nonTeachingTable, sessionsTable, type ExportOptions, type Table } from "./export.js";
 import { REGISTRAR_SHEET, registrarTable } from "./registrar.js";
@@ -150,7 +151,7 @@ export async function writeWorkbook(schedule: import("./types.js").Schedule, opt
     rows: [
       ["Export Date", `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`],
       ["Export Time", `${two(now.getHours())}:${two(now.getMinutes())}:${two(now.getSeconds())}`],
-      ["Academic Year", years.join(", ")],
+      ["Academic Year", years.map(yearToData).join(", ")],
       ["Name", schedule.meta.name],
       ["Nickname", schedule.meta.nickname ?? ""],
       ["Save As", schedule.meta.saveAs || DEFAULT_SAVE_AS],

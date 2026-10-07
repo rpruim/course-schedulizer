@@ -75,7 +75,7 @@ describe("inline non-teaching rows and default academic year", () => {
     const r = importSessions([nt({})], undefined, { academicYear: "AY25" });
     expect(r.issues).toEqual([]);
     expect(r.sessions).toEqual([]);
-    expect(r.nonTeaching).toEqual([{ academicYear: "AY25", faculty: "Ada Example", activity: "Chair", term: "FA", load: 4, comment: "", extra: {} }]);
+    expect(r.nonTeaching).toEqual([{ academicYear: "25-26", faculty: "Ada Example", activity: "Chair", term: "FA", load: 4, comment: "", extra: {} }]);
   });
   it("divides the load among several people, honoring shares", () => {
     const r = importSessions([nt({ Faculty: "Ada (3), Ben" })], undefined, { academicYear: "Y" });

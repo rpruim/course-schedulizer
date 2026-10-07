@@ -1,3 +1,4 @@
+import { yearFromData } from "./academicYear.js";
 import { constraintSchema, emptyMeta, type Schedule } from "./types.js";
 
 /**
@@ -10,8 +11,10 @@ export function upgradeSchedule(s: Schedule): Schedule {
     ...s,
     meta: { ...emptyMeta(), ...s.meta },
     comparisons: s.comparisons ?? [],
-    sessions: s.sessions.some((x) => x.coreTag === undefined || x.specialTopic === undefined)
-      ? s.sessions.map((x) => (x.coreTag === undefined || x.specialTopic === undefined ? { ...x, coreTag: x.coreTag ?? "", specialTopic: x.specialTopic ?? false } : x))
+    nonTeaching: s.nonTeaching.some((n) => yearFromData(n.academicYear) !== n.academicYear) ? s.nonTeaching.map((n) => ({ ...n, academicYear: yearFromData(n.academicYear) })) : s.nonTeaching,
+    // years saved as AY25 are 25-26 now; a section's core tag and special-topic mark default
+    sessions: s.sessions.some((x) => x.coreTag === undefined || x.specialTopic === undefined || yearFromData(x.academicYear) !== x.academicYear)
+      ? s.sessions.map((x) => ({ ...x, academicYear: yearFromData(x.academicYear), coreTag: x.coreTag ?? "", specialTopic: x.specialTopic ?? false }))
       : s.sessions,
     constraints: (s.constraints ?? []).map((raw) => {
       // the rule type before there were two colocate versions

@@ -4,6 +4,7 @@ import { parseDays } from "./format.js";
 import { sectionShares } from "./load.js";
 import type { Listing } from "./names.js";
 import { nextFreeLetter, offeringOf, sameLetter, uniqueSectionId, type LetterResolution, type Offering } from "./sections.js";
+import { yearFromData } from "./academicYear.js";
 import { partsFor } from "./terms.js";
 import { deriveSectionId } from "./import.js";
 import { sessionSchema, type Instructor, type Schedule, type Session } from "./types.js";
@@ -151,7 +152,7 @@ export function draftToSessions(d: SectionDraft, sectionId: string): Session[] {
   return rows.map((m) => ({
     sectionId,
     department: d.department.trim(),
-    academicYear: d.academicYear.trim(),
+    academicYear: yearFromData(d.academicYear),
     term: d.term.trim().toUpperCase(),
     termPart: d.termPart,
     prefix: d.prefix.trim(),
@@ -279,7 +280,7 @@ export function saveDraft(schedule: Schedule, draft: SectionDraft, resolution?: 
 
   const existing = draft.sectionId ? firstSession(schedule, draft.sectionId) : undefined;
   if (draft.sectionId && !existing) return { kind: "invalid", errors: [{ field: "", message: `no section ${draft.sectionId}` }] };
-  const d: SectionDraft = { ...draft, term: draft.term.trim().toUpperCase(), prefix: draft.prefix.trim(), courseNumber: draft.courseNumber.trim(), section: tidyLetter(draft.section), academicYear: draft.academicYear.trim() };
+  const d: SectionDraft = { ...draft, term: draft.term.trim().toUpperCase(), prefix: draft.prefix.trim(), courseNumber: draft.courseNumber.trim(), section: tidyLetter(draft.section), academicYear: yearFromData(draft.academicYear) };
   const id = existing ? existing.sectionId : uniqueSectionId(schedule, deriveSectionId(d));
   const target = offeringOf(d);
 

@@ -36,6 +36,21 @@ export function partForExport(settings: Settings, term: string, code: string): s
   return partsFor(settings, term).some((p) => p.code === number) ? code : number;
 }
 
+/**
+ * The registrar's reports (reports.calvin.edu) code the winter interim as part 0 of Spring: `SP` with `TermPart` 0. The app keeps it as
+ * its own term, `WI`. This is the term and part for a data row: `WI` when the data says Spring, part 0 (and the schedule has a WI term).
+ */
+export function termFromData(settings: Settings, term: string, partText: string): { term: string; part: string } | undefined {
+  if (term.trim().toUpperCase() === "SP" && partText.trim() === "0" && settings.terms.some((t) => t.code === "WI")) return { term: "WI", part: "Full" };
+  return undefined;
+}
+
+/** A section's term and part the way the data writes them: `WI` as `SP` with part 0, the halves as 1 and 2. */
+export function termForData(settings: Settings, term: string, part: string): { term: string; part: string } {
+  if (term === "WI") return { term: "SP", part: "0" };
+  return { term, part: partForExport(settings, term, part) };
+}
+
 /** Inclusive week range of a part within a term, or `undefined` if the part is not defined for it. */
 export function weeksOf(settings: Settings, term: string, part: string): [number, number] | undefined {
   const p = partsFor(settings, term).find((x) => x.code.toLowerCase() === part.toLowerCase());

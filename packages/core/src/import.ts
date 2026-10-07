@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { parseDays, parseFaculty, parseTime } from "./format.js";
 import { sectionShares } from "./load.js";
-import { partNamed, partsFor, splitTermCode } from "./terms.js";
+import { yearFromData, yearToData } from "./academicYear.js";
+import { partNamed, partsFor, splitTermCode, termFromData } from "./terms.js";
 import { normalizeCoreTag } from "./coreTag.js";
 import { unifyCrossListings } from "./crosslistings.js";
 import { normalizeDelivery } from "./delivery.js";
@@ -180,7 +181,7 @@ function listings(r: Reporter, row: number, k: Rec): { prefix: string; courseNum
 }
 
 export const deriveSectionId = (s: Pick<Session, "academicYear" | "term" | "prefix" | "courseNumber" | "section">) =>
-  `${s.academicYear}-${s.term}-${s.prefix}${s.courseNumber}-${s.section}`;
+  `${yearToData(s.academicYear)}-${s.term}-${s.prefix}${s.courseNumber}-${s.section}`;
 
 const SECTION_FIELDS = [
   "department", "academicYear", "term", "termPart", "prefix", "courseNumber", "section", "faculty",
@@ -216,6 +217,7 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
     const row = idx + 2;
     const { known: k, extra } = split(rec, SESSION_COLUMNS);
     if (opts.academicYear && !k.AcademicYear) k.AcademicYear = opts.academicYear;
+    if (k.AcademicYear) k.AcademicYear = yearFromData(k.AcademicYear);
 
     // No course at all: a non-teaching load row (activity in InstructionalMethod).
     if (!k.Prefix && !k.CourseNumber && !k.Section) {
@@ -254,6 +256,13 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
     }
     if (term === AY) r.add("error", row, `Term: AY (full academic year) is only for non-teaching load; enter a year-long course as separate sections in each semester`);
     else if (term && !terms.has(term)) r.add("error", row, `Term: "${k.Term}" is not a configured term (${[...terms].join(", ")})`);
+    // The registrar's reports write the winter interim as Spring, part 0.
+    const winter = termFromData(settings, term, k.TermPart ?? "");
+    if (winter) {
+      term = winter.term;
+      impliedPart = winter.part;
+      k.TermPart = "";
+    }
     const partCodes = partsFor(settings, term).map((p) => p.code);
     let part = impliedPart ?? "Full";
     if (k.TermPart) {
@@ -389,6 +398,7 @@ export function importNonTeaching(records: Rec[], settings: Settings = defaultSe
     const row = idx + 2;
     const { known: k, extra } = split(rec, NONTEACHING_COLUMNS);
     if (opts.academicYear && !k.AcademicYear) k.AcademicYear = opts.academicYear;
+    if (k.AcademicYear) k.AcademicYear = yearFromData(k.AcademicYear);
     const term = (k.Term ?? "").toUpperCase();
     if (term && !terms.has(term)) r.add("error", row, `Term: "${k.Term}" is not a configured term (${[...terms].join(", ")})`);
     const parsed = nonTeachingSchema.safeParse({

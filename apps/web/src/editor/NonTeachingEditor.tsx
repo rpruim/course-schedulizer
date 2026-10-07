@@ -1,3 +1,4 @@
+import { ACADEMIC_YEAR_HELP } from "@schedulizer/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   deleteNonTeaching,
@@ -90,7 +91,7 @@ export function NonTeachingEditor({ scheduleId, initial, index, onClose, onNotic
   }
 
   const text = (key: keyof NtForm, label: string, opts: { list?: string; size?: number; hint?: string } = {}) => (
-    <label className="f">
+    <label className="f" title={key === "academicYear" ? ACADEMIC_YEAR_HELP : undefined}>
       <span>{label}</span>
       <input value={String(form[key])} list={opts.list} size={opts.size} aria-invalid={attempted && !!fieldErrors[key] ? true : undefined} onChange={(e) => set(key, e.target.value as never)} />
       {opts.hint && <small className="muted">{opts.hint}</small>}

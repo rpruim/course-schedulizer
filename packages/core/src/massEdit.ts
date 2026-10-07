@@ -1,5 +1,6 @@
 import { unifyCrossListings } from "./crosslistings.js";
 import { formatFaculty, formatNumber } from "./format.js";
+import { yearFromData } from "./academicYear.js";
 import { partsFor } from "./terms.js";
 import type { Instructor, Schedule, Session } from "./types.js";
 
@@ -101,7 +102,7 @@ export function massEdit(schedule: Schedule, sectionIds: Iterable<string>, edits
   const skippedIds = new Set<string>();
   const renamed = new Set<string>();
   const newPrefix = edits.prefix?.trim();
-  const newYear = edits.academicYear?.trim();
+  const newYear = edits.academicYear ? yearFromData(edits.academicYear) : undefined;
   const newTerm = edits.term?.trim().toUpperCase();
   const newPart = edits.termPart?.trim();
   if (mode === "overwrite" && (newPrefix || newYear || newTerm || newPart)) {

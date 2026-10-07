@@ -1,3 +1,4 @@
+import { ACADEMIC_YEAR_HELP } from "@schedulizer/core";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CORE_TAGS, DELIVERY_MODES, formatTime, massEdit, parseFaculty, parseTime, sharedValues, type MassEdits, type MassMode, type Schedule, type Session } from "@schedulizer/core";
 import { useWorkspace } from "../state";
@@ -170,7 +171,7 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
   const set = (k: Field, v: string) => setForm((f) => ({ ...f, [k]: v }));
   const setM = (patch: Partial<MeetingBoxes>) => setMeetingForm((m) => ({ ...m, ...patch }));
   const box = (k: Field, label: ReactNode, size?: number, hint?: string) => (
-    <label className="f">
+    <label className="f" title={k === "academicYear" ? ACADEMIC_YEAR_HELP : undefined}>
       <span>{label}</span>
       <input value={form[k]} size={size} placeholder={shared.fields[k] ?? various(k)} onChange={(e) => set(k, e.target.value)} aria-invalid={errors[k] ? true : undefined} />
       {hint && <small className="muted">{hint}</small>}

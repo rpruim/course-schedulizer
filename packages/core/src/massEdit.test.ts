@@ -4,7 +4,7 @@ import { emptySchedule, type Schedule, type Session } from "./types.js";
 
 const session = (over: Partial<Session>): Session =>
   ({
-    sectionId: "a", department: "", academicYear: "AY25", term: "FA", termPart: "Full", prefix: "MUSC", courseNumber: "101", section: "A",
+    sectionId: "a", department: "", academicYear: "25-26", term: "FA", termPart: "Full", prefix: "MUSC", courseNumber: "101", section: "A",
     shortTitle: "", instructionalMethod: "", courseLevel: "", group: "", deliveryMode: "", comment: "", faculty: [], days: "MWF", start: 540, duration: 50, room: "", extra: {},
     ...over,
   }) as Session;
@@ -183,13 +183,13 @@ describe("massEdit: year, term and part of the term", () => {
   const last = sched({ sectionId: "a" }, { sectionId: "b", section: "B", termPart: "First" }, { sectionId: "c", courseNumber: "102", term: "SP" });
   it("moves sections to another academic year, every meeting row, keeping their ids", () => {
     const two = { ...last, sessions: [...last.sessions, session({ sectionId: "a", days: "R" })] };
-    const r = massEdit(two, ["a", "b", "c"], { academicYear: "AY26" }, "overwrite");
-    expect(field(r.schedule, "a", "academicYear")).toEqual(["AY26", "AY26"]);
+    const r = massEdit(two, ["a", "b", "c"], { academicYear: "26-27" }, "overwrite");
+    expect(field(r.schedule, "a", "academicYear")).toEqual(["26-27", "26-27"]);
     expect(r.schedule.sessions.map((x) => x.sectionId)).toEqual(two.sessions.map((x) => x.sectionId));
     expect([r.sections, r.values, r.skipped]).toEqual([3, 3, 0]);
   });
   it("is applied only when overwriting", () => {
-    expect(massEdit(last, ["a"], { academicYear: "AY26", term: "SP", termPart: "First" }, "missing").sections).toBe(0);
+    expect(massEdit(last, ["a"], { academicYear: "26-27", term: "SP", termPart: "First" }, "missing").sections).toBe(0);
   });
   it("moves to another term, and sets the part of the term", () => {
     const r = massEdit(last, ["a", "b"], { term: "SP", termPart: "Second" }, "overwrite");
@@ -197,13 +197,13 @@ describe("massEdit: year, term and part of the term", () => {
     expect([field(r.schedule, "a", "termPart"), field(r.schedule, "b", "termPart")]).toEqual([["Second"], ["Second"]]);
   });
   it("leaves alone a section that would land on another section of the same course, number and letter", () => {
-    const clash = sched({ sectionId: "a" }, { sectionId: "n", academicYear: "AY26" });
-    const r = massEdit(clash, ["a"], { academicYear: "AY26" }, "overwrite");
+    const clash = sched({ sectionId: "a" }, { sectionId: "n", academicYear: "26-27" });
+    const r = massEdit(clash, ["a"], { academicYear: "26-27" }, "overwrite");
     expect([r.sections, r.skipped]).toEqual([0, 1]);
-    expect(field(r.schedule, "a", "academicYear")).toEqual(["AY25"]);
+    expect(field(r.schedule, "a", "academicYear")).toEqual(["25-26"]);
     // two chosen sections that would meet each other keep one of them
-    const both = sched({ sectionId: "a" }, { sectionId: "b", academicYear: "AY24" });
-    const r2 = massEdit(both, ["a", "b"], { academicYear: "AY26" }, "overwrite");
+    const both = sched({ sectionId: "a" }, { sectionId: "b", academicYear: "24-25" });
+    const r2 = massEdit(both, ["a", "b"], { academicYear: "26-27" }, "overwrite");
     expect([r2.sections, r2.skipped]).toEqual([1, 1]);
   });
   it("refuses a term the schedule does not have, and a part the term does not have", () => {

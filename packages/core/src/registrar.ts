@@ -1,7 +1,7 @@
 import { colocatedPairs } from "./conflicts.js";
 import { formatNumber } from "./format.js";
 import { SPECIAL_TOPIC, type Table } from "./export.js";
-import { partForExport } from "./terms.js";
+import { termForData } from "./terms.js";
 import type { Schedule, Session } from "./types.js";
 import { AY } from "./types.js";
 
@@ -70,9 +70,9 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
     const terms = n.term === AY && spread.length ? spread : [n.term];
     for (const term of terms) {
       rows.push(row({
-        Term: term, Prefix: "", CourseNumber: "", Section: "", StudentCredits: "0",
+        Term: termForData(schedule.settings, term, "Full").term, Prefix: "", CourseNumber: "", Section: "", StudentCredits: "0",
         FacultyLoad: formatNumber(Math.round((n.load / terms.length) * 1e6) / 1e6),
-        MeetingDays: "", MeetingTime: "", BuildingAndRoom: "", TermPart: "Full", TermAndPart: `${term}-Full`,
+        MeetingDays: "", MeetingTime: "", BuildingAndRoom: "", TermPart: termForData(schedule.settings, term, "Full").part, TermAndPart: `${termForData(schedule.settings, term, "Full").term}-${termForData(schedule.settings, term, "Full").part}`,
         Duration: "", ShortTitle: "", Faculty: n.faculty, InstructionalMethod: n.activity,
         DeliveryMode: "", Comment: n.comment, CrossListings: "", CoreTag: "", SpecialTopic: "", Level: "", Colocations: "",
       }));
@@ -100,7 +100,7 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
     const scheduled = ms.some((m) => m.days !== "");
     const when = (m: Session) => (m.days !== "" && m.start !== undefined && m.duration !== undefined ? m : undefined);
     rows.push(row({
-      Term: head.term,
+      Term: termForData(schedule.settings, head.term, head.termPart).term,
       Prefix: head.prefix,
       CourseNumber: head.courseNumber,
       Section: head.section,
@@ -109,8 +109,8 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
       MeetingDays: scheduled || ms.length > 1 ? compact(ms.map((m) => m.days)) : "",
       MeetingTime: scheduled ? compact(ms.map((m) => { const w = when(m); return w ? `${clock(w.start!)} - ${clock(w.start! + w.duration!)}` : ""; })) : "",
       BuildingAndRoom: ms.some((m) => m.room !== "") ? compact(ms.map((m) => m.room)) : "",
-      TermPart: partForExport(schedule.settings, head.term, head.termPart),
-      TermAndPart: `${head.term}-${partForExport(schedule.settings, head.term, head.termPart)}`,
+      TermPart: termForData(schedule.settings, head.term, head.termPart).part,
+      TermAndPart: `${termForData(schedule.settings, head.term, head.termPart).term}-${termForData(schedule.settings, head.term, head.termPart).part}`,
       Duration: scheduled ? compact(ms.map((m) => formatNumber(when(m)?.duration))) : "",
       ShortTitle: head.shortTitle,
       Faculty: head.faculty.map((f) => f.name).join(", "),

@@ -1,3 +1,4 @@
+import { ACADEMIC_YEAR_HELP } from "@schedulizer/core";
 import { inPartOrder } from "../model";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
@@ -235,7 +236,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
               </div>
             </div>
             <div className="row top">
-              <label className="f">
+              <label className="f" title={ACADEMIC_YEAR_HELP}>
                 <span>Academic year</span>
                 <input value={form.academicYear} list="dl-years" size={8} onChange={(e) => set("academicYear", e.target.value)} aria-invalid={attempted && !!fieldErrors.academicYear ? true : undefined} />
                 {err("academicYear")}
