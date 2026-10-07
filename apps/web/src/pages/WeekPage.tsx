@@ -10,7 +10,7 @@ import { useRemembered } from "../remember";
 import { keyFor, openColorKey, setColorKey, useColorBy } from "../colorKey";
 import { inPartOrder, termsAcross, yearsAcross } from "../model";
 import { MERGED_ID, useWorkspace } from "../state";
-import { colorOptions, colorValueOf, groupGrids, hourLabel, termsFor, weekGrids, type Block, type ColorBy, type Grid, type GridKind } from "../week";
+import { cohortCourseNames, colorOptions, colorValueOf, groupGrids, hourLabel, termsFor, weekGrids, type Block, type ColorBy, type Grid, type GridKind } from "../week";
 import { Empty, NoneShown } from "./SchedulePage";
 
 const DAY_NAMES: Record<string, string> = { M: "Mon", T: "Tue", W: "Wed", R: "Thu", F: "Fri", S: "Sat", U: "Sun" };
@@ -52,7 +52,8 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
   const filterBy = colorChoices.some((c) => c.value === pickedFilterBy) ? pickedFilterBy : "prefix";
   const setFilterBy = (by: ColorBy) => {
     setFilterByState(by);
-    setFilterValues([]);
+    // A cohort rule starts with its courses ticked and (other courses) not; anything else starts with everything shown.
+    setFilterValues(by.startsWith("cohort:") ? cohortCourseNames(entries.map((e) => e.schedule), by) : []);
   };
   const filter = mass ? { by: filterBy, values: filterValues } : undefined;
 

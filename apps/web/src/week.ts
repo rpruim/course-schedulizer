@@ -57,6 +57,15 @@ export function cohortCourses(rule: Rule): string[] {
   for (const e of rule.elements) for (const c of e.courses) if (c.trim() && !seen.has(courseKey(c, ""))) seen.set(courseKey(c, ""), c.trim());
   return [...seen.values()];
 }
+/** The courses of the cohort planning rule `by` names (nothing for another way of coloring), over several schedules. */
+export function cohortCourseNames(schedules: Schedule[], by: ColorBy): string[] {
+  const seen = new Map<string, string>();
+  for (const s of schedules) {
+    const rule = cohortOf(s, by);
+    if (rule) for (const c of cohortCourses(rule)) if (!seen.has(courseKey(c, ""))) seen.set(courseKey(c, ""), c);
+  }
+  return [...seen.values()];
+}
 const cohortOf = (schedule: Schedule, by: ColorBy) => (by.startsWith("cohort:") ? cohortRules(schedule).find((r) => r.name === by.slice(7)) : undefined);
 
 export interface Block {
