@@ -1,7 +1,7 @@
 import { constraintNames, constraintNamesInstructor, courseMatches, listingKeys, normCourse } from "./constraints.js";
 import { displayNames, listingsOf } from "./names.js";
 import { formatTime } from "./format.js";
-import { planSeats, type SeatElement } from "./seats.js";
+import { adviseTimes, planSeats, type SeatElement } from "./seats.js";
 import { meetingsOverlap, scheduled, weeksConcurrent } from "./overlap.js";
 import { DAY_ORDER, DEFAULT_STANDARD_TIMES, type Constraint, type Schedule, type Session, type StandardTime } from "./types.js";
 
@@ -775,13 +775,22 @@ function violationsIn(all: Schedule): RuleViolation[] {
     if (result.placed === total && unseatable === 0) return true;
     const parts: string[] = [];
     for (const c of notOffered) parts.push(`${c} is not offered in ${g.term}`);
-    for (const i of result.noSchedule) {
-      const e = elements[i]!;
-      if (e.courses.every((c) => c.sections.length > 0)) parts.push(`no clash-free choice of sections lets ${e.students} student${e.students === 1 ? "" : "s"} take ${e.courses.map((c) => c.label).join(", ")}`);
+    for (const s of result.short) parts.push(`not enough seats in ${s.label} (${s.seats} in all, ${s.needed} student${s.needed === 1 ? "" : "s"} need${s.needed === 1 ? "s" : ""} them)`);
+    // With seats enough in every course the times are what is in the way: say which sections to move apart.
+    let advice = "";
+    if (result.placed < result.total && result.short.length === 0) {
+      const options = adviseTimes(elements, sectionsOverlap);
+      const move = (pairs: [string, string][]) => pairs.map(([x, y]) => `${label(x)} and ${label(y)} at different times`);
+      const joinWith = (items: string[], word: string) => (items.length === 1 ? items[0]! : `${items.slice(0, -1).join(", ")}, ${word} ${items[items.length - 1]}`);
+      if (options.length > 0) advice = `Try offering ${options.length === 1 ? joinWith(move(options[0]!), "and") : joinWith(options.map((o) => move(o).join(" and ")), "or")}`;
+      else for (const i of result.noSchedule) {
+        const e = elements[i]!;
+        parts.push(`no clash-free choice of sections lets ${e.students} student${e.students === 1 ? "" : "s"} take ${e.courses.map((c) => c.label).join(", ")}`);
+      }
     }
-    for (const s of result.short) parts.push(`${s.label} has ${s.seats} seat${s.seats === 1 ? "" : "s"} in all but ${s.needed} students need it`);
     const how = result.exact ? "" : " (the search was cut off, so more might fit)";
-    report(`${result.placed} of ${total} students can all get seats${how}${parts.length ? `: ${parts.join("; ")}` : ": the seats and the times of the sections do not fit together"}`);
+    const why = parts.length ? `: ${parts.join("; ")}` : advice ? "" : ": the seats and the times of the sections do not fit together";
+    report(`${result.placed} of ${total} students can all get seats${how}${why}${advice ? `. ${advice}` : ""}`);
     return true;
   }
 

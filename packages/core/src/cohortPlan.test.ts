@@ -33,16 +33,29 @@ describe("cohort planning", () => {
   it("is not met when a course has too few seats in all, and says which", () => {
     const v = cohort(build(sessions(2), rows(SEATS)));
     expect(v).toHaveLength(1);
-    expect(v[0]!.message).toBe("50 of 75 students can all get seats: CHEM 101 has 50 seats in all but 75 students need it");
+    expect(v[0]!.message).toBe("50 of 75 students can all get seats: not enough seats in CHEM 101 (50 in all, 75 students need them)");
     expect(v[0]!.term).toBe("FA");
     expect(v[0]!.sectionIds.length).toBeGreaterThan(0);
   });
-  it("takes the times into account", () => {
+  it("takes the times into account, and says which sections to move apart", () => {
     // every ENGR section meets with every CHEM section, so no student can take both
     const s = [sec("MATH", "161", "A", "MWF", "8:00"), sec("MATH", "162", "A", "MWF", "9:15"), sec("ENGR", "101", "A", "TR", "8:00"), sec("CHEM", "101", "A", "TR", "8:00")];
-    const v = cohort(build(s, rows({ ...SEATS, "CHEM 101": 100, "ENGR 101": 100 })));
-    expect(v[0]!.message).toContain("0 of 75 students can all get seats");
-    expect(v[0]!.message).toContain("no clash-free choice of sections lets 50 students take MATH 161, ENGR 101, CHEM 101");
+    const v = cohort(build(s, rows({ "MATH 161": 100, "MATH 162": 100, "ENGR 101": 100, "CHEM 101": 100 })));
+    expect(v[0]!.message).toBe("0 of 75 students can all get seats. Try offering ENGR 101 A and CHEM 101 A at different times");
+  });
+  it("offers each single fix as an alternative (or)", () => {
+    const s = [sec("MATH", "161", "A", "MWF", "8:00"), sec("MATH", "162", "A", "MWF", "9:15"), sec("ENGR", "101", "A", "TR", "8:00"), sec("ENGR", "101", "B", "TR", "8:00"), sec("CHEM", "101", "A", "TR", "8:00")];
+    const v = cohort(build(s, rows({ "MATH 161": 100, "MATH 162": 100, "ENGR 101": 100, "CHEM 101": 100 })));
+    expect(v[0]!.message).toBe("0 of 75 students can all get seats. Try offering ENGR 101 A and CHEM 101 A at different times, or ENGR 101 B and CHEM 101 A at different times");
+  });
+  it("asks for several moves together when one is not enough (and)", () => {
+    const s = [sec("MATH", "161", "A", "MWF", "8:00"), sec("MATH", "162", "A", "MWF", "9:15"), ...["A", "B"].flatMap((l) => [sec("ENGR", "101", l, "TR", "8:00"), sec("CHEM", "101", l, "TR", "8:00")])];
+    const v = cohort(build(s, rows({ "MATH 161": 100, "MATH 162": 100, "ENGR 101": 40, "CHEM 101": 40 })));
+    expect(v[0]!.message).toMatch(/^\d+ of 75 students can all get seats\. Try offering \w+ 101 [AB] and \w+ 101 [AB] at different times, and \w+ 101 [AB] and \w+ 101 [AB] at different times$/);
+  });
+  it("does not offer time advice while a course is short of seats", () => {
+    const v = cohort(build(sessions(2), rows(SEATS)));
+    expect(v[0]!.message).not.toContain("Try offering");
   });
   it("says so when a course of a group is not offered in the term", () => {
     const s = sessions(3).filter((x) => x.CourseNumber !== "162");

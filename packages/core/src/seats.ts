@@ -162,3 +162,76 @@ export function planSeats(elements: SeatElement[], overlap: (a: string, b: strin
   }
   return { placed: lo, total, exact: exact || lo === total, noSchedule, short };
 }
+
+/**
+ * When everyone cannot be seated and no course is short of seats, the sections' times are what is in the way. This looks for pairs of
+ * sections (of different courses of one element) whose overlap could be removed by moving one of them. It returns alternatives, each a
+ * list of pairs that must all be moved apart together: the pairs that fix it alone, as separate alternatives, or, when no single pair
+ * does, one alternative of several pairs (found greedily, then trimmed to those that are needed).
+ */
+export function adviseTimes(elements: SeatElement[], overlap: (a: string, b: string) => boolean, budget = 40000): [string, string][][] {
+  const key = (a: string, b: string) => (a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`);
+  const pairs = new Map<string, [string, string]>();
+  for (const e of elements) {
+    for (let i = 0; i < e.courses.length; i++) {
+      for (let j = i + 1; j < e.courses.length; j++) {
+        for (const a of e.courses[i]!.sections) for (const b of e.courses[j]!.sections) if (a.id !== b.id && overlap(a.id, b.id)) pairs.set(key(a.id, b.id), [a.id, b.id]);
+      }
+    }
+  }
+  if (pairs.size === 0) return [];
+  const total = elements.reduce((n, e) => n + e.students, 0);
+  const without = (skip: Set<string>) => (a: string, b: string) => a === b || (!skip.has(key(a, b)) && overlap(a, b));
+  const placed = (skip: Set<string>) => planSeats(elements, without(skip), budget).placed;
+  const deadline = Date.now() + 1000;
+
+  const singles: [string, string][][] = [];
+  for (const [k, p] of pairs) {
+    if (Date.now() > deadline) break;
+    if (placed(new Set([k])) === total) singles.push([p]);
+    if (singles.length >= 6) break;
+  }
+  if (singles.length > 0) return singles;
+
+  // how many clash-free choices of sections the elements have in all (a tie-break when no single move seats anyone more)
+  const choices = (skip: Set<string>) => {
+    const ok = without(skip);
+    let n = 0;
+    for (const e of elements) {
+      let count = 0;
+      const picked: string[] = [];
+      const go = (k: number) => {
+        if (count >= 2500) return;
+        if (k === e.courses.length) {
+          count++;
+          return;
+        }
+        for (const s of e.courses[k]!.sections) if (picked.every((p) => ok(p, s.id))) { picked.push(s.id); go(k + 1); picked.pop(); }
+      };
+      go(0);
+      n += count;
+    }
+    return n;
+  };
+  const chosen = new Set<string>();
+  for (let round = 0; round < 12 && placed(chosen) < total; round++) {
+    let best: string | undefined;
+    let bestScore = -1;
+    for (const k of pairs.keys()) {
+      if (chosen.has(k)) continue;
+      if (Date.now() > deadline) break;
+      const next = new Set(chosen).add(k);
+      const score = placed(next) * 1e6 + choices(next);
+      if (score > bestScore) { bestScore = score; best = k; }
+    }
+    if (best === undefined) break;
+    chosen.add(best);
+  }
+  if (placed(chosen) < total) return [];
+  for (const k of [...chosen]) {
+    const rest = new Set(chosen);
+    rest.delete(k);
+    if (placed(rest) === total) chosen.delete(k);
+  }
+  return [[...chosen].map((k) => pairs.get(k)!)];
+}
