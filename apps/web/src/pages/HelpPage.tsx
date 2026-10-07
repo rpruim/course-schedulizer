@@ -403,27 +403,27 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </p>
         <dl>
           <dt>Colocate (same instructor)</dt>
-          <dd><em>The seminar runs at two levels.</em> Courses CRUD 290, CRUD 390; the two listings of one seminar share an instructor, a room and a time and are not reported.</dd>
+          <dd><em>The seminar runs at two levels.</em> Courses DIGI 371, DIGI 471; the two listings of one seminar share an instructor, a room and a time and are not reported.</dd>
           <dt>Modify standard times: allow</dt>
           <dd><em>Colloquium time.</em> Course AMUS 241; allow R, 50 minutes, starting 15:05.</dd>
           <dt>Modify standard times: disallow</dt>
           <dd><em>No 8:00 MWF.</em> Every course (<code>*</code>); disallow MWF, 65 minutes, starting 8:00.</dd>
           <dt>Subset of standard times</dt>
-          <dd><em>Harmonic structures may meet one day of TR.</em> Course AMUS 296, which meets on Tuesday alone at 8:00 for 100 minutes and is not flagged; BHAV 226 on Friday alone at 9:15 is still flagged, because the rule does not name it.</dd>
+          <dd><em>Corpus studies may meet one day of TR.</em> Course AMUS 375, which meets on Tuesday alone at 14:10 for 100 minutes and is not flagged; DIGI 325 on Friday alone at 9:15 is still flagged, because the rule does not name it.</dd>
           <dt>Time window: courses</dt>
           <dd><em>Colloquium hour is free.</em> Courses AMUS 3*, BHAV 3*, DIGI 3*; <em>should not</em> meet 15:05–15:55 on R; counts as meeting: any overlap.</dd>
           <dt>Time window: an instructor</dt>
           <dd><em>Gus does not teach before 9:00.</em> Instructor Gus Testwell; <em>should not</em> meet 00:00–09:00 on any day.</dd>
           <dt>Time window: at least some sections</dt>
-          <dd><em>Ecology Core needs an evening section.</em> Course HELP 111; <em>should</em> meet within 17:00–22:00; applies to at least 1 section.</dd>
+          <dd><em>Behavior in Sport needs an evening section.</em> Course BHAV 121; <em>should</em> meet within 17:00–22:00; applies to at least 1 section.</dd>
           <dt>Back-to-back: at most</dt>
           <dd><em>Kim, at most two in a row.</em> Instructor Kim; at most 2 consecutive classes, gap 20 minutes.</dd>
           <dt>Back-to-back: at least, in some terms</dt>
           <dd><em>Lee, at least two in a row.</em> Instructor Lee; at least 2 consecutive classes; terms: Fall only.</dd>
           <dt>Take together: all</dt>
-          <dd><em>AMUS major, year 2.</em> Courses AMUS 228, BHAV 212, AMUS 261; number blank. Met if a student can pick one section of each with no clash (a second section of AMUS 228 makes it work).</dd>
+          <dd><em>AMUS major, year 2.</em> Courses AMUS 228, BHAV 212, AMUS 203; number blank. Met if a student can pick one section of each with no clash (a second section of AMUS 228 makes it work).</dd>
           <dt>Take together: any two</dt>
-          <dd><em>Digital information minor.</em> Courses DIGI 318, BHAV 312, CRUD 245; <em>any</em> 2. Every pair must fit, so it lists the pair that clashes.</dd>
+          <dd><em>Digital information minor.</em> Courses DIGI 318, BHAV 312, DIGI 306; <em>any</em> 2. Every pair must fit, so it lists the pair that clashes.</dd>
           <dt>Take together: some pair</dt>
           <dd>The same courses with <em>some</em> 2: met as long as one pair fits.</dd>
           <dt>Cohort planning</dt>

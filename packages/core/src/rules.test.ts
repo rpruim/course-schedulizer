@@ -417,20 +417,20 @@ describe("the demo schedule with constraint rules (fixtures/cases/rules-*.csv)",
       ["Digital information minor: some pair of electives", "takeable"],
       ["Colloquium hour is free", "window"],
       ["Gus does not teach before 9:00", "window"],
-      ["Ecology Core needs an evening section", "window"],
+      ["Behavior in Sport needs an evening section", "window"],
       ["Kim: at most two classes in a row", "consecutive"],
       ["Lee: at least two classes in a row", "consecutive"],
       ["Colloquium time", "standard"],
       ["No 8:00 MWF", "standard"],
-      ["Harmonic structures may meet one day of TR", "subset"],
+      ["Corpus studies may meet one day of TR", "subset"],
       ["The seminar runs at two levels", "colocate"],
     ]);
     expect(violations(demo()).map((v) => [v.rule, v.message])).toEqual([
       ["Digital information minor: any two electives", "Not every 2 of the 3 courses can be taken together: BHAV 312 + DIGI 318"],
-      ["Colloquium hour is free", "AMUS 318 A meets during 15:05–15:55 on R"],
-      ["Gus does not teach before 9:00", "CRUD 167 B meets during 00:00–09:00 on M W F"],
-      ["Ecology Core needs an evening section", "Only 0 of 2 sections meet within 17:00–22:00 on any of M T W R F (needs 1)"],
-      ["Kim: at most two classes in a row", expect.stringContaining("Kim teaches 3 consecutive classes on M: CRUD 245 A 13:30–14:35, CRUD 167 A 14:45–15:50, CRUD 315 A 16:00–17:00 (at most 2)")],
+      ["Colloquium hour is free", "AMUS 368 A meets during 15:05–15:55 on R"],
+      ["Gus does not teach before 9:00", "AMUS 145 B meets during 00:00–09:00 on M W F"],
+      ["Behavior in Sport needs an evening section", "Only 0 of 2 sections meet within 17:00–22:00 on any of M T W R F (needs 1)"],
+      ["Kim: at most two classes in a row", expect.stringContaining("Kim teaches 3 consecutive classes on M: DIGI 306 A 13:30–14:35, AMUS 145 A 14:45–15:50, DIGI 378 A 16:00–17:00 (at most 2)")],
       ["Kim: at most two classes in a row", expect.stringContaining("on W")],
       ["Kim: at most two classes in a row", expect.stringContaining("on F")],
       ["Lee: at least two classes in a row", "Lee never teaches 2 consecutive classes in FA (the most is 1)"],
@@ -438,17 +438,17 @@ describe("the demo schedule with constraint rules (fixtures/cases/rules-*.csv)",
   });
   it("names every section a rule violation involves, so the section editor can list it", () => {
     const rule = findRuleViolations(demo()).filter((v) => !v.builtin && v.rule.startsWith("Kim"));
-    expect(new Set(rule.flatMap((v) => v.sectionIds))).toEqual(new Set(["R2-FA-CRUD167-A", "R2-FA-CRUD245-A", "R2-FA-CRUD315-A"]));
+    expect(new Set(rule.flatMap((v) => v.sectionIds))).toEqual(new Set(["R2-FA-AMUS145-A", "R2-FA-DIGI306-A", "R2-FA-DIGI378-A"]));
   });
   it("does not report the seminar listed at two levels as a conflict, because a rule allows it", () => {
     const s = demo();
-    expect(findConflicts(s).filter((c) => c.sectionIdA.includes("CRUD290") || c.sectionIdB.includes("CRUD290"))).toEqual([]);
+    expect(findConflicts(s).filter((c) => c.sectionIdA.includes("DIGI371") || c.sectionIdB.includes("DIGI371"))).toEqual([]);
     const without = { ...s, constraints: s.constraints.filter((c) => c.type !== "colocate") };
     expect(findConflicts(without).map((c) => c.type)).toEqual(["Instructor", "Room"]);
   });
   it("flags only the standard-time exceptions the rules do not cover", () => {
     const odd = findRuleViolations(demo()).filter((v) => v.builtin);
-    expect(odd.map((v) => v.sectionIds[0])).toEqual(["R2-FA-CRUD167-B", "R2-FA-BHAV112-C", "R2-SP-BHAV226-A"]); // AMUS 296 on Tuesday alone is allowed by the subset rule; BHAV 226 on Friday alone is not covered
+    expect(odd.map((v) => v.sectionIds[0])).toEqual(["R2-FA-AMUS145-B", "R2-FA-BHAV112-C", "R2-SP-DIGI325-A"]); // AMUS 375 on Tuesday alone is allowed by the subset rule; DIGI 325 on Friday alone is not covered
     expect(odd[0]!.message).toContain("allowable M W F starts for 65 minutes: 9:15, 11:00, 12:15, 13:30, 14:45"); // 8:00 is disallowed, so it is no longer offered
   });
 });

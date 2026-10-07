@@ -11,6 +11,7 @@
 * Academic years are shown as `25-26` instead of `AY25`, which people find confusing. The files keep the registrar's code: it is converted when a file is read (`AY25`, `2025-26` and `25-26` all give `25-26`) and converted back to `AY25` when one is written, including the Excel file's Metadata sheet. Where an academic year is typed (Import, the section editor, the non-teaching editor, Mass edit), hovering over the box suggests two 2-digit years separated by a dash. Section ids keep the form the data gives (`AY25-FA-…`). Workspaces saved by an earlier version are converted when they are opened.
 * The winter interim, which reports.calvin.edu codes as part 0 of Spring (`SP` with `TermPart` 0), is read as the `WI` term and written back as `SP` with 0 (the Excel file and the registrar tab). Files that say `WI` are still read.
 * *Color by* (and *Filter by* on Mass edit) has a new choice for each active cohort planning rule, *Cohort: rule name*: the courses the rule uses are each drawn in a different color and every other section in the gray hatch.
+* *Example with constraint rules* now uses only the made-up courses of the other examples (prefixes AMUS, BHAV and DIGI, with their titles), so every example is fictitious.
 
 # Course Schedulizer 2.0.6
 

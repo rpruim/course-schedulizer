@@ -1,24 +1,24 @@
 Constraint,Type,Course,Section,Instructor,Count,Choose,Bound,Gap,Action,Duration,Starts,Term,Days,DayRule,From,To,Should,Meets,Comment
 "AMUS major, year 2",takeable,AMUS 228,,,,,,,,,,,,,,,,,A cohort that must be able to take all three courses together. AMUS 228 has two sections so this is met.
 "AMUS major, year 2",takeable,BHAV 212,,,,,,,,,,,,,,,,,
-"AMUS major, year 2",takeable,AMUS 261,,,,,,,,,,,,,,,,,
+"AMUS major, year 2",takeable,AMUS 203,,,,,,,,,,,,,,,,,
 Digital information minor: any two electives,takeable,DIGI 318,,,2,any,,,,,,,,,,,,,Any two of the three should fit together. DIGI 318 and BHAV 312 clash.
 Digital information minor: any two electives,takeable,BHAV 312,,,,,,,,,,,,,,,,,
-Digital information minor: any two electives,takeable,CRUD 245,,,,,,,,,,,,,,,,,
+Digital information minor: any two electives,takeable,DIGI 306,,,,,,,,,,,,,,,,,
 Digital information minor: some pair of electives,takeable,DIGI 318,,,2,some,,,,,,,,,,,,,At least one pair of the three can be taken together.
 Digital information minor: some pair of electives,takeable,BHAV 312,,,,,,,,,,,,,,,,,
-Digital information minor: some pair of electives,takeable,CRUD 245,,,,,,,,,,,,,,,,,
+Digital information minor: some pair of electives,takeable,DIGI 306,,,,,,,,,,,,,,,,,
 Colloquium hour is free,window,AMUS 3*,,,,,,,,,,,R,any,15:05,15:55,should not,overlaps,No 300-level class during the colloquium.
 Colloquium hour is free,window,BHAV 3*,,,,,,,,,,,,,,,,,
 Colloquium hour is free,window,DIGI 3*,,,,,,,,,,,,,,,,,
 Gus does not teach before 9:00,window,,,Gus Testwell,,,,,,,,,,any,00:00,09:00,should not,overlaps,A rule about an instructor instead of courses.
-Ecology Core needs an evening section,window,HELP 111,,,1,,,,,,,,,any,17:00,22:00,should,within,At least one section must meet within the evening hours.
+Behavior in Sport needs an evening section,window,BHAV 121,,,1,,,,,,,,,any,17:00,22:00,should,within,At least one section must meet within the evening hours.
 Kim: at most two classes in a row,consecutive,,,Kim,2,,atMost,20,,,,,,,,,,,
 Lee: at least two classes in a row,consecutive,,,Lee,2,,atLeast,20,,,,FA,,,,,,,
 Colloquium time,standard,AMUS 241,,,,,,,,,,,,,,,,,The colloquium meets at a time that is not standard.
 Colloquium time,standard,,,,,,,,allow,50,15:05,,R,,,,,,
 No 8:00 MWF,standard,*,,,,,,,,,,,,,,,,,This department does not use 8:00 on MWF.
 No 8:00 MWF,standard,,,,,,,,disallow,65,8:00,,MWF,,,,,,
-Harmonic structures may meet one day of TR,subset,AMUS 296,,,,,,,,,,,,,,,,,"AMUS 296 is meant to meet on only one of the standard days, so it is not flagged for that."
-The seminar runs at two levels,colocate,CRUD 290,,,,,,,,,,,,,,,,,"CRUD 290 and CRUD 390 are one class, so they share an instructor, a room and a time on purpose."
-The seminar runs at two levels,colocate,CRUD 390,,,,,,,,,,,,,,,,,
+Corpus studies may meet one day of TR,subset,AMUS 375,,,,,,,,,,,,,,,,,"AMUS 375 is meant to meet on only one of the standard days, so it is not flagged for that."
+The seminar runs at two levels,colocate,DIGI 371,,,,,,,,,,,,,,,,,"DIGI 371 and DIGI 471 are one class, so they share an instructor, a room and a time on purpose."
+The seminar runs at two levels,colocate,DIGI 471,,,,,,,,,,,,,,,,,
