@@ -165,6 +165,8 @@ export interface SharedValues {
   meeting: { days?: string; start?: number; duration?: number; room?: string };
   /** What a mass edit cannot change (the course number, letter, year, term and part of the term), when the sections agree. */
   fixed: { courseNumber?: string; section?: string; academicYear?: string; term?: string; termPart?: string };
+  /** The names of the boxes (fields, fixed values and meeting parts) where the chosen sections differ, as opposed to all being blank. */
+  mixed: string[];
 }
 
 /**
@@ -173,16 +175,18 @@ export interface SharedValues {
  */
 export function sharedValues(sections: Session[][]): SharedValues {
   const rows = sections.filter((s) => s.length > 0);
-  const out: SharedValues = { fields: {}, meeting: {}, fixed: {} };
+  const out: SharedValues = { fields: {}, meeting: {}, fixed: {}, mixed: [] };
   if (rows.length === 0) return out;
   const text = (s: Session, k: SharedField): string => (k === "faculty" ? formatFaculty(s.faculty) : typeof s[k] === "number" ? formatNumber(s[k] as number) : String(s[k] ?? "").trim());
   for (const k of SHARED_FIELDS) {
     const v = text(rows[0]![0]!, k);
     if (v !== "" && rows.every((r) => text(r[0]!, k) === v)) out.fields[k] = v;
+    else if (!rows.every((r) => text(r[0]!, k) === v)) out.mixed.push(k);
   }
   for (const k of ["courseNumber", "section", "academicYear", "term", "termPart"] as const) {
     const v = rows[0]![0]![k].trim();
     if (v !== "" && rows.every((r) => r[0]![k].trim() === v)) out.fixed[k] = v;
+    else if (!rows.every((r) => r[0]![k].trim() === v)) out.mixed.push(k);
   }
   const meetings = rows.flat();
   const same = <T,>(get: (s: Session) => T | undefined): T | undefined => {
@@ -193,6 +197,10 @@ export function sharedValues(sections: Session[][]): SharedValues {
   const start = same((s) => s.start);
   const duration = same((s) => s.duration);
   const room = same((s) => s.room.trim());
+  for (const [k, get] of [["days", (s: Session) => s.days], ["start", (s: Session) => s.start], ["duration", (s: Session) => s.duration], ["room", (s: Session) => s.room.trim()]] as const) {
+    const v = get(meetings[0]!);
+    if (!meetings.every((m) => get(m) === v)) out.mixed.push(k);
+  }
   if (days !== undefined) out.meeting.days = days;
   if (start !== undefined) out.meeting.start = start;
   if (duration !== undefined) out.meeting.duration = duration;

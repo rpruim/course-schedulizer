@@ -148,7 +148,7 @@ describe("sharedValues", () => {
     expect(v.meeting).toEqual({ days: "MWF", start: 540, duration: 50 }); // the rooms differ
   });
   it("has nothing to say for no sections", () => {
-    expect(sharedValues([])).toEqual({ fields: {}, meeting: {}, fixed: {} });
+    expect(sharedValues([])).toEqual({ fields: {}, meeting: {}, fixed: {}, mixed: [] });
   });
 });
 
@@ -170,6 +170,11 @@ describe("sharedValues: what a mass edit cannot change", () => {
     const rows = (...s: Partial<Session>[]) => s.map(session);
     expect(sharedValues([rows({ courseNumber: "101", section: "A" }), rows({ courseNumber: "101", section: "B" })]).fixed).toEqual({ courseNumber: "101", academicYear: "AY25", term: "FA", termPart: "Full" });
     expect(sharedValues([rows({ term: "FA" }), rows({ term: "SP" })]).fixed.term).toBeUndefined();
+    // "various" is only for boxes where the sections differ, not where all are blank.
+    const v = sharedValues([rows({ term: "FA" }), rows({ term: "SP" })]);
+    expect(v.mixed).toContain("term");
+    expect(v.mixed).not.toContain("courseNumber");
+    expect(v.mixed).not.toContain("comment");
   });
 });
 

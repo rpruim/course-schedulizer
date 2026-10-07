@@ -166,21 +166,22 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
     onClose();
   };
 
+  const various = (k: string) => (shared.mixed.includes(k) ? "various" : undefined);
   const set = (k: Field, v: string) => setForm((f) => ({ ...f, [k]: v }));
   const setM = (patch: Partial<MeetingBoxes>) => setMeetingForm((m) => ({ ...m, ...patch }));
   const box = (k: Field, label: ReactNode, size?: number, hint?: string) => (
     <label className="f">
       <span>{label}</span>
-      <input value={form[k]} size={size} placeholder={shared.fields[k]} onChange={(e) => set(k, e.target.value)} aria-invalid={errors[k] ? true : undefined} />
+      <input value={form[k]} size={size} placeholder={shared.fields[k] ?? various(k)} onChange={(e) => set(k, e.target.value)} aria-invalid={errors[k] ? true : undefined} />
       {hint && <small className="muted">{hint}</small>}
       {errors[k] && <span className="err">{errors[k]}</span>}
     </label>
   );
   // What a mass edit cannot change is shown as the section editor shows it, greyed out, with the value the sections have in common.
-  const fixedBox = (label: string, value: string | undefined, size: number, hint?: string) => (
+  const fixedBox = (key: string, label: string, value: string | undefined, size: number, hint?: string) => (
     <label className="f" title="A mass edit does not change this">
       <span>{label}</span>
-      <input value={value ?? ""} placeholder={value === undefined ? "various" : undefined} size={size} disabled readOnly />
+      <input value={value ?? ""} placeholder={value === undefined && shared.mixed.includes(key) ? "various" : undefined} size={size} disabled readOnly />
       {hint && <small className="muted">{hint}</small>}
     </label>
   );
@@ -207,18 +208,18 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
             <legend>Course and instructor(s)</legend>
             <div className="row top">
               {box("prefix", "Prefix", 6)}
-              {fixedBox("Number", shared.fixed.courseNumber, 6)}
-              {fixedBox("Section", shared.fixed.section, 4, "not changed by a mass edit")}
+              {fixedBox("courseNumber", "Number", shared.fixed.courseNumber, 6)}
+              {fixedBox("section", "Section", shared.fixed.section, 4, "not changed by a mass edit")}
               <div className="grow">{box("shortTitle", "Title")}</div>
             </div>
             <div className="row top">
-              {fixedBox("Academic year", shared.fixed.academicYear, 8)}
-              {fixedBox("Term", shared.fixed.term, 3)}
-              {fixedBox("Part of term", shared.fixed.termPart, 8)}
+              {fixedBox("academicYear", "Academic year", shared.fixed.academicYear, 8)}
+              {fixedBox("term", "Term", shared.fixed.term, 3)}
+              {fixedBox("termPart", "Part of term", shared.fixed.termPart, 8)}
               <label className="f">
                 <span>Delivery</span>
                 <select className={form.deliveryMode === "" && shared.fields.deliveryMode ? "suggest" : undefined} value={form.deliveryMode} onChange={(e) => set("deliveryMode", e.target.value)}>
-                  <option value="">{shared.fields.deliveryMode ?? ""}</option>
+                  <option value="">{shared.fields.deliveryMode ?? various("deliveryMode") ?? ""}</option>
                   {DELIVERY_MODES.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
               </label>
@@ -258,12 +259,12 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
             <div className="meeting-fields">
               <label className="f">
                 <span>Start</span>
-                <input value={meetingForm.start} size={6} placeholder={shared.meeting.start === undefined ? undefined : formatTime(shared.meeting.start)} onChange={(e) => setM({ start: e.target.value })} aria-invalid={meetingErrors.start ? true : undefined} />
+                <input value={meetingForm.start} size={6} placeholder={shared.meeting.start === undefined ? various("start") : formatTime(shared.meeting.start)} onChange={(e) => setM({ start: e.target.value })} aria-invalid={meetingErrors.start ? true : undefined} />
                 {meetingErrors.start && <span className="err">{meetingErrors.start}</span>}
               </label>
               <label className="f">
                 <span>Minutes</span>
-                <input value={meetingForm.duration} size={4} inputMode="numeric" placeholder={shared.meeting.duration === undefined ? undefined : String(shared.meeting.duration)} onChange={(e) => setM({ duration: e.target.value })} aria-invalid={meetingErrors.duration ? true : undefined} />
+                <input value={meetingForm.duration} size={4} inputMode="numeric" placeholder={shared.meeting.duration === undefined ? various("duration") : String(shared.meeting.duration)} onChange={(e) => setM({ duration: e.target.value })} aria-invalid={meetingErrors.duration ? true : undefined} />
                 {meetingErrors.duration && <span className="err">{meetingErrors.duration}</span>}
               </label>
               <span className="chips">
@@ -271,7 +272,7 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
               </span>
               <label className="f">
                 <span>Room</span>
-                <input value={meetingForm.room} size={10} placeholder={shared.meeting.room} onChange={(e) => setM({ room: e.target.value })} />
+                <input value={meetingForm.room} size={10} placeholder={shared.meeting.room ?? various("room")} onChange={(e) => setM({ room: e.target.value })} />
               </label>
               {Object.values(meetingForm).some(Boolean) && <button type="button" className="link" onClick={() => setMeetingForm(BLANK_MEETING)}>Clear</button>}
             </div>
@@ -284,7 +285,7 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
               <label className="f" title="If the tag has already been approved for all sections of a course, DO NOT indicate the tag here.">
                 <span>Core tag (only if section specific)</span>
                 <select className={form.coreTag === "" && shared.fields.coreTag ? "suggest" : undefined} value={form.coreTag} onChange={(e) => set("coreTag", e.target.value)}>
-                  <option value="">{shared.fields.coreTag ?? ""}</option>
+                  <option value="">{shared.fields.coreTag ?? various("coreTag") ?? ""}</option>
                   {CORE_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </label>
@@ -295,7 +296,7 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
               {box("enrollment", <>Enrollment<Optional /></>, 6)}
               {box("enrollmentDay10", <>Day-10 enrollment<Optional /></>, 6)}
             </div>
-            <label className="f"><span>Comment</span><textarea rows={2} value={form.comment} placeholder={shared.fields.comment} onChange={(e) => set("comment", e.target.value)} /></label>
+            <label className="f"><span>Comment</span><textarea rows={2} value={form.comment} placeholder={shared.fields.comment ?? various("comment")} onChange={(e) => set("comment", e.target.value)} /></label>
           </details>
           <OptionalNote />
         </div>
