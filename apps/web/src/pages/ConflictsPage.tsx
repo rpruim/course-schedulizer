@@ -111,7 +111,7 @@ function RuleTable({ entry, violations, label, title, orange }: { entry: Entry; 
           <tbody>
             {violations.map((v, i) => (
               <tr key={i}>
-                <td>{letters(v) && <span className="letter" title="The schedule(s) this rule is saved in">{letters(v)}:</span>} {v.builtin ? <span title="Built in: changed by the standard-times rules on the Constraint rules tab">{v.rule}</span> : <button className="link" onClick={() => openConstraint(v.rule, entry.id)} title="Edit this rule">{v.rule}</button>}</td>
+                <td>{letters(v) && <span className="letter" title="The schedule(s) this rule is saved in">{letters(v)}:</span>} {v.builtin ? <span title="Built in: changed by the standard-times rules on the Constraint rules tab">{v.rule}</span> : <button className="link" onClick={() => openConstraint(v.rule, entry.id)} title="Edit this rule">{entry.id === MERGED_ID ? ws.mergedOrigin?.rules.get(v.rule)?.name ?? v.rule : v.rule}</button>}</td>
                 <td className="nowrap">{v.academicYear} {v.term}</td>
                 <td>{orange && <span className="tag tag-standard">standard time</span>} {v.message}</td>
                 <td>
