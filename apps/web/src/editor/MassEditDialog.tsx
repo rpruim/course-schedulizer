@@ -10,9 +10,9 @@ export interface Pick {
   sectionId: string;
 }
 
-type Field = "prefix" | "department" | "shortTitle" | "faculty" | "facultyLoad" | "minimumCredits" | "maximumCredits" | "instructionalMethod" | "coreTag" | "courseLevel" | "group" | "deliveryMode" | "enrollment" | "enrollmentDay10" | "comment";
+type Field = "prefix" | "academicYear" | "term" | "termPart" | "department" | "shortTitle" | "faculty" | "facultyLoad" | "minimumCredits" | "maximumCredits" | "instructionalMethod" | "coreTag" | "courseLevel" | "group" | "deliveryMode" | "enrollment" | "enrollmentDay10" | "comment";
 const BLANK: Record<Field, string> = {
-  prefix: "", department: "", shortTitle: "", faculty: "", facultyLoad: "", minimumCredits: "", maximumCredits: "", instructionalMethod: "", coreTag: "", courseLevel: "", group: "", deliveryMode: "", enrollment: "", enrollmentDay10: "", comment: "",
+  prefix: "", academicYear: "", term: "", termPart: "", department: "", shortTitle: "", faculty: "", facultyLoad: "", minimumCredits: "", maximumCredits: "", instructionalMethod: "", coreTag: "", courseLevel: "", group: "", deliveryMode: "", enrollment: "", enrollmentDay10: "", comment: "",
 };
 const NUMERIC: Field[] = ["facultyLoad", "minimumCredits", "maximumCredits", "enrollment", "enrollmentDay10"];
 
@@ -20,7 +20,7 @@ const NUMERIC: Field[] = ["facultyLoad", "minimumCredits", "maximumCredits", "en
 export function readEdits(form: Record<Field, string>): { edits: MassEdits; errors: Partial<Record<Field, string>> } {
   const edits: MassEdits = {};
   const errors: Partial<Record<Field, string>> = {};
-  for (const k of ["prefix", "department", "shortTitle", "instructionalMethod", "courseLevel", "group", "deliveryMode", "coreTag", "comment"] as const) {
+  for (const k of ["prefix", "academicYear", "term", "termPart", "department", "shortTitle", "instructionalMethod", "courseLevel", "group", "deliveryMode", "coreTag", "comment"] as const) {
     const v = form[k].trim();
     if (v) edits[k] = v;
   }
@@ -70,7 +70,7 @@ export function readMeeting(m: MeetingBoxes): { meeting: NonNullable<MassEdits["
 function notes(p: { skipped: number; skippedMeetings: number; rules: number; renamed: string[] }): string {
   const out: string[] = [];
   if (p.skippedMeetings > 0) out.push(`${p.skippedMeetings} meeting${p.skippedMeetings === 1 ? " was" : "s were"} left as ${p.skippedMeetings === 1 ? "it was" : "they were"}: days, start time and length have to be given together (or none of them).`);
-  if (p.skipped > 0) out.push(`${p.skipped} section${p.skipped === 1 ? " kept its" : "s kept their"} prefix because the new one would match another section’s course, number and letter.`);
+  if (p.skipped > 0) out.push(`${p.skipped} section${p.skipped === 1 ? " kept its" : "s kept their"} prefix, year, term or part of term because the result would match another section’s course, number and letter, or the term or part does not exist.`);
   if (p.rules > 0) out.push(`${p.rules} constraint row${p.rules === 1 ? " still names" : "s still name"} ${p.renamed.join(", ")}; update ${p.rules === 1 ? "it" : "them"} on the Constraints tab.`);
   return out.length ? ` ${out.join(" ")}` : "";
 }
@@ -213,9 +213,9 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
               <div className="grow">{box("shortTitle", "Title")}</div>
             </div>
             <div className="row top">
-              {fixedBox("academicYear", "Academic year", shared.fixed.academicYear, 8)}
-              {fixedBox("term", "Term", shared.fixed.term, 3)}
-              {fixedBox("termPart", "Part of term", shared.fixed.termPart, 8)}
+              {box("academicYear", "Academic year", 8)}
+              {box("term", "Term", 3)}
+              {box("termPart", "Part of term", 8)}
               <label className="f">
                 <span>Delivery</span>
                 <select className={form.deliveryMode === "" && shared.fields.deliveryMode ? "suggest" : undefined} value={form.deliveryMode} onChange={(e) => set("deliveryMode", e.target.value)}>

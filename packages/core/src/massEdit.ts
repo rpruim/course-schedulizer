@@ -1,16 +1,24 @@
 import { unifyCrossListings } from "./crosslistings.js";
 import { formatFaculty, formatNumber } from "./format.js";
+import { partsFor } from "./terms.js";
 import type { Instructor, Schedule, Session } from "./types.js";
 
 /**
  * Values to put on many sections at once. A field that is left out is not touched. These are the section-level fields (the ones
- * that repeat on every meeting row) plus the prefix, so a department that changes its name can be renamed in one go; never the
- * course number, the section letter, or the year or term. `meeting` sets those parts of a meeting that are given, on every
+ * that repeat on every meeting row) plus the prefix, the academic year, the term and the part of the term, so a department that
+ * changes its name can be renamed in one go, or last year's sections moved to the next year; never the course number or the
+ * section letter (every section would get the same one). `meeting` sets those parts of a meeting that are given, on every
  * meeting of each section.
  */
 export interface MassEdits {
   /** Renames the course's prefix. Only ever applied when overwriting (a section always has a prefix). */
   prefix?: string;
+  /** Moves the sections to this academic year. Only applied when overwriting. */
+  academicYear?: string;
+  /** Moves the sections to this term (a code the schedule has). Only applied when overwriting. */
+  term?: string;
+  /** Sets the part of the term (a code the term has). Only applied when overwriting. */
+  termPart?: string;
   department?: string;
   shortTitle?: string;
   instructionalMethod?: string;
@@ -40,7 +48,7 @@ export interface MassResult {
   values: number;
   /** Meetings left as they were because the result would have days, a start time and a length only in part. */
   skippedMeetings: number;
-  /** Sections whose prefix was left as it was because the new one would give two sections the same course, number and letter. */
+  /** Sections whose prefix, year, term or part of term was left as it was: the result would give two sections the same course, number and letter, or the term or part does not exist. */
   skipped: number;
   /** The prefixes that were renamed away from, and how many constraint rows still name each (a rename does not touch rules). */
   renamedFrom: { prefix: string; rules: number }[];
@@ -49,8 +57,8 @@ export interface MassResult {
 const TEXT = ["department", "shortTitle", "instructionalMethod", "courseLevel", "group", "deliveryMode", "coreTag", "comment"] as const;
 const NUMBERS = ["facultyLoad", "minimumCredits", "maximumCredits", "enrollment", "enrollmentDay10"] as const;
 
-const offeringKey = (s: Pick<Session, "academicYear" | "term" | "prefix" | "courseNumber" | "section">, prefix = s.prefix) =>
-  [s.academicYear, s.term, prefix, s.courseNumber, s.section].map((x) => x.trim().toLowerCase()).join("\u0001");
+const offeringKey = (s: Pick<Session, "academicYear" | "term" | "prefix" | "courseNumber" | "section">, to: Partial<Pick<Session, "academicYear" | "term" | "prefix">> = {}) =>
+  [to.academicYear ?? s.academicYear, to.term ?? s.term, to.prefix ?? s.prefix, s.courseNumber, s.section].map((x) => x.trim().toLowerCase()).join("\u0001");
 
 /**
  * Apply `edits` to the given sections (all of each section's meeting rows). In `missing` mode a field is set only where
@@ -89,27 +97,57 @@ export function massEdit(schedule: Schedule, sectionIds: Iterable<string>, edits
     patches.set(id, patch as Partial<Session>);
   }
 
-  // Prefix renames, checked against the sections as they will be.
-  let skipped = 0;
+  // Moves to another prefix, year or term, checked against the sections as they will be; then the part of the term.
+  const skippedIds = new Set<string>();
   const renamed = new Set<string>();
   const newPrefix = edits.prefix?.trim();
-  if (newPrefix && mode === "overwrite") {
-    const renaming = [...patches.keys()].filter((id) => firstOf.get(id)!.prefix !== newPrefix);
-    const leaving = new Set(renaming);
+  const newYear = edits.academicYear?.trim();
+  const newTerm = edits.term?.trim().toUpperCase();
+  const newPart = edits.termPart?.trim();
+  if (mode === "overwrite" && (newPrefix || newYear || newTerm || newPart)) {
+    const to = (s: Session) => ({ prefix: newPrefix || s.prefix, academicYear: newYear || s.academicYear, term: newTerm || s.term });
+    const moving = [...patches.keys()].filter((id) => {
+      const s = firstOf.get(id)!;
+      const t = to(s);
+      return t.prefix !== s.prefix || t.academicYear !== s.academicYear || t.term !== s.term;
+    });
+    const leaving = new Set(moving);
     const taken = new Set<string>();
     for (const [id, s] of firstOf) if (!leaving.has(id)) taken.add(offeringKey(s));
-    for (const id of renaming) {
+    const finalTerm = new Map<string, string>();
+    for (const id of patches.keys()) finalTerm.set(id, firstOf.get(id)!.term);
+    for (const id of moving) {
       const s = firstOf.get(id)!;
-      const key = offeringKey(s, newPrefix);
-      if (s.section.trim() !== "?" && taken.has(key)) {
-        skipped++;
+      const t = to(s);
+      const key = offeringKey(s, t);
+      const unknownTerm = t.term !== s.term && !schedule.settings.terms.some((x) => x.code === t.term);
+      if (unknownTerm || (s.section.trim() !== "?" && taken.has(key))) {
+        skippedIds.add(id);
         continue;
       }
       taken.add(key);
-      patches.get(id)!.prefix = newPrefix;
-      renamed.add(s.prefix);
+      const patch = patches.get(id)!;
+      if (t.prefix !== s.prefix) {
+        patch.prefix = t.prefix;
+        renamed.add(s.prefix);
+      }
+      if (t.academicYear !== s.academicYear) patch.academicYear = t.academicYear;
+      if (t.term !== s.term) {
+        patch.term = t.term;
+        finalTerm.set(id, t.term);
+      }
+    }
+    if (newPart) {
+      for (const [id, patch] of patches) {
+        if (skippedIds.has(id)) continue;
+        const s = firstOf.get(id)!;
+        if (s.termPart === newPart) continue;
+        if (partsFor(schedule.settings, finalTerm.get(id)!).some((x) => x.code === newPart)) patch.termPart = newPart;
+        else skippedIds.add(id);
+      }
     }
   }
+  const skipped = skippedIds.size;
 
   const changed = new Set<string>();
   let values = 0;
@@ -156,15 +194,15 @@ export function massEdit(schedule: Schedule, sectionIds: Iterable<string>, edits
 
 /** The fields of a section whose value, when it is the same in every section chosen, can be shown as a suggestion. */
 export type SharedField = Exclude<keyof MassEdits, "meeting">;
-const SHARED_FIELDS: SharedField[] = ["prefix", "department", "shortTitle", "instructionalMethod", "courseLevel", "group", "deliveryMode", "coreTag", "comment", "faculty", "facultyLoad", "minimumCredits", "maximumCredits", "enrollment", "enrollmentDay10"];
+const SHARED_FIELDS: SharedField[] = ["prefix", "academicYear", "term", "termPart", "department", "shortTitle", "instructionalMethod", "courseLevel", "group", "deliveryMode", "coreTag", "comment", "faculty", "facultyLoad", "minimumCredits", "maximumCredits", "enrollment", "enrollmentDay10"];
 
 export interface SharedValues {
   /** Each field the chosen sections all have, the same, as text for a box. */
   fields: Partial<Record<SharedField, string>>;
   /** The parts of a meeting that every meeting of every chosen section has, the same. */
   meeting: { days?: string; start?: number; duration?: number; room?: string };
-  /** What a mass edit cannot change (the course number, letter, year, term and part of the term), when the sections agree. */
-  fixed: { courseNumber?: string; section?: string; academicYear?: string; term?: string; termPart?: string };
+  /** What a mass edit cannot change (the course number and the section letter), when the sections agree. */
+  fixed: { courseNumber?: string; section?: string };
   /** The names of the boxes (fields, fixed values and meeting parts) where the chosen sections differ, as opposed to all being blank. */
   mixed: string[];
 }
@@ -183,7 +221,7 @@ export function sharedValues(sections: Session[][]): SharedValues {
     if (v !== "" && rows.every((r) => text(r[0]!, k) === v)) out.fields[k] = v;
     else if (!rows.every((r) => text(r[0]!, k) === v)) out.mixed.push(k);
   }
-  for (const k of ["courseNumber", "section", "academicYear", "term", "termPart"] as const) {
+  for (const k of ["courseNumber", "section"] as const) {
     const v = rows[0]![0]![k].trim();
     if (v !== "" && rows.every((r) => r[0]![k].trim() === v)) out.fixed[k] = v;
     else if (!rows.every((r) => r[0]![k].trim() === v)) out.mixed.push(k);

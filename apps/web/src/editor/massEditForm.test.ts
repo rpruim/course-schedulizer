@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readEdits, readMeeting } from "./MassEditDialog";
 
-const blank = { prefix: "", department: "", shortTitle: "", faculty: "", facultyLoad: "", minimumCredits: "", maximumCredits: "", instructionalMethod: "", courseLevel: "", group: "", deliveryMode: "", coreTag: "", enrollment: "", enrollmentDay10: "", comment: "" };
+const blank = { prefix: "", academicYear: "", term: "", termPart: "", department: "", shortTitle: "", faculty: "", facultyLoad: "", minimumCredits: "", maximumCredits: "", instructionalMethod: "", courseLevel: "", group: "", deliveryMode: "", coreTag: "", enrollment: "", enrollmentDay10: "", comment: "" };
 
 describe("readEdits", () => {
   it("reads a core tag like the other text boxes", () => {

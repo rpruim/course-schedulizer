@@ -7,6 +7,7 @@
 * Each schedule in the list at the top now has a letter (A:, B:, …) that follows the order of the list and changes when the schedules are reordered. The letters head the columns of the Compare tab (a key above the table gives the names; the Excel export keeps full names), say which schedule a rule on the Conflicts tab is saved in, and appear in the schedule headings of the other tabs, which saves space when nicknames are long.
 * New example on the Import tab, *Merging schedules*: the example schedule split by prefix into three schedules (Music, Behavior, Digital), with a cohort planning rule that needs courses from all three. The rule cannot be met by any one schedule, and when the three are merged it is not met, with advice on which sections to put at different times.
 * Cohort planning now finds the best way to seat the students exactly (by linear programming), instead of a search that could give up early and report fewer seats than the schedule really has.
+* Mass edit can now change the *Academic year*, *Term* and *Part of term* of the selected sections (with *Overwrite existing values*), for example to move last year's schedule to the next year. A section is left alone, and counted in the message, if it would land on another section of the same course, number and letter, or if the term or part does not exist. The course number and section letter still cannot be mass edited.
 
 # Course Schedulizer 2.0.6
 
