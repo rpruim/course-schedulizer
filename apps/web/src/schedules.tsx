@@ -17,7 +17,11 @@ export function SchedulePicker() {
   if (ws.entries.length === 0) return null;
 
   const commit = () => {
-    if (renaming) ws.applyTo(renaming, (s) => ({ ...s, meta: { ...s.meta, nickname: draft.trim() } }));
+    // The box starts with the name shown, so a nickname equal to the file name is no nickname.
+    if (renaming) {
+      const nickname = draft.trim() === ws.fileNameOf(renaming).trim() ? "" : draft.trim();
+      ws.applyTo(renaming, (s) => ({ ...s, meta: { ...s.meta, nickname } }));
+    }
     setRenaming(undefined);
   };
 
@@ -96,7 +100,7 @@ export function SchedulePicker() {
               </button>
             )}
             {isCurrent && <span className="badge">current</span>}
-            <button className="icon" onClick={() => { setRenaming(e.id); setDraft(e.schedule.meta.nickname ?? ""); }} title="Set a nickname (shown instead of the file name; blank to use the file name)" aria-label={`Set nickname of ${e.name}`}>✎</button>
+            <button className="icon" onClick={() => { setRenaming(e.id); setDraft(e.schedule.meta.nickname?.trim() || ws.fileNameOf(e.id)); }} title="Set a nickname (shown instead of the file name; blank to use the file name)" aria-label={`Set nickname of ${e.name}`}>✎</button>
             <button
               className="icon"
               onClick={() => window.confirm(`Remove “${e.name}” from the workspace? You can undo this.`) && ws.removeSchedule(e.id)}
