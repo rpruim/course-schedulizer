@@ -8,16 +8,18 @@ import {
   levelOf,
   listingsOf,
   partsFor,
+  rulesOf,
   weeksOf,
   weeksOverlap,
   type PartDef,
+  type Rule,
   type Schedule,
   type Session,
 } from "@schedulizer/core";
 import { timeRange } from "./model";
 
 export type GridKind = "dept" | "faculty" | "room";
-export type ColorBy = "prefix" | "level" | "instructor" | "group" | "method" | "department" | "room" | "delivery";
+export type ColorBy = "prefix" | "level" | "instructor" | "group" | "method" | "department" | "room" | "delivery" | `cohort:${string}`;
 
 /** What each way of coloring is called, in the order the menu lists them. */
 export const COLOR_BY: { value: ColorBy; label: string }[] = [
@@ -30,6 +32,32 @@ export const COLOR_BY: { value: ColorBy; label: string }[] = [
   { value: "delivery", label: "Delivery" },
   { value: "room", label: "Room" },
 ];
+
+/** The menu of ways to color: the fixed ones, then one for each active cohort planning rule (by the rule's name). */
+export function colorOptions(schedules: Schedule[]): { value: ColorBy; label: string }[] {
+  const names = new Set<string>();
+  for (const s of schedules) for (const r of cohortRules(s)) names.add(r.name);
+  return [...COLOR_BY, ...[...names].map((name) => ({ value: `cohort:${name}` as ColorBy, label: `Cohort: ${name}` }))];
+}
+
+const rulesCache = new WeakMap<Schedule, Rule[]>();
+/** The cohort planning rules of a schedule that are active. */
+function cohortRules(schedule: Schedule): Rule[] {
+  let rules = rulesCache.get(schedule);
+  if (!rules) {
+    rules = rulesOf(schedule).filter((r) => r.type === "cohortPlan" && r.active);
+    rulesCache.set(schedule, rules);
+  }
+  return rules;
+}
+const courseKey = (prefix: string, number: string) => `${prefix} ${number}`.replace(/\s+/g, " ").trim().toLowerCase();
+/** The courses a cohort planning rule uses (those of its groups), as the rule writes them, each once. */
+export function cohortCourses(rule: Rule): string[] {
+  const seen = new Map<string, string>();
+  for (const e of rule.elements) for (const c of e.courses) if (c.trim() && !seen.has(courseKey(c, ""))) seen.set(courseKey(c, ""), c.trim());
+  return [...seen.values()];
+}
+const cohortOf = (schedule: Schedule, by: ColorBy) => (by.startsWith("cohort:") ? cohortRules(schedule).find((r) => r.name === by.slice(7)) : undefined);
 
 export interface Block {
   /** Unique within a grid. */
@@ -121,6 +149,13 @@ export interface WeekResult {
 
 /** What a section has for each thing the grids can be colored (or filtered) by; empty when it has nothing. */
 export function colorValueOf(schedule: Schedule, by: ColorBy, s: Session): string {
+  if (by.startsWith("cohort:")) {
+    // the course of the rule this section is (under any of its names), else nothing: not part of the rule
+    const rule = cohortOf(schedule, by);
+    if (!rule) return "";
+    const mine = new Set(listingsOf(s, schedule.crossListings).map((l) => courseKey(l.prefix, l.courseNumber)));
+    return cohortCourses(rule).find((c) => mine.has(courseKey(c, ""))) ?? "";
+  }
   switch (by) {
     case "level": return levelOf(s);
     case "instructor": return s.faculty[0]?.name ?? "";
@@ -200,7 +235,14 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
 
   const colorKey = (s: Session): string => colorValueOf(schedule, o.colorBy, s);
   // A section with nothing in the field being colored by is gray, so "missing" is easy to spot.
-  const hueFor = (s: Session) => (colorKey(s) === "" ? undefined : hueOf(colorKey(s)));
+  // Courses of a cohort rule get hues spread evenly round the wheel, so no two look alike.
+  const cohort = cohortOf(schedule, o.colorBy);
+  const cohortList = cohort ? cohortCourses(cohort) : [];
+  const hueFor = (s: Session) => {
+    const v = colorKey(s);
+    if (v === "") return undefined;
+    return cohort ? Math.round((cohortList.indexOf(v) * 360) / Math.max(1, cohortList.length) + 8) % 360 : hueOf(v);
+  };
   const label = (s: Session) => `${courseName(s)} ${s.section}`;
   const quartersOf = (s: Session): boolean[] => {
     const full = weeksOf(schedule.settings, s.term, "Full") ?? [1, 16];

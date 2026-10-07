@@ -21,14 +21,15 @@ export function keyFor(colorBy: ColorBy, blocks: Pick<Block, "colorValue" | "hue
   for (const b of blocks) if (!seen.has(b.colorValue)) seen.set(b.colorValue, b.hue);
   const named = [...seen].filter(([v]) => v !== "").sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
   const entries: KeyEntry[] = named.map(([label, hue]) => ({ label, hue }));
-  if (seen.has("")) entries.push({ label: MISSING, hue: undefined });
-  return { title: `Color by ${COLOR_BY.find((c) => c.value === colorBy)?.label ?? colorBy}`, entries };
+  const cohort = colorBy.startsWith("cohort:");
+  if (seen.has("")) entries.push({ label: cohort ? "(not in the rule)" : MISSING, hue: undefined });
+  return { title: `Color by ${cohort ? `cohort ${colorBy.slice(7)}` : (COLOR_BY.find((c) => c.value === colorBy)?.label ?? colorBy)}`, entries };
 }
 
 // ---- the choice of what to color by: shared by the three week tabs and remembered
 
 const COLOR_KEY = "schedulizer:colorBy";
-const isColorBy = (v: unknown): v is ColorBy => COLOR_BY.some((c) => c.value === v);
+const isColorBy = (v: unknown): v is ColorBy => COLOR_BY.some((c) => c.value === v) || (typeof v === "string" && v.startsWith("cohort:"));
 let colorBy: ColorBy = (() => {
   try {
     const v = window.localStorage.getItem(COLOR_KEY);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { importRecords, type Schedule } from "@schedulizer/core";
-import { groupGrids, hourLabel, hueOf, layoutLanes, weekGrids, type WeekOptions } from "./week";
+import { colorOptions, groupGrids, hourLabel, hueOf, layoutLanes, weekGrids, type WeekOptions } from "./week";
 
 const sec = (prefix: string, n: string, letter: string, o: Record<string, string> = {}) => ({
   AcademicYear: "Y", Term: "FA", Prefix: prefix, CourseNumber: n, Section: letter, ...o,
@@ -342,5 +342,35 @@ describe("order by part of term", () => {
   it("lists unscheduled sections in the same order", () => {
     const g = weekGrids(make(["B", "Full", "First"].map((p, i) => sec("MUSC", String(200 + i), "A", { TermPart: p }))), opts());
     expect(g.grids[0]!.unscheduled.map((u) => u.label.split(" ")[1])).toEqual(["201", "202", "200"]);
+  });
+});
+
+describe("color by a cohort planning rule", () => {
+  const rule = (active: string) => [
+    ...["MATH 161", "ENGR 101"].map((Course) => ({ Constraint: "Cohort", Type: "cohort planning", Course, Count: "20", Element: "1", Active: active })),
+    ...["MATH 161", "ENGR 101"].map((Course) => ({ Constraint: "Cohort", Type: "cohort planning", Course, Capacity: "30", Active: active })),
+  ];
+  const rows = [
+    sec("MATH", "161", "A", mt("MWF", "9:00", "50")), sec("MATH", "161", "B", mt("MWF", "10:00", "50")), sec("ENGR", "101", "A", mt("TR", "9:00", "75")),
+    sec("MUSC", "104", "A", mt("MWF", "11:00", "50")),
+  ];
+  it("lists each active cohort rule in the menu, after the usual choices", () => {
+    expect(colorOptions([make(rows, { constraints: rule("Yes") })]).slice(-1)).toEqual([{ value: "cohort:Cohort", label: "Cohort: Cohort" }]);
+    expect(colorOptions([make(rows, { constraints: rule("No") })]).some((c) => c.value.startsWith("cohort:"))).toBe(false);
+  });
+  it("gives each course of the rule its own color and leaves the others gray", () => {
+    const grid = weekGrids(make(rows, { constraints: rule("Yes") }), opts({ colorBy: "cohort:Cohort" })).grids[0]!;
+    const byCourse = new Map(grid.blocks.map((b) => [b.title.split(" ").slice(0, 2).join(" "), b]));
+    expect(byCourse.get("MATH 161")!.colorValue).toBe("MATH 161");
+    expect(byCourse.get("ENGR 101")!.colorValue).toBe("ENGR 101");
+    expect(byCourse.get("MATH 161")!.hue).not.toBe(byCourse.get("ENGR 101")!.hue);
+    expect(byCourse.get("MUSC 104")!.hue).toBeUndefined(); // not in the rule: gray hatch
+    // both sections of a course share its color
+    const math = grid.blocks.filter((b) => b.title.startsWith("MATH 161"));
+    expect(new Set(math.map((b) => b.hue)).size).toBe(1);
+  });
+  it("is all gray once the rule is gone or deactivated", () => {
+    const grid = weekGrids(make(rows, { constraints: rule("No") }), opts({ colorBy: "cohort:Cohort" })).grids[0]!;
+    expect(grid.blocks.every((b) => b.hue === undefined)).toBe(true);
   });
 });

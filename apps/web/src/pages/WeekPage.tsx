@@ -10,7 +10,7 @@ import { useRemembered } from "../remember";
 import { keyFor, openColorKey, setColorKey, useColorBy } from "../colorKey";
 import { inPartOrder, termsAcross, yearsAcross } from "../model";
 import { MERGED_ID, useWorkspace } from "../state";
-import { COLOR_BY, colorValueOf, groupGrids, hourLabel, termsFor, weekGrids, type Block, type ColorBy, type Grid, type GridKind } from "../week";
+import { colorOptions, colorValueOf, groupGrids, hourLabel, termsFor, weekGrids, type Block, type ColorBy, type Grid, type GridKind } from "../week";
 import { Empty, NoneShown } from "./SchedulePage";
 
 const DAY_NAMES: Record<string, string> = { M: "Mon", T: "Tue", W: "Wed", R: "Thu", F: "Fri", S: "Sat", U: "Sun" };
@@ -37,21 +37,25 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
   const [pickedYear, setPickedYear] = useRemembered(`${page}:year`, "", params.get("year") ?? undefined);
   const [pickedTerm, setPickedTerm] = useRemembered(`${page}:term`, "", params.get("term") ?? undefined);
   const [pickedPart, setPickedPart] = useRemembered(`${page}:part`, "Full");
-  const [colorBy, setColorBy] = useColorBy();
+  const [pickedColorBy, setColorBy] = useColorBy();
   const [only, setOnly] = useRemembered(`${page}:only`, "", kind === "faculty" && params.get("who") ? params.get("who")! : undefined);
   // Mass edit: what is selected (as "schedule id, section id"), the filter, and the dialog.
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
-  const [filterBy, setFilterByState] = useRemembered<ColorBy>("mass:filterBy", "prefix");
+  const [pickedFilterBy, setFilterByState] = useRemembered<ColorBy>("mass:filterBy", "prefix");
   const [filterValues, setFilterValues] = useRemembered<string[]>("mass:filterValues", []);
   const [massOpen, setMassOpen] = useState(false);
   const [massMessage, setMassMessage] = useState("");
+  const entries = ws.viewEntries;
+  // What to color (or filter) by: the fixed choices and each active cohort planning rule; a rule that is gone means the first choice.
+  const colorChoices = useMemo(() => colorOptions(entries.map((e) => e.schedule)), [entries]);
+  const colorBy = colorChoices.some((c) => c.value === pickedColorBy) ? pickedColorBy : "prefix";
+  const filterBy = colorChoices.some((c) => c.value === pickedFilterBy) ? pickedFilterBy : "prefix";
   const setFilterBy = (by: ColorBy) => {
     setFilterByState(by);
     setFilterValues([]);
   };
   const filter = mass ? { by: filterBy, values: filterValues } : undefined;
 
-  const entries = ws.viewEntries;
   const years = yearsAcross(entries);
   const year = years.includes(pickedYear) ? pickedYear : (years[0] ?? "");
   const terms = termsAcross(entries).filter((t) => entries.some((e) => termsFor(e.schedule, year).some((x) => x.code === t.code)));
@@ -248,7 +252,7 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
           <>
             <label className="field">Filter by
               <select value={filterBy} onChange={(e) => setFilterBy(e.target.value as ColorBy)}>
-                {COLOR_BY.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                {colorChoices.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
             </label>
             <div className="field">Show
@@ -262,7 +266,7 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
         )}
         <label className="field">Color by
           <select value={colorBy} onChange={(e) => setColorBy(e.target.value as ColorBy)}>
-            {COLOR_BY.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            {colorChoices.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
         </label>
         <button onClick={showKey} title="Opens a small window listing what each color means; it stays up to date as you change the choice">Show color key</button>
