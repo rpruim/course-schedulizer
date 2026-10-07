@@ -1,6 +1,7 @@
 import { constraintNames, constraintNamesInstructor, courseMatches, listingKeys, normCourse } from "./constraints.js";
 import { displayNames, listingsOf } from "./names.js";
 import { formatTime } from "./format.js";
+import { planSeats, type SeatElement } from "./seats.js";
 import { meetingsOverlap, scheduled, weeksConcurrent } from "./overlap.js";
 import { DAY_ORDER, DEFAULT_STANDARD_TIMES, type Constraint, type Schedule, type Session, type StandardTime } from "./types.js";
 
@@ -31,11 +32,29 @@ export const termMatches = (setting: string, term: string): boolean => {
 };
 export const termList = (setting: string): string[] => setting.split(/[,;\s]+/).filter(Boolean);
 
+/** One element of a cohort planning rule: this many students must be able to take all of these courses. */
+export interface CohortElement {
+  /** Blank (undefined) while it is being typed. */
+  students: number | undefined;
+  /** Courses as `PREFIX NUMBER`. */
+  courses: string[];
+}
+
+/** The seats in each section of a course (blank while it is being typed). */
+export interface Capacity {
+  course: string;
+  seats: number | undefined;
+}
+
 /** A constraint as the editor sees it: the rows that share a name, gathered into one object. */
 export interface Rule {
   name: string;
-  type: "takeable" | "window" | "standard" | "subset" | "colocate" | "colocateDifferent" | "consecutive";
+  type: "takeable" | "window" | "standard" | "subset" | "colocate" | "colocateDifferent" | "cohortPlan" | "consecutive";
   items: RuleItem[];
+  /** `cohortPlan` rules: the groups of students and the courses each must be able to take. */
+  elements: CohortElement[];
+  /** `cohortPlan` rules: the seats in each section of each course. */
+  capacities: Capacity[];
   /** `standard` rules: the changes to the standard times. */
   changes: StandardChange[];
   count?: number;
@@ -56,7 +75,7 @@ export interface Rule {
 }
 
 export const emptyRule = (type: Rule["type"] = "takeable"): Rule => ({
-  name: "", type, items: [], changes: [], choose: "some", bound: "atMost", gap: 20, term: "", days: "", dayRule: "any", should: "should not", meets: "", comment: "",
+  name: "", type, items: [], elements: [], capacities: [], changes: [], choose: "some", bound: "atMost", gap: 20, term: "", days: "", dayRule: "any", should: "should not", meets: "", comment: "",
   ...(type === "window" ? { from: 600, to: 660 } : {}),
   ...(type === "consecutive" ? { count: 3 } : {}),
 });
@@ -75,10 +94,23 @@ export function rulesOf(schedule: Schedule): Rule[] {
   return [...byName].map(([name, rows]) => {
     const f = rows[0]!;
     const comments = [...new Set(rows.map((r) => r.comment.trim()).filter(Boolean))];
+    const cohort = f.type === "cohortPlan";
+    const elements = new Map<number, CohortElement>();
+    if (cohort) {
+      for (const r of rows) {
+        if (r.element === undefined) continue;
+        const e = elements.get(r.element) ?? { students: r.count, courses: [] };
+        if (e.students === undefined) e.students = r.count;
+        if (r.course.trim()) e.courses.push(r.course.trim());
+        elements.set(r.element, e);
+      }
+    }
     return {
       name,
       type: f.type,
-      items: rows.filter((r) => r.action === "").map((r) => ({ course: r.course, section: r.section, instructor: r.instructor })),
+      elements: [...elements].sort((a, b) => a[0] - b[0]).map(([, e]) => e),
+      capacities: cohort ? rows.filter((r) => r.element === undefined && r.capacity !== undefined).map((r) => ({ course: r.course.trim(), seats: r.capacity })) : [],
+      items: cohort ? [] : rows.filter((r) => r.action === "").map((r) => ({ course: r.course, section: r.section, instructor: r.instructor })),
       changes: rows.filter((r) => r.action !== "").map((r) => ({ action: r.action as "allow" | "disallow", days: r.days, ...(r.duration !== undefined ? { duration: r.duration } : {}), starts: r.starts })),
       ...(f.count !== undefined ? { count: f.count } : {}),
       choose: f.choose,
@@ -98,6 +130,7 @@ export function rulesOf(schedule: Schedule): Rule[] {
 
 /** A rule as constraint rows: the rule's settings repeat on every row; the comment goes on the first. */
 export function rulesToRows(rule: Rule): Constraint[] {
+  if (rule.type === "cohortPlan") return cohortRows(rule);
   const window = rule.type === "window";
   const common = {
     constraint: rule.name,
@@ -135,6 +168,22 @@ export function rulesToRows(rule: Rule): Constraint[] {
     comment: "",
   }));
   return [...items, ...changes];
+}
+
+/** A cohort planning rule as rows: a line for each course of each element (with the element and its students), then a seats line per course. */
+function cohortRows(rule: Rule): Constraint[] {
+  const base = { constraint: rule.name, type: "cohortPlan" as const, term: rule.term.trim(), choose: rule.choose, bound: rule.bound, gap: rule.gap, dayRule: rule.dayRule, should: rule.should, meets: "" as const, section: "", instructor: "", action: "" as const, starts: [] as number[], days: "" };
+  const rows: Constraint[] = [];
+  rule.elements.forEach((e, i) => {
+    for (const course of e.courses.filter((c) => c.trim())) {
+      rows.push({ ...base, course: course.trim(), ...(e.students !== undefined ? { count: e.students } : {}), element: i + 1, comment: rows.length === 0 ? rule.comment.trim() : "" });
+    }
+  });
+  for (const c of rule.capacities) {
+    if (!c.course.trim()) continue;
+    rows.push({ ...base, course: c.course.trim(), ...(c.seats !== undefined ? { capacity: c.seats } : {}), comment: rows.length === 0 ? rule.comment.trim() : "" });
+  }
+  return rows;
 }
 
 /** Replace the rule called `original` (or add a new one at the end) — returns a new schedule. */
@@ -177,8 +226,8 @@ export function validateRule(schedule: Schedule, rule: Rule, original?: string):
   const name = rule.name.trim();
   if (!name) out.push({ field: "name", message: "Give the rule a name." });
   else if (schedule.constraints.some((c) => c.constraint.toLowerCase() === name.toLowerCase() && c.constraint !== original)) out.push({ field: "name", message: `Another rule is already called “${name}”.` });
-  if (rule.items.length === 0) {
-    const message = { takeable: "List at least two courses.", window: "Say which courses or instructors the rule is about.", standard: "Say which courses it applies to (* means every course).", subset: "Say which courses it applies to (* means every course).", colocate: "Say which course is colocated.", colocateDifferent: "Say which course is colocated.", consecutive: "List at least one instructor." }[rule.type];
+  if (rule.type !== "cohortPlan" && rule.items.length === 0) {
+    const message = { takeable: "List at least two courses.", window: "Say which courses or instructors the rule is about.", standard: "Say which courses it applies to (* means every course).", subset: "Say which courses it applies to (* means every course).", colocate: "Say which course is colocated.", colocateDifferent: "Say which course is colocated.", cohortPlan: "", consecutive: "List at least one instructor." }[rule.type];
     out.push({ field: "items", message });
   }
   rule.items.forEach((it, i) => {
@@ -201,6 +250,7 @@ export function validateRule(schedule: Schedule, rule: Rule, original?: string):
     if (rule.to === undefined) out.push({ field: "to", message: "Give the end of the interval." });
     if (rule.from !== undefined && rule.to !== undefined && rule.from >= rule.to) out.push({ field: "to", message: "The interval must end after it starts." });
   }
+  if (rule.type === "cohortPlan") out.push(...validateCohort(rule));
   if (rule.count !== undefined && (!Number.isInteger(rule.count) || rule.count < 1)) out.push({ field: "count", message: "Use a whole number, 1 or more." });
   for (const t of termList(rule.term)) {
     if (!schedule.settings.terms.some((x) => x.code.toLowerCase() === t.toLowerCase())) out.push({ field: "term", message: `“${t}” is not a term of this schedule.` });
@@ -213,6 +263,39 @@ export function validateRule(schedule: Schedule, rule: Rule, original?: string):
       if (c.action === "allow" && (c.duration === undefined || c.starts.length === 0)) out.push({ field: `changes.${i}`, message: "To allow a time, give its length and at least one start time." });
     });
   }
+  return out;
+}
+
+/** What is wrong with the elements and seats of a cohort planning rule. Every course named in an element needs its seats given. */
+function validateCohort(rule: Rule): RuleProblem[] {
+  const out: RuleProblem[] = [];
+  if (rule.elements.length === 0) out.push({ field: "elements", message: "Add at least one group of students and the courses they must be able to take." });
+  const seatsFor = new Map<string, number | undefined>();
+  rule.capacities.forEach((c, i) => {
+    if (!c.course.trim()) out.push({ field: `capacities.${i}`, message: "Name the course." });
+    else if (!/^\S+\s+\S+$/.test(c.course.trim()) || /[*?[\]]/.test(c.course)) out.push({ field: `capacities.${i}`, message: "Write a course as PREFIX NUMBER, for example MUSC 234 (no patterns)." });
+    if (c.seats === undefined) out.push({ field: `capacities.${i}`, message: "Give the seats in each section." });
+    else if (!Number.isInteger(c.seats) || c.seats < 1) out.push({ field: `capacities.${i}`, message: "The seats are a whole number, 1 or more." });
+    if (c.course.trim()) {
+      const key = normCourse(c.course);
+      if (seatsFor.has(key)) out.push({ field: `capacities.${i}`, message: `${c.course.trim()} is listed twice.` });
+      seatsFor.set(key, c.seats);
+    }
+  });
+  rule.elements.forEach((e, i) => {
+    if (e.students === undefined) out.push({ field: `elements.${i}`, message: "Say how many students." });
+    else if (!Number.isInteger(e.students) || e.students < 1) out.push({ field: `elements.${i}`, message: "The students are a whole number, 1 or more." });
+    if (e.courses.length === 0) out.push({ field: `elements.${i}`, message: "List at least one course." });
+    const seen = new Set<string>();
+    for (const course of e.courses) {
+      const key = normCourse(course);
+      if (!course.trim()) out.push({ field: `elements.${i}`, message: "Name a course on every line." });
+      else if (!/^\S+\s+\S+$/.test(course.trim()) || /[*?[\]]/.test(course)) out.push({ field: `elements.${i}`, message: `Write ${course.trim()} as PREFIX NUMBER, for example MUSC 234 (no patterns).` });
+      else if (seen.has(key)) out.push({ field: `elements.${i}`, message: `${course.trim()} is listed twice in this group.` });
+      else if (!seatsFor.has(key)) out.push({ field: `elements.${i}`, message: `Give the seats in each section of ${course.trim()} (under Seats).` });
+      seen.add(key);
+    }
+  });
   return out;
 }
 
@@ -242,6 +325,11 @@ export function describeRule(r: Rule): string {
   if (r.type === "subset") {
     const everything = r.items.length > 0 && r.items.every((it) => it.course.trim() === "*");
     return `${everything ? "Every course" : items} may meet on only some of the days of a standard time (for example Tuesday alone when TR is standard)${when}.`;
+  }
+  if (r.type === "cohortPlan") {
+    const each = r.elements.map((e) => `${e.students ?? "…"} student${e.students === 1 ? "" : "s"} must be able to take ${e.courses.join(", ") || "…"}`).join("; ");
+    const seats = r.capacities.map((c) => `${c.course} ${c.seats ?? "…"}`).join(", ");
+    return `${each || "No groups yet"}${seats ? `. Seats in each section: ${seats}` : ""}${when}.`;
   }
   if (r.type === "colocate" || r.type === "colocateDifferent") {
     const everything = r.items.length > 0 && r.items.every((it) => it.course.trim() === "*");
@@ -393,6 +481,7 @@ function violationsIn(schedule: Schedule): RuleViolation[] {
     for (const g of groups.values()) {
       if (!termMatches(rule.term, g.term)) continue;
       if (rule.type === "takeable") takeable(rule, g);
+      else if (rule.type === "cohortPlan") cohortPlanning(rule, g);
       else window(rule, g);
     }
   }
@@ -628,6 +717,52 @@ function violationsIn(schedule: Schedule): RuleViolation[] {
       sectionIds: involved.length ? involved : [...new Set(list.flatMap((x) => [...x.sectionIds]))],
       sessions: involved.flatMap((id) => bySection.get(id)!),
     });
+  }
+
+  /**
+   * Cohort planning: can every student of every group be seated, at the same time, in a clash-free choice of sections of the group's
+   * courses, without passing the seats of any section? (`planSeats`.) A group is looked at in a term when some of its courses are offered
+   * then; a course of it that is not offered that term means its students cannot be seated.
+   */
+  function cohortPlanning(rule: Rule, g: { year: string; term: string; sections: Session[] }) {
+    const seatsOf = new Map(rule.capacities.filter((c) => c.seats !== undefined).map((c) => [normCourse(c.course), c.seats!] as const));
+    const offered = (course: string) => g.sections.filter((s) => listingsOf(s, schedule.crossListings).some((l) => normCourse(`${l.prefix} ${l.courseNumber}`) === normCourse(course)));
+    const elements: SeatElement[] = [];
+    const involved = new Set<string>();
+    const notOffered: string[] = [];
+    const noSeats = new Set<string>();
+    let unseatable = 0;
+    for (const e of rule.elements) {
+      if (e.students === undefined || e.courses.length === 0) continue;
+      const found = e.courses.map((c) => ({ course: c, sections: offered(c) }));
+      if (found.every((x) => x.sections.length === 0)) continue; // none of its courses run this term
+      for (const x of found) if (!seatsOf.has(normCourse(x.course))) noSeats.add(x.course);
+      const missing = found.filter((x) => x.sections.length === 0);
+      for (const x of missing) if (!notOffered.includes(x.course)) notOffered.push(x.course);
+      for (const x of found) for (const s of x.sections) involved.add(s.sectionId);
+      if (missing.length > 0) {
+        unseatable += e.students; // one of its courses is not offered, so no student of it can take them all
+        continue;
+      }
+      elements.push({ students: e.students, courses: found.map((x) => ({ label: x.course, sections: x.sections.map((s) => ({ id: s.sectionId, seats: seatsOf.get(normCourse(x.course)) ?? 0 })) })) });
+    }
+    if (elements.length === 0 && unseatable === 0) return;
+    const ids = [...involved];
+    const report = (message: string, sectionIds = ids) => out.push({ rule: rule.name, type: "cohortPlan", academicYear: g.year, term: g.term, message, sectionIds, sessions: sectionIds.flatMap((id) => bySection.get(id) ?? []) });
+    if (noSeats.size > 0) return report(`The seats in each section are not given for ${[...noSeats].join(", ")}, so this cannot be checked`);
+
+    const result = planSeats(elements, sectionsOverlap);
+    const total = result.total + unseatable;
+    if (result.placed === total && unseatable === 0) return;
+    const parts: string[] = [];
+    for (const c of notOffered) parts.push(`${c} is not offered in ${g.term}`);
+    for (const i of result.noSchedule) {
+      const e = elements[i]!;
+      if (e.courses.every((c) => c.sections.length > 0)) parts.push(`no clash-free choice of sections lets ${e.students} student${e.students === 1 ? "" : "s"} take ${e.courses.map((c) => c.label).join(", ")}`);
+    }
+    for (const s of result.short) parts.push(`${s.label} has ${s.seats} seat${s.seats === 1 ? "" : "s"} in all but ${s.needed} students need it`);
+    const how = result.exact ? "" : " (the search was cut off, so more might fit)";
+    report(`${result.placed} of ${total} students can all get seats${how}${parts.length ? `: ${parts.join("; ")}` : ": the seats and the times of the sections do not fit together"}`);
   }
 
   function window(rule: Rule, g: { year: string; term: string; sections: Session[] }) {

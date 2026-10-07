@@ -42,6 +42,16 @@ interface ChangeForm {
 
 const at = (n: number) => formatTime(n).replace(/^0/, "");
 
+interface ElementForm {
+  students: string;
+  courses: string[];
+}
+interface CapacityForm {
+  course: string;
+  seats: string;
+}
+const normCourse = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
+
 /** The rule's inputs as strings (times as `HH:MM`, for the time inputs). */
 interface Form {
   name: string;
@@ -49,6 +59,9 @@ interface Form {
   /** Window rules: are the lines courses or instructors? (One choice for the whole rule.) */
   subject: "courses" | "instructors";
   items: RuleItem[];
+  /** Cohort planning rules: the groups of students and the seats, as typed. */
+  elements: ElementForm[];
+  capacities: CapacityForm[];
   /** Standard-times rules: the changes, as typed. */
   changes: ChangeForm[];
   count: string;
@@ -67,6 +80,8 @@ interface Form {
 
 const toForm = (r: Rule): Form => ({
   name: r.name, type: r.type, subject: ruleSubject(r), items: r.items.map((i) => ({ ...i })),
+  elements: r.elements.map((e) => ({ students: e.students === undefined ? "" : String(e.students), courses: [...e.courses] })),
+  capacities: r.capacities.map((c) => ({ course: c.course, seats: c.seats === undefined ? "" : String(c.seats) })),
   changes: r.changes.map((c) => ({ action: c.action, days: c.days, duration: c.duration === undefined ? "" : String(c.duration), starts: c.starts.map(at).join(", ") })), count: r.count === undefined ? "" : String(r.count), choose: r.choose, bound: r.bound, gap: String(r.gap),
   term: r.term, days: r.days, dayRule: r.dayRule, from: r.from === undefined ? "" : formatTime(r.from), to: r.to === undefined ? "" : formatTime(r.to),
   should: r.should, meets: r.meets, comment: r.comment,
@@ -109,8 +124,19 @@ function toRule(f: Form): { rule: Rule; problems: { field: string; message: stri
       changes.push({ action: c.action, days, ...(dur !== undefined && Number.isInteger(dur) ? { duration: dur } : {}), starts });
     });
   }
+  const whole = (field: string, text: string): number | undefined => {
+    if (text.trim() === "") return undefined;
+    const n = Number(text);
+    if (Number.isInteger(n) && n >= 1) return n;
+    problems.push({ field, message: "Use a whole number, 1 or more" });
+    return undefined;
+  };
+  const cohort = f.type === "cohortPlan";
+  const elements = cohort ? f.elements.map((e, i) => ({ students: whole(`elements.${i}`, e.students), courses: e.courses.map((c) => c.trim()) })) : [];
+  const capacities = cohort ? f.capacities.filter((c) => c.course.trim() || c.seats.trim()).map((c, i) => ({ course: c.course.trim(), seats: whole(`capacities.${i}`, c.seats) })) : [];
   const people = f.type === "consecutive" || (f.type === "window" && f.subject === "instructors");
   const rule: Rule = {
+    elements, capacities,
     name: f.name.trim(), type: f.type, items: f.items
       .map((i) => (people ? { course: "", section: "", instructor: i.instructor } : { ...i, instructor: "" }))
       .filter((i) => i.course.trim() || i.section.trim() || i.instructor.trim()), term: f.term, days: f.days, dayRule: f.dayRule,
@@ -196,6 +222,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
         type,
         subject,
         items,
+        elements: type === "cohortPlan" && f.elements.length === 0 ? [{ students: "", courses: [""] }] : f.elements,
         from: type === "window" && f.from === "" ? "10:00" : f.from,
         to: type === "window" && f.to === "" ? "11:00" : f.to,
         count: type === "consecutive" && f.count.trim() === "" ? "3" : type === "standard" || type === "subset" || type === "colocate" || type === "colocateDifferent" ? "" : f.count,
@@ -206,6 +233,21 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
   const switchSubject = (subject: Form["subject"]) => setForm((f) => (f.subject === subject ? f : { ...f, subject, items: [{ course: "", section: "", instructor: "" }] }));
   const toggleDay = (d: string) => set("days", [..."MTWRF"].filter((x) => (x === d ? !form.days.includes(x) : form.days.includes(x))).join(""));
   const allDays = form.days === "" || form.days === "MTWRF";
+
+  // Cohort planning: the groups of students, and one line of seats for each course that a group names (and any others given).
+  const setElement = (i: number, patch: Partial<ElementForm>) => set("elements", form.elements.map((e, j) => (j === i ? { ...e, ...patch } : e)));
+  const usedCourses = (() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const e of form.elements) for (const c of e.courses) if (c.trim() && !seen.has(normCourse(c))) { seen.add(normCourse(c)); out.push(c.trim()); }
+    return out;
+  })();
+  const seatsOf = (course: string) => form.capacities.find((c) => normCourse(c.course) === normCourse(course))?.seats ?? "";
+  const setSeats = (course: string, seats: string) => {
+    const at = form.capacities.findIndex((c) => normCourse(c.course) === normCourse(course));
+    set("capacities", at >= 0 ? form.capacities.map((c, j) => (j === at ? { ...c, seats } : c)) : [...form.capacities, { course, seats }]);
+  };
+  const unusedCapacities = form.capacities.map((c, i) => ({ c, i })).filter(({ c }) => !usedCourses.some((u) => normCourse(u) === normCourse(c.course)));
 
   return (
     <dialog ref={dialog} className="editor" onCancel={(e) => { e.preventDefault(); onClose(); }} aria-label={isNew ? "Add constraint rule" : "Edit constraint rule"}>
@@ -231,9 +273,62 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
             <label className="choice"><input type="radio" checked={form.type === "subset"} onChange={() => switchType("subset")} /> <strong>Subset of standard times.</strong> Normally courses should meet for all of the times in a standard meeting. Add this rule to allow a section to meet for only some of the allowed times.</label>
             <label className="choice"><input type="radio" checked={form.type === "colocate"} onChange={() => switchType("colocate")} /> <strong>Colocate (same instructor).</strong> These sections may share a room at the same (or overlapping) time without generating a conflict. The registrar will be notified that the course should be colocated in Workday.</label>
             <label className="choice"><input type="radio" checked={form.type === "colocateDifferent"} onChange={() => switchType("colocateDifferent")} /> <strong>Colocate (different instructors).</strong> These sections may share a room at the same (or overlapping) time without generating a conflict. The registrar will be notified that the course should be colocated in Workday.</label>
+            <label className="choice"><input type="radio" checked={form.type === "cohortPlan"} onChange={() => switchType("cohortPlan")} /> <strong>Cohort planning.</strong> Make sure there are enough seats for cohorts of students: so many students must be able to take a list of courses, given the seats in each section and the times of the sections.</label>
             <label className="choice"><input type="radio" checked={form.type === "consecutive"} onChange={() => switchType("consecutive")} /> <strong>Back-to-back classes.</strong> These instructors should teach at most (or at least) some number of consecutive classes.</label>
           </fieldset>
 
+          {form.type === "cohortPlan" ? (
+            <>
+              <fieldset>
+                <legend>Groups of students</legend>
+                <p className="muted small">Each group is a number of students who must be able to take all of a list of courses, one section of each, with no two overlapping in time. The rule is met when all the students of all the groups can be seated at once.</p>
+                {form.elements.map((e, i) => (
+                  <div className="cohort-element" key={i}>
+                    <div className="row">
+                      <label className="f">
+                        <span>Students</span>
+                        <input value={e.students} size={5} inputMode="numeric" onChange={(ev) => setElement(i, { students: ev.target.value })} aria-invalid={attempted && has(`elements.${i}`).length > 0 ? true : undefined} />
+                      </label>
+                      <span className="cohort-must">must be able to take</span>
+                      <button type="button" className="link" onClick={() => set("elements", form.elements.filter((_, j) => j !== i))} disabled={form.elements.length <= 1}><Trash /> Remove this group</button>
+                    </div>
+                    {e.courses.map((c, k) => (
+                      <div className="row item-row" key={k}>
+                        <label className="f grow">
+                          <span>Course</span>
+                          <input value={c} list="rule-courses" placeholder="MATH 161" onChange={(ev) => setElement(i, { courses: e.courses.map((x, m) => (m === k ? ev.target.value : x)) })} />
+                        </label>
+                        <button type="button" className="link" onClick={() => setElement(i, { courses: e.courses.filter((_, m) => m !== k) })} disabled={e.courses.length <= 1}><Trash /> Remove</button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => setElement(i, { courses: [...e.courses, ""] })}>+ Add course</button>
+                    {err(`elements.${i}`)}
+                  </div>
+                ))}
+                <button type="button" onClick={() => set("elements", [...form.elements, { students: "", courses: [""] }])}>+ Add group of students</button>
+                {attempted ? has("elements").filter((p) => p.field === "elements").map((p, i) => <span key={i} className="err">{p.message}</span>) : null}
+              </fieldset>
+              <fieldset>
+                <legend>Seats in each section</legend>
+                <p className="muted small">Every section of a course is taken to have this many seats. Give them for every course in a group; seats for a course no group uses are ignored.</p>
+                {usedCourses.map((c) => (
+                  <div className="row" key={c}>
+                    <span className="seat-course">{c}</span>
+                    <label className="f"><span>Seats</span><input value={seatsOf(c)} size={5} inputMode="numeric" onChange={(ev) => setSeats(c, ev.target.value)} /></label>
+                  </div>
+                ))}
+                {unusedCapacities.map(({ c, i }) => (
+                  <div className="row" key={`extra-${i}`}>
+                    <label className="f"><span>Course</span><input value={c.course} list="rule-courses" placeholder="PHYS 101" onChange={(ev) => set("capacities", form.capacities.map((x, j) => (j === i ? { ...x, course: ev.target.value } : x)))} /></label>
+                    <label className="f"><span>Seats</span><input value={c.seats} size={5} inputMode="numeric" onChange={(ev) => set("capacities", form.capacities.map((x, j) => (j === i ? { ...x, seats: ev.target.value } : x)))} /></label>
+                    <button type="button" className="link" onClick={() => set("capacities", form.capacities.filter((_, j) => j !== i))}><Trash /> Remove</button>
+                    {err(`capacities.${form.capacities.filter((x) => x.course.trim() || x.seats.trim()).indexOf(c)}`)}
+                  </div>
+                ))}
+                <button type="button" onClick={() => set("capacities", [...form.capacities, { course: "", seats: "" }])}>+ Add seats for another course</button>
+              </fieldset>
+            </>
+          ) : (
           <fieldset>
             <legend>{form.type === "window" ? "What the rule is about" : form.type === "consecutive" ? "Instructors" : "Courses"}</legend>
             {form.type === "window" && (
@@ -279,8 +374,9 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
             <button type="button" onClick={() => set("items", [...form.items, { course: "", section: "", instructor: "" }])}>+ Add {form.type === "consecutive" || (form.type === "window" && form.subject === "instructors") ? "instructor" : "course"}</button>
             {err("items")}
           </fieldset>
+          )}
 
-          {form.type === "takeable" ? (
+          {form.type === "cohortPlan" ? null : form.type === "takeable" ? (
             <div>
               <div className="row take-row">
                 <span>A student must be able to take</span>

@@ -38,7 +38,7 @@ export const SESSION_COLUMNS = [
 ] as const;
 export const CROSSLISTING_COLUMNS = ["SectionId", "Prefix", "CourseNumber"] as const;
 export const NONTEACHING_COLUMNS = ["AcademicYear", "Faculty", "Activity", "Term", "Load", "Comment"] as const;
-export const CONSTRAINT_COLUMNS = ["Constraint", "Type", "Course", "Section", "Instructor", "Count", "Choose", "Bound", "Gap", "Action", "Duration", "Starts", "Term", "Days", "DayRule", "From", "To", "Should", "Meets", "Comment"] as const;
+export const CONSTRAINT_COLUMNS = ["Constraint", "Type", "Course", "Section", "Instructor", "Count", "Choose", "Bound", "Gap", "Action", "Duration", "Starts", "Term", "Days", "DayRule", "From", "To", "Should", "Meets", "Element", "Capacity", "Comment"] as const;
 
 const key = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -425,6 +425,9 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
   const isStandard = (k: Rec) => /^standard/i.test((k.Type ?? "").trim());
   const standardNames = new Set(rows.filter(({ k }) => (k.Action ?? "").trim() !== "" || isStandard(k)).map(({ k }) => (k.Constraint ?? "").trim()));
 
+  // A cohort planning rule has a different Count (the students) on each of its groups.
+  const cohortNames = new Set(rows.filter(({ k }) => /^(cohort ?plan|planning)/i.test((k.Type ?? "").trim())).map(({ k }) => (k.Constraint ?? "").trim()));
+
   // Rule-level settings: the first non-blank value among a rule's rows; a different one later is an error.
   const settings = new Map<string, Rec>();
   for (const { row, k } of rows) {
@@ -432,6 +435,7 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
     const have = settings.get(name) ?? {};
     for (const f of RULE_FIELDS) {
       if (f === "Days" && standardNames.has(name)) continue;
+      if (f === "Count" && cohortNames.has(name)) continue;
       const v = (k[f] ?? "").trim();
       if (v === "") continue;
       if (have[f] === undefined) have[f] = v;
@@ -484,7 +488,7 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
     }
     const looksConsecutive = have.Bound !== undefined || have.Gap !== undefined;
     const looksWindow = !standard && (have.From !== undefined || have.To !== undefined || have.Days !== undefined || have.Should !== undefined || (k.Instructor ?? "").trim() !== "");
-    const type = oneOf("Type", have.Type, { takeable: "takeable", cohort: "takeable", window: "window", time: "window", standard: "standard", "standard times": "standard", standardtimes: "standard", subset: "subset", "subset of standard times": "subset", collide: "colocate", collision: "colocate", collisions: "colocate", "allow collisions": "colocate", "allow collision": "colocate", colocate: "colocate", "colocate (same instructor)": "colocate", "colocate same instructor": "colocate", "colocate same": "colocate", colocatesame: "colocate", "colocate (different instructors)": "colocateDifferent", "colocate different instructors": "colocateDifferent", "colocate different": "colocateDifferent", colocatedifferent: "colocateDifferent", consecutive: "consecutive", "back-to-back": "consecutive" } as Record<string, "takeable" | "window" | "standard" | "subset" | "colocate" | "colocateDifferent" | "consecutive">, standard ? "standard" : looksConsecutive ? "consecutive" : looksWindow ? "window" : "takeable");
+    const type = oneOf("Type", have.Type, { takeable: "takeable", cohort: "takeable", window: "window", time: "window", standard: "standard", "standard times": "standard", standardtimes: "standard", subset: "subset", "subset of standard times": "subset", collide: "colocate", collision: "colocate", collisions: "colocate", "allow collisions": "colocate", "allow collision": "colocate", colocate: "colocate", "colocate (same instructor)": "colocate", "colocate same instructor": "colocate", "colocate same": "colocate", colocatesame: "colocate", "colocate (different instructors)": "colocateDifferent", "colocate different instructors": "colocateDifferent", "colocate different": "colocateDifferent", colocatedifferent: "colocateDifferent", "cohort planning": "cohortPlan", cohortplanning: "cohortPlan", "cohort plan": "cohortPlan", cohortplan: "cohortPlan", planning: "cohortPlan", consecutive: "consecutive", "back-to-back": "consecutive" } as Record<string, "takeable" | "window" | "standard" | "subset" | "colocate" | "colocateDifferent" | "cohortPlan" | "consecutive">, standard ? "standard" : looksConsecutive ? "consecutive" : looksWindow ? "window" : "takeable");
     const from = time("From", have.From);
     const to = time("To", have.To);
     if (type === "window" && !reported.has(`${name}|window`)) {
@@ -501,8 +505,10 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
       if (t === null || t === undefined) r.add("error", row, `Starts: "${text}" is not a time`);
       else starts.push(t);
     }
-    const count = num(r, row, "Count", have.Count ?? have.AtLeast);
+    const count = num(r, row, "Count", cohortNames.has(name) ? k.Count : have.Count ?? have.AtLeast);
     const gap = num(r, row, "Gap", have.Gap);
+    const element = num(r, row, "Element", k.Element);
+    const capacity = num(r, row, "Capacity", k.Capacity);
     const parsed = constraintSchema.safeParse({
       constraint: name,
       type,
@@ -513,6 +519,8 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
       choose: oneOf("Choose", have.Choose, { some: "some", any: "any" }, "some"),
       bound: oneOf("Bound", have.Bound, { atmost: "atMost", "at most": "atMost", max: "atMost", atleast: "atLeast", "at least": "atLeast", min: "atLeast" }, "atMost"),
       ...(gap !== undefined ? { gap } : {}),
+      ...(element !== undefined ? { element } : {}),
+      ...(capacity !== undefined ? { capacity } : {}),
       action,
       ...(duration !== undefined ? { duration } : {}),
       starts,

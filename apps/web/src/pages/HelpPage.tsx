@@ -350,6 +350,15 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           List the courses (one per line, with <code>*</code> and the other patterns, and a section letter if only one section is meant); a course listed once is enough for its own sections to be colocated.
           It silences only the conflicts reported in the Conflicts tab: a <em>Take together</em> rule still treats the courses as clashing. The registrar tab has a <code>Colocations</code> column that lists, for each section, the other sections it really meets with under a colocate rule (they overlap in time and share a room, or an instructor, so they would otherwise have been flagged), for example <em>MUSC 243 A, MUSC 343 A</em>. A colocation a rule would allow but that does not happen is not listed.
         </p>
+        <h3>Cohort planning</h3>
+        <p>
+          A <em>Cohort planning</em> rule makes sure there are enough seats for cohorts of students. It has two parts. The first is one or more <em>groups of students</em>: “<em>n</em> students must be able to take” a list of courses.
+          The second is the <em>seats in each section</em> of every course that a group names (seats for a course no group uses are ignored, and a rule cannot be saved while a course in a group has no seats given).
+          The rule is met when all the students of all the groups can get seats at the same time: each student takes one section of every course of their group, no two sections overlapping in time, and no section takes more students than it has seats.
+          For example: 50 students must be able to take MATH 161, ENGR 101 and CHEM 101, and 25 must be able to take MATH 162, ENGR 101 and CHEM 101; with 32 seats in each MATH 161 section, 30 in MATH 162, 40 in ENGR 101 and 25 in CHEM 101, the rule is met if the 75 students can all be seated.
+          The Constraint rules tab says whether the rule is met; when it is not, the message says how many students can be seated and why (a course with too few seats in all, sections that clash in time, or a course that is not offered that term).
+          The rule is checked term by term, so limit it to the term in which the cohort takes the courses.
+        </p>
         <h3>Back-to-back classes</h3>
         <p>
           “Each of these instructors should teach <em>at most</em> (or <em>at least</em>) <em>n</em> consecutive classes.” One class follows another when it starts within 20 minutes of the other’s end
@@ -386,6 +395,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dd><em>The seminar runs at two levels.</em> Courses CRUD 290, CRUD 390; the two listings of one seminar share an instructor, a room and a time and are not reported.</dd>
           <dt>Modify standard times: disallow</dt>
           <dd><em>No 8:00 MWF.</em> Every course (<code>*</code>); disallow MWF, 65 minutes, starting 8:00.</dd>
+          <dt>Cohort planning</dt>
+          <dd><em>First-year engineers.</em> 50 students must be able to take MATH 161, ENGR 101, CHEM 101; 25 students must be able to take MATH 162, ENGR 101, CHEM 101; seats in each section: MATH 161 32, MATH 162 30, ENGR 101 40, CHEM 101 25.</dd>
           <dt>Back-to-back: at most</dt>
           <dd><em>Kim, at most two in a row.</em> Instructor Kim; at most 2 consecutive classes, gap 20 minutes.</dd>
           <dt>Back-to-back: at least, in some terms</dt>

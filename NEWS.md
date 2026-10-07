@@ -1,5 +1,6 @@
 # Course Schedulizer 2.0.6.9000
 
+* New constraint rule, *Cohort planning*: it makes sure there are enough seats for cohorts of students. Give one or more groups (*n students must be able to take* a list of courses) and the seats in each section of each course. The rule is met when all the students of all the groups can be seated at once, each taking one section of every course of their group with no two overlapping in time and without passing any section's seats. A rule cannot be saved while a course in a group has no seats given. When it is not met, the Constraint rules tab says how many students can be seated and why.
 * The Mass edit window now has the same layout as the section editor: the course number, section, academic year, term and part of term are shown (greyed out, since a mass edit cannot change them) in the same places, with what the selected sections have in common.
 
 # Course Schedulizer 2.0.6

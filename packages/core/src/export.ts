@@ -123,6 +123,8 @@ export function constraintsTable(schedule: Schedule): Table {
         To: window && c.to !== undefined ? formatTime(c.to) : "",
         Should: window ? c.should : "",
         Meets: window ? c.meets : "",
+        Element: c.element === undefined ? "" : String(c.element),
+        Capacity: c.capacity === undefined ? "" : String(c.capacity),
         Comment: c.comment,
       };
     }),

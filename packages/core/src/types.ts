@@ -102,6 +102,10 @@ export type NonTeaching = z.infer<typeof nonTeachingSchema>;
  *   they may share a room, and an instructor, at the same or overlapping times without being reported as a conflict (a seminar
  *   run as a 200- and a 300-level course). `colocateDifferent`: colocated with different instructors, so they may share a room
  *   only; a shared instructor is still a conflict. (Files written before the two versions have `collide`, read as `colocate`.)
+ * - `cohortPlan`: enough seats for cohorts of students. A course line with an `element` number belongs to that element of the
+ *   rule: `count` students must be able to take all the element's courses (one section of each, none overlapping in time). A
+ *   line with a `capacity` and no `element` gives the seats in each section of its `course`. It is met when all the students of all
+ *   the elements can be seated at once without passing any section's seats.
  * - `consecutive`: each instructor named should teach at most (or at least) `count` consecutive
  *   classes; one class follows another when it starts 0 to `gap` minutes after the other ends.
  * - `window`: the sections named (by `course` pattern or `instructor`) should / should not meet
@@ -110,7 +114,7 @@ export type NonTeaching = z.infer<typeof nonTeachingSchema>;
  */
 export const constraintSchema = z.object({
   constraint: z.string().min(1),
-  type: z.enum(["takeable", "window", "standard", "subset", "colocate", "colocateDifferent", "consecutive"]).default("takeable"),
+  type: z.enum(["takeable", "window", "standard", "subset", "colocate", "colocateDifferent", "cohortPlan", "consecutive"]).default("takeable"),
   /** `Prefix CourseNumber` pattern, where `*` matches anything: `MUSC 234`, `MUSC 3*`, `MUSC *`. */
   course: str,
   /** A section letter to name one section of the course; blank = every section. */
@@ -144,6 +148,10 @@ export const constraintSchema = z.object({
   should: z.enum(["should", "should not"]).default("should not"),
   /** Window rules: "meets in the interval" means overlapping it, or lying entirely within it. Blank: overlapping for "should not", within for "should". */
   meets: z.enum(["", "overlaps", "within"]).default(""),
+  /** `cohortPlan`: on a course line, the element (1, 2, …) of the rule it belongs to; `count` is the students of that element. */
+  element: z.number().int().positive().optional(),
+  /** `cohortPlan`: on a seats line (a course, no element), the seats in each section of that course. */
+  capacity: z.number().int().positive().optional(),
   comment: str,
   /** Only on the copies in a merged schedule: the schedule the rule came from. It applies to sections of the same scope. Never saved. */
   scope: z.string().optional(),

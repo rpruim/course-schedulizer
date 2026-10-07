@@ -468,3 +468,9 @@ table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
 
 /* a box a mass edit cannot change: it shows what the sections have in common, but is not a place to type */
 .f input:disabled { color: var(--muted); background: var(--panel); cursor: not-allowed; }
+
+/* cohort planning in the rule editor */
+.cohort-element { border-top: 1px dashed var(--line); padding: 8px 0; }
+.cohort-element:first-of-type { border-top: 0; }
+.cohort-must { align-self: flex-end; line-height: 32px; color: var(--muted); }
+.seat-course { align-self: flex-end; line-height: 32px; min-width: 9rem; font-weight: 600; }
