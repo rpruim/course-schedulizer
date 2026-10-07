@@ -13,8 +13,8 @@ Colloquium hour is free,window,BHAV 3*,,,,,,,,,,,,,,,,,
 Colloquium hour is free,window,DIGI 3*,,,,,,,,,,,,,,,,,
 Gus does not teach before 9:00,window,,,Gus Testwell,,,,,,,,,,any,00:00,09:00,should not,overlaps,A rule about an instructor instead of courses.
 Behavior in Sport needs an evening section,window,BHAV 121,,,1,,,,,,,,,any,17:00,22:00,should,within,At least one section must meet within the evening hours.
-Kim: at most two classes in a row,consecutive,,,Kim,2,,atMost,20,,,,,,,,,,,
-Lee: at least two classes in a row,consecutive,,,Lee,2,,atLeast,20,,,,FA,,,,,,,
+Kim Mockup: at most two classes in a row,consecutive,,,Kim Mockup,2,,atMost,20,,,,,,,,,,,
+Lee Standin: at least two classes in a row,consecutive,,,Lee Standin,2,,atLeast,20,,,,FA,,,,,,,
 Colloquium time,standard,AMUS 241,,,,,,,,,,,,,,,,,The colloquium meets at a time that is not standard.
 Colloquium time,standard,,,,,,,,allow,50,15:05,,R,,,,,,
 No 8:00 MWF,standard,*,,,,,,,,,,,,,,,,,This department does not use 8:00 on MWF.

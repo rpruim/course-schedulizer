@@ -417,9 +417,9 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dt>Time window: at least some sections</dt>
           <dd><em>Behavior in Sport needs an evening section.</em> Course BHAV 121; <em>should</em> meet within 17:00–22:00; applies to at least 1 section.</dd>
           <dt>Back-to-back: at most</dt>
-          <dd><em>Kim, at most two in a row.</em> Instructor Kim; at most 2 consecutive classes, gap 20 minutes.</dd>
+          <dd><em>Kim Mockup, at most two in a row.</em> Instructor Kim Mockup; at most 2 consecutive classes, gap 20 minutes.</dd>
           <dt>Back-to-back: at least, in some terms</dt>
-          <dd><em>Lee, at least two in a row.</em> Instructor Lee; at least 2 consecutive classes; terms: Fall only.</dd>
+          <dd><em>Lee Standin, at least two in a row.</em> Instructor Lee Standin; at least 2 consecutive classes; terms: Fall only.</dd>
           <dt>Take together: all</dt>
           <dd><em>AMUS major, year 2.</em> Courses AMUS 228, BHAV 212, AMUS 203; number blank. Met if a student can pick one section of each with no clash (a second section of AMUS 228 makes it work).</dd>
           <dt>Take together: any two</dt>

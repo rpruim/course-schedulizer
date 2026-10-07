@@ -6,14 +6,14 @@ R2,FA,Full,AMUS,203,A,Cy Fictional,4,4,MWF,09:15,65,NH 104,Discrete Rhythm,Lectu
 R2,FA,Full,DIGI,225,A,Fay Mockson,4,4,MWF,11:00,65,SB 110,Information Computing,Lecture,In-Person,
 R2,FA,Full,DIGI,318,A,Ben Sample,4,4,TR,12:15,100,NH 106,Adaptive Systems,Lecture,In-Person,Same time as BHAV 312 A
 R2,FA,Full,BHAV,312,A,Eli Specimen,4,4,TR,12:15,100,NH 105,Stochastic Behavior,Lecture,In-Person,Same time as DIGI 318 A
-R2,FA,Full,DIGI,306,A,Kim,4,4,MWF,13:30,65,SB 120,Network Optimization,Lecture,In-Person,Kim teaches three in a row on MWF
-R2,FA,Full,AMUS,145,A,Kim,4,4,MWF,14:45,65,SB 120,Musical Patterns II,Lecture,In-Person,
-R2,FA,Full,DIGI,378,A,Kim,4,4,MWF,16:00,60,SB 122,Information Visualization,Lecture,In-Person,
+R2,FA,Full,DIGI,306,A,Kim Mockup,4,4,MWF,13:30,65,SB 120,Network Optimization,Lecture,In-Person,Kim Mockup teaches three in a row on MWF
+R2,FA,Full,AMUS,145,A,Kim Mockup,4,4,MWF,14:45,65,SB 120,Musical Patterns II,Lecture,In-Person,
+R2,FA,Full,DIGI,378,A,Kim Mockup,4,4,MWF,16:00,60,SB 122,Information Visualization,Lecture,In-Person,
 R2,FA,Full,AMUS,145,B,Gus Testwell,4,4,MWF,08:00,65,SB 121,Musical Patterns II,Lecture,In-Person,8:00 MWF is standard for the university but disallowed by this department's rule
 R2,FA,Full,AMUS,368,A,Ben Sample,4,4,TR,14:10,100,NH 104,Corpus Studies I,Lecture,In-Person,Runs into the colloquium hour (R 15:05)
 R2,FA,Full,AMUS,241,A,Ada Example,1,1,R,15:05,50,NH 276,Colloquium,Seminar,In-Person,Not a standard time; allowed by this department's rule
-R2,FA,Full,BHAV,112,A,Lee,4,4,MWF,09:15,65,NH 106,Introduction to Behavioral Dynamics,Lecture,In-Person,Lee's two sections are not back to back
-R2,FA,Full,BHAV,112,B,Lee,4,4,MWF,11:00,65,NH 106,Introduction to Behavioral Dynamics,Lecture,In-Person,
+R2,FA,Full,BHAV,112,A,Lee Standin,4,4,MWF,09:15,65,NH 106,Introduction to Behavioral Dynamics,Lecture,In-Person,Lee Standin's two sections are not back to back
+R2,FA,Full,BHAV,112,B,Lee Standin,4,4,MWF,11:00,65,NH 106,Introduction to Behavioral Dynamics,Lecture,In-Person,
 R2,FA,Full,BHAV,112,C,Dee Placeholder,4,4,MWF,10:30,65,NH 107,Introduction to Behavioral Dynamics,Lecture,In-Person,10:30 is not a standard start (shown in orange)
 R2,FA,Full,BHAV,121,A,Hal Fakename,4,4,MWF,09:15,65,HH 210,Behavior in Sport,Lecture,In-Person,There is no evening section yet
 R2,FA,Full,BHAV,121,B,Hal Fakename,4,4,TR,12:15,100,HH 210,Behavior in Sport,Lecture,In-Person,
