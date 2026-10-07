@@ -376,6 +376,22 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           Every rule except the built-in standard times has an <em>Active</em> check box at the right of its row on the Constraint rules tab. Uncheck it to deactivate the rule: it is kept in the schedule (and in the Excel file, in the <code>Active</code> column of the Constraints sheet, as Yes or No) but is not
           checked, so it is never reported as not met, a deactivated <em>Colocate</em> rule no longer silences conflicts, and a deactivated <em>Modify standard times</em> or <em>Subset</em> rule no longer changes what counts as a standard time. Its status reads “deactivated”. Check the box again to turn it back on.
         </p>
+        <h3>Rules when schedules are merged</h3>
+        <p>
+          When two or more schedules are ticked and shown <em>merged</em>, they are laid over one another as if they were one schedule, so clashes between them are found. The rules are not merged in the same way:
+          each rule stays with the schedule it is saved in, and is checked only against that schedule’s own sections, as if the other schedules were not there. This holds for every type of rule.
+        </p>
+        <ul>
+          <li><strong>Clashes are found across schedules; rules are not.</strong> Two sections of different schedules that share a room, or an instructor, at overlapping times are reported as a conflict, as always. But a <em>Take together</em> rule counts only the sections of its own schedule, a <em>Cohort planning</em> rule takes its sections and their times from its own schedule only (so seats and clashes in another schedule do not count), and a <em>Time window</em> or <em>Back-to-back</em> rule looks only at the meetings of its own schedule, even for an instructor who also teaches in another.</li>
+          <li><strong>Colocate rules do not reach across schedules.</strong> A <em>Colocate</em> rule silences only the conflicts between sections that both belong to its schedule. If a section of one schedule meets with a section of another, the conflict between them is still reported; to silence it, put both sections in one schedule.</li>
+          <li><strong>Standard times</strong> are checked for each schedule by its own <em>Modify standard times</em> and <em>Subset of standard times</em> rules. An exception made in one schedule does not apply to another’s sections.</li>
+          <li><strong>Names.</strong> If two schedules have a rule with the same name, the Conflicts tab tells them apart as “name” and “name (2)”, in the order the schedules are listed. The Constraint rules tab lists each schedule’s rules under that schedule, with their own names.</li>
+          <li><strong>Deactivating</strong> a rule affects only the schedule that holds it.</li>
+          <li><strong>Viewing separately</strong> gives the same results for the rules, since each schedule is checked on its own; only the clashes between schedules are no longer looked for.</li>
+        </ul>
+        <p>
+          To use a rule in several schedules, copy it with the <em>Copy to current schedule</em> and <em>Copy to all schedules</em> buttons on the Constraint rules tab. Each copy is then a separate rule, edited and deactivated on its own.
+        </p>
         <h3>Examples</h3>
         <p>
           Each of these is in the <em>Example with constraint rules</em> schedule (on the <Link to="/import">Import</Link> tab); open its Constraint rules and Conflicts pages and click a rule to see how it is set up.

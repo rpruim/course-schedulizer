@@ -48,3 +48,16 @@ describe("the terms come first in a rule's sentence", () => {
     expect(describeRule({ ...emptyRule("consecutive"), name: "x", term: "FA", items: [{ course: "", section: "", instructor: "Kim" }] })).toMatch(/^In FA, Kim should teach at most 3/);
   });
 });
+
+describe("rules and merged schedules", () => {
+  it("a colocate rule does not silence a conflict between sections of two schedules", async () => {
+    const { mergeSchedules } = await import("./merge.js");
+    const rule = [{ Constraint: "Together", Type: "colocate", Course: "AMUS 112" }, { Constraint: "Together", Type: "colocate", Course: "BHAV 112" }];
+    const a = build(rule, [sec("AMUS", "112", "A", "8:00")]);
+    const b = build(rule, [sec("BHAV", "112", "A", "8:00")]);
+    const merged = mergeSchedules([{ id: "a", name: "A", schedule: a }, { id: "b", name: "B", schedule: b }]).schedule;
+    expect(findConflicts(merged).length).toBeGreaterThan(0);
+    const one = build(rule, [sec("AMUS", "112", "A", "8:00"), sec("BHAV", "112", "A", "8:00")]);
+    expect(findConflicts(one)).toHaveLength(0);
+  });
+});
