@@ -369,6 +369,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           For example: 50 students must be able to take MATH 161, ENGR 101 and CHEM 101, and 25 must be able to take MATH 162, ENGR 101 and CHEM 101; with 32 seats in each MATH 161 section, 30 in MATH 162, 40 in ENGR 101 and 25 in CHEM 101, the rule is met if the 75 students can all be seated.
           The Constraint rules tab says whether the rule is met; when it is not, the message says how many students can be seated and why (a course with too few seats in all, sections that clash in time, or a course that is not offered that term).
           The rule is checked term by term, so limit it to the term in which the cohort takes the courses.
+          Courses that are colocated (same instructor) share their seats, so mention only one of them in the rule and give the number of students across the whole set of colocated courses.
         </p>
         <h3>Turning a rule off</h3>
         <p>

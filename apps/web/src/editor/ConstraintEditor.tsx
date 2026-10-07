@@ -309,9 +309,10 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
               <fieldset>
                 <legend>Seats in each section</legend>
                 <p className="muted small">Every section of a course is taken to have this many seats. Provide them for every course mentioned in the rule. A course you take out of every group keeps the seats you gave it, in case you put it back.</p>
+                <p className="muted small">Courses that are colocated (same instructor) share their seats: mention only one of them in the rule, and give the number of students across the whole set of colocated courses.</p>
                 {usedCourses.length === 0 ? <p className="muted small">The courses of the groups above will be listed here.</p> : (
                   <table className="seats-table">
-                    <thead><tr><th>Course</th><th>Seats</th></tr></thead>
+                    <thead><tr><th>Course</th><th>Seats per section</th></tr></thead>
                     <tbody>
                       {usedCourses.map((c) => (
                         <tr key={normCourse(c)}>
