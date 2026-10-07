@@ -240,7 +240,7 @@ describe("editing rules", () => {
     expect(describeRule({ ...emptyRule("takeable"), name: "x", items: [item("MUSC 3*")], count: 2, choose: "any" })).toBe("A student must be able to take any 2 of MUSC 3*.");
     expect(describeRule({ ...emptyRule("takeable"), name: "x", items: [item("MUSC 3*")] })).toBe("A student must be able to take all of MUSC 3*.");
     expect(describeRule({ ...emptyRule("window"), name: "x", items: [item("MUSC 231")], from: 600, to: 650, days: "MWF" })).toBe("Every section of MUSC 231 should not meet during 10:00–10:50 on any of M W F.");
-    expect(describeRule({ ...emptyRule("window"), name: "x", items: [item("BHAV 100")], from: 1020, to: 1320, should: "should", count: 1, term: "FA" })).toBe("At least 1 of the sections of BHAV 100 should meet within 17:00–22:00 on any of M T W R F in FA.");
+    expect(describeRule({ ...emptyRule("window"), name: "x", items: [item("BHAV 100")], from: 1020, to: 1320, should: "should", count: 1, term: "FA" })).toBe("In FA, at least 1 of the sections of BHAV 100 should meet within 17:00–22:00 on any of M T W R F.");
   });
 });
 
@@ -311,7 +311,7 @@ describe("standard times (built in) and the rules that change them", () => {
       { action: "disallow", days: "MWF", duration: 65, starts: [480] },
       { action: "disallow", days: "TR", starts: [] },
     ]);
-    expect(describeRule(rule!)).toBe("Modified standard times for MUSC 391: also allow R for 50 minutes starting 15:05, 16:00; stop allowing M W F for 65 minutes starting 8:00; stop allowing T R in FA, SP.");
+    expect(describeRule(rule!)).toBe("In FA, SP, modified standard times for MUSC 391: also allow R for 50 minutes starting 15:05, 16:00; stop allowing M W F for 65 minutes starting 8:00; stop allowing T R.");
     const back = await readWorkbook(await writeWorkbook(s));
     expect(back.issues.filter((i) => i.severity === "error")).toEqual([]);
     expect(back.schedule.constraints).toEqual(s.constraints);
@@ -396,7 +396,7 @@ describe("back-to-back (consecutive) rule", () => {
   it("describes itself and validates", () => {
     const r = { ...emptyRule("consecutive"), name: "x", items: [{ course: "", section: "", instructor: "Kim" }, { course: "", section: "", instructor: "Lee" }], count: 2 };
     expect(describeRule(r)).toBe("Each of Kim, Lee should teach at most 2 consecutive classes (a class follows another when it starts within 20 minutes of the other's end).");
-    expect(describeRule({ ...r, bound: "atLeast", items: [r.items[0]!] })).toBe("Kim should teach at least 2 consecutive classes in each term (a class follows another when it starts within 20 minutes of the other's end).");
+    expect(describeRule({ ...r, bound: "atLeast", items: [r.items[0]!] })).toBe("In each term, Kim should teach at least 2 consecutive classes (a class follows another when it starts within 20 minutes of the other's end).");
     expect(validateRule(build([]), r)).toEqual([]);
     expect(validateRule(build([]), { ...r, items: [{ course: "MUSC 1", section: "", instructor: "" }] }).map((p) => p.field)).toEqual(["items.0"]);
     expect(validateRule(build([]), { ...r, count: undefined as never }).map((p) => p.field)).toEqual(["count"]);
@@ -486,7 +486,7 @@ describe("subset of standard times", () => {
     const s = build([meet("1", "T", "8:00", "100")], rule("MUSC 3*", { Term: "FA" }));
     const r = rulesOf(s)[0]!;
     expect(r.type).toBe("subset");
-    expect(describeRule(r)).toBe("MUSC 3* may meet on only some of the days of a standard time (for example Tuesday alone when TR is standard) in FA.");
+    expect(describeRule(r)).toBe("In FA, MUSC 3* may meet on only some of the days of a standard time (for example Tuesday alone when TR is standard).");
     expect(describeRule({ ...r, items: [{ course: "*", section: "", instructor: "" }], term: "" })).toMatch(/^Every course may meet/);
     expect(rulesToRows(r)[0]).toMatchObject({ type: "subset", course: "MUSC 3*", term: "FA" });
     expect(importConstraints([{ Constraint: "X", Type: "Subset of standard times", Course: "*" }]).constraints[0]!.type).toBe("subset");

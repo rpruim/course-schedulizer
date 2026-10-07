@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { findConflicts } from "./conflicts.js";
 import { importRecords } from "./import.js";
-import { findRuleViolations, rulesOf, setRuleActive } from "./rules.js";
+import { describeRule, emptyRule, findRuleViolations, rulesOf, setRuleActive } from "./rules.js";
 import { readWorkbook, writeWorkbook } from "./xlsx.js";
 
 type Rec = Record<string, string>;
@@ -35,5 +35,16 @@ describe("activating and deactivating rules", () => {
     const back = await readWorkbook(await writeWorkbook(s));
     expect(back.issues).toEqual([]);
     expect(rulesOf(back.schedule).map((r) => r.active)).toEqual([false]);
+  });
+});
+
+describe("the terms come first in a rule's sentence", () => {
+  const item = (course: string) => ({ course, section: "", instructor: "" });
+  it("for every kind of rule", () => {
+    const r = { ...emptyRule("takeable"), name: "x", term: "FA", count: undefined, items: [item("AMUS 112"), item("BHAV 112")] };
+    expect(describeRule(r)).toBe("In FA, a student must be able to take all of AMUS 112, BHAV 112.");
+    expect(describeRule({ ...emptyRule("colocate"), name: "x", term: "FA, SP", items: [item("AMUS 112")] })).toBe("In FA, SP, AMUS 112 is colocated (same instructor): its sections may share a room at the same or overlapping times without a conflict.");
+    expect(describeRule({ ...emptyRule("colocate"), name: "x", term: "FA", items: [item("*")] })).toMatch(/^In FA, any courses are colocated/);
+    expect(describeRule({ ...emptyRule("consecutive"), name: "x", term: "FA", items: [{ course: "", section: "", instructor: "Kim" }] })).toMatch(/^In FA, Kim should teach at most 3/);
   });
 });
