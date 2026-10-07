@@ -5,7 +5,7 @@
  */
 
 /** What to tell people to type where an academic year is asked for. */
-export const ACADEMIC_YEAR_HELP = "Use two 2-digit years separated by a dash, such as 25-26 for the 2025–26 academic year. The files use AY25 for this; the app converts it when it reads and writes them.";
+export const ACADEMIC_YEAR_HELP = "Use two 2-digit years separated by a dash, such as 25-26 for the 2025–26 academic year. Schedulizer will take care of converting to from AY25 for you.";
 
 const two = (n: number) => String(((n % 100) + 100) % 100).padStart(2, "0");
 
