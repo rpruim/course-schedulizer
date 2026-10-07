@@ -22,7 +22,7 @@ export function ConstraintsPage() {
       </div>
       {ws.includedEntries.map((e) => (
         <section key={e.id} className={`sched-section${several && e.id === ws.currentId ? " current" : ""}`}>
-          {several && <h2 className="sched-heading">{e.name}{e.id === ws.currentId && <span className="badge">Current</span>}</h2>}
+          {several && <h2 className="sched-heading">{ws.letterOf(e.id) && <span className="letter">{ws.letterOf(e.id)}:</span>} {e.name}{e.id === ws.currentId && <span className="badge">Current</span>}</h2>}
           <RuleList entry={e} copying={several} />
         </section>
       ))}

@@ -13,11 +13,11 @@ export function ConflictsPage() {
   const several = ws.viewEntries.length > 1;
   return (
     <>
-      {ws.viewEntries[0]?.id === MERGED_ID && <p className="muted small">Showing {ws.includedEntries.length} schedules merged, so conflicts between them are included.</p>}
+      {ws.viewEntries[0]?.id === MERGED_ID && <p className="muted small">Showing {ws.includedEntries.length} schedules merged ({ws.includedEntries.map((x) => `${ws.letterOf(x.id)}: ${x.name}`).join("; ")}), so conflicts between them are included.</p>}
       {several && <p className="muted small">Conflicts are found within each schedule, never between schedules.</p>}
       {ws.viewEntries.map((e) => (
         <section key={e.id} className={`sched-section${several && e.id === ws.currentId ? " current" : ""}`}>
-          {several && <h2 className="sched-heading">{e.name}{e.id === ws.currentId && <span className="badge">Current</span>}</h2>}
+          {several && <h2 className="sched-heading">{ws.letterOf(e.id) && <span className="letter">{ws.letterOf(e.id)}:</span>} {e.name}{e.id === ws.currentId && <span className="badge">Current</span>}</h2>}
           <ConflictsTable entry={e} />
         </section>
       ))}
@@ -97,6 +97,9 @@ function ConflictsTable({ entry }: { entry: Entry }) {
 /** Constraint rules that are not met (a different kind of problem from two sections clashing). */
 function RuleTable({ entry, violations, label, title, orange }: { entry: Entry; violations: RuleViolation[]; label: (id: string) => string; title: string; orange?: boolean }) {
   const { openSection, openConstraint } = useEditor();
+  const ws = useWorkspace();
+  // In the merged view, the letters of the schedules a rule is saved in (a rule saved in several is checked once).
+  const letters = (v: RuleViolation) => (entry.id === MERGED_ID && !v.builtin ? [...new Set([v.rule, ...(v.sameAs ?? [])].map((n) => ws.mergedOrigin?.rules.get(n)?.scheduleId).filter((x): x is string => !!x).map((id) => ws.letterOf(id)))].join(", ") : "");
   return (
     <>
       <h3 className={`rule-heading${orange ? " warn-orange" : ""}`}>{title}</h3>
@@ -108,7 +111,7 @@ function RuleTable({ entry, violations, label, title, orange }: { entry: Entry; 
           <tbody>
             {violations.map((v, i) => (
               <tr key={i}>
-                <td>{v.builtin ? <span title="Built in: changed by the standard-times rules on the Constraint rules tab">{v.rule}</span> : <button className="link" onClick={() => openConstraint(v.rule, entry.id)} title="Edit this rule">{v.rule}</button>}</td>
+                <td>{letters(v) && <span className="letter" title="The schedule(s) this rule is saved in">{letters(v)}:</span>} {v.builtin ? <span title="Built in: changed by the standard-times rules on the Constraint rules tab">{v.rule}</span> : <button className="link" onClick={() => openConstraint(v.rule, entry.id)} title="Edit this rule">{v.rule}</button>}</td>
                 <td className="nowrap">{v.academicYear} {v.term}</td>
                 <td>{orange && <span className="tag tag-standard">standard time</span>} {v.message}</td>
                 <td>

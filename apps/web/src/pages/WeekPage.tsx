@@ -321,7 +321,7 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
           {g.title && <h2>{g.title}</h2>}
           {g.items.map((item) => (
             <div key={item.scheduleId} className={`week-item${several && item.scheduleId === ws.currentId ? " current" : ""}`}>
-              {several && <h3 className="sched-heading">{item.scheduleName}{item.scheduleId === ws.currentId && <span className="badge">Current</span>}</h3>}
+              {several && <h3 className="sched-heading">{ws.letterOf(item.scheduleId) && <span className="letter">{ws.letterOf(item.scheduleId)}:</span>} {item.scheduleName}{item.scheduleId === ws.currentId && <span className="badge">Current</span>}</h3>}
               {item.grid ? (
                 <>
                   <WeekGrid grid={item.grid} onOpen={(sectionId) => (mass ? pick(item.scheduleId, sectionId) : openSection(sectionId, item.scheduleId))} {...(mass ? { selected: (sectionId: string) => isSelected(item.scheduleId, sectionId) } : {})} />

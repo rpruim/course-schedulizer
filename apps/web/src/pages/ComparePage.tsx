@@ -101,7 +101,9 @@ export function ComparePage() {
   );
   const only = onlyDiff ?? defaultOnlyDifferences(comparison);
   const rows = useMemo(() => visibleRows(comparison, only), [comparison, only]);
-  const columns = useMemo(() => tableColumns(comparison), [comparison]);
+  // Schedules are told apart by their letters in the list at the top (the full names are in the key), which keeps the columns narrow.
+  const tag = (s: { id: string; name: string }) => ws.letterOf(s.id) || s.name;
+  const columns = useMemo(() => tableColumns(comparison, tag).map((c) => (c.key.startsWith("d") && comparison.schedules.length === 2 ? { ...c, sub: `${tag(comparison.schedules[1]!)} − ${tag(comparison.schedules[0]!)}` } : c)), [comparison, ws]); // eslint-disable-line react-hooks/exhaustive-deps
   // With exactly one aggregate, its columns (a value for each schedule, and the difference) stay in view at the right
   // while the grouping columns scroll under them.
   const frozen = useMemo(
@@ -244,7 +246,7 @@ export function ComparePage() {
   const EXPAND_LIMIT = 60;
   /** Export what is on screen: the rows shown, in the order shown. */
   async function exportXlsx() {
-    const sheets = comparisonSheets(comparison, columns, sorting.sorted, tones, { rowKind, nonTeaching, onlyDifferences: only, exportedAt: new Date() });
+    const sheets = comparisonSheets(comparison, tableColumns(comparison), sorting.sorted, tones, { rowKind, nonTeaching, onlyDifferences: only, exportedAt: new Date() });
     downloadBytes(await writeSheets(sheets), `comparison_${new Date().toISOString().slice(0, 10)}.xlsx`, XLSX_TYPE);
   }
   const differing = comparison.rows.filter((r) => r.differs).length;
@@ -366,6 +368,7 @@ export function ComparePage() {
           {only && comparison.rows.length > rows.length ? `; showing ${rows.length}` : ""}
           {onlyDiff === null && comparison.rows.length > 10 ? " (more than 10 groups, so only differences are shown by default)" : ""}
         </span>
+        <span className="muted small" title="The letters in the list of schedules at the top">{comparison.schedules.map((s) => `${tag(s)}: ${s.name}`).join(" · ")}</span>
         <span className="spacer" />
         {open.size > 0 ? (
           <button className="link" onClick={() => setOpen(new Set())}>Collapse all</button>
@@ -377,7 +380,7 @@ export function ComparePage() {
           <span className="tone-legend" aria-label="Color key">
             <span className="muted">{comparison.schedules.length === 2 ? `Larger ${aggName}:` : `Largest ${aggName}:`}</span>
             {comparison.schedules.map((s, i) => (
-              <span key={s.id} className="legend-item"><span className="swatch" style={{ background: `hsl(${hueFor(i)} 75% 52% / 0.5)` }} />{s.name}</span>
+              <span key={s.id} className="legend-item"><span className="swatch" style={{ background: `hsl(${hueFor(i)} 75% 52% / 0.5)` }} />{tag(s)}</span>
             ))}
           </span>
         )}
@@ -436,7 +439,7 @@ export function ComparePage() {
                           const lines = views[si] ?? [];
                           return (
                             <div className="members" key={s.id}>
-                              <h4><span className="swatch" style={{ background: `hsl(${hueFor(si)} 75% 52% / 0.5)` }} /> {s.name} <span className="muted">— {members.length === 0 ? "none" : `${members.length} ${members.length === 1 ? "item" : "items"}`}</span></h4>
+                              <h4><span className="swatch" style={{ background: `hsl(${hueFor(si)} 75% 52% / 0.5)` }} /> {tag(s)} <span className="muted">— {members.length === 0 ? "none" : `${members.length} ${members.length === 1 ? "item" : "items"}`}</span></h4>
                               {members.length === 0 ? (
                                 <p className="muted small">Nothing in this schedule for this row.</p>
                               ) : (
@@ -495,7 +498,7 @@ export function ComparePage() {
                                                   <option value="">Same as…</option>
                                                   {options.map(({ sj, k, o }) => (
                                                     <option key={`${sj}:${k}`} value={`${sj}:${k}`}>
-                                                      {comparison.schedules[sj]?.name}: {o.member.course} {o.member.section} · {o.member.meets || "no time"} · {o.member.instructor || "no instructor"}
+                                                      {comparison.schedules[sj] ? tag(comparison.schedules[sj]!) : ""}: {o.member.course} {o.member.section} · {o.member.meets || "no time"} · {o.member.instructor || "no instructor"}
                                                     </option>
                                                   ))}
                                                 </select>

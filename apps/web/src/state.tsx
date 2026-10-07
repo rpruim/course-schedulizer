@@ -59,6 +59,9 @@ const withSource = (entry: Entry, source: OneDriveSource | undefined): Entry => 
 
 const cleanName = (name: string) => name.trim() || "Schedule";
 
+/** A, B, … Z, then AA, AB, … for the schedule at this position in the list. */
+export const scheduleLetter = (index: number): string => (index < 26 ? "" : scheduleLetter(Math.floor(index / 26) - 1)) + String.fromCharCode(65 + (index % 26));
+
 /**
  * Entries as the views show them: a schedule is shown under its nickname when it has one, else its file name; when
  * several are shown under the same name (case-insensitively), each gets a number in workspace order —
@@ -173,6 +176,8 @@ export interface Workspace {
   /** The stored file name of a schedule (what `name` is when there is no nickname). */
   fileNameOf(id: string): string;
   currentId: string;
+  /** The letter that labels a schedule in the list at the top (A, B, … in list order; changes when the schedules are reordered); blank for an unknown id. */
+  letterOf(id: string): string;
   /** Ids of the schedules shown in the views. */
   included: string[];
   /** The schedules shown in the views, in workspace order. */
@@ -280,6 +285,10 @@ export function WorkspaceProvider({ children, store }: { children: ReactNode; st
     const merged = viewAs === "merged" && includedEntries.length > 1 ? mergeSchedules(includedEntries) : undefined;
     return {
       entries,
+      letterOf: (id) => {
+        const at = entries.findIndex((e) => e.id === id);
+        return at < 0 ? "" : scheduleLetter(at);
+      },
       fileNameOf: (id) => state.present.find((e) => e.id === id)?.name ?? "",
       currentId: state.currentId,
       included: state.included,

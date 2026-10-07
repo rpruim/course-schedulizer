@@ -75,7 +75,8 @@ export function SchedulePicker() {
                 <Move />
               </button>
             )}
-            <input type="checkbox" checked={shown} onChange={() => ws.toggleIncluded(e.id)} aria-label={`Show ${e.name} in the views`} title="Show in the views" />
+            <span className="letter" title={`Schedule ${ws.letterOf(e.id)}: the letters follow the order of the list`}>{ws.letterOf(e.id)}:</span>
+            <input type="checkbox" checked={shown} onChange={() => ws.toggleIncluded(e.id)} aria-label={`Show ${ws.letterOf(e.id)}: ${e.name} in the views`} title="Show in the views" />
             {renaming === e.id ? (
               <input
                 ref={input}

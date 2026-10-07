@@ -487,3 +487,4 @@ table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
 .seats-table th { text-align: left; font-weight: 500; color: var(--muted); padding: 0 16px 2px 0; }
 .seats-table td { padding: 2px 16px 2px 0; }
 .seats-table .seat-course { min-width: 8rem; }
+.letter { font-weight: 700; color: var(--accent); margin-right: 2px; }

@@ -135,7 +135,7 @@ export interface TableColumn {
  * column per schedule and, when exactly two schedules are compared, a difference column
  * (B − A) for each numeric aggregate.
  */
-export function tableColumns(c: Comparison): TableColumn[] {
+export function tableColumns(c: Comparison, nameOf: (s: { id: string; name: string }) => string = (s) => s.name): TableColumn[] {
   const cols: TableColumn[] = c.groups.map((g, i) => ({
     key: `g${i}`,
     label: g.label,
@@ -149,7 +149,7 @@ export function tableColumns(c: Comparison): TableColumn[] {
       cols.push({
         key: `a${ai}_${si}`,
         label: a.key === COUNT_KEY ? "Rows" : a.label,
-        sub: s.name,
+        sub: nameOf(s),
         numeric: a.kind === "number",
         aggregate: ai,
         value: (r) => r.values[ai]![si],
