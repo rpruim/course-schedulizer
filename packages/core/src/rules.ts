@@ -737,12 +737,11 @@ function violationsIn(schedule: Schedule): RuleViolation[] {
     const notOffered: string[] = [];
     const noSeats = new Set<string>();
     let unseatable = 0;
-    let considered = false;
+    // A term where none of the rule's courses run is not looked at; in any other term a group whose courses are not offered cannot be seated.
+    if (!rule.elements.some((e) => e.students !== undefined && e.courses.some((c) => offered(c).length > 0))) return false;
     for (const e of rule.elements) {
       if (e.students === undefined || e.courses.length === 0) continue;
       const found = e.courses.map((c) => ({ course: c, sections: offered(c) }));
-      if (found.every((x) => x.sections.length === 0)) continue; // none of its courses run this term
-      considered = true;
       for (const x of found) if (!seatsOf.has(normCourse(x.course))) noSeats.add(x.course);
       const missing = found.filter((x) => x.sections.length === 0);
       for (const x of missing) if (!notOffered.includes(x.course)) notOffered.push(x.course);
@@ -753,7 +752,7 @@ function violationsIn(schedule: Schedule): RuleViolation[] {
       }
       elements.push({ students: e.students, courses: found.map((x) => ({ label: x.course, sections: x.sections.map((s) => ({ id: s.sectionId, seats: seatsOf.get(normCourse(x.course)) ?? 0 })) })) });
     }
-    if (elements.length === 0 && unseatable === 0) return considered;
+    if (elements.length === 0 && unseatable === 0) return true;
     const ids = [...involved];
     const report = (message: string, sectionIds = ids) => out.push({ rule: rule.name, type: "cohortPlan", academicYear: g.year, term: g.term, message, sectionIds, sessions: sectionIds.flatMap((id) => bySection.get(id) ?? []) });
     if (noSeats.size > 0) report(`The seats in each section are not given for ${[...noSeats].join(", ")}, so this cannot be checked`);

@@ -57,6 +57,12 @@ describe("cohort planning", () => {
     // and a schedule that has the courses is judged as before
     expect(cohort(build(sessions(3), rows(SEATS)))).toEqual([]);
   });
+  it("counts a group none of whose courses is offered as unseated, in a term where other groups' courses run", () => {
+    const s = sessions(3).filter((x) => !["MATH 162"].includes(`${x.Prefix} ${x.CourseNumber}`) && !(x.Prefix === "ENGR") && !(x.Prefix === "CHEM"));
+    const v = cohort(build(s, rows(SEATS)));
+    expect(v).toHaveLength(1);
+    expect(v[0]!.message).toContain("0 of 75 students");
+  });
   it("looks at each term on its own, and only at terms where its courses run", () => {
     const sp = sessions(3).map((x) => ({ ...x, Term: "SP", AcademicYear: "Y" }));
     const v = cohort(build([...sessions(3), ...sp.filter((x) => x.Prefix !== "CHEM")], rows(SEATS)));
