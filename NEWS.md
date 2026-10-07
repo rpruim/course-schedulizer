@@ -1,6 +1,6 @@
 # Course Schedulizer 2.0.6.9000
 
-* Changes since 2.0.6 will be listed here.
+* The Mass edit window now has the same layout as the section editor: the course number, section, academic year, term and part of term are shown (greyed out, since a mass edit cannot change them) in the same places, with what the selected sections have in common.
 
 # Course Schedulizer 2.0.6
 

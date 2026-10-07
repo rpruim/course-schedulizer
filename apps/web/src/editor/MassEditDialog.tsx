@@ -176,6 +176,14 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
       {errors[k] && <span className="err">{errors[k]}</span>}
     </label>
   );
+  // What a mass edit cannot change is shown as the section editor shows it, greyed out, with the value the sections have in common.
+  const fixedBox = (label: string, value: string | undefined, size: number, hint?: string) => (
+    <label className="f" title="A mass edit does not change this">
+      <span>{label}</span>
+      <input value={value ?? ""} placeholder={value === undefined ? "various" : undefined} size={size} disabled readOnly />
+      {hint && <small className="muted">{hint}</small>}
+    </label>
+  );
   // The days every meeting has are suggested in gray until a day is clicked; then the days shown are the ones to set.
   const sharedDays = shared.meeting.days ?? "";
   const toggleDay = (letter: string) => {
@@ -199,9 +207,14 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
             <legend>Course and instructor(s)</legend>
             <div className="row top">
               {box("prefix", "Prefix", 6)}
+              {fixedBox("Number", shared.fixed.courseNumber, 6)}
+              {fixedBox("Section", shared.fixed.section, 4, "not changed by a mass edit")}
               <div className="grow">{box("shortTitle", "Title")}</div>
             </div>
             <div className="row top">
+              {fixedBox("Academic year", shared.fixed.academicYear, 8)}
+              {fixedBox("Term", shared.fixed.term, 3)}
+              {fixedBox("Part of term", shared.fixed.termPart, 8)}
               <label className="f">
                 <span>Delivery</span>
                 <select className={form.deliveryMode === "" && shared.fields.deliveryMode ? "suggest" : undefined} value={form.deliveryMode} onChange={(e) => set("deliveryMode", e.target.value)}>

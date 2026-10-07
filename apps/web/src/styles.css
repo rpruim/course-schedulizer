@@ -465,3 +465,6 @@ table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
 .callout.danger { border-left-color: #c0392b; background: var(--err-bg); }
 .callout.danger > strong { color: #c0392b; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .callout.danger > strong { color: #ff8a80; } }
+
+/* a box a mass edit cannot change: it shows what the sections have in common, but is not a place to type */
+.f input:disabled { color: var(--muted); background: var(--panel); cursor: not-allowed; }

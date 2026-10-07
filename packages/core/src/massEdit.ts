@@ -163,6 +163,8 @@ export interface SharedValues {
   fields: Partial<Record<SharedField, string>>;
   /** The parts of a meeting that every meeting of every chosen section has, the same. */
   meeting: { days?: string; start?: number; duration?: number; room?: string };
+  /** What a mass edit cannot change (the course number, letter, year, term and part of the term), when the sections agree. */
+  fixed: { courseNumber?: string; section?: string; academicYear?: string; term?: string; termPart?: string };
 }
 
 /**
@@ -171,12 +173,16 @@ export interface SharedValues {
  */
 export function sharedValues(sections: Session[][]): SharedValues {
   const rows = sections.filter((s) => s.length > 0);
-  const out: SharedValues = { fields: {}, meeting: {} };
+  const out: SharedValues = { fields: {}, meeting: {}, fixed: {} };
   if (rows.length === 0) return out;
   const text = (s: Session, k: SharedField): string => (k === "faculty" ? formatFaculty(s.faculty) : typeof s[k] === "number" ? formatNumber(s[k] as number) : String(s[k] ?? "").trim());
   for (const k of SHARED_FIELDS) {
     const v = text(rows[0]![0]!, k);
     if (v !== "" && rows.every((r) => text(r[0]!, k) === v)) out.fields[k] = v;
+  }
+  for (const k of ["courseNumber", "section", "academicYear", "term", "termPart"] as const) {
+    const v = rows[0]![0]![k].trim();
+    if (v !== "" && rows.every((r) => r[0]![k].trim() === v)) out.fixed[k] = v;
   }
   const meetings = rows.flat();
   const same = <T,>(get: (s: Session) => T | undefined): T | undefined => {
