@@ -83,6 +83,7 @@ describe("a cohort planning rule as the editor sees it", () => {
     expect(rule).toMatchObject({ name: "Cohort", type: "cohortPlan", items: [] });
     expect(rule!.elements).toEqual([{ students: 50, courses: ["MATH 161", "ENGR 101", "CHEM 101"] }, { students: 25, courses: ["MATH 162", "ENGR 101", "CHEM 101"] }]);
     expect(rule!.capacities).toEqual([{ course: "MATH 161", seats: 32 }, { course: "MATH 162", seats: 30 }, { course: "ENGR 101", seats: 40 }, { course: "CHEM 101", seats: 25 }]);
+    expect(describeRule({ ...rule!, term: "FA" })).toBe("In FA, 50 students must be able to take MATH 161, ENGR 101, CHEM 101; 25 students must be able to take MATH 162, ENGR 101, CHEM 101. Seats in each section: MATH 161 32, MATH 162 30, ENGR 101 40, CHEM 101 25.");
     expect(describeRule(rule!)).toBe("50 students must be able to take MATH 161, ENGR 101, CHEM 101; 25 students must be able to take MATH 162, ENGR 101, CHEM 101. Seats in each section: MATH 161 32, MATH 162 30, ENGR 101 40, CHEM 101 25.");
   });
   it("goes back to rows and round trips, also through the Excel file", async () => {

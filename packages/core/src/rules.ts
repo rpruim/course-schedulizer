@@ -336,7 +336,8 @@ export function describeRule(r: Rule): string {
   if (r.type === "cohortPlan") {
     const each = r.elements.map((e) => `${e.students ?? "…"} student${e.students === 1 ? "" : "s"} must be able to take ${e.courses.join(", ") || "…"}`).join("; ");
     const seats = r.capacities.map((c) => `${c.course} ${c.seats ?? "…"}`).join(", ");
-    return `${each || "No groups yet"}${seats ? `. Seats in each section: ${seats}` : ""}${when}.`;
+    const first = each || "No groups yet";
+    return `${when ? `In ${termList(r.term).join(", ")}, ${first}` : first}${seats ? `. Seats in each section: ${seats}` : ""}.`;
   }
   if (r.type === "colocate" || r.type === "colocateDifferent") {
     const everything = r.items.length > 0 && r.items.every((it) => it.course.trim() === "*");
