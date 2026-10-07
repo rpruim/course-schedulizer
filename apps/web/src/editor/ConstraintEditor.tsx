@@ -160,7 +160,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
   };
   const dialog = useRef<HTMLDialogElement>(null);
   const original = useMemo(() => (name === undefined ? undefined : rulesOf(schedule).find((r) => r.name === name)), []); // eslint-disable-line react-hooks/exhaustive-deps
-  const [form, setForm] = useState<Form>(() => toForm(original ?? { ...emptyRule("takeable"), choose: "any", items: [{ course: "", section: "", instructor: "" }] }));
+  const [form, setForm] = useState<Form>(() => toForm(original ?? { ...emptyRule("colocate"), items: [{ course: "", section: "", instructor: "" }] }));
   const [attempted, setAttempted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const isNew = original === undefined;
