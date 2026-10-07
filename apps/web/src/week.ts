@@ -96,6 +96,8 @@ export interface Block {
   nonStandard: boolean;
   /** The block's color; undefined when the field being colored by is missing (drawn gray). */
   hue: number | undefined;
+  /** The block's lightness step (0, 1 or 2: lightest to darkest in a light theme), varied along with the hue so colors also differ in lightness. */
+  tone: number;
   /** What the color stands for (a prefix, an instructor …); empty when missing. */
   colorValue: string;
   /** Position among side-by-side blocks that overlap in time, and how many share the space. */
@@ -201,6 +203,14 @@ export function hueMap(values: string[]): Map<string, number> {
   return new Map(list.map((v, i) => [v, Math.round((((i * step) % n) * 360) / n + 12) % 360]));
 }
 
+/**
+ * A lightness step (0, 1, 2) for each of the values, cycling in list order, so that values also differ in lightness (which helps people
+ * who cannot tell some hues apart, and values whose hues are close).
+ */
+export function toneMap(values: string[]): Map<string, number> {
+  return new Map([...new Set(values)].map((v, i) => [v, i % 3]));
+}
+
 /** Every value (not blank) the schedules have for a way of coloring, in natural order: what the colors are shared out among. */
 export function colorValuesOf(schedules: Schedule[], by: ColorBy): string[] {
   const seen = new Set<string>();
@@ -273,7 +283,9 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
   // The values the schedule has (or, in several schedules, all of them: `o.palette`) share out the color wheel, so none look alike.
   // A cohort rule's courses are shared out in the order the rule has them.
   const cohort = cohortOf(schedule, o.colorBy);
-  const hues = hueMap(o.palette ?? (cohort ? cohortCourses(cohort) : colorValuesOf([schedule], o.colorBy)));
+  const paletteValues = o.palette ?? (cohort ? cohortCourses(cohort) : colorValuesOf([schedule], o.colorBy));
+  const hues = hueMap(paletteValues);
+  const tones = toneMap(paletteValues);
   const hueFor = (s: Session) => {
     const v = colorKey(s);
     return v === "" ? undefined : hues.get(v);
@@ -311,6 +323,7 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
     conflict: flagged.has(s),
     nonStandard: odd.has(s),
     hue: hueFor(s),
+    tone: tones.get(colorKey(s)) ?? 0,
     colorValue: colorKey(s),
     lane: 0,
     lanes: 1,

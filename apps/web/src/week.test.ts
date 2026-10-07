@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { importRecords, type Schedule } from "@schedulizer/core";
-import { colorOptions, groupGrids, hourLabel, hueMap, layoutLanes, weekGrids, type WeekOptions } from "./week";
+import { colorOptions, groupGrids, hourLabel, hueMap, layoutLanes, toneMap, weekGrids, type WeekOptions } from "./week";
 
 const sec = (prefix: string, n: string, letter: string, o: Record<string, string> = {}) => ({
   AcademicYear: "Y", Term: "FA", Prefix: prefix, CourseNumber: n, Section: letter, ...o,
@@ -51,6 +51,17 @@ describe("hueMap", () => {
   });
   it("does not depend on the order, only on the set, once sorted, and ignores repeats", () => {
     expect(hueMap(["b", "a", "a"]).size).toBe(2);
+  });
+});
+
+describe("toneMap", () => {
+  it("cycles three lightness steps through the values in order, so neighbours differ", () => {
+    expect([...toneMap(["a", "b", "c", "d", "e", "a"]).values()]).toEqual([0, 1, 2, 0, 1]);
+  });
+  it("is on each block, and blocks of one value share it", () => {
+    const s = make([sec("AMUS", "1", "A", mt("M", "9:00", "50")), sec("BHAV", "1", "A", mt("T", "9:00", "50")), sec("DIGI", "1", "A", mt("W", "9:00", "50")), sec("AMUS", "2", "A", mt("R", "9:00", "50"))]);
+    const tones = new Map(weekGrids(s, opts()).grids[0]!.blocks.map((b) => [b.title.slice(0, 4), b.tone]));
+    expect([...tones]).toEqual([["AMUS", 0], ["BHAV", 1], ["DIGI", 2]]);
   });
 });
 

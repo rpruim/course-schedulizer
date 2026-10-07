@@ -419,6 +419,7 @@ function WeekGrid({ grid, onOpen, selected }: { grid: Grid; onOpen: (sectionId: 
                   left: `calc(${(b.lane / b.lanes) * 100}% + 1px)`,
                   width: `calc(${100 / b.lanes}% - 2px)`,
                   ["--hue" as string]: b.hue ?? 0,
+                  ["--tone" as string]: b.tone,
                 }}
               >
                 {(selected?.(b.sectionId) || b.conflict || b.nonStandard) && (

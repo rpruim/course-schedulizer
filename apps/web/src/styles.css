@@ -154,7 +154,7 @@ details summary { cursor: pointer; color: var(--muted); }
 .week-axis span { position: absolute; right: 6px; transform: translateY(-50%); font-size: .7rem; color: var(--muted); }
 .week-axis span:first-child { transform: none; }
 .week-col { position: relative; border-left: 1px solid var(--line); background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hour) - 1px), var(--line) calc(var(--hour) - 1px), var(--line) var(--hour)); }
-.block { --bl: 86%; --blfg: #1c2024; --bb: 68%; position: absolute; display: flex; flex-direction: row; align-items: stretch; gap: 3px; overflow: hidden; padding: 2px 4px; text-align: left; font-size: .72rem; line-height: 1.2; border-radius: 4px; cursor: pointer; background: hsl(var(--hue) var(--sat, 60%) var(--bl)); color: var(--blfg); border: 1px solid hsl(var(--hue) var(--bsat, 45%) var(--bb)); }
+.block { --bl: 86%; --bl0: 91%; --lstep: -9%; --blfg: #1c2024; --bb: 68%; position: absolute; display: flex; flex-direction: row; align-items: stretch; gap: 3px; overflow: hidden; padding: 2px 4px; text-align: left; font-size: .72rem; line-height: 1.2; border-radius: 4px; cursor: pointer; background: hsl(var(--hue) var(--sat, 60%) calc(var(--bl0) + var(--tone, 0) * var(--lstep))); color: var(--blfg); border: 1px solid hsl(var(--hue) var(--bsat, 45%) calc(var(--bb) + var(--tone, 0) * var(--lstep))); }
 /* nothing in the field being colored by: gray */
 .block.nocolor { --sat: 0%; --bsat: 0%; }
 .block strong { font-weight: 600; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -172,7 +172,7 @@ details summary { cursor: pointer; color: var(--muted); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .block:hover, :root:not([data-theme="light"]) .block:focus-visible { outline-color: #56B4E9; } }
 .block.conflict { border: 3px solid #D55E00; }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .block { --bl: 28%; --blfg: #f0f2f4; --bb: 45%; }
+  :root:not([data-theme="light"]) .block { --bl: 28%; --bl0: 22%; --lstep: 8%; --blfg: #f0f2f4; --bb: 45%; }
 }
 .unscheduled { margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .chip.wide { padding: 2px 10px; font-size: .8rem; }

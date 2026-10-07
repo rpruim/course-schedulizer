@@ -6,6 +6,8 @@ import { COLOR_BY, type Block, type ColorBy } from "./week";
 export interface KeyEntry {
   label: string;
   hue: number | undefined;
+  /** Lightness step (0 lightest … 2 darkest in a light theme). */
+  tone?: number;
 }
 export interface KeyInfo {
   /** For example "Color by Prefix". */
@@ -16,11 +18,12 @@ export interface KeyInfo {
 const MISSING = "(none given)";
 
 /** The key for the blocks on screen: each distinct value once, in natural order, gray "none given" last. */
-export function keyFor(colorBy: ColorBy, blocks: Pick<Block, "colorValue" | "hue">[]): KeyInfo {
+export function keyFor(colorBy: ColorBy, blocks: (Pick<Block, "colorValue" | "hue"> & { tone?: number })[]): KeyInfo {
   const seen = new Map<string, number | undefined>();
-  for (const b of blocks) if (!seen.has(b.colorValue)) seen.set(b.colorValue, b.hue);
+  const tones = new Map<string, number | undefined>();
+  for (const b of blocks) if (!seen.has(b.colorValue)) { seen.set(b.colorValue, b.hue); tones.set(b.colorValue, b.tone); }
   const named = [...seen].filter(([v]) => v !== "").sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
-  const entries: KeyEntry[] = named.map(([label, hue]) => ({ label, hue }));
+  const entries: KeyEntry[] = named.map(([label, hue]) => (tones.get(label) === undefined ? { label, hue } : { label, hue, tone: tones.get(label) }));
   const cohort = colorBy.startsWith("cohort:");
   if (seen.has("")) entries.push({ label: cohort ? "(not in the rule)" : MISSING, hue: undefined });
   return { title: `Color by ${cohort ? `cohort ${colorBy.slice(7)}` : (COLOR_BY.find((c) => c.value === colorBy)?.label ?? colorBy)}`, entries };
@@ -76,14 +79,14 @@ const publish = (next: Partial<Snapshot>) => {
 export const setColorKey = (info: KeyInfo | undefined) => publish({ info });
 
 const POPUP_CSS = `
-  :root { --bg: #fff; --fg: #1c2024; --muted: #667085; --line: #d9dde3; --bl: 86%; --bb: 68%; color-scheme: light dark; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #14171a; --fg: #e8eaed; --muted: #9aa3ad; --line: #2e343b; --bl: 28%; --bb: 45%; } }
-  :root[data-theme="dark"] { --bg: #14171a; --fg: #e8eaed; --muted: #9aa3ad; --line: #2e343b; --bl: 28%; --bb: 45%; }
+  :root { --bg: #fff; --fg: #1c2024; --muted: #667085; --line: #d9dde3; --bl: 86%; --bb: 68%; --bl0: 91%; --lstep: -9%; color-scheme: light dark; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #14171a; --fg: #e8eaed; --muted: #9aa3ad; --line: #2e343b; --bl: 28%; --bb: 45%; --bl0: 22%; --lstep: 8%; } }
+  :root[data-theme="dark"] { --bg: #14171a; --fg: #e8eaed; --muted: #9aa3ad; --line: #2e343b; --bl: 28%; --bb: 45%; --bl0: 22%; --lstep: 8%; }
   body { margin: 0; padding: 10px 12px; background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
   h1 { font-size: 1rem; margin: 0 0 8px; }
   ul { list-style: none; margin: 0; padding: 0; }
   li { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
-  .sw { flex: none; width: 22px; height: 14px; border-radius: 3px; background: hsl(var(--hue) var(--sat) var(--bl)); border: 1px solid hsl(var(--hue) var(--bsat) var(--bb)); }
+  .sw { flex: none; width: 22px; height: 14px; border-radius: 3px; background: hsl(var(--hue) var(--sat) calc(var(--bl0) + var(--tone, 0) * var(--lstep))); border: 1px solid hsl(var(--hue) var(--bsat) calc(var(--bb) + var(--tone, 0) * var(--lstep))); }
   .muted { color: var(--muted); }
   .sw.none { background: repeating-linear-gradient(135deg, hsl(0 0% var(--bl)) 0 4px, hsl(0 0% calc(var(--bl) - 10%)) 4px 6px); border-color: hsl(0 0% var(--bb)); }
 `;
@@ -135,7 +138,7 @@ export function ColorKeyWindow() {
           <ul>
             {info.entries.map((e) => (
               <li key={e.label}>
-                <span className={`sw${e.hue === undefined ? " none" : ""}`} style={{ ["--hue" as string]: e.hue ?? 0, ["--sat" as string]: e.hue === undefined ? "0%" : "60%", ["--bsat" as string]: e.hue === undefined ? "0%" : "45%" }} />
+                <span className={`sw${e.hue === undefined ? " none" : ""}`} style={{ ["--hue" as string]: e.hue ?? 0, ["--tone" as string]: e.tone ?? 0, ["--sat" as string]: e.hue === undefined ? "0%" : "60%", ["--bsat" as string]: e.hue === undefined ? "0%" : "45%" }} />
                 <span className={e.hue === undefined ? "muted" : ""}>{e.label}</span>
               </li>
             ))}
