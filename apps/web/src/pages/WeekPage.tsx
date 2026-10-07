@@ -257,7 +257,7 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
             </label>
             <div className="field">Show
               <MultiSelect
-                choices={[...filterChoices.map((v) => ({ value: v, label: v })), ...(filterHasMissing ? [{ value: "", label: "(missing)", muted: true }] : [])]}
+                choices={[...filterChoices.map((v) => ({ value: v, label: v })), ...(filterHasMissing ? [{ value: "", label: filterBy.startsWith("cohort:") ? "(other courses)" : "(missing)", muted: true }] : [])]}
                 selected={filterValues}
                 onChange={setFilterValues}
               />
