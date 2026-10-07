@@ -38,7 +38,7 @@ export const SESSION_COLUMNS = [
 ] as const;
 export const CROSSLISTING_COLUMNS = ["SectionId", "Prefix", "CourseNumber"] as const;
 export const NONTEACHING_COLUMNS = ["AcademicYear", "Faculty", "Activity", "Term", "Load", "Comment"] as const;
-export const CONSTRAINT_COLUMNS = ["Constraint", "Type", "Course", "Section", "Instructor", "Count", "Choose", "Bound", "Gap", "Action", "Duration", "Starts", "Term", "Days", "DayRule", "From", "To", "Should", "Meets", "Element", "Capacity", "Comment"] as const;
+export const CONSTRAINT_COLUMNS = ["Constraint", "Type", "Course", "Section", "Instructor", "Count", "Choose", "Bound", "Gap", "Action", "Duration", "Starts", "Term", "Days", "DayRule", "From", "To", "Should", "Meets", "Element", "Capacity", "Active", "Comment"] as const;
 
 const key = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -408,7 +408,7 @@ export function importNonTeaching(records: Rec[], settings: Settings = defaultSe
 
 /** The first version of this sheet called Count "AtLeast"; still read. */
 const CONSTRAINT_READ_COLUMNS = [...CONSTRAINT_COLUMNS, "AtLeast"] as const;
-const RULE_FIELDS = ["Type", "Count", "AtLeast", "Choose", "Bound", "Gap", "Term", "Days", "DayRule", "From", "To", "Should", "Meets"] as const;
+const RULE_FIELDS = ["Type", "Count", "AtLeast", "Choose", "Bound", "Gap", "Term", "Days", "DayRule", "From", "To", "Should", "Meets", "Active"] as const;
 
 /**
  * Constraint rows. Rows with the same `Constraint` name make one rule: its settings (Type, Count, Choose,
@@ -530,6 +530,7 @@ export function importConstraints(records: Rec[]): { constraints: Constraint[]; 
       ...(from !== undefined ? { from } : {}),
       ...(to !== undefined ? { to } : {}),
       should: oneOf("Should", have.Should, { should: "should", "should not": "should not", "should not meet": "should not", not: "should not", "must not": "should not", must: "should" }, "should not"),
+      active: !/^(no|n|false|inactive|deactivated|off|0)$/i.test((have.Active ?? "").trim()),
       meets: oneOf("Meets", have.Meets, { overlaps: "overlaps", overlap: "overlaps", during: "overlaps", within: "within", inside: "within" }, ""),
       comment: k.Comment ?? "",
     });

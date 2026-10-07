@@ -340,6 +340,11 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           it can be limited to some terms) as long as its start time and length are those of a standard time and its days are some, but not all, of that time’s days. A meeting that matches no standard time at all is still flagged.
           The flag says when a subset rule would allow the meeting.
         </p>
+        <h3>Turning a rule off</h3>
+        <p>
+          Every rule except the built-in standard times has an <em>Active</em> check box at the right of its row on the Constraint rules tab. Uncheck it to deactivate the rule: it is kept in the schedule (and in the Excel file, in the <code>Active</code> column of the Constraints sheet, as Yes or No) but is not
+          checked, so it is never reported as not met, a deactivated <em>Colocate</em> rule no longer silences conflicts, and a deactivated <em>Modify standard times</em> or <em>Subset</em> rule no longer changes what counts as a standard time. Its status reads “deactivated”. Check the box again to turn it back on.
+        </p>
         <h3>Colocate</h3>
         <p>
           Two sections that share an instructor, or a room, at overlapping times are reported as a conflict. A <em>Colocate</em> rule says that some courses are meant to meet together in one room, for example a seminar

@@ -75,6 +75,8 @@ interface Form {
   to: string;
   should: Rule["should"];
   meets: Rule["meets"];
+  /** Kept as the rule has it; it is switched on the Constraint rules page. */
+  active: boolean;
   comment: string;
 }
 
@@ -84,7 +86,7 @@ const toForm = (r: Rule): Form => ({
   capacities: r.capacities.map((c) => ({ course: c.course, seats: c.seats === undefined ? "" : String(c.seats) })),
   changes: r.changes.map((c) => ({ action: c.action, days: c.days, duration: c.duration === undefined ? "" : String(c.duration), starts: c.starts.map(at).join(", ") })), count: r.count === undefined ? "" : String(r.count), choose: r.choose, bound: r.bound, gap: String(r.gap),
   term: r.term, days: r.days, dayRule: r.dayRule, from: r.from === undefined ? "" : formatTime(r.from), to: r.to === undefined ? "" : formatTime(r.to),
-  should: r.should, meets: r.meets, comment: r.comment,
+  should: r.should, meets: r.meets, active: r.active, comment: r.comment,
 });
 
 function toRule(f: Form): { rule: Rule; problems: { field: string; message: string }[] } {
@@ -140,7 +142,7 @@ function toRule(f: Form): { rule: Rule; problems: { field: string; message: stri
     name: f.name.trim(), type: f.type, items: f.items
       .map((i) => (people ? { course: "", section: "", instructor: i.instructor } : { ...i, instructor: "" }))
       .filter((i) => i.course.trim() || i.section.trim() || i.instructor.trim()), term: f.term, days: f.days, dayRule: f.dayRule,
-    changes, choose: f.choose, bound: f.bound, gap, should: f.should, meets: f.meets, comment: f.comment, ...(count !== undefined ? { count } : {}),
+    changes, choose: f.choose, bound: f.bound, gap, should: f.should, meets: f.meets, active: f.active, comment: f.comment, ...(count !== undefined ? { count } : {}),
     ...(from !== undefined ? { from } : {}), ...(to !== undefined ? { to } : {}),
   };
   return { rule, problems };

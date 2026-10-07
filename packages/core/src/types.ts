@@ -152,6 +152,8 @@ export const constraintSchema = z.object({
   element: z.number().int().positive().optional(),
   /** `cohortPlan`: on a seats line (a course, no element), the seats in each section of that course. */
   capacity: z.number().int().positive().optional(),
+  /** False = the rule is deactivated: kept in the schedule but not checked (and, for a colocate or standard-times rule, not applied). */
+  active: z.boolean().default(true),
   comment: str,
   /** Only on the copies in a merged schedule: the schedule the rule came from. It applies to sections of the same scope. Never saved. */
   scope: z.string().optional(),

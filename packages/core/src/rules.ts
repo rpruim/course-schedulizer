@@ -71,11 +71,13 @@ export interface Rule {
   to?: number;
   should: "should" | "should not";
   meets: "" | "overlaps" | "within";
+  /** False = deactivated: kept, but not checked. */
+  active: boolean;
   comment: string;
 }
 
 export const emptyRule = (type: Rule["type"] = "takeable"): Rule => ({
-  name: "", type, items: [], elements: [], capacities: [], changes: [], choose: "some", bound: "atMost", gap: 20, term: "", days: "", dayRule: "any", should: "should not", meets: "", comment: "",
+  name: "", type, items: [], elements: [], capacities: [], changes: [], choose: "some", bound: "atMost", gap: 20, term: "", days: "", dayRule: "any", should: "should not", meets: "", active: true, comment: "",
   ...(type === "window" ? { from: 600, to: 660 } : {}),
   ...(type === "consecutive" ? { count: 3 } : {}),
 });
@@ -123,6 +125,7 @@ export function rulesOf(schedule: Schedule): Rule[] {
       ...(f.to !== undefined ? { to: f.to } : {}),
       should: f.should,
       meets: f.meets,
+      active: rows.every((r) => r.active),
       comment: comments.join("; "),
     };
   });
@@ -145,6 +148,7 @@ export function rulesToRows(rule: Rule): Constraint[] {
     ...(window && rule.to !== undefined ? { to: rule.to } : {}),
     should: rule.should,
     meets: window ? rule.meets : "",
+    active: rule.active,
   };
   const items = rule.items.map((it, i) => ({
     ...common,
@@ -172,7 +176,7 @@ export function rulesToRows(rule: Rule): Constraint[] {
 
 /** A cohort planning rule as rows: a line for each course of each element (with the element and its students), then a seats line per course. */
 function cohortRows(rule: Rule): Constraint[] {
-  const base = { constraint: rule.name, type: "cohortPlan" as const, term: rule.term.trim(), choose: rule.choose, bound: rule.bound, gap: rule.gap, dayRule: rule.dayRule, should: rule.should, meets: "" as const, section: "", instructor: "", action: "" as const, starts: [] as number[], days: "" };
+  const base = { constraint: rule.name, type: "cohortPlan" as const, term: rule.term.trim(), choose: rule.choose, bound: rule.bound, gap: rule.gap, dayRule: rule.dayRule, should: rule.should, meets: "" as const, active: rule.active, section: "", instructor: "", action: "" as const, starts: [] as number[], days: "" };
   const rows: Constraint[] = [];
   rule.elements.forEach((e, i) => {
     for (const course of e.courses.filter((c) => c.trim())) {
@@ -185,6 +189,9 @@ function cohortRows(rule: Rule): Constraint[] {
   }
   return rows;
 }
+
+/** Turn the rule called `name` on or off (a deactivated rule is kept but not checked). */
+export const setRuleActive = (schedule: Schedule, name: string, active: boolean): Schedule => ({ ...schedule, constraints: schedule.constraints.map((c) => (c.constraint === name ? { ...c, active } : c)) });
 
 /** Replace the rule called `original` (or add a new one at the end) — returns a new schedule. */
 export function saveRule(schedule: Schedule, original: string | undefined, rule: Rule): Schedule {
@@ -443,7 +450,8 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
   });
 }
 
-function violationsIn(schedule: Schedule): RuleViolation[] {
+function violationsIn(all: Schedule): RuleViolation[] {
+  const schedule = { ...all, constraints: all.constraints.filter((c) => c.active) }; // a deactivated rule is not checked
   const names = displayNames(schedule);
   const bySection = new Map<string, Session[]>();
   for (const s of schedule.sessions) bySection.set(s.sectionId, [...(bySection.get(s.sectionId) ?? []), s]);
@@ -836,7 +844,7 @@ function violationsIn(schedule: Schedule): RuleViolation[] {
  * not reported as conflicting (`findConflicts`); a pair the rules do not fit is reported as usual.
  */
 export function allowedCollisions(schedule: Schedule): (sectionIdA: string, sectionIdB: string, sharesInstructor: boolean) => boolean {
-  const rows = schedule.constraints.filter((c) => c.type === "colocate" || c.type === "colocateDifferent");
+  const rows = schedule.constraints.filter((c) => c.active && (c.type === "colocate" || c.type === "colocateDifferent"));
   if (rows.length === 0) return () => false;
   const first = new Map<string, Session>();
   for (const s of schedule.sessions) if (!first.has(s.sectionId)) first.set(s.sectionId, s);

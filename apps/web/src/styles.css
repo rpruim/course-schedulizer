@@ -479,3 +479,7 @@ table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
 .cohort-course { display: inline-flex; align-items: center; gap: 2px; }
 .icon-only { padding: 4px; line-height: 0; }
 .seat-course { align-self: flex-end; line-height: 32px; min-width: 9rem; font-weight: 600; }
+
+.deactivated td { opacity: .55; }
+.deactivated td.active-cell { opacity: 1; }
+.active-cell { text-align: center; }

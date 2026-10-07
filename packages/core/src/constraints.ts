@@ -80,6 +80,7 @@ export function constraintWarnings(schedule: Schedule): Issue[] {
   const keyed = [...first.values()].map((s) => ({ session: s, keys: listingKeys(schedule, s), letter: s.section }));
   const courses = new Map<string, Set<string>>(); // rule → distinct courses its rows match
   schedule.constraints.forEach((c, i) => {
+    if (!c.active) return;
     const hits = keyed.filter((k) => constraintNames(c, k.keys, k.letter) || constraintNamesInstructor(c, k.session));
     if (hits.length === 0) {
       const what = c.instructor ? `instructor ${c.instructor}` : c.section ? `${c.course} section ${c.section}` : c.course;

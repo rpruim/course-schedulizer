@@ -125,6 +125,7 @@ export function constraintsTable(schedule: Schedule): Table {
         Meets: window ? c.meets : "",
         Element: c.element === undefined ? "" : String(c.element),
         Capacity: c.capacity === undefined ? "" : String(c.capacity),
+        Active: c.active ? "Yes" : "No",
         Comment: c.comment,
       };
     }),

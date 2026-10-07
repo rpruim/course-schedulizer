@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { copyRule, describeRule, findRuleViolations, rulesOf, type Schedule } from "@schedulizer/core";
+import { copyRule, describeRule, findRuleViolations, rulesOf, setRuleActive, type Schedule } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
 import { useWorkspace, type Entry } from "../state";
 import { Empty, NoneShown } from "./SchedulePage";
@@ -67,22 +67,27 @@ function RuleList({ entry, copying }: { entry: Entry; copying: boolean }) {
     <div className="table-wrap">
       <table>
         <thead>
-          <tr><th>Rule</th><th>What it says</th><th>Status</th>{showCopy && <th>{isCurrent ? "Copy to all schedules" : "Copy to current schedule"}</th>}</tr>
+          <tr><th>Rule</th><th>What it says</th><th>Status</th><th>Active</th>{showCopy && <th>{isCurrent ? "Copy to all schedules" : "Copy to current schedule"}</th>}</tr>
         </thead>
         <tbody>
           <tr title="Built in: always checked. Add a Modify standard times rule to allow exceptions or to disallow times.">
             <td><strong>Standard times</strong> <span className="muted small">(built in)</span></td>
             <td>Normally every meeting should be at one of the university’s standard days, start times and durations. Add a “Modify standard times” rule below to change the list for some or all courses, or a “Subset of standard times” rule to accept a course that meets on only some of the days of a standard time.</td>
             <td className="nowrap">{nonStandard === 0 ? <span className="ok-text">✓ met</span> : <span className="warn-orange">⚠ {nonStandard} non-standard</span>}</td>
+            <td />
             {showCopy && <td />}
           </tr>
           {rules.map((r) => {
             const n = broken.get(r.name) ?? 0;
             return (
-              <tr key={r.name} className="clickable" tabIndex={0} onClick={() => openConstraint(r.name, entry.id)} onKeyDown={(e) => e.key === "Enter" && openConstraint(r.name, entry.id)} title="Click to edit">
+              <tr key={r.name} className={`clickable${r.active ? "" : " deactivated"}`} tabIndex={0} onClick={() => openConstraint(r.name, entry.id)} onKeyDown={(e) => e.key === "Enter" && openConstraint(r.name, entry.id)} title="Click to edit">
                 <td><strong>{r.name}</strong></td>
                 <td>{describeRule(r)}{r.comment && <div className="muted small">{r.comment}</div>}</td>
-                <td className="nowrap">{r.type === "standard" ? <span className="muted">changes the standard times</span> : r.type === "subset" ? <span className="muted">allows subsets of standard times</span> : r.type === "colocate" ? <span className="muted">colocated (same instructor)</span> : r.type === "colocateDifferent" ? <span className="muted">colocated (different instructors)</span> : n === 0 ? <span className="ok-text">✓ met</span> : <span className="err">⚠ not met ({n})</span>}</td>
+                <td className="nowrap">{!r.active ? <span className="muted">deactivated</span> : r.type === "standard" ? <span className="muted">changes the standard times</span> : r.type === "subset" ? <span className="muted">allows subsets of standard times</span> : r.type === "colocate" ? <span className="muted">colocated (same instructor)</span> : r.type === "colocateDifferent" ? <span className="muted">colocated (different instructors)</span> : n === 0 ? <span className="ok-text">✓ met</span> : <span className="err">⚠ not met ({n})</span>}</td>
+                <td className="active-cell" onClick={(ev) => ev.stopPropagation()} onKeyDown={(ev) => ev.stopPropagation()}>
+                  <input type="checkbox" checked={r.active} aria-label={`${r.name} is active`} title={r.active ? "Active: click to deactivate this rule (it is kept, but not checked)" : "Deactivated: click to activate this rule"}
+                    onChange={(ev) => ws.applyTo(entry.id, (s) => setRuleActive(s, r.name, ev.target.checked))} />
+                </td>
                 {showCopy && (
                   <td className="nowrap">
                     <button type="button" onClick={(ev) => { ev.stopPropagation(); copy(r.name); }} onKeyDown={(ev) => ev.stopPropagation()}
