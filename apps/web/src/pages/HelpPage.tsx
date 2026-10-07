@@ -292,34 +292,16 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           current schedule’s. A copy is named “name (2)” if the schedule already has a different rule of that name, and is skipped if
           it already has the same rule. Only a schedule’s own rules are saved when you export it.
         </p>
-        <h3>Take together</h3>
+        <h3>Colocate</h3>
         <p>
-          “A student must be able to take <em>any</em> or <em>some</em> <em>n</em> of the listed courses.” A student takes one section of each course, and sections that overlap cannot be taken together.
-          Leave <em>n</em> blank to require all of them: with several sections of a course, one section may clash as long as another does not. Use it for a program’s required courses, or to keep
-          courses that one cohort needs from being scheduled against each other.
+          Two sections that share an instructor, or a room, at overlapping times are reported as a conflict. A <em>Colocate</em> rule says that some courses are meant to meet together in one room, for example a seminar
+          run as both a 200- and a 300-level course, with identical class sessions, or two courses taught together. The registrar is notified that the course should be colocated in Workday.
+          There are two versions. <em>Colocate (same instructor)</em> is for one instructor who teaches several classes at once (for example different levels of an art studio or of a seminar, where the expectations of the students differ but everyone meets together with the instructor): sections that share an instructor will not be reported as conflicting even though they share the instructor and the room at the same time,
+          and loads should be specified so that the sum of the loads across the colocated sessions is correct for the instructor(s). <em>Colocate (different instructors)</em> is for classes that share a large space (a gym, a pool) at the same time, each with its own instructor: sections whose instructors differ will not be reported as conflicting for sharing the room.
+          Each version applies only to a pair that fits it: if two sections named by a <em>different instructors</em> rule share an instructor, or two named by a <em>same instructor</em> rule have different instructors, the conflicts between them are reported as usual.
+          List the courses (one per line, with <code>*</code> and the other patterns, and a section letter if only one section is meant); a course listed once is enough for its own sections to be colocated.
+          It silences only the conflicts reported in the Conflicts tab: a <em>Take together</em> rule still treats the courses as clashing. The registrar tab has a <code>Colocations</code> column that lists, for each section, the other sections it really meets with under a colocate rule (they overlap in time and share a room, or an instructor, so they would otherwise have been flagged), for example <em>MUSC 243 A, MUSC 343 A</em>. A colocation a rule would allow but that does not happen is not listed.
         </p>
-        <ul>
-          <li><strong>some <em>n</em></strong>: at least one set of <em>n</em> courses can be taken together. “Some 2 of these courses” is met if there is at least one workable pair.</li>
-          <li><strong>any <em>n</em></strong>: every set of <em>n</em> courses can be taken together. “Any 2 300-level AMUS courses” checks every pair, and lists the pairs that clash.</li>
-          <li>With the number blank (all courses), <em>any</em> and <em>some</em> mean the same thing.</li>
-        </ul>
-        <p>
-          A course is <code>AMUS 228</code>; add a section letter to mean just that section. To name many courses at once, use a pattern: <code>*</code> matches any run of characters,
-          <code>?</code> any one character, and <code>[23]</code> either of the characters in brackets (<code>[2-4]</code> is a range, <code>[^5]</code> anything but 5). So <code>AMUS 3*</code> stands for every
-          300-level AMUS course, <code>BHAV [23]1?</code> for 211, 212, 311, 312 and so on, and <code>AMUS *</code> (or just <code>AMUS</code>) for every AMUS course. Each matching course counts as its own
-          course. A rule is checked separately in each term; choose a term to limit it to one.
-        </p>
-        <h3>Time window</h3>
-        <p>
-          “The sections of these courses — or taught by these instructors — <em>should</em> (or <em>should not</em>) meet between two times on some days.” Choose once whether the rule is about <em>courses</em> or about <em>instructors</em>, then list them. For example, no 300-level course during the 10:00–10:50 slot on M/W/F, or
-          Kim not teaching before 9:00.
-        </p>
-        <ul>
-          <li><strong>Counts as meeting</strong>: <em>any overlap</em> (the default for “should not”: a class 9:30–10:20 breaks a 10:00–10:50 rule) or <em>entirely within</em> (the default for “should”). A class that ends exactly when the window starts does not overlap it.</li>
-          <li><strong>Any or all of the days</strong>: with “any of M W F”, one meeting in the window is enough to count; with “all of”, the section must meet in the window on each of those days.</li>
-          <li><strong>Every section, or at least some</strong>: by default every section of those courses (or taught by those instructors) must satisfy the rule. Choose <em>at least some</em> for rules such as “at least one section of HELP 111 should meet between 5pm and 10pm”, so a day-time section is fine as long as an evening one exists.</li>
-          <li>Sections with no scheduled time are not checked.</li>
-        </ul>
         <h3>Standard times</h3>
         <p>
           Every meeting is checked against the university’s <strong>standard times</strong>: its days, start time and length (in minutes) must all be one of the standard patterns, for example MWF at 9:15 for 65 minutes
@@ -340,30 +322,17 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           it can be limited to some terms) as long as its start time and length are those of a standard time and its days are some, but not all, of that time’s days. A meeting that matches no standard time at all is still flagged.
           The flag says when a subset rule would allow the meeting.
         </p>
-        <h3>Turning a rule off</h3>
+        <h3>Time window</h3>
         <p>
-          Every rule except the built-in standard times has an <em>Active</em> check box at the right of its row on the Constraint rules tab. Uncheck it to deactivate the rule: it is kept in the schedule (and in the Excel file, in the <code>Active</code> column of the Constraints sheet, as Yes or No) but is not
-          checked, so it is never reported as not met, a deactivated <em>Colocate</em> rule no longer silences conflicts, and a deactivated <em>Modify standard times</em> or <em>Subset</em> rule no longer changes what counts as a standard time. Its status reads “deactivated”. Check the box again to turn it back on.
+          “The sections of these courses — or taught by these instructors — <em>should</em> (or <em>should not</em>) meet between two times on some days.” Choose once whether the rule is about <em>courses</em> or about <em>instructors</em>, then list them. For example, no 300-level course during the 10:00–10:50 slot on M/W/F, or
+          Kim not teaching before 9:00.
         </p>
-        <h3>Colocate</h3>
-        <p>
-          Two sections that share an instructor, or a room, at overlapping times are reported as a conflict. A <em>Colocate</em> rule says that some courses are meant to meet together in one room, for example a seminar
-          run as both a 200- and a 300-level course, with identical class sessions, or two courses taught together. The registrar is notified that the course should be colocated in Workday.
-          There are two versions. <em>Colocate (same instructor)</em> is for one instructor who teaches several classes at once (for example different levels of an art studio or of a seminar, where the expectations of the students differ but everyone meets together with the instructor): sections that share an instructor will not be reported as conflicting even though they share the instructor and the room at the same time,
-          and loads should be specified so that the sum of the loads across the colocated sessions is correct for the instructor(s). <em>Colocate (different instructors)</em> is for classes that share a large space (a gym, a pool) at the same time, each with its own instructor: sections whose instructors differ will not be reported as conflicting for sharing the room.
-          Each version applies only to a pair that fits it: if two sections named by a <em>different instructors</em> rule share an instructor, or two named by a <em>same instructor</em> rule have different instructors, the conflicts between them are reported as usual.
-          List the courses (one per line, with <code>*</code> and the other patterns, and a section letter if only one section is meant); a course listed once is enough for its own sections to be colocated.
-          It silences only the conflicts reported in the Conflicts tab: a <em>Take together</em> rule still treats the courses as clashing. The registrar tab has a <code>Colocations</code> column that lists, for each section, the other sections it really meets with under a colocate rule (they overlap in time and share a room, or an instructor, so they would otherwise have been flagged), for example <em>MUSC 243 A, MUSC 343 A</em>. A colocation a rule would allow but that does not happen is not listed.
-        </p>
-        <h3>Cohort planning</h3>
-        <p>
-          A <em>Cohort planning</em> rule makes sure there are enough seats for cohorts of students. It has two parts. The first is one or more <em>groups of students</em>: “<em>n</em> students must be able to take” a list of courses.
-          The second is the <em>seats in each section</em> of every course that a group names (seats for a course no group uses are ignored, and a rule cannot be saved while a course in a group has no seats given).
-          The rule is met when all the students of all the groups can get seats at the same time: each student takes one section of every course of their group, no two sections overlapping in time, and no section takes more students than it has seats.
-          For example: 50 students must be able to take MATH 161, ENGR 101 and CHEM 101, and 25 must be able to take MATH 162, ENGR 101 and CHEM 101; with 32 seats in each MATH 161 section, 30 in MATH 162, 40 in ENGR 101 and 25 in CHEM 101, the rule is met if the 75 students can all be seated.
-          The Constraint rules tab says whether the rule is met; when it is not, the message says how many students can be seated and why (a course with too few seats in all, sections that clash in time, or a course that is not offered that term).
-          The rule is checked term by term, so limit it to the term in which the cohort takes the courses.
-        </p>
+        <ul>
+          <li><strong>Counts as meeting</strong>: <em>any overlap</em> (the default for “should not”: a class 9:30–10:20 breaks a 10:00–10:50 rule) or <em>entirely within</em> (the default for “should”). A class that ends exactly when the window starts does not overlap it.</li>
+          <li><strong>Any or all of the days</strong>: with “any of M W F”, one meeting in the window is enough to count; with “all of”, the section must meet in the window on each of those days.</li>
+          <li><strong>Every section, or at least some</strong>: by default every section of those courses (or taught by those instructors) must satisfy the rule. Choose <em>at least some</em> for rules such as “at least one section of HELP 111 should meet between 5pm and 10pm”, so a day-time section is fine as long as an evening one exists.</li>
+          <li>Sections with no scheduled time are not checked.</li>
+        </ul>
         <h3>Back-to-back classes</h3>
         <p>
           “Each of these instructors should teach <em>at most</em> (or <em>at least</em>) <em>n</em> consecutive classes.” One class follows another when it starts within 20 minutes of the other’s end
@@ -375,37 +344,68 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li>Two meetings of the same section on one day count as one class.</li>
           <li>Choose <strong>terms</strong> on the rule to check only those; with none chosen, every term is checked. (Any rule can be limited to some terms this way.)</li>
         </ul>
+        <h3>Take together</h3>
+        <p>
+          “A student must be able to take <em>any</em> or <em>some</em> <em>n</em> of the listed courses.” A student takes one section of each course, and sections that overlap cannot be taken together.
+          Leave <em>n</em> blank to require all of them: with several sections of a course, one section may clash as long as another does not. Use it for a program’s required courses, or to keep
+          courses that one cohort needs from being scheduled against each other.
+        </p>
+        <ul>
+          <li><strong>some <em>n</em></strong>: at least one set of <em>n</em> courses can be taken together. “Some 2 of these courses” is met if there is at least one workable pair.</li>
+          <li><strong>any <em>n</em></strong>: every set of <em>n</em> courses can be taken together. “Any 2 300-level AMUS courses” checks every pair, and lists the pairs that clash.</li>
+          <li>With the number blank (all courses), <em>any</em> and <em>some</em> mean the same thing.</li>
+        </ul>
+        <p>
+          A course is <code>AMUS 228</code>; add a section letter to mean just that section. To name many courses at once, use a pattern: <code>*</code> matches any run of characters,
+          <code>?</code> any one character, and <code>[23]</code> either of the characters in brackets (<code>[2-4]</code> is a range, <code>[^5]</code> anything but 5). So <code>AMUS 3*</code> stands for every
+          300-level AMUS course, <code>BHAV [23]1?</code> for 211, 212, 311, 312 and so on, and <code>AMUS *</code> (or just <code>AMUS</code>) for every AMUS course. Each matching course counts as its own
+          course. A rule is checked separately in each term; choose a term to limit it to one.
+        </p>
+        <h3>Cohort planning</h3>
+        <p>
+          A <em>Cohort planning</em> rule makes sure there are enough seats for cohorts of students. It has two parts. The first is one or more <em>groups of students</em>: “<em>n</em> students must be able to take” a list of courses.
+          The second is the <em>seats in each section</em> of every course that a group names (seats for a course no group uses are ignored, and a rule cannot be saved while a course in a group has no seats given).
+          The rule is met when all the students of all the groups can get seats at the same time: each student takes one section of every course of their group, no two sections overlapping in time, and no section takes more students than it has seats.
+          For example: 50 students must be able to take MATH 161, ENGR 101 and CHEM 101, and 25 must be able to take MATH 162, ENGR 101 and CHEM 101; with 32 seats in each MATH 161 section, 30 in MATH 162, 40 in ENGR 101 and 25 in CHEM 101, the rule is met if the 75 students can all be seated.
+          The Constraint rules tab says whether the rule is met; when it is not, the message says how many students can be seated and why (a course with too few seats in all, sections that clash in time, or a course that is not offered that term).
+          The rule is checked term by term, so limit it to the term in which the cohort takes the courses.
+        </p>
+        <h3>Turning a rule off</h3>
+        <p>
+          Every rule except the built-in standard times has an <em>Active</em> check box at the right of its row on the Constraint rules tab. Uncheck it to deactivate the rule: it is kept in the schedule (and in the Excel file, in the <code>Active</code> column of the Constraints sheet, as Yes or No) but is not
+          checked, so it is never reported as not met, a deactivated <em>Colocate</em> rule no longer silences conflicts, and a deactivated <em>Modify standard times</em> or <em>Subset</em> rule no longer changes what counts as a standard time. Its status reads “deactivated”. Check the box again to turn it back on.
+        </p>
         <h3>Examples</h3>
         <p>
           Each of these is in the <em>Example with constraint rules</em> schedule (on the <Link to="/import">Import</Link> tab); open its Constraint rules and Conflicts pages and click a rule to see how it is set up.
         </p>
         <dl>
-          <dt>Take together: all</dt>
-          <dd><em>AMUS major, year 2.</em> Courses AMUS 228, BHAV 212, AMUS 261; number blank. Met if a student can pick one section of each with no clash (a second section of AMUS 228 makes it work).</dd>
-          <dt>Take together: any two</dt>
-          <dd><em>Digital information minor.</em> Courses DIGI 318, BHAV 312, CRUD 245; <em>any</em> 2. Every pair must fit, so it lists the pair that clashes.</dd>
-          <dt>Take together: some pair</dt>
-          <dd>The same courses with <em>some</em> 2: met as long as one pair fits.</dd>
+          <dt>Colocate (same instructor)</dt>
+          <dd><em>The seminar runs at two levels.</em> Courses CRUD 290, CRUD 390; the two listings of one seminar share an instructor, a room and a time and are not reported.</dd>
+          <dt>Modify standard times: allow</dt>
+          <dd><em>Colloquium time.</em> Course AMUS 241; allow R, 50 minutes, starting 15:05.</dd>
+          <dt>Modify standard times: disallow</dt>
+          <dd><em>No 8:00 MWF.</em> Every course (<code>*</code>); disallow MWF, 65 minutes, starting 8:00.</dd>
+          <dt>Subset of standard times</dt>
+          <dd><em>Harmonic structures may meet one day of TR.</em> Course AMUS 296, which meets on Tuesday alone at 8:00 for 100 minutes and is not flagged; BHAV 226 on Friday alone at 9:15 is still flagged, because the rule does not name it.</dd>
           <dt>Time window: courses</dt>
           <dd><em>Colloquium hour is free.</em> Courses AMUS 3*, BHAV 3*, DIGI 3*; <em>should not</em> meet 15:05–15:55 on R; counts as meeting: any overlap.</dd>
           <dt>Time window: an instructor</dt>
           <dd><em>Gus does not teach before 9:00.</em> Instructor Gus Testwell; <em>should not</em> meet 00:00–09:00 on any day.</dd>
           <dt>Time window: at least some sections</dt>
           <dd><em>Ecology Core needs an evening section.</em> Course HELP 111; <em>should</em> meet within 17:00–22:00; applies to at least 1 section.</dd>
-          <dt>Modify standard times: allow</dt>
-          <dd><em>Colloquium time.</em> Course AMUS 241; allow R, 50 minutes, starting 15:05.</dd>
-          <dt>Subset of standard times</dt>
-          <dd><em>Harmonic structures may meet one day of TR.</em> Course AMUS 296, which meets on Tuesday alone at 8:00 for 100 minutes and is not flagged; BHAV 226 on Friday alone at 9:15 is still flagged, because the rule does not name it.</dd>
-          <dt>Colocate (same instructor)</dt>
-          <dd><em>The seminar runs at two levels.</em> Courses CRUD 290, CRUD 390; the two listings of one seminar share an instructor, a room and a time and are not reported.</dd>
-          <dt>Modify standard times: disallow</dt>
-          <dd><em>No 8:00 MWF.</em> Every course (<code>*</code>); disallow MWF, 65 minutes, starting 8:00.</dd>
-          <dt>Cohort planning</dt>
-          <dd><em>First-year engineers.</em> 50 students must be able to take MATH 161, ENGR 101, CHEM 101; 25 students must be able to take MATH 162, ENGR 101, CHEM 101; seats in each section: MATH 161 32, MATH 162 30, ENGR 101 40, CHEM 101 25.</dd>
           <dt>Back-to-back: at most</dt>
           <dd><em>Kim, at most two in a row.</em> Instructor Kim; at most 2 consecutive classes, gap 20 minutes.</dd>
           <dt>Back-to-back: at least, in some terms</dt>
           <dd><em>Lee, at least two in a row.</em> Instructor Lee; at least 2 consecutive classes; terms: Fall only.</dd>
+          <dt>Take together: all</dt>
+          <dd><em>AMUS major, year 2.</em> Courses AMUS 228, BHAV 212, AMUS 261; number blank. Met if a student can pick one section of each with no clash (a second section of AMUS 228 makes it work).</dd>
+          <dt>Take together: any two</dt>
+          <dd><em>Digital information minor.</em> Courses DIGI 318, BHAV 312, CRUD 245; <em>any</em> 2. Every pair must fit, so it lists the pair that clashes.</dd>
+          <dt>Take together: some pair</dt>
+          <dd>The same courses with <em>some</em> 2: met as long as one pair fits.</dd>
+          <dt>Cohort planning</dt>
+          <dd><em>First-year engineers.</em> 50 students must be able to take MATH 161, ENGR 101, CHEM 101; 25 students must be able to take MATH 162, ENGR 101, CHEM 101; seats in each section: MATH 161 32, MATH 162 30, ENGR 101 40, CHEM 101 25.</dd>
         </dl>
         <p>
           Rules are saved in the <code>Constraints</code> sheet of the Excel file (one row per course or instructor, with the rule’s settings in columns such as <code>Type</code>, <code>Count</code>,
