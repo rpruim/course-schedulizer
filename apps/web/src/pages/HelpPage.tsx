@@ -512,7 +512,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     title: "Saving, exporting and sharing",
     body: () => (
       <>
-        <p>On the <Link to="/export">Export</Link> tab, choose a schedule and <em>Export Excel</em>. The file name comes from <em>Save as</em> on the <Link to="/meta">Meta</Link> tab (default <code>schedulizer</code>), with the date and time added unless you turn that off there.</p>
+        <p>On the <Link to="/export">Export</Link> tab, choose a schedule and <em>Export Excel</em>. The file name comes from <em>Save as</em> on the <Link to="/meta">Meta</Link> tab (default <code>schedulizer</code>), with the date and time added unless you turn that off there. The Meta tab’s <em>Time stamp in file name</em> can also be <em>Both</em>, which saves two files in one export, one with the date and time and one without (your browser may ask before allowing the second download). On the Export tab you can type another <em>File name</em> and choose another time stamp setting for that export only; the Meta settings are the starting point and are not changed.</p>
         <ul>
           <li>The first sheet, <em>Registrar Schedule</em>, is in the format the registrar asked for, including a column for cross-listings and your notes. The other sheets let Schedulizer read the file back in full.</li>
           <li><em>Teaching schedule only</em> leaves non-teaching load out of the file, to share a schedule without those details. Whoever opens it still sees the schedule; loads will cover teaching only.</li>

@@ -12,6 +12,7 @@
 * The winter interim, which reports.calvin.edu codes as part 0 of Spring (`SP` with `TermPart` 0), is read as the `WI` term and written back as `SP` with 0 (the Excel file and the registrar tab). Files that say `WI` are still read.
 * *Color by* (and *Filter by* on Mass edit) has a new choice for each active cohort planning rule, *Cohort: rule name*: the courses the rule uses are each drawn in a different color and every other section in the gray hatch.
 * *Example with constraint rules* now uses only the made-up courses of the other examples (prefixes AMUS, BHAV and DIGI, with their titles), so every example is fictitious.
+* Exporting: the Export tab has a *File name* box, starting with the name suggested from the Meta tab (*Save as*), so it can be changed for one export, and a *Time stamp* choice: add the date and time, leave it off, or *Both*, which saves two files in one export. The Meta tab's *Time stamp in file name* has the same three choices (it was a check box) and starts the Export tab's choice; *Both* is saved in the file's Metadata sheet.
 
 # Course Schedulizer 2.0.6
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DEFAULT_SAVE_AS, exportFileName, type Schedule } from "@schedulizer/core";
+import { DEFAULT_SAVE_AS, exportFileNames, stampChoiceOf, type Schedule } from "@schedulizer/core";
 import { yearsOf } from "../model";
 import { metaOpen, useMetaOpen } from "../metaOpen";
 import { useWorkspace, type Entry } from "../state";
@@ -72,11 +72,14 @@ function MetaForm({ entry, fileName }: { entry: Entry; fileName: string }) {
       </label>
       <label className="field">Save as
         <input {...bind("saveAs")} placeholder={DEFAULT_SAVE_AS} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />
-        <span className="muted small">Export downloads as <code>{exportFileName(meta)}</code></span>
+        <span className="muted small">Export downloads as {exportFileNames(meta, stampChoiceOf(meta)).map((n, i) => <span key={n}>{i > 0 && " and "}<code>{n}</code></span>)}</span>
       </label>
-      <label className="field inline">
-        <input type="checkbox" checked={meta.timestamp !== false} onChange={(e) => ws.applyTo(entry.id, (x: Schedule) => ({ ...x, meta: { ...x.meta, timestamp: e.target.checked } }))} />
-        Include time stamp in file name
+      <label className="field">Time stamp in file name
+        <select value={meta.timestamp === "both" ? "both" : meta.timestamp === false ? "no" : "yes"} onChange={(e) => ws.applyTo(entry.id, (x: Schedule) => ({ ...x, meta: { ...x.meta, timestamp: e.target.value === "both" ? "both" : e.target.value === "yes" } }))}>
+          <option value="yes">Add the date and time</option>
+          <option value="no">No time stamp</option>
+          <option value="both">Both: one export saves two files</option>
+        </select>
       </label>
       <label className="field">Version
         <input {...bind("version")} placeholder="e.g. draft 3, sent to registrar" onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />

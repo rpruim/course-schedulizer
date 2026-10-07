@@ -1,7 +1,11 @@
 import { ACADEMIC_YEAR_HELP } from "@schedulizer/core";
 import { useEffect, useRef, useState } from "react";
 import {
+  exportBaseName,
   exportFileName,
+  exportFileNames,
+  stampChoiceOf,
+  type StampChoice,
   readWorkbook,
   writeWorkbook,
   type Issue,
@@ -226,9 +230,16 @@ export function ExportPanel() {
   const ws = useWorkspace();
   const [picked, setPicked] = useState("");
   const [teachingOnly, setTeachingOnly] = useState(false);
+  // A name typed here instead of the one the Meta tab suggests, and a time stamp choice other than the Meta tab's: per schedule, for this visit.
+  const [typed, setTyped] = useState<Record<string, string>>({});
+  const [stamps, setStamps] = useState<Record<string, StampChoice>>({});
   const entry = ws.entries.find((e) => e.id === picked) ?? ws.current;
   if (!entry) return null;
   const s = entry.schedule;
+  const suggested = exportBaseName(s.meta);
+  const base = typed[entry.id] ?? suggested;
+  const stamp = stamps[entry.id] ?? stampChoiceOf(s.meta);
+  const names = exportFileNames(s.meta, stamp, new Date(), base);
   const empty = s.sessions.length === 0 && s.nonTeaching.length === 0;
 
   const build = (includeNonTeaching: boolean) => {
@@ -236,7 +247,12 @@ export function ExportPanel() {
     return writeWorkbook(named, { includeNonTeaching });
   };
   async function exportXlsx() {
-    downloadBytes(await build(!teachingOnly), exportFileName(entry!.schedule.meta), XLSX_TYPE);
+    const bytes = await build(!teachingOnly);
+    // each file in turn: a browser may ask before allowing a second download
+    for (const [i, name] of names.entries()) {
+      if (i > 0) await new Promise((r) => setTimeout(r, 400));
+      downloadBytes(bytes, name, XLSX_TYPE);
+    }
   }
 
   return (
@@ -253,10 +269,21 @@ export function ExportPanel() {
         <input type="checkbox" checked={teachingOnly} onChange={(e) => setTeachingOnly(e.target.checked)} />
         Teaching schedule only
       </label>
+      <label className="field">File name
+        <input value={base} size={26} onChange={(e) => setTyped({ ...typed, [entry.id]: e.target.value })} title={`Suggested from the Save As text on the Meta tab: ${suggested}`} aria-label="File name, without .xlsx or the time stamp" />
+      </label>
+      {typed[entry.id] !== undefined && <button className="link" onClick={() => setTyped(({ [entry.id]: _gone, ...rest }) => rest)} title={`Back to the suggested name, ${suggested}`}>Use {suggested}</button>}
+      <label className="field">Time stamp
+        <select value={stamp} onChange={(e) => setStamps({ ...stamps, [entry.id]: e.target.value as StampChoice })} title="The Meta tab’s time stamp setting is the starting choice">
+          <option value="with">Add the date and time</option>
+          <option value="without">No time stamp</option>
+          <option value="both">Both: save two files</option>
+        </select>
+      </label>
       <button className="primary" onClick={() => void exportXlsx()} disabled={empty}>Export Excel</button>
-      <span className="muted small">Downloads as <code>{exportFileName(s.meta)}</code> (change this on the Meta tab).</span>
     </div>
-    <OneDrivePanel entry={entry} build={() => build(true)} fileName={exportFileName(s.meta)} disabled={empty} />
+    <p className="muted small">Downloads as {names.map((n, i) => <span key={n}>{i > 0 && " and "}<code>{n}</code></span>)}. The name starts from the Meta tab (Save As and the time stamp setting); change it here for this export only.</p>
+    <OneDrivePanel entry={entry} build={() => build(true)} fileName={exportFileName({ saveAs: s.meta.saveAs, timestamp: stamp !== "without" }, new Date(), base)} disabled={empty} />
     </>
   );
 }

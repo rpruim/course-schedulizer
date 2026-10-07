@@ -67,7 +67,7 @@ export async function readWorkbook(data: ArrayBuffer | Uint8Array, options: Impo
     if (k === "name" || k === "nickname" || k === "notes" || k === "version") meta[k] = r.Value ?? "";
     else if (k === "default department") meta.defaultDepartment = (r.Value ?? "").trim();
     else if (k === "save as") meta.saveAs = (r.Value ?? "").trim() || DEFAULT_SAVE_AS;
-    else if (k === "time stamp in file name") meta.timestamp = !/^(no|false|0)$/i.test((r.Value ?? "").trim());
+    else if (k === "time stamp in file name") meta.timestamp = /^both$/i.test((r.Value ?? "").trim()) ? "both" : !/^(no|false|0)$/i.test((r.Value ?? "").trim());
   }
   const result = importRecords({
     // Our own "Sessions" sheet, else the old app's first tab ("Schedule"), else the first sheet.
@@ -155,7 +155,7 @@ export async function writeWorkbook(schedule: import("./types.js").Schedule, opt
       ["Name", schedule.meta.name],
       ["Nickname", schedule.meta.nickname ?? ""],
       ["Save As", schedule.meta.saveAs || DEFAULT_SAVE_AS],
-      ["Time Stamp In File Name", schedule.meta.timestamp === false ? "No" : "Yes"],
+      ["Time Stamp In File Name", schedule.meta.timestamp === false ? "No" : schedule.meta.timestamp === "both" ? "Both" : "Yes"],
       ["Default Department", schedule.meta.defaultDepartment ?? ""],
       ["Version", schedule.meta.version],
       ["Notes", schedule.meta.notes],

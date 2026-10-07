@@ -198,8 +198,8 @@ export interface Meta {
   nickname: string;
   /** Base of the file name when exporting; blank = `DEFAULT_SAVE_AS`. */
   saveAs: string;
-  /** Add the date and time to the exported file name. */
-  timestamp: boolean;
+  /** Add the date and time to the exported file name (`true`), leave it off (`false`), or save both files in one export (`"both"`). */
+  timestamp: boolean | "both";
   notes: string;
   version: string;
   /** The department of every section that has none of its own (the Department box under More details); blank = none. */
