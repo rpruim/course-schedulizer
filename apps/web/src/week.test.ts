@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { importRecords, type Schedule } from "@schedulizer/core";
-import { colorOptions, groupGrids, hourLabel, hueOf, layoutLanes, weekGrids, type WeekOptions } from "./week";
+import { colorOptions, groupGrids, hourLabel, hueMap, layoutLanes, weekGrids, type WeekOptions } from "./week";
 
 const sec = (prefix: string, n: string, letter: string, o: Record<string, string> = {}) => ({
   AcademicYear: "Y", Term: "FA", Prefix: prefix, CourseNumber: n, Section: letter, ...o,
@@ -31,12 +31,26 @@ describe("layoutLanes", () => {
   });
 });
 
-describe("hueOf", () => {
-  it("is stable and in range", () => {
-    expect(hueOf("MUSC")).toBe(hueOf("MUSC"));
-    expect(hueOf("MUSC")).not.toBe(hueOf("URBS"));
-    expect(hueOf("anything")).toBeGreaterThanOrEqual(0);
-    expect(hueOf("anything")).toBeLessThan(360);
+describe("hueMap", () => {
+  const spread = (n: number) => [...hueMap(Array.from({ length: n }, (_, i) => `v${i}`)).values()];
+  it("gives every value its own hue, evenly spread, however many there are", () => {
+    for (const n of [1, 2, 5, 8, 9, 13, 30, 100]) {
+      const hues = spread(n);
+      expect(new Set(hues).size, `n = ${n}`).toBe(n);
+      const sorted = [...hues].sort((a, b) => a - b);
+      const gaps = sorted.map((h, i) => (i === 0 ? h + 360 - sorted[n - 1]! : h - sorted[i - 1]!));
+      expect(Math.min(...gaps), `n = ${n}`).toBeGreaterThanOrEqual(Math.floor(360 / n) - 1);
+    }
+  });
+  it("lets neighbours in a short list run through the spectrum, and scatters them in a long one", () => {
+    const short = spread(5);
+    expect(short).toEqual([12, 84, 156, 228, 300]);
+    const long = spread(13);
+    const near = long.slice(1).filter((h, i) => Math.min(Math.abs(h - long[i]!), 360 - Math.abs(h - long[i]!)) < 40).length;
+    expect(near).toBe(0); // consecutive values never have similar hues
+  });
+  it("does not depend on the order, only on the set, once sorted, and ignores repeats", () => {
+    expect(hueMap(["b", "a", "a"]).size).toBe(2);
   });
 });
 
@@ -100,8 +114,8 @@ describe("department grid", () => {
     expect(b.title).toBe("MUSC 1 A");
     expect(b.detail).toContain("MUSC 1 A · First");
     expect(b.quarters).toEqual([true, true, false, false]);
-    expect(weekGrids(part, opts({ colorBy: "level" })).grids[0]!.blocks[0]!.hue).toBe(hueOf("100"));
-    expect(weekGrids(part, opts({ colorBy: "instructor" })).grids[0]!.blocks[0]!.hue).toBe(hueOf("Ada"));
+    expect(weekGrids(part, opts({ colorBy: "level" })).grids[0]!.blocks[0]!.hue).toBe(hueMap(["100"]).get("100"));
+    expect(weekGrids(part, opts({ colorBy: "instructor" })).grids[0]!.blocks[0]!.hue).toBe(hueMap(["Ada"]).get("Ada"));
   });
   it("colors by group, instructional method, and a level taken from the course number", () => {
     const s = make([
@@ -109,9 +123,9 @@ describe("department grid", () => {
       sec("MUSC", "231", "B", { CourseLevel: "300", ...mt("T", "9:00", "50") }),
     ]);
     const hues = (colorBy: WeekOptions["colorBy"]) => weekGrids(s, opts({ colorBy })).grids[0]!.blocks.map((b) => b.hue);
-    expect(hues("group")).toEqual([hueOf("Major bhav"), undefined]); // a missing value has no color: it is drawn gray
-    expect(hues("method")).toEqual([hueOf("Lecture"), undefined]);
-    expect(hues("level")).toEqual([hueOf("200"), hueOf("300")]); // 231 implies 200 unless a level is given
+    expect(hues("group")).toEqual([hueMap(["Major bhav"]).get("Major bhav"), undefined]); // a missing value has no color: it is drawn gray
+    expect(hues("method")).toEqual([hueMap(["Lecture"]).get("Lecture"), undefined]);
+    expect(hues("level")).toEqual([hueMap(["200", "300"]).get("200"), hueMap(["200", "300"]).get("300")]); // 231 implies 200 unless a level is given
   });
   it("colors by department (with the schedule's default) and draws a missing value gray", () => {
     const s = make([
@@ -121,10 +135,10 @@ describe("department grid", () => {
     ]);
     const blocks = (sched: Schedule, colorBy: WeekOptions["colorBy"]) => weekGrids(sched, opts({ colorBy })).grids[0]!.blocks;
     expect(blocks(s, "department").map((b) => b.colorValue)).toEqual(["Musicology", "", ""]);
-    expect(blocks(s, "department").map((b) => b.hue)).toEqual([hueOf("Musicology"), undefined, undefined]);
+    expect(blocks(s, "department").map((b) => b.hue)).toEqual([hueMap(["Musicology"]).get("Musicology"), undefined, undefined]);
     const withDefault = { ...s, meta: { ...s.meta, defaultDepartment: "Some Dept" } };
     expect(blocks(withDefault, "department").map((b) => b.colorValue)).toEqual(["Musicology", "Some Dept", "Some Dept"]);
-    expect(blocks(s, "group").map((b) => b.hue)).toEqual([undefined, undefined, hueOf("G")]);
+    expect(blocks(s, "group").map((b) => b.hue)).toEqual([undefined, undefined, hueMap(["G"]).get("G")]);
     expect(blocks(s, "prefix").every((b) => b.hue !== undefined)).toBe(true);
   });
   it("filters the department grid by what it can be colored by, offering the values (and whether any are missing)", () => {

@@ -10,7 +10,7 @@ import { useRemembered } from "../remember";
 import { keyFor, openColorKey, setColorKey, useColorBy } from "../colorKey";
 import { inPartOrder, termsAcross, yearsAcross } from "../model";
 import { MERGED_ID, useWorkspace } from "../state";
-import { cohortCourseNames, colorOptions, colorValueOf, groupGrids, hourLabel, termsFor, weekGrids, type Block, type ColorBy, type Grid, type GridKind } from "../week";
+import { cohortCourseNames, colorOptions, colorValuesOf, colorValueOf, groupGrids, hourLabel, termsFor, weekGrids, type Block, type ColorBy, type Grid, type GridKind } from "../week";
 import { Empty, NoneShown } from "./SchedulePage";
 
 const DAY_NAMES: Record<string, string> = { M: "Mon", T: "Tue", W: "Wed", R: "Thu", F: "Fri", S: "Sat", U: "Sun" };
@@ -57,6 +57,8 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
   };
   const filter = mass ? { by: filterBy, values: filterValues } : undefined;
 
+  // The colors are shared out among everything the schedules shown have for this way of coloring, so a value keeps its color from week to week.
+  const palette = useMemo(() => (colorBy.startsWith("cohort:") ? undefined : colorValuesOf(entries.map((e) => e.schedule), colorBy)), [entries, colorBy]);
   const years = yearsAcross(entries);
   const year = years.includes(pickedYear) ? pickedYear : (years[0] ?? "");
   const terms = termsAcross(entries).filter((t) => entries.some((e) => termsFor(e.schedule, year).some((x) => x.code === t.code)));
@@ -71,9 +73,9 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
       entries.map((e) => ({
         id: e.id,
         name: e.name,
-        result: weekGrids(e.schedule, { year, term, kind, colorBy, part, ...(filter ? { filter } : {}), ...(kind === "dept" && only && !mass ? { prefix: only } : {}) }),
+        result: weekGrids(e.schedule, { year, term, kind, colorBy, ...(palette ? { palette } : {}), part, ...(filter ? { filter } : {}), ...(kind === "dept" && only && !mass ? { prefix: only } : {}) }),
       })),
-    [entries, year, term, kind, colorBy, part, only, mass, filterBy, filterValues],
+    [entries, year, term, kind, colorBy, palette, part, only, mass, filterBy, filterValues],
   );
   // Choices come from every included schedule; one that no longer exists (a different file or term) means "all".
   const choices = [...new Set(results.flatMap((r) => r.result.choices))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
@@ -84,8 +86,8 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
     () =>
       kind === "dept" || !effectiveOnly
         ? results
-        : entries.map((e) => ({ id: e.id, name: e.name, result: weekGrids(e.schedule, { year, term, kind, colorBy, part, only: effectiveOnly }) })),
-    [results, entries, year, term, kind, colorBy, part, effectiveOnly],
+        : entries.map((e) => ({ id: e.id, name: e.name, result: weekGrids(e.schedule, { year, term, kind, colorBy, ...(palette ? { palette } : {}), part, only: effectiveOnly }) })),
+    [results, entries, year, term, kind, colorBy, palette, part, effectiveOnly],
   );
   const filterChoices = [...new Set(results.flatMap((r) => r.result.filterValues))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
   const filterHasMissing = results.some((r) => r.result.filterMissing);

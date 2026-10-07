@@ -141,6 +141,8 @@ export interface WeekOptions {
    * an empty string stands for "missing". No values means every section.
    */
   filter?: { by: ColorBy; values: string[] };
+  /** The values the colors are shared out among (the app passes those of all the schedules shown, so a value keeps its color in each). */
+  palette?: string[];
 }
 
 export interface WeekResult {
@@ -181,11 +183,35 @@ const DAY_ORDER = "MTWRFSU";
 const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
 
-/** A stable hue (0–359) for a string, so the same course keeps the same color. */
-export function hueOf(s: string): number {
-  let h = 0;
-  for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return h % 360;
+/**
+ * A hue (0–359) for each of the values, so that every value looks different: the hues are spread evenly round the color wheel, however
+ * many values there are. With a few values (up to 8) neighbours in the list get neighbouring hues, so an ordered thing such as the
+ * course levels reads as a run of colors; with more, neighbours are scattered (by a step that is coprime with the count) so values
+ * next to each other in the key do not look alike.
+ */
+export function hueMap(values: string[]): Map<string, number> {
+  const list = [...new Set(values)];
+  const n = list.length;
+  let step = 1;
+  if (n > 8) {
+    step = Math.max(2, Math.round(n * 0.382));
+    const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+    while (gcd(step, n) !== 1) step++;
+  }
+  return new Map(list.map((v, i) => [v, Math.round((((i * step) % n) * 360) / n + 12) % 360]));
+}
+
+/** Every value (not blank) the schedules have for a way of coloring, in natural order: what the colors are shared out among. */
+export function colorValuesOf(schedules: Schedule[], by: ColorBy): string[] {
+  const seen = new Set<string>();
+  for (const sc of schedules) {
+    if (by.startsWith("cohort:")) {
+      const rule = cohortOf(sc, by);
+      if (rule) for (const c of cohortCourses(rule)) seen.add(c);
+    } else for (const s of sc.sessions) seen.add(colorValueOf(sc, by, s));
+  }
+  seen.delete("");
+  return [...seen].sort(natural);
 }
 
 /**
@@ -244,13 +270,13 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
 
   const colorKey = (s: Session): string => colorValueOf(schedule, o.colorBy, s);
   // A section with nothing in the field being colored by is gray, so "missing" is easy to spot.
-  // Courses of a cohort rule get hues spread evenly round the wheel, so no two look alike.
+  // The values the schedule has (or, in several schedules, all of them: `o.palette`) share out the color wheel, so none look alike.
+  // A cohort rule's courses are shared out in the order the rule has them.
   const cohort = cohortOf(schedule, o.colorBy);
-  const cohortList = cohort ? cohortCourses(cohort) : [];
+  const hues = hueMap(o.palette ?? (cohort ? cohortCourses(cohort) : colorValuesOf([schedule], o.colorBy)));
   const hueFor = (s: Session) => {
     const v = colorKey(s);
-    if (v === "") return undefined;
-    return cohort ? Math.round((cohortList.indexOf(v) * 360) / Math.max(1, cohortList.length) + 8) % 360 : hueOf(v);
+    return v === "" ? undefined : hues.get(v);
   };
   const label = (s: Session) => `${courseName(s)} ${s.section}`;
   const quartersOf = (s: Session): boolean[] => {
