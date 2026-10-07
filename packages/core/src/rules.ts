@@ -478,11 +478,16 @@ function violationsIn(schedule: Schedule): RuleViolation[] {
     }
     if (rule.type === "colocate" || rule.type === "colocateDifferent") continue; // they only silence conflicts (`allowedCollisions`)
     if (rule.type === "standard" || rule.type === "subset") continue; // they change what the standard-times check accepts, below
+    let cohortSeen = false;
     for (const g of groups.values()) {
       if (!termMatches(rule.term, g.term)) continue;
       if (rule.type === "takeable") takeable(rule, g);
-      else if (rule.type === "cohortPlan") cohortPlanning(rule, g);
+      else if (rule.type === "cohortPlan") cohortSeen = cohortPlanning(rule, g) || cohortSeen;
       else window(rule, g);
+    }
+    // A cohort rule none of whose courses is offered in any term it covers is not met, not vacuously satisfied.
+    if (rule.type === "cohortPlan" && !cohortSeen && rule.elements.some((e) => e.students !== undefined && e.courses.length > 0)) {
+      out.push({ rule: rule.name, type: "cohortPlan", academicYear: "", term: "", message: "None of the courses in this rule are offered in the schedule, so its students cannot take them", sectionIds: [], sessions: [] });
     }
   }
   for (const g of groups.values()) standardTimes(g);
@@ -724,7 +729,7 @@ function violationsIn(schedule: Schedule): RuleViolation[] {
    * courses, without passing the seats of any section? (`planSeats`.) A group is looked at in a term when some of its courses are offered
    * then; a course of it that is not offered that term means its students cannot be seated.
    */
-  function cohortPlanning(rule: Rule, g: { year: string; term: string; sections: Session[] }) {
+  function cohortPlanning(rule: Rule, g: { year: string; term: string; sections: Session[] }): boolean {
     const seatsOf = new Map(rule.capacities.filter((c) => c.seats !== undefined).map((c) => [normCourse(c.course), c.seats!] as const));
     const offered = (course: string) => g.sections.filter((s) => listingsOf(s, schedule.crossListings).some((l) => normCourse(`${l.prefix} ${l.courseNumber}`) === normCourse(course)));
     const elements: SeatElement[] = [];
@@ -732,10 +737,12 @@ function violationsIn(schedule: Schedule): RuleViolation[] {
     const notOffered: string[] = [];
     const noSeats = new Set<string>();
     let unseatable = 0;
+    let considered = false;
     for (const e of rule.elements) {
       if (e.students === undefined || e.courses.length === 0) continue;
       const found = e.courses.map((c) => ({ course: c, sections: offered(c) }));
       if (found.every((x) => x.sections.length === 0)) continue; // none of its courses run this term
+      considered = true;
       for (const x of found) if (!seatsOf.has(normCourse(x.course))) noSeats.add(x.course);
       const missing = found.filter((x) => x.sections.length === 0);
       for (const x of missing) if (!notOffered.includes(x.course)) notOffered.push(x.course);
@@ -746,14 +753,15 @@ function violationsIn(schedule: Schedule): RuleViolation[] {
       }
       elements.push({ students: e.students, courses: found.map((x) => ({ label: x.course, sections: x.sections.map((s) => ({ id: s.sectionId, seats: seatsOf.get(normCourse(x.course)) ?? 0 })) })) });
     }
-    if (elements.length === 0 && unseatable === 0) return;
+    if (elements.length === 0 && unseatable === 0) return considered;
     const ids = [...involved];
     const report = (message: string, sectionIds = ids) => out.push({ rule: rule.name, type: "cohortPlan", academicYear: g.year, term: g.term, message, sectionIds, sessions: sectionIds.flatMap((id) => bySection.get(id) ?? []) });
-    if (noSeats.size > 0) return report(`The seats in each section are not given for ${[...noSeats].join(", ")}, so this cannot be checked`);
+    if (noSeats.size > 0) report(`The seats in each section are not given for ${[...noSeats].join(", ")}, so this cannot be checked`);
+    if (noSeats.size > 0) return true;
 
     const result = planSeats(elements, sectionsOverlap);
     const total = result.total + unseatable;
-    if (result.placed === total && unseatable === 0) return;
+    if (result.placed === total && unseatable === 0) return true;
     const parts: string[] = [];
     for (const c of notOffered) parts.push(`${c} is not offered in ${g.term}`);
     for (const i of result.noSchedule) {
@@ -763,6 +771,7 @@ function violationsIn(schedule: Schedule): RuleViolation[] {
     for (const s of result.short) parts.push(`${s.label} has ${s.seats} seat${s.seats === 1 ? "" : "s"} in all but ${s.needed} students need it`);
     const how = result.exact ? "" : " (the search was cut off, so more might fit)";
     report(`${result.placed} of ${total} students can all get seats${how}${parts.length ? `: ${parts.join("; ")}` : ": the seats and the times of the sections do not fit together"}`);
+    return true;
   }
 
   function window(rule: Rule, g: { year: string; term: string; sections: Session[] }) {

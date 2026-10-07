@@ -49,6 +49,14 @@ describe("cohort planning", () => {
     const v = cohort(build(s, rows(SEATS)));
     expect(v[0]!.message).toBe("50 of 75 students can all get seats: MATH 162 is not offered in FA");
   });
+  it("is not met, rather than vacuously met, when none of its courses is in the schedule", () => {
+    const other = [sec("AMUS", "112", "A", "MWF", "8:00"), sec("BHAV", "112", "A", "TR", "8:00")];
+    const v = cohort(build(other, rows(SEATS)));
+    expect(v).toHaveLength(1);
+    expect(v[0]!.message).toBe("None of the courses in this rule are offered in the schedule, so its students cannot take them");
+    // and a schedule that has the courses is judged as before
+    expect(cohort(build(sessions(3), rows(SEATS)))).toEqual([]);
+  });
   it("looks at each term on its own, and only at terms where its courses run", () => {
     const sp = sessions(3).map((x) => ({ ...x, Term: "SP", AcademicYear: "Y" }));
     const v = cohort(build([...sessions(3), ...sp.filter((x) => x.Prefix !== "CHEM")], rows(SEATS)));
