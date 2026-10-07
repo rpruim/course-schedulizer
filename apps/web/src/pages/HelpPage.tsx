@@ -286,8 +286,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           There are several types of constraint rules.
         </p>
         <p>
-          A rule belongs to the schedule it is saved in, and applies only to that schedule’s sections, even when several schedules are
-          viewed merged. When two or more schedules are ticked, the Constraint rules tab marks the current schedule with a border and has a
+          A rule belongs to the schedule it is saved in (how rules behave when schedules are viewed merged is described below). When two or more schedules are ticked, the Constraint rules tab marks the current schedule with a border and has a
           button on each rule: <em>Copy to current schedule</em> on the other schedules’ rules, and <em>Copy to all schedules</em> on the
           current schedule’s. A copy is named “name (2)” if the schedule already has a different rule of that name, and is skipped if
           it already has the same rule. Only a schedule’s own rules are saved when you export it.
@@ -378,20 +377,23 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </p>
         <h3>Rules when schedules are merged</h3>
         <p>
-          When two or more schedules are ticked and shown <em>merged</em>, they are laid over one another as if they were one schedule, so clashes between them are found. The rules are not merged in the same way:
-          each rule stays with the schedule it is saved in, and is checked only against that schedule’s own sections, as if the other schedules were not there. This holds for every type of rule.
+          When two or more schedules are ticked and shown <em>merged</em>, they are laid over one another as if they were one schedule. A rule always stays <em>saved</em> in the schedule where you made it (it is exported with that schedule, and edited, deactivated and copied there),
+          but what it is checked against depends on what it is about:
         </p>
         <ul>
-          <li><strong>Clashes are found across schedules; rules are not.</strong> Two sections of different schedules that share a room, or an instructor, at overlapping times are reported as a conflict, as always. But a <em>Take together</em> rule counts only the sections of its own schedule, a <em>Cohort planning</em> rule takes its sections and their times from its own schedule only (so seats and clashes in another schedule do not count), and a <em>Time window</em> or <em>Back-to-back</em> rule looks only at the meetings of its own schedule, even for an instructor who also teaches in another.</li>
-          <li><strong>Colocate rules do not reach across schedules.</strong> A <em>Colocate</em> rule silences only the conflicts between sections that both belong to its schedule. If a section of one schedule meets with a section of another, the conflict between them is still reported; to silence it, put both sections in one schedule.</li>
-          <li><strong>Standard times</strong> are checked for each schedule by its own <em>Modify standard times</em> and <em>Subset of standard times</em> rules. An exception made in one schedule does not apply to another’s sections.</li>
-          <li><strong>Names.</strong> If two schedules have a rule with the same name, the Conflicts tab tells them apart as “name” and “name (2)”, in the order the schedules are listed. The Constraint rules tab lists each schedule’s rules under that schedule, with their own names.</li>
-          <li><strong>Deactivating</strong> a rule affects only the schedule that holds it.</li>
-          <li><strong>Viewing separately</strong> gives the same results for the rules, since each schedule is checked on its own; only the clashes between schedules are no longer looked for.</li>
+          <li><strong>Rules about sections together are checked against the whole merged schedule.</strong> These are <em>Take together</em>, <em>Cohort planning</em>, <em>Back-to-back classes</em>, <em>Colocate</em> (both versions), and a <em>Time window</em> rule that has a number (“at least <em>n</em> of the sections”). Such a rule names courses or instructors, and it looks at every section of them in every ticked schedule, whichever schedule the rule is saved in. For example, put MATH and ENGR in one schedule and CHEM in another, and a cohort planning rule saved in either one sees all three; an instructor who teaches in two schedules is checked for back-to-back classes across both; and a colocate rule silences a conflict between a section of one schedule and a section of another.</li>
+          <li><strong>Rules about sections one at a time stay with their own schedule.</strong> These are <em>Modify standard times</em>, <em>Subset of standard times</em> and a <em>Time window</em> rule with no number (“every section”). They apply only to the sections of the schedule they are saved in, so an exception to the standard times in one schedule does not excuse another schedule’s sections, and the built-in standard times check uses each schedule’s own rules.</li>
+          <li><strong>Viewing separately</strong> checks every rule against its own schedule alone, as it always did. (Compare always keeps schedules separate.) The Constraint rules tab and the rule editor’s live check agree with the Conflicts tab: when the schedules are merged they judge a rule against the merged schedule, and when they are separate, against its own.</li>
         </ul>
-        <p>
-          To use a rule in several schedules, copy it with the <em>Copy to current schedule</em> and <em>Copy to all schedules</em> buttons on the Constraint rules tab. Each copy is then a separate rule, edited and deactivated on its own.
-        </p>
+        <p>Things to watch for:</p>
+        <ul>
+          <li><strong>Merge complements, not alternatives.</strong> Merging works well for schedules that cover different courses or departments. If you merge two versions of the <em>same</em> schedule (say a draft and the registrar’s copy), every section is there twice: a cohort planning rule counts the seats of both, so the seats look doubled and a shortage can be hidden, and a take together or back-to-back rule can be satisfied by a section from the other version. Untick one of them, or view them separately, to check one version.</li>
+          <li><strong>The result depends on which schedules are ticked.</strong> A rule that is met on its own can become unmet once another schedule’s sections are added (an instructor’s extra classes make a run of consecutive classes), and one that is unmet can become met (the missing course is in the other schedule). Nothing changes in the files; only the view changes.</li>
+          <li><strong>Copies of a rule are checked once.</strong> If the same rule is saved in several schedules (for example after <em>Copy to all schedules</em>), merging checks it once, so a failure is not listed twice; each copy’s row on the Constraint rules tab still shows “not met”. A copy whose settings were changed is a different rule and is checked on its own, so change it everywhere or remove the extra copy.</li>
+          <li><strong>Names.</strong> If two different rules have the same name in different schedules, the Conflicts tab tells them apart as “name” and “name (2)”, in the order the schedules are listed.</li>
+          <li><strong>Windows with and without a number differ.</strong> The same time window rule can reach across schedules or not depending on whether it has a number. If you want a rule to cover only its own schedule’s sections, make it about every section (no number), or view the schedules separately.</li>
+          <li><strong>Terms and years.</strong> Rules are checked for each academic year and term of the merged schedule, as for a single schedule, so schedules of different years do not mix.</li>
+        </ul>
         <h3>Examples</h3>
         <p>
           Each of these is in the <em>Example with constraint rules</em> schedule (on the <Link to="/import">Import</Link> tab); open its Constraint rules and Conflicts pages and click a rule to see how it is set up.

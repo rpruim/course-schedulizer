@@ -5,6 +5,7 @@ import {
   emptyRule,
   emptySchedule,
   findRuleViolations,
+  mergeSchedules,
   formatTime,
   meetsMode,
   parseTime,
@@ -182,8 +183,13 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
   const preview = useMemo(() => {
     if (problems.length) return undefined;
     const saved = saveRule(schedule, original?.name, rule);
+    // With schedules merged, a rule about sections together reaches across them, so it is checked in the merged schedule.
+    if (scheduleId && ws.viewAs === "merged" && ws.includedEntries.length > 1 && ws.includedEntries.some((e) => e.id === scheduleId)) {
+      const m = mergeSchedules(ws.includedEntries.map((e) => ({ id: e.id, name: e.name, schedule: e.id === scheduleId ? saved : e.schedule })));
+      return findRuleViolations(m.schedule).filter((v) => [v.rule, ...(v.sameAs ?? [])].some((n) => { const o = m.origin.rules.get(n); return o?.scheduleId === scheduleId && o.name === rule.name; }));
+    }
     return findRuleViolations(saved).filter((v) => v.rule === rule.name);
-  }, [problems, schedule, rule, original]);
+  }, [problems, schedule, rule, original, ws.viewAs, ws.includedEntries, scheduleId]);
 
   const lists = useMemo(() => {
     const uniq = (xs: string[]) => [...new Set(xs.map((x) => x.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));

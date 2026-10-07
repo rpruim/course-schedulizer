@@ -505,18 +505,28 @@ describe("subset of standard times", () => {
   });
 });
 
-describe("rules belong to the schedule they came from", () => {
+describe("rules and merged schedules", () => {
   const custom = (s: Parameters<typeof findRuleViolations>[0]) => findRuleViolations(s).filter((v) => !v.builtin);
   const a = () => importRecords({ sessions: [sec("MUSC", "1", "A", "MWF", "9:00"), sec("MUSC", "2", "A", "MWF", "9:00")], constraints: [{ Constraint: "Both", Course: "MUSC 1" }, { Constraint: "Both", Course: "MUSC 2" }] }).schedule;
   const b = () => importRecords({ sessions: [sec("MUSC", "1", "A", "TR", "9:00"), sec("MUSC", "2", "A", "TR", "11:00")], constraints: [] }).schedule;
-  it("a rule of one schedule is not checked against the sections of another when they are merged", () => {
+  it("a rule about sections together (take together) is checked against the whole merged schedule", () => {
     expect(custom(a()).map((v) => v.rule)).toEqual(["Both"]);
     const merged = mergeSchedules([{ id: "a", name: "A", schedule: a() }, { id: "b", name: "B", schedule: b() }]).schedule;
-    expect(custom(merged).map((v) => [v.rule, v.sectionIds])).toEqual([["Both", expect.arrayContaining(["Y-FA-MUSC1-A"])]]);
-    // B has no rules, so its (clashing) sections are not drawn into A's rule: only A's two sections are involved
-    expect(custom(merged)[0]!.sectionIds).toHaveLength(2);
+    // B's sections offer a clash-free choice of MUSC 1 and MUSC 2, so a student can take both: the rule is met
+    expect(custom(merged)).toEqual([]);
     const reversed = mergeSchedules([{ id: "b", name: "B", schedule: b() }, { id: "a", name: "A", schedule: a() }]).schedule;
-    expect(custom(reversed).map((v) => v.rule)).toEqual(["Both"]);
+    expect(custom(reversed)).toEqual([]);
+  });
+  it("a rule about sections one at a time (a window rule for every section) stays with its own schedule", () => {
+    const morning = (id: string) => importRecords({ sessions: [sec("MUSC", "1", "A", "MWF", "8:00")], constraints: id === "a" ? [{ Constraint: "Not early", Type: "window", Course: "MUSC 1", From: "7:00", To: "9:00", Should: "should not" }] : [] }).schedule;
+    const merged = mergeSchedules([{ id: "a", name: "A", schedule: morning("a") }, { id: "b", name: "B", schedule: morning("b") }]).schedule;
+    const found = custom(merged);
+    expect(found).toHaveLength(1);
+    expect(found[0]!.sectionIds).toEqual(["Y-FA-MUSC1-A"]); // not B's section (Y-FA-MUSC1-A~2)
+  });
+  it("the same rule saved in two schedules is checked once", () => {
+    const merged = mergeSchedules([{ id: "a", name: "A", schedule: a() }, { id: "a2", name: "A2", schedule: a() }]).schedule;
+    expect(custom(merged).map((v) => v.rule)).toEqual(["Both"]);
   });
   it("copies a rule to another schedule, renaming it when the name is taken and skipping an identical one", () => {
     const first = copyRule(a(), b(), "Both");
@@ -571,14 +581,11 @@ describe("colocated courses (the allow-collisions rule)", () => {
     expect(validateRule(s, { ...rule, items: [{ course: "", section: "", instructor: "Kim" }] }, rule.name).length).toBeGreaterThan(0);
     expect(findRuleViolations(s).filter((v) => !v.builtin)).toEqual([]);
   });
-  it("applies only inside the schedule it came from when schedules are merged", () => {
+  it("applies to sections of other schedules too when schedules are merged", () => {
     const a = importRecords({ sessions: [seminar("200"), seminar("300")], constraints: [allow("MUSC 200"), allow("MUSC 300")] }).schedule;
     const b = importRecords({ sessions: [seminar("200"), seminar("300")], constraints: [] }).schedule;
     const merged = mergeSchedules([{ id: "a", name: "A", schedule: a }, { id: "b", name: "B", schedule: b }]).schedule;
-    const found = findConflicts(merged);
-    expect(found.every((c) => c.sectionIdA.includes("~") || c.sectionIdB.includes("~"))).toBe(true); // clashes between A's allowed sections are silent; B's and cross-schedule ones are reported
-    expect(found.length).toBeGreaterThan(0);
-    expect(found.some((c) => !c.sectionIdA.includes("~") && !c.sectionIdB.includes("~"))).toBe(false);
+    expect(findConflicts(merged)).toEqual([]); // A's rule names the courses, so it covers B's sections of them as well
   });
 });
 

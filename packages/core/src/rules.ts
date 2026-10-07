@@ -420,6 +420,8 @@ export interface RuleViolation {
   term: string;
   /** What is wrong, in a sentence. */
   message: string;
+  /** In a merged schedule: other rules (by their merged names) that are the same rule saved in another schedule, checked here only once. */
+  sameAs?: string[];
   /** The sections involved. */
   sectionIds: string[];
   /** The meetings to highlight in views. */
@@ -444,18 +446,41 @@ const sameLetter = (a: string, b: string) => a.trim().toLowerCase() === b.trim()
  *   section must satisfy the rule, or, with `count`, that many of them.
  */
 export function findRuleViolations(schedule: Schedule): RuleViolation[] {
-  // In a merged schedule each rule belongs to the schedule it came from and applies only to that schedule's sections.
+  // In a merged schedule, a rule about sections one at a time (the standard times, a window rule for every section) belongs to the
+  // schedule it came from and applies only to that schedule's sections. A rule about sections together (take together, cohort planning,
+  // back-to-back, colocate, a window rule with a count) is checked against the whole merged schedule.
   const scopes = [...new Set([...schedule.sessions, ...schedule.constraints].map((x) => x.scope).filter((x): x is string => x !== undefined))];
-  if (scopes.length === 0) return violationsIn(schedule);
-  return scopes.flatMap((scope) => {
+  if (scopes.length === 0) return violationsIn(schedule, "all");
+  const scoped = scopes.flatMap((scope) => {
     const sessions = schedule.sessions.filter((s) => s.scope === scope);
     const ids = new Set(sessions.map((s) => s.sectionId));
-    return violationsIn({ ...schedule, sessions, constraints: schedule.constraints.filter((c) => c.scope === scope), crossListings: schedule.crossListings.filter((c) => ids.has(c.sectionId)) });
+    return violationsIn({ ...schedule, sessions, constraints: schedule.constraints.filter((c) => c.scope === scope), crossListings: schedule.crossListings.filter((c) => ids.has(c.sectionId)) }, "scoped");
   });
+  // The same rule saved in several schedules (a copy) is checked once, and its violations say which copies they stand for.
+  const bySignature = new Map<string, string[]>();
+  const byRule = new Map<string, Constraint[]>();
+  for (const c of schedule.constraints) if (spansSchedules(c)) byRule.set(`${c.scope}\u0000${c.constraint}`, [...(byRule.get(`${c.scope}\u0000${c.constraint}`) ?? []), c]);
+  const constraints: Constraint[] = [];
+  for (const rows of byRule.values()) {
+    const signature = JSON.stringify(rows.map(({ constraint: _n, scope: _s, comment: _c, ...rest }) => rest));
+    const names = bySignature.get(signature);
+    if (names) {
+      names.push(rows[0]!.constraint);
+      continue;
+    }
+    bySignature.set(signature, [rows[0]!.constraint]);
+    constraints.push(...rows);
+  }
+  const twins = new Map([...bySignature.values()].filter((n) => n.length > 1).map((n) => [n[0]!, n.slice(1)] as const));
+  const global = violationsIn({ ...schedule, constraints }, "global").map((v) => (twins.has(v.rule) ? { ...v, sameAs: twins.get(v.rule)! } : v));
+  return [...scoped, ...global];
 }
 
-function violationsIn(all: Schedule): RuleViolation[] {
-  const schedule = { ...all, constraints: all.constraints.filter((c) => c.active) }; // a deactivated rule is not checked
+/** Does the rule this row belongs to look at sections together, so that in a merged schedule it reaches across the schedules? */
+export const spansSchedules = (c: Pick<Constraint, "type" | "count">) => c.type === "window" ? c.count !== undefined : c.type !== "standard" && c.type !== "subset";
+
+function violationsIn(all: Schedule, mode: "all" | "scoped" | "global"): RuleViolation[] {
+  const schedule = { ...all, constraints: all.constraints.filter((c) => c.active && (mode === "all" || (mode === "global") === spansSchedules(c))) }; // a deactivated rule is not checked
   const names = displayNames(schedule);
   const bySection = new Map<string, Session[]>();
   for (const s of schedule.sessions) bySection.set(s.sectionId, [...(bySection.get(s.sectionId) ?? []), s]);
@@ -502,7 +527,7 @@ function violationsIn(all: Schedule): RuleViolation[] {
       out.push({ rule: rule.name, type: "cohortPlan", academicYear: "", term: "", message: "None of the courses in this rule are offered in the schedule, so its students cannot take them", sectionIds: [], sessions: [] });
     }
   }
-  for (const g of groups.values()) standardTimes(g);
+  if (mode !== "global") for (const g of groups.values()) standardTimes(g);
   return out;
 
   /** Sections of the group that a rule's course lines name. */
@@ -866,7 +891,6 @@ export function allowedCollisions(schedule: Schedule): (sectionIdA: string, sect
     const key = `${c.scope ?? ""}\u0000${c.constraint}`;
     const rule = byRule.get(key) ?? { sections: new Set<string>(), sameInstructor: c.type === "colocate" };
     for (const p of first.values()) {
-      if (c.scope !== undefined && p.scope !== c.scope) continue;
       if (!termMatches(c.term, p.term)) continue;
       if (constraintNames({ course: c.course, section: c.section } as Constraint, listingKeys(schedule, p), p.section)) rule.sections.add(p.sectionId);
     }

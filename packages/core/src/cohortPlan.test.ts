@@ -123,3 +123,23 @@ describe("a cohort planning rule as the editor sees it", () => {
     expect(validateRule(s, { ...rule!, capacities: [...rule!.capacities, { course: "PHYS 101", seats: 20 }] }, "Cohort")).toEqual([]);
   });
 });
+
+describe("cohort planning across merged schedules", () => {
+  it("counts the sections of every schedule, wherever the rule is saved", async () => {
+    const { mergeSchedules } = await import("./merge.js");
+    const rule = rows(SEATS);
+    // MATH and ENGR in one schedule, CHEM (three sections) in another; the rule is only in the first
+    const a = build(sessions(3).filter((x) => x.Prefix !== "CHEM"), rule);
+    const b = build(sessions(3).filter((x) => x.Prefix === "CHEM"), []);
+    const merged = mergeSchedules([{ id: "a", name: "A", schedule: a }, { id: "b", name: "B", schedule: b }]).schedule;
+    expect(cohort(merged)).toEqual([]);
+    expect(cohort(a)[0]!.message).toContain("CHEM 101 is not offered");
+  });
+  it("is checked once when copies of it are saved in several schedules", async () => {
+    const { mergeSchedules } = await import("./merge.js");
+    const a = build(sessions(2), rows(SEATS));
+    const b = build([], rows(SEATS));
+    const merged = mergeSchedules([{ id: "a", name: "A", schedule: a }, { id: "b", name: "B", schedule: b }]).schedule;
+    expect(cohort(merged)).toHaveLength(1);
+  });
+});

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { copyRule, describeRule, findRuleViolations, rulesOf, setRuleActive, type Schedule } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
-import { useWorkspace, type Entry } from "../state";
+import { MERGED_ID, useWorkspace, type Entry } from "../state";
 import { Empty, NoneShown } from "./SchedulePage";
 
 /** The constraint rules of each schedule: what must be true of the schedule beyond plain clashes. */
@@ -54,15 +54,31 @@ function RuleList({ entry, copying }: { entry: Entry; copying: boolean }) {
   }
   const schedule = entry.schedule;
   const rules = useMemo(() => rulesOf(schedule), [schedule]);
+  // With the schedules merged, a rule is judged against the whole merged schedule (the Conflicts tab's view); on its own, against its schedule.
+  const mergedView = ws.viewEntries[0]?.id === MERGED_ID ? ws.viewEntries[0].schedule : undefined;
+  const origin = ws.mergedOrigin;
   const { broken, nonStandard } = useMemo(() => {
     const m = new Map<string, number>();
     let odd = 0;
+    if (mergedView && origin) {
+      for (const v of findRuleViolations(mergedView)) {
+        if (v.builtin) {
+          if (v.sessions.some((x) => x.scope === entry.id)) odd += 1;
+          continue;
+        }
+        for (const name of [v.rule, ...(v.sameAs ?? [])]) {
+          const o = origin.rules.get(name);
+          if (o?.scheduleId === entry.id) m.set(o.name, (m.get(o.name) ?? 0) + 1);
+        }
+      }
+      return { broken: m, nonStandard: odd };
+    }
     for (const v of findRuleViolations(schedule)) {
       if (v.builtin) odd += 1;
       else m.set(v.rule, (m.get(v.rule) ?? 0) + 1);
     }
     return { broken: m, nonStandard: odd };
-  }, [schedule]);
+  }, [schedule, mergedView, origin, entry.id]);
   return (
     <div className="table-wrap">
       <table>
