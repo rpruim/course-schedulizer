@@ -472,5 +472,10 @@ table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
 /* cohort planning in the rule editor */
 .cohort-element { border-top: 1px dashed var(--line); padding: 8px 0; }
 .cohort-element:first-of-type { border-top: 0; }
-.cohort-must { align-self: flex-end; line-height: 32px; color: var(--muted); }
+.cohort-head { display: flex; align-items: center; gap: 8px; }
+.cohort-head input { flex: none; }
+.cohort-must { color: var(--muted); flex: 1; min-width: 0; }
+.cohort-courses { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 6px 0 0 28px; padding-left: 10px; border-left: 2px solid var(--line); }
+.cohort-course { display: inline-flex; align-items: center; gap: 2px; }
+.icon-only { padding: 4px; line-height: 0; }
 .seat-course { align-self: flex-end; line-height: 32px; min-width: 9rem; font-weight: 600; }

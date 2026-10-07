@@ -284,24 +284,20 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
                 <p className="muted small">Each group is a number of students who must be able to take all of a list of courses, one section of each, with no two overlapping in time. The rule is met when all the students of all the groups can be seated at once.</p>
                 {form.elements.map((e, i) => (
                   <div className="cohort-element" key={i}>
-                    <div className="row">
-                      <label className="f">
-                        <span>Students</span>
-                        <input value={e.students} size={5} inputMode="numeric" onChange={(ev) => setElement(i, { students: ev.target.value })} aria-invalid={attempted && has(`elements.${i}`).length > 0 ? true : undefined} />
-                      </label>
-                      <span className="cohort-must">must be able to take</span>
-                      <button type="button" className="link" onClick={() => set("elements", form.elements.filter((_, j) => j !== i))} disabled={form.elements.length <= 1}><Trash /> Remove this group</button>
+                    <div className="cohort-head">
+                      <input value={e.students} size={4} inputMode="numeric" aria-label="Number of students" onChange={(ev) => setElement(i, { students: ev.target.value })} aria-invalid={attempted && has(`elements.${i}`).length > 0 ? true : undefined} />
+                      <span className="cohort-must">students must be able to take all of the following courses:</span>
+                      <button type="button" className="link icon-only" title="Remove this group" aria-label="Remove this group" onClick={() => set("elements", form.elements.filter((_, j) => j !== i))} disabled={form.elements.length <= 1}><Trash /></button>
                     </div>
-                    {e.courses.map((c, k) => (
-                      <div className="row item-row" key={k}>
-                        <label className="f grow">
-                          <span>Course</span>
-                          <input value={c} list="rule-courses" placeholder="MATH 161" onChange={(ev) => setElement(i, { courses: e.courses.map((x, m) => (m === k ? ev.target.value : x)) })} />
-                        </label>
-                        <button type="button" className="link" onClick={() => setElement(i, { courses: e.courses.filter((_, m) => m !== k) })} disabled={e.courses.length <= 1}><Trash /> Remove</button>
-                      </div>
-                    ))}
-                    <button type="button" onClick={() => setElement(i, { courses: [...e.courses, ""] })}>+ Add course</button>
+                    <div className="cohort-courses">
+                      {e.courses.map((c, k) => (
+                        <span className="cohort-course" key={k}>
+                          <input value={c} size={10} list="rule-courses" placeholder="MATH 161" aria-label="Course" onChange={(ev) => setElement(i, { courses: e.courses.map((x, m) => (m === k ? ev.target.value : x)) })} />
+                          <button type="button" className="link icon-only" title="Remove this course" aria-label="Remove this course" onClick={() => setElement(i, { courses: e.courses.filter((_, m) => m !== k) })} disabled={e.courses.length <= 1}><Trash /></button>
+                        </span>
+                      ))}
+                      <button type="button" onClick={() => setElement(i, { courses: [...e.courses, ""] })}>+ Add course</button>
+                    </div>
                     {err(`elements.${i}`)}
                   </div>
                 ))}
