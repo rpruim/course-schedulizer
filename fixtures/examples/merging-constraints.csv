@@ -1,0 +1,11 @@
+Constraint,Type,Course,Count,Element,Capacity,Term,Comment
+First-year cohort,cohort planning,AMUS 112,30,1,,FA,"Two groups of 30 first-year students who share BHAV 112 and DIGI 225. The courses are in three schedules, so the rule can only be checked when they are merged."
+First-year cohort,cohort planning,BHAV 112,30,1,,FA,
+First-year cohort,cohort planning,DIGI 225,30,1,,FA,
+First-year cohort,cohort planning,AMUS 145,30,2,,FA,
+First-year cohort,cohort planning,BHAV 112,30,2,,FA,
+First-year cohort,cohort planning,DIGI 225,30,2,,FA,
+First-year cohort,cohort planning,AMUS 112,,,25,FA,
+First-year cohort,cohort planning,AMUS 145,,,25,FA,
+First-year cohort,cohort planning,BHAV 112,,,30,FA,
+First-year cohort,cohort planning,DIGI 225,,,30,FA,

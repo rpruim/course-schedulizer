@@ -5,6 +5,8 @@ import sessions from "@fixtures/examples/schedule-sessions.csv?raw";
 import scheduleConstraints from "@fixtures/examples/schedule-constraints.csv?raw";
 import conflictSessions from "@fixtures/examples/conflicts-sessions.csv?raw";
 import conflictConstraints from "@fixtures/examples/conflicts-constraints.csv?raw";
+import mergingSessions from "@fixtures/examples/merging-sessions.csv?raw";
+import mergingConstraints from "@fixtures/examples/merging-constraints.csv?raw";
 import ruleSessions from "@fixtures/cases/rules-sessions.csv?raw";
 import ruleConstraints from "@fixtures/cases/rules-constraints.csv?raw";
 
@@ -22,8 +24,30 @@ const schedule = (): ImportResult =>
     constraints: recordsFromCsv(scheduleConstraints),
   });
 
+/**
+ * "Merging schedules": the example schedule split by prefix into three schedules (AMUS, BHAV and DIGI are its three prefixes),
+ * with a few sections added and a cohort planning rule (saved in the AMUS schedule) that needs courses from all three. Each
+ * schedule keeps the sections, cross-listings and non-teaching load of its own prefix; the "intensive terms" standard-times rule
+ * is saved in the two schedules that have winter and summer sections.
+ */
+const merging = (prefix: "AMUS" | "BHAV" | "DIGI"): (() => ImportResult) => () => {
+  const mine = (r: Record<string, string>) => r.Prefix === prefix;
+  const faculty = { AMUS: ["Ada Example", "Ben Sample"], BHAV: ["Eli Specimen"], DIGI: [] as string[] }[prefix];
+  const rules = recordsFromCsv(scheduleConstraints).filter(() => prefix !== "DIGI");
+  return importRecords({
+    sessions: [...recordsFromCsv(sessions), ...recordsFromCsv(mergingSessions)].filter(mine),
+    // the listing of DIGI 306 as BHAV 306 belongs to DIGI's section
+    crossListings: recordsFromCsv(crossListings).filter(() => prefix === "DIGI"),
+    nonTeaching: recordsFromCsv(nonTeaching).filter((r) => faculty.includes(r.Faculty ?? "")),
+    constraints: [...rules, ...(prefix === "AMUS" ? recordsFromCsv(mergingConstraints) : [])],
+  });
+};
+
 export const EXAMPLE_FILES: Record<string, () => ImportResult> = {
   "example-schedule": schedule,
+  "example-merging-amus": merging("AMUS"),
+  "example-merging-bhav": merging("BHAV"),
+  "example-merging-digi": merging("DIGI"),
   "example-with-conflicts": () => importRecords({ sessions: recordsFromCsv(conflictSessions), constraints: recordsFromCsv(conflictConstraints) }),
   // The rules fixtures are labeled R2 for the tests; the example shows the year Calvin would write.
   "example-with-constraint-rules": () => importRecords({ sessions: recordsFromCsv(ruleSessions).map((r) => ({ ...r, AcademicYear: "AY25" })), constraints: recordsFromCsv(ruleConstraints) }),

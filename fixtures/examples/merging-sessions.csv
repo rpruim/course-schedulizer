@@ -1,0 +1,3 @@
+AcademicYear,Term,TermPart,Prefix,CourseNumber,Section,Faculty,FacultyLoad,MinimumCredits,MeetingDays,StartTime,MeetingDuration,Classroom,ShortTitle,InstructionalMethod,DeliveryMode,Comment
+AY25,FA,Full,AMUS,145,B,Ben Sample,4,4,MWF,13:30,65,NH 102,Musical Patterns II,Lecture,In-Person,Added for the merging example: a second section for the first-year cohort
+AY25,FA,Full,DIGI,225,B,Fay Mockson,4,4,MWF,13:30,65,SB 110,Information Computing,Lecture,In-Person,Added for the merging example: a second section for the first-year cohort

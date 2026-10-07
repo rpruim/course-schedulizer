@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { readWorkbook } from "@schedulizer/core";
+import { findConflicts, findRuleViolations, mergeSchedules, readWorkbook } from "@schedulizer/core";
 import { EXAMPLE_FILES } from "./exampleBuilders";
 import { loadExamples, parseExamples } from "./examples";
 import { parseAddress } from "./remote";
@@ -42,5 +42,29 @@ describe("the examples folder", () => {
       const onDisk = await readWorkbook(new Uint8Array(read(`examples/${name}.xlsx`)));
       expect(onDisk.schedule.sessions, `${name}.xlsx is out of date: run pnpm examples`).toEqual(build().schedule.sessions);
     }
+  });
+});
+
+describe("the merging schedules example", () => {
+  const built = () => ["amus", "bhav", "digi"].map((p, i) => ({ id: "ABC"[i]!, name: p, schedule: EXAMPLE_FILES[`example-merging-${p}`]!().schedule }));
+  const cohort = (schedule: Parameters<typeof findRuleViolations>[0]) => findRuleViolations(schedule).filter((v) => v.type === "cohortPlan");
+  it("splits the example schedule by prefix without losing a section", () => {
+    const parts = built();
+    expect(parts.map((p) => new Set(p.schedule.sessions.map((s) => s.prefix)).size)).toEqual([1, 1, 1]);
+    const whole = EXAMPLE_FILES["example-schedule"]!().schedule.sessions.length;
+    expect(parts.reduce((n, p) => n + p.schedule.sessions.length, 0)).toBe(whole + 2); // the two sections added for the cohort
+    expect(parts.flatMap((p) => findConflicts(p.schedule))).toEqual([]);
+  });
+  it("cannot be checked alone, fails when merged, and the advice fixes it", () => {
+    const parts = built();
+    expect(cohort(parts[0]!.schedule)[0]!.message).toContain("is not offered in FA"); // the rule is saved with AMUS, whose schedule lacks BHAV 112 and DIGI 225
+    const merged = mergeSchedules(parts).schedule;
+    const found = cohort(merged);
+    expect(found).toHaveLength(1);
+    expect(found[0]!.message).toBe("57 of 60 students can all get seats. Try offering BHAV 112 A and DIGI 225 B at different times, AMUS 145 B and BHAV 112 A at different times, or AMUS 145 B and DIGI 225 B at different times");
+    expect(findRuleViolations(merged).filter((v) => v.builtin)).toEqual([]);
+    // following the last piece of advice: DIGI 225 B moves to 14:45
+    const moved = { ...merged, sessions: merged.sessions.map((s) => (s.prefix === "DIGI" && s.courseNumber === "225" && s.section === "B" ? { ...s, start: 14 * 60 + 45 } : s)) };
+    expect(cohort(moved)).toEqual([]);
   });
 });

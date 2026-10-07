@@ -17,3 +17,6 @@
 
 - name: Two drafts, to compare
   url: url=examples/example-schedule.xlsx&name=First%20draft&url=examples/example-schedule-revised.xlsx&name=Revised%20draft
+
+- name: Merging schedules
+  url: url=examples/example-merging-amus.xlsx&name=Music&url=examples/example-merging-bhav.xlsx&name=Behavior&url=examples/example-merging-digi.xlsx&name=Digital
