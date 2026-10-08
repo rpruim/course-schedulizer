@@ -42,7 +42,7 @@ describe("hueMap", () => {
       expect(Math.min(...gaps), `n = ${n}`).toBeGreaterThanOrEqual(Math.floor(360 / n) - 1);
     }
   });
-  it("lets neighbours in a short list run through the spectrum, and scatters them in a long one", () => {
+  it("lets neighbors in a short list run through the spectrum, and scatters them in a long one", () => {
     const short = spread(5);
     expect(short).toEqual([12, 84, 156, 228, 300]);
     const long = spread(13);
@@ -55,7 +55,7 @@ describe("hueMap", () => {
 });
 
 describe("toneMap", () => {
-  it("cycles three lightness steps through the values in order, so neighbours differ", () => {
+  it("cycles three lightness steps through the values in order, so neighbors differ", () => {
     expect([...toneMap(["a", "b", "c", "d", "e", "a"]).values()]).toEqual([0, 1, 2, 0, 1]);
   });
   it("is on each block, and blocks of one value share it", () => {

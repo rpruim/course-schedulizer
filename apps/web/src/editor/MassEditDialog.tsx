@@ -178,7 +178,7 @@ export function MassEditDialog({ picks: shown, hidden, onClose, onDone }: { pick
       {errors[k] && <span className="err">{errors[k]}</span>}
     </label>
   );
-  // What a mass edit cannot change is shown as the section editor shows it, greyed out, with the value the sections have in common.
+  // What a mass edit cannot change is shown as the section editor shows it, grayed out, with the value the sections have in common.
   const fixedBox = (key: string, label: string, value: string | undefined, size: number, hint?: string) => (
     <label className="f" title="A mass edit does not change this">
       <span>{label}</span>

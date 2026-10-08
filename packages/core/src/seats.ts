@@ -112,7 +112,7 @@ export function planSeats(elements: SeatElement[], overlap: (a: string, b: strin
     const rows = sectionCount + elements.length;
     class Cut extends Error {}
 
-    /** Maximise the students seated for the lower and upper bounds given; the solution (or undefined when infeasible). */
+    /** Maximize the students seated for the lower and upper bounds given; the solution (or undefined when infeasible). */
     const lp = (lo: number[], hi: number[]): { value: number; x: number[] } | undefined => {
       const n = choices.length;
       const limited = hi.map((u, j) => (u === Infinity ? -1 : j)).filter((j) => j >= 0);

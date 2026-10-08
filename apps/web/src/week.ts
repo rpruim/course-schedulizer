@@ -187,8 +187,8 @@ const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeri
 
 /**
  * A hue (0–359) for each of the values, so that every value looks different: the hues are spread evenly round the color wheel, however
- * many values there are. With a few values (up to 8) neighbours in the list get neighbouring hues, so an ordered thing such as the
- * course levels reads as a run of colors; with more, neighbours are scattered (by a step that is coprime with the count) so values
+ * many values there are. With a few values (up to 8) neighbors in the list get neighboring hues, so an ordered thing such as the
+ * course levels reads as a run of colors; with more, neighbors are scattered (by a step that is coprime with the count) so values
  * next to each other in the key do not look alike.
  */
 export function hueMap(values: string[]): Map<string, number> {

@@ -155,7 +155,7 @@ export class GraphClient {
 
   private async download(item: DriveItem): Promise<Uint8Array> {
     const url = item["@microsoft.graph.downloadUrl"];
-    // The download address is pre-authorised; it must be fetched without the Authorization header.
+    // The download address is pre-authorized; it must be fetched without the Authorization header.
     const res = url ? await this.fetcher(url) : await this.call("read", `/drives/${item.parentReference?.driveId}/items/${item.id}/content`);
     if (!res.ok) throw explain(res.status, "");
     return new Uint8Array(await res.arrayBuffer());
