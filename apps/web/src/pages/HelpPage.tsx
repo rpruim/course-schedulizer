@@ -584,7 +584,7 @@ export function HelpPage() {
       <div className="callout" role="note">
         <strong>Questions, problems, ideas?</strong>
         <p>
-          Join the <a href={DISCUSSION_URL} target="_blank" rel="noreferrer">Discussion Forums in Teams</a>: ask how to do something, report a bug (say what you did and the version number shown in the page title), or suggest a feature. Searching there first may already have your answer.
+          Join the <a href={DISCUSSION_URL} target="_blank" rel="noreferrer">Discussion Forums in Teams</a>: ask how to do something, report a bug, or suggest a feature. Search there to see if your question has already been answered.
         </p>
       </div>
       {SECTIONS.map((s) => (
