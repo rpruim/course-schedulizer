@@ -1,3 +1,4 @@
+import { DISCUSSION_URL } from "../links";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { oneDriveConfigured } from "../onedrive/auth";
@@ -579,6 +580,12 @@ export function HelpPage() {
         {SECTIONS.map((s) => (
           <a key={s.id} href={`#${s.id}`} onClick={jump(s.id)}>{s.title}</a>
         ))}
+      </div>
+      <div className="callout" role="note">
+        <strong>Questions, problems, ideas?</strong>
+        <p>
+          Join the <a href={DISCUSSION_URL} target="_blank" rel="noreferrer">Discussion Forums in Teams</a>: ask how to do something, report a bug (say what you did and the version number shown in the page title), or suggest a feature. Searching there first may already have your answer.
+        </p>
       </div>
       {SECTIONS.map((s) => (
         <section key={s.id} id={s.id} className="help-section">

@@ -10,6 +10,7 @@ import { MetaPage } from "./pages/MetaPage";
 import { ExportPage } from "./pages/ExportPage";
 import { ImportPage } from "./pages/ImportPage";
 import { HelpPage } from "./pages/HelpPage";
+import { DISCUSSION_URL } from "./links";
 import { LoadsPage } from "./pages/LoadsPage";
 import { NonTeachingPage } from "./pages/NonTeachingPage";
 import { ReleaseNotesPage } from "./pages/ReleaseNotesPage";
@@ -54,7 +55,7 @@ const groups = (newBlank: () => void): MenuGroup[] => [
   { label: "Check", items: [{ to: "/conflicts", label: "Conflicts" }, { to: "/constraints", label: "Constraint rules" }, { to: "/compare", label: "Compare" }] },
   { label: "Mass edit", direct: true, items: [{ to: "/massedit", label: "Mass edit" }] },
   { label: "File", items: [{ label: "+ New blank schedule", onSelect: newBlank }, { to: "/meta", label: "Meta" }, { to: "/import", label: "Import" }, { to: "/export", label: "Export" }] },
-  { label: "Help", items: [{ to: "/help", label: "User guide" }, { to: "/news", label: "Release notes" }, { to: "/about", label: "About" }] },
+  { label: "Help", items: [{ to: "/help", label: "User guide" }, { href: DISCUSSION_URL, label: "Discussion Forums in Teams" }, { to: "/news", label: "Release notes" }, { to: "/about", label: "About" }] },
 ];
 
 /** Pages that make sense with no schedule open. */

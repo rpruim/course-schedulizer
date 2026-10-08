@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
-/** A page to go to (`to`), or an action to run (`onSelect`). */
+/** A page to go to (`to`), another site to open in a new tab (`href`), or an action to run (`onSelect`). */
 export interface MenuItem {
   label: string;
   to?: string;
+  href?: string;
   onSelect?: () => void;
 }
 /** A top-level entry: a plain link (one item, no `label` of its own) or a menu of links. */
@@ -72,7 +73,9 @@ export function MenuBar({ groups }: { groups: MenuGroup[] }) {
                     if (e.key === "ArrowDown") (e.preventDefault(), items[(i + 1) % items.length]?.focus());
                     if (e.key === "ArrowUp") (e.preventDefault(), items[(i - 1 + items.length) % items.length]?.focus());
                   };
-                  return it.to !== undefined ? (
+                  return it.href !== undefined ? (
+                    <a key={it.label} href={it.href} target="_blank" rel="noreferrer" role="menuitem" onKeyDown={keys}>{it.label}</a>
+                  ) : it.to !== undefined ? (
                     <NavLink key={it.label} to={it.to} role="menuitem" onKeyDown={keys}>{it.label}</NavLink>
                   ) : (
                     <button key={it.label} type="button" role="menuitem" onKeyDown={keys} onClick={() => { setOpen(undefined); it.onSelect?.(); }}>{it.label}</button>
