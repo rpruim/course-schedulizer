@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router";
 
 /** A page to go to (`to`), another site to open in a new tab (`href`), or an action to run (`onSelect`). */
 export interface MenuItem {

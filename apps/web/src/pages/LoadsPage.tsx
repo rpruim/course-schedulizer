@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { loadItems, loadTable, UNASSIGNED, type LoadTableRow } from "@schedulizer/core";
 import { yearsAcross, yearsOf } from "../model";
 import { SortTh, useSort, type SortValue } from "../sort";

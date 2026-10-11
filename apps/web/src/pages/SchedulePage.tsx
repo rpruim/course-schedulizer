@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useEditor } from "../editor/context";
 import { filterRows, multiSectionRows, termsAcross, termsInUseAcross, yearsAcross, type MultiRow } from "../model";
 import { SortTh, useSort, type SortValue } from "../sort";

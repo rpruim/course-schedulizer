@@ -1,6 +1,6 @@
 import { DISCUSSION_URL } from "../links";
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { oneDriveConfigured } from "../onedrive/auth";
 
 const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [

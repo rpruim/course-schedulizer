@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { APP_VERSION, BUILD_DATE } from "../version";
 
 /** The student teams that built the earlier versions, as listed on the original Course Schedulizer's About page. */

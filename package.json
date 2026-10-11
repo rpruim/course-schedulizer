@@ -5,7 +5,7 @@
   "license": "MIT",
   "description": "Course Schedulizer 2.0 (TypeScript)",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.22"
   },
   "scripts": {
     "build": "node tools/gen-settings.mjs && pnpm --filter @schedulizer/web build",

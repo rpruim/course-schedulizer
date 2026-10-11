@@ -16,7 +16,7 @@
     "@schedulizer/core": "workspace:*",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-router-dom": "^6.26.2"
+    "react-router": "^8.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
