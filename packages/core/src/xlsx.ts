@@ -1,4 +1,8 @@
-import ExcelJS from "exceljs";
+import type ExcelJS from "exceljs";
+
+/** ExcelJS is large and only needed to read or write a file, so it is loaded the first time it is (a separate download in the app). */
+let excel: Promise<typeof ExcelJS> | undefined;
+const loadExcel = () => (excel ??= import("exceljs").then((m) => m.default));
 import { yearToData } from "./academicYear.js";
 import { comparisonsTable } from "./savedComparisons.js";
 import { constraintsTable, crossListingsTable, nonTeachingTable, sessionsTable, type ExportOptions, type Table } from "./export.js";
@@ -55,7 +59,7 @@ const sheetByName = (wb: ExcelJS.Workbook, name: string) =>
  * form (first sheet when there is no `Sessions` sheet).
  */
 export async function readWorkbook(data: ArrayBuffer | Uint8Array, options: ImportOptions = {}): Promise<ImportResult> {
-  const wb = new ExcelJS.Workbook();
+  const wb = new (await loadExcel()).Workbook();
   await wb.xlsx.load((data instanceof Uint8Array ? data : new Uint8Array(data)) as unknown as ArrayBuffer);
   const issues: Issue[] = [];
   const { settings, issues: settingsIssues } = importSettings(sheetRecords(sheetByName(wb, "Settings")));
@@ -125,7 +129,7 @@ const two = (n: number) => String(n).padStart(2, "0");
  * (Sessions, CrossListings, NonTeaching, Constraints, Comparisons when there are any, Settings) and Metadata.
  */
 export async function writeWorkbook(schedule: import("./types.js").Schedule, opts: WriteOptions = {}): Promise<Uint8Array> {
-  const wb = new ExcelJS.Workbook();
+  const wb = new (await loadExcel()).Workbook();
   // The registrar tab keeps FacultyLoad and StudentCredits as text, as the old app did; only Duration is numeric.
   const withNonTeaching = opts.includeNonTeaching !== false;
   addTable(wb, REGISTRAR_SHEET, registrarTable(schedule, { includeNonTeaching: withNonTeaching }), new Set(["Duration"]));
@@ -181,7 +185,7 @@ const CELL_LIMIT = 32767; // the most characters Excel allows in a cell
 
 /** Write tables as an .xlsx workbook, one sheet each, with a bold frozen header row. */
 export async function writeSheets(sheets: SheetSpec[]): Promise<Uint8Array> {
-  const wb = new ExcelJS.Workbook();
+  const wb = new (await loadExcel()).Workbook();
   for (const sheet of sheets) {
     const ws = wb.addWorksheet(sheet.name.slice(0, 31)); // Excel's sheet-name limit
     const head = ws.addRow(sheet.header);
