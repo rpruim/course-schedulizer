@@ -43,8 +43,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
             <a href="#edit" onClick={jump("edit")}>
             Change</a>, 
             what needs changing: 
-            Edit, add, and delete sections
-            add <a href="#loads" onClick={jump("loads")}>non-teaching load</a>.
+            Edit, add, and delete course sections
+            add <a href="#loads" onClick={jump("loads")}>and non-teaching load</a>.
           </li>
           <li>
             <strong>Check</strong>{" "}
