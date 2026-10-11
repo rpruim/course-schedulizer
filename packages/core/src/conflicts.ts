@@ -25,7 +25,18 @@ const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
  * `findRuleViolations`, which is not about pairs.)
  */
 export function findConflicts(schedule: Schedule): Conflict[] {
-  return scan(schedule).conflicts;
+  return scanOnce(schedule).conflicts;
+}
+
+// Schedules are never changed in place, so a schedule's scan is kept (and its result shared: callers must not change it).
+const scans = new WeakMap<Schedule, ReturnType<typeof scan>>();
+function scanOnce(schedule: Schedule): ReturnType<typeof scan> {
+  let r = scans.get(schedule);
+  if (!r) {
+    r = scan(schedule);
+    scans.set(schedule, r);
+  }
+  return r;
 }
 
 /**
@@ -34,7 +45,7 @@ export function findConflicts(schedule: Schedule): Conflict[] {
  * a rule would allow but that does not occur (the sections are at different times, say) is not in the list.
  */
 export function colocatedPairs(schedule: Schedule): [string, string][] {
-  return [...scan(schedule).colocated].map((k) => k.split("\u0000") as [string, string]);
+  return [...scanOnce(schedule).colocated].map((k) => k.split("\u0000") as [string, string]);
 }
 
 function scan(schedule: Schedule): { conflicts: Conflict[]; colocated: Set<string> } {
@@ -74,11 +85,36 @@ function scan(schedule: Schedule): { conflicts: Conflict[]; colocated: Set<strin
     found.set(key, c);
   };
 
+  // Only meetings of the same year and term, on the same day, at overlapping times can clash: find those pairs by sweeping each
+  // day's meetings in order of start time, instead of comparing every meeting with every other.
   const meetings = schedule.sessions.filter(scheduled);
-  for (let i = 0; i < meetings.length; i++) {
-    const a = meetings[i]!;
-    for (let j = i + 1; j < meetings.length; j++) {
-      const b = meetings[j]!;
+  const byDay = new Map<string, number[]>();
+  meetings.forEach((m, i) => {
+    for (const d of new Set(m.days)) {
+      const k = `${m.academicYear}\u0000${m.term}\u0000${d}`;
+      const list = byDay.get(k);
+      if (list) list.push(i);
+      else byDay.set(k, [i]);
+    }
+  });
+  const candidates = new Set<number>();
+  const n = meetings.length;
+  for (const list of byDay.values()) {
+    list.sort((x, y) => meetings[x]!.start - meetings[y]!.start);
+    for (let p = 0; p < list.length; p++) {
+      const x = list[p]!;
+      const end = meetings[x]!.start + meetings[x]!.duration;
+      for (let q = p + 1; q < list.length && meetings[list[q]!]!.start < end; q++) {
+        const y = list[q]!;
+        candidates.add(x < y ? x * n + y : y * n + x);
+      }
+    }
+  }
+  // In the order the meetings come, as before, so each conflict lists its meetings the same way.
+  for (const pair of [...candidates].sort((x, y) => x - y)) {
+    const a = meetings[Math.floor(pair / n)]!;
+    const b = meetings[pair % n]!;
+    {
       if (a.sectionId === b.sectionId) continue;
       if (!meetingsOverlap(schedule, a, b)) continue;
 
