@@ -1,3 +1,4 @@
+import { useSettled } from "../debounce";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   deleteRule,
@@ -179,8 +180,12 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
   const has = (field: string) => problems.filter((p) => p.field === field || p.field.startsWith(`${field}.`));
   const err = (field: string) => (attempted ? has(field).map((p, i) => <span key={i} className="err">{p.message}</span>) : null);
 
-  // Live check against the schedule as it would be with this rule saved.
+  // Live check against the schedule as it would be with this rule saved: redone once typing pauses, since with schedules merged it
+  // checks the whole workspace.
+  const typed = useMemo(() => ({ rule, problems }), [rule, problems]);
+  const settled = useSettled(typed);
   const preview = useMemo(() => {
+    const { rule, problems } = settled;
     if (problems.length) return undefined;
     const saved = saveRule(schedule, original?.name, rule);
     // With schedules merged, a rule about sections together reaches across them, so it is checked in the merged schedule.
@@ -189,7 +194,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
       return findRuleViolations(m.schedule, { advice: true }).filter((v) => [v.rule, ...(v.sameAs ?? [])].some((n) => { const o = m.origin.rules.get(n); return o?.scheduleId === scheduleId && o.name === rule.name; }));
     }
     return findRuleViolations(saved, { advice: true }).filter((v) => v.rule === rule.name);
-  }, [problems, schedule, rule, original, ws.viewAs, ws.includedEntries, scheduleId]);
+  }, [settled, schedule, original, ws.viewAs, ws.includedEntries, scheduleId]);
 
   const lists = useMemo(() => {
     const uniq = (xs: string[]) => [...new Set(xs.map((x) => x.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));

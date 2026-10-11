@@ -1,3 +1,4 @@
+import { useSettled } from "../debounce";
 import { ACADEMIC_YEAR_HELP } from "@schedulizer/core";
 import { inPartOrder } from "../model";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -95,7 +96,11 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
   }, [form.prefix, form.courseNumber, form.crossListings, isNew, initial, schedule]);
 
   // Live preview of what saving would do: the course name, load shares, and any conflicts or non-standard times it would create.
+  // It checks the whole schedule, so it is redone once typing pauses.
+  const typed = useMemo(() => ({ draft, errors }), [draft, errors]);
+  const settled = useSettled(typed);
   const preview = useMemo(() => {
+    const { draft, errors } = settled;
     if (errors.length) return undefined;
     const r = saveDraft(schedule, draft, { kind: "swap" }, { deleteListed: true });
     if (r.kind !== "saved") return undefined;
@@ -113,7 +118,7 @@ export function SectionEditor({ scheduleId, initial, onClose, onNotice, onCopy }
     // Other rules the schedule has (a cohort that cannot take its courses, a clash with a window, too many classes in a row) show as conflicts in the grids.
     const ruleBreaks = violations.filter((v) => v.type !== "standard").map((v) => `${v.rule}: ${v.message}`);
     return { conflicts, ruleBreaks, nonStandard, other: r.other, swapTo: r.other?.to };
-  }, [errors, schedule, draft]);
+  }, [settled, schedule]);
 
   // A problem with a listing must not hide inside the folded section.
   const listingProblem = attempted && Object.keys(fieldErrors).some((k) => k.startsWith("crossListings"));
