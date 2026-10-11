@@ -23,7 +23,7 @@ const build = (s: Rec[], c: Rec[]) => {
   expect(r.issues.filter((i) => i.severity === "error")).toEqual([]);
   return r.schedule;
 };
-const cohort = (s: ReturnType<typeof build>) => findRuleViolations(s).filter((v) => v.type === "cohortPlan");
+const cohort = (s: ReturnType<typeof build>) => findRuleViolations(s, { advice: true }).filter((v) => v.type === "cohortPlan");
 const SEATS = { "MATH 161": 32, "MATH 162": 30, "ENGR 101": 40, "CHEM 101": 25 };
 
 describe("cohort planning", () => {
@@ -52,6 +52,15 @@ describe("cohort planning", () => {
     const s = [sec("MATH", "161", "A", "MWF", "8:00"), sec("MATH", "162", "A", "MWF", "9:15"), ...["A", "B"].flatMap((l) => [sec("ENGR", "101", l, "TR", "8:00"), sec("CHEM", "101", l, "TR", "8:00")])];
     const v = cohort(build(s, rows({ "MATH 161": 100, "MATH 162": 100, "ENGR 101": 40, "CHEM 101": 40 })));
     expect(v[0]!.message).toMatch(/^\d+ of 75 students can all get seats\. Try offering \w+ 101 [AB] and \w+ 101 [AB] at different times, and \w+ 101 [AB] and \w+ 101 [AB] at different times$/);
+  });
+  it("works out the advice only when asked, and keeps each result for the schedule", () => {
+    const s = build([sec("MATH", "161", "A", "MWF", "8:00"), sec("MATH", "162", "A", "MWF", "9:15"), sec("ENGR", "101", "A", "TR", "8:00"), sec("CHEM", "101", "A", "TR", "8:00")], rows({ "MATH 161": 100, "MATH 162": 100, "ENGR 101": 100, "CHEM 101": 100 }));
+    const plain = findRuleViolations(s).filter((v) => v.type === "cohortPlan");
+    expect(plain[0]!.message).toBe("0 of 75 students can all get seats: no clash-free choice of sections lets 50 students take MATH 161, ENGR 101, CHEM 101; no clash-free choice of sections lets 25 students take MATH 162, ENGR 101, CHEM 101");
+    expect(findRuleViolations(s)).toBe(findRuleViolations(s)); // the same array: kept for the schedule
+    const advised = findRuleViolations(s, { advice: true });
+    expect(advised.find((v) => v.type === "cohortPlan")!.message).toContain("Try offering ENGR 101 A and CHEM 101 A at different times");
+    expect(findRuleViolations(s)).toBe(findRuleViolations(s)); // a plain request may be answered by the advised result once there is one
   });
   it("does not offer time advice while a course is short of seats", () => {
     const v = cohort(build(sessions(2), rows(SEATS)));

@@ -445,16 +445,30 @@ const sameLetter = (a: string, b: string) => a.trim().toLowerCase() === b.trim()
  *   days; it satisfies a *should* rule if it holds and a *should not* rule if it does not. Every
  *   section must satisfy the rule, or, with `count`, that many of them.
  */
-export function findRuleViolations(schedule: Schedule): RuleViolation[] {
+export function findRuleViolations(schedule: Schedule, opts: { advice?: boolean } = {}): RuleViolation[] {
+  // Schedules are never changed in place, so the result for a schedule object can be kept and handed out again. Callers must not
+  // change it. Advice (which sections of a cohort to move apart) costs more and is only worked out when asked for; a result with
+  // advice also serves a request without.
+  const kept = ruleCache.get(schedule) ?? {};
+  const hit = opts.advice ? kept.advised : (kept.plain ?? kept.advised);
+  if (hit) return hit;
+  const found = checkRules(schedule, opts.advice === true);
+  ruleCache.set(schedule, opts.advice ? { ...kept, advised: found } : { ...kept, plain: found });
+  return found;
+}
+
+const ruleCache = new WeakMap<Schedule, { plain?: RuleViolation[]; advised?: RuleViolation[] }>();
+
+function checkRules(schedule: Schedule, advice: boolean): RuleViolation[] {
   // In a merged schedule, a rule about sections one at a time (the standard times, a window rule for every section) belongs to the
   // schedule it came from and applies only to that schedule's sections. A rule about sections together (take together, cohort planning,
   // back-to-back, colocate, a window rule with a count) is checked against the whole merged schedule.
   const scopes = [...new Set([...schedule.sessions, ...schedule.constraints].map((x) => x.scope).filter((x): x is string => x !== undefined))];
-  if (scopes.length === 0) return violationsIn(schedule, "all");
+  if (scopes.length === 0) return violationsIn(schedule, "all", advice);
   const scoped = scopes.flatMap((scope) => {
     const sessions = schedule.sessions.filter((s) => s.scope === scope);
     const ids = new Set(sessions.map((s) => s.sectionId));
-    return violationsIn({ ...schedule, sessions, constraints: schedule.constraints.filter((c) => c.scope === scope), crossListings: schedule.crossListings.filter((c) => ids.has(c.sectionId)) }, "scoped");
+    return violationsIn({ ...schedule, sessions, constraints: schedule.constraints.filter((c) => c.scope === scope), crossListings: schedule.crossListings.filter((c) => ids.has(c.sectionId)) }, "scoped", advice);
   });
   // The same rule saved in several schedules (a copy) is checked once, and its violations say which copies they stand for.
   const bySignature = new Map<string, string[]>();
@@ -472,14 +486,14 @@ export function findRuleViolations(schedule: Schedule): RuleViolation[] {
     constraints.push(...rows);
   }
   const twins = new Map([...bySignature.values()].filter((n) => n.length > 1).map((n) => [n[0]!, n.slice(1)] as const));
-  const global = violationsIn({ ...schedule, constraints }, "global").map((v) => (twins.has(v.rule) ? { ...v, sameAs: twins.get(v.rule)! } : v));
+  const global = violationsIn({ ...schedule, constraints }, "global", advice).map((v) => (twins.has(v.rule) ? { ...v, sameAs: twins.get(v.rule)! } : v));
   return [...scoped, ...global];
 }
 
 /** Does the rule this row belongs to look at sections together, so that in a merged schedule it reaches across the schedules? */
 export const spansSchedules = (c: Pick<Constraint, "type" | "count">) => c.type === "window" ? c.count !== undefined : c.type !== "standard" && c.type !== "subset";
 
-function violationsIn(all: Schedule, mode: "all" | "scoped" | "global"): RuleViolation[] {
+function violationsIn(all: Schedule, mode: "all" | "scoped" | "global", advice: boolean): RuleViolation[] {
   const schedule = { ...all, constraints: all.constraints.filter((c) => c.active && (mode === "all" || (mode === "global") === spansSchedules(c))) }; // a deactivated rule is not checked
   const names = displayNames(schedule);
   const bySection = new Map<string, Session[]>();
@@ -801,21 +815,21 @@ function violationsIn(all: Schedule, mode: "all" | "scoped" | "global"): RuleVio
     const parts: string[] = [];
     for (const c of notOffered) parts.push(`${c} is not offered in ${g.term}`);
     for (const s of result.short) parts.push(`not enough seats in ${s.label} (${s.seats} in all, ${s.needed} student${s.needed === 1 ? "" : "s"} need${s.needed === 1 ? "s" : ""} them)`);
-    // With seats enough in every course the times are what is in the way: say which sections to move apart.
-    let advice = "";
+    // With seats enough in every course the times are what is in the way: say which sections to move apart (when advice is asked for).
+    let tip = "";
     if (result.placed < result.total && result.short.length === 0) {
-      const options = adviseTimes(elements, sectionsOverlap);
+      const options = advice ? adviseTimes(elements, sectionsOverlap) : [];
       const move = (pairs: [string, string][]) => pairs.map(([x, y]) => `${label(x)} and ${label(y)} at different times`);
       const joinWith = (items: string[], word: string) => (items.length === 1 ? items[0]! : `${items.slice(0, -1).join(", ")}, ${word} ${items[items.length - 1]}`);
-      if (options.length > 0) advice = `Try offering ${options.length === 1 ? joinWith(move(options[0]!), "and") : joinWith(options.map((o) => move(o).join(" and ")), "or")}`;
+      if (options.length > 0) tip = `Try offering ${options.length === 1 ? joinWith(move(options[0]!), "and") : joinWith(options.map((o) => move(o).join(" and ")), "or")}`;
       else for (const i of result.noSchedule) {
         const e = elements[i]!;
         parts.push(`no clash-free choice of sections lets ${e.students} student${e.students === 1 ? "" : "s"} take ${e.courses.map((c) => c.label).join(", ")}`);
       }
     }
     const how = result.exact ? "" : " (the search was cut off, so more might fit)";
-    const why = parts.length ? `: ${parts.join("; ")}` : advice ? "" : ": the seats and the times of the sections do not fit together";
-    report(`${result.placed} of ${total} students can all get seats${how}${why}${advice ? `. ${advice}` : ""}`);
+    const why = parts.length ? `: ${parts.join("; ")}` : tip ? "" : ": the times of the sections keep them from fitting together";
+    report(`${result.placed} of ${total} students can all get seats${how}${why}${tip ? `. ${tip}` : ""}`);
     return true;
   }
 

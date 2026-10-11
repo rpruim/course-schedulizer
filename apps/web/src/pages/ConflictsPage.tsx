@@ -42,7 +42,8 @@ function ConflictsTable({ entry }: { entry: Entry }) {
     const [a, b] = c.meetings[0]!;
     return `${a.days} ${timeRange(a)} / ${b.days} ${timeRange(b)}`;
   };
-  const violations = useMemo(() => findRuleViolations(schedule), [schedule]);
+  // The Conflicts tab shows the messages, so it asks for the advice on cohort rules as well.
+  const violations = useMemo(() => findRuleViolations(schedule, { advice: true }), [schedule]);
   const sorting = useSort(conflicts, (c: Conflict, key: string): SortValue => {
     switch (key) {
       case "type": return c.type;

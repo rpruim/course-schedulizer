@@ -47,7 +47,7 @@ describe("the examples folder", () => {
 
 describe("the merging schedules example", () => {
   const built = () => ["amus", "bhav", "digi"].map((p, i) => ({ id: "ABC"[i]!, name: p, schedule: EXAMPLE_FILES[`example-merging-${p}`]!().schedule }));
-  const cohort = (schedule: Parameters<typeof findRuleViolations>[0]) => findRuleViolations(schedule).filter((v) => v.type === "cohortPlan");
+  const cohort = (schedule: Parameters<typeof findRuleViolations>[0]) => findRuleViolations(schedule, { advice: true }).filter((v) => v.type === "cohortPlan");
   it("splits the example schedule by prefix without losing a section", () => {
     const parts = built();
     expect(parts.map((p) => new Set(p.schedule.sessions.map((s) => s.prefix)).size)).toEqual([1, 1, 1]);

@@ -235,9 +235,10 @@ export function planSeats(elements: SeatElement[], overlap: (a: string, b: strin
  * When everyone cannot be seated and no course is short of seats, the sections' times are what is in the way. This looks for pairs of
  * sections (of different courses of one element) whose overlap could be removed by moving one of them. It returns alternatives, each a
  * list of pairs that must all be moved apart together: the pairs that fix it alone, as separate alternatives, or, when no single pair
- * does, one alternative of several pairs (found greedily, then trimmed to those that are needed).
+ * does, one alternative of several pairs (found greedily, then trimmed to those that are needed). It tries at most `maxTries`
+ * seatings, so on a large cohort it may find fewer alternatives, or none.
  */
-export function adviseTimes(elements: SeatElement[], overlap: (a: string, b: string) => boolean, budget = 40000): [string, string][][] {
+export function adviseTimes(elements: SeatElement[], overlap: (a: string, b: string) => boolean, budget = 40000, maxTries = 120): [string, string][][] {
   const key = (a: string, b: string) => (a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`);
   const pairs = new Map<string, [string, string]>();
   for (const e of elements) {
@@ -250,12 +251,16 @@ export function adviseTimes(elements: SeatElement[], overlap: (a: string, b: str
   if (pairs.size === 0) return [];
   const total = elements.reduce((n, e) => n + e.students, 0);
   const without = (skip: Set<string>) => (a: string, b: string) => a === b || (!skip.has(key(a, b)) && overlap(a, b));
-  const placed = (skip: Set<string>) => planSeats(elements, without(skip), budget).placed;
-  const deadline = Date.now() + 1000;
+  // A fixed amount of work (at most `maxTries` seatings tried), so the advice is the same on every computer.
+  let tries = 0;
+  const placed = (skip: Set<string>) => {
+    tries++;
+    return planSeats(elements, without(skip), budget).placed;
+  };
 
   const singles: [string, string][][] = [];
   for (const [k, p] of pairs) {
-    if (Date.now() > deadline) break;
+    if (tries >= maxTries) break;
     if (placed(new Set([k])) === total) singles.push([p]);
     if (singles.length >= 6) break;
   }
@@ -287,7 +292,7 @@ export function adviseTimes(elements: SeatElement[], overlap: (a: string, b: str
     let bestScore = -1;
     for (const k of pairs.keys()) {
       if (chosen.has(k)) continue;
-      if (Date.now() > deadline) break;
+      if (tries >= maxTries) break;
       const next = new Set(chosen).add(k);
       const score = placed(next) * 1e6 + choices(next);
       if (score > bestScore) { bestScore = score; best = k; }
