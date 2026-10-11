@@ -463,6 +463,12 @@ table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
 .callout > strong { display: block; margin-bottom: 2px; }
 .callout > p { margin: 0; }
 .callout.danger { border-left-color: #c0392b; background: var(--err-bg); }
+/* an example in the user guide */
+.callout.example { border-left-color: var(--accent); }
+.callout.example > strong { color: var(--accent); font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; }
+.callout.example > p + p { margin-top: 6px; }
+.callout.example ul { margin: 2px 0 0; padding-left: 20px; }
+.help li .callout.example { margin: 6px 0 4px; }
 .callout.danger > strong { color: #c0392b; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .callout.danger > strong { color: #ff8a80; } }
 

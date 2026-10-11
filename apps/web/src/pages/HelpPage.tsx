@@ -328,11 +328,16 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li>Days are letters (<code>MWF</code>, <code>TR</code>; R is Thursday). Start times are separated by commas. Later changes win, and a rule can be limited to some terms.</li>
         </ul>
         <p>
-          A <em>Subset of standard times</em> rule is for courses that are meant to use only some of the days of a standard time. Without it, a course that meets on Tuesday at 8:00 for 100 minutes is flagged, because
-          the standard time is Tuesday and Thursday together; that is often useful, since it can point to a slip in choosing the days. With the rule, such a meeting is accepted for the courses it names (<code>*</code> alone for every course;
+          A <em>Subset of standard times</em> rule is for courses that are meant to use only some of the days of a standard time. With the rule, a meeting is accepted for the courses it names (<code>*</code> alone for every course;
           it can be limited to some terms) as long as its start time and length are those of a standard time and its days are some, but not all, of that time’s days. A meeting that matches no standard time at all is still flagged.
           The flag says when a subset rule would allow the meeting.
         </p>
+        <Example>
+          <p>
+            A course that meets on Tuesday at 8:00 for 100 minutes is flagged without the rule, because the standard time is Tuesday and Thursday together. That is often useful, since it can point to a slip in choosing the days.
+            A subset rule that names the course accepts the Tuesday-only meeting; a Tuesday meeting at 8:30 is still flagged, since no standard time starts then.
+          </p>
+        </Example>
         <h3>Time window</h3>
         <p>
           “The sections of these courses — or taught by these instructors — <em>should</em> (or <em>should not</em>) meet between two times on some days.” Choose once whether the rule is about <em>courses</em> or about <em>instructors</em>, then list them. For example, no 300-level course during the 10:00–10:50 slot on M/W/F, or
@@ -368,16 +373,30 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </ul>
         <p>
           A course is <code>AMUS 228</code>; add a section letter to mean just that section. To name many courses at once, use a pattern: <code>*</code> matches any run of characters,{" "}
-          <code>?</code> any one character, and <code>[23]</code> either of the characters in brackets (<code>[2-4]</code> is a range, <code>[^5]</code> anything but 5). So <code>AMUS 3*</code> stands for every
-          300-level AMUS course, <code>BHAV [23]1?</code> for 211, 212, 311, 312 and so on, and <code>AMUS *</code> (or just <code>AMUS</code>) for every AMUS course. Each matching course counts as its own
+          <code>?</code> any one character, and <code>[23]</code> either of the characters in brackets (<code>[2-4]</code> is a range, <code>[^5]</code> anything but 5). Each matching course counts as its own
           course. A rule is checked separately in each term; choose a term to limit it to one.
         </p>
+        <Example>
+          <ul>
+            <li><code>AMUS 3*</code>: every 300-level AMUS course.</li>
+            <li><code>BHAV [23]1?</code>: BHAV 211, 212, 311, 312 and so on.</li>
+            <li><code>AMUS *</code>, or just <code>AMUS</code>: every AMUS course.</li>
+            <li><code>AMUS 228 B</code>: only section B of AMUS 228.</li>
+          </ul>
+        </Example>
         <h3>Cohort planning</h3>
         <p>
           A <em>Cohort planning</em> rule makes sure there are enough seats for cohorts of students. It has two parts. The first is one or more <em>groups of students</em>: “<em>n</em> students must be able to take” a list of courses.
           The second is the <em>seats in each section</em> of every course that a group names (seats for a course no group uses are ignored, and a rule cannot be saved while a course in a group has no seats given).
           The rule is met when all the students of all the groups can get seats at the same time: each student takes one section of every course of their group, no two sections overlapping in time, and no section takes more students than it has seats.
-          For example: 50 students must be able to take MATH 161, ENGR 101 and CHEM 101, and 25 must be able to take MATH 162, ENGR 101 and CHEM 101; with 32 seats in each MATH 161 section, 30 in MATH 162, 40 in ENGR 101 and 25 in CHEM 101, the rule is met if the 75 students can all be seated.
+        </p>
+        <Example>
+          <p>
+            50 students must be able to take MATH 161, ENGR 101 and CHEM 101, and 25 must be able to take MATH 162, ENGR 101 and CHEM 101. Each MATH 161 section has 32 seats, MATH 162 30, ENGR 101 40 and CHEM 101 25.
+            The rule is met if the 75 students can all be seated at once. With two sections of CHEM 101 there are only 50 CHEM seats, so the message reads “50 of 75 students can all get seats: not enough seats in CHEM 101 (50 in all, 75 students need them)”.
+          </p>
+        </Example>
+        <p>
           The Constraint rules tab says whether the rule is met; when it is not, the message says how many students can be seated and why. If a course has too few seats in all, it says “not enough seats in MATH 161” with the numbers; a course that is not offered that term is named. If every course has enough seats, the times of the sections are what is in the way, and the message advises which sections to move apart, for example “Try offering MATH 161 A and ENGR 101 B at different times”. Several single fixes are joined with “or” (any one is enough); when one move is not enough, the moves needed together are joined with “and”.
           The rule is checked term by term, so limit it to the term in which the cohort takes the courses.
           Courses that are colocated (same instructor) share their seats, so mention only one of them in the rule and give the number of students across the whole set of colocated courses.
@@ -393,7 +412,15 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           but what it is checked against depends on what it is about:
         </p>
         <ul>
-          <li><strong>Rules about sections together are checked against the whole merged schedule.</strong> These are <em>Take together</em>, <em>Cohort planning</em>, <em>Back-to-back classes</em>, <em>Colocate</em> (both versions), and a <em>Time window</em> rule that has a number (“at least <em>n</em> of the sections”). Such a rule names courses or instructors, and it looks at every section of them in every ticked schedule, whichever schedule the rule is saved in. For example, put MATH and ENGR in one schedule and CHEM in another, and a cohort planning rule saved in either one sees all three; an instructor who teaches in two schedules is checked for back-to-back classes across both; and a colocate rule silences a conflict between a section of one schedule and a section of another.</li>
+          <li><strong>Rules about sections together are checked against the whole merged schedule.</strong> These are <em>Take together</em>, <em>Cohort planning</em>, <em>Back-to-back classes</em>, <em>Colocate</em> (both versions), and a <em>Time window</em> rule that has a number (“at least <em>n</em> of the sections”). Such a rule names courses or instructors, and it looks at every section of them in every ticked schedule, whichever schedule the rule is saved in.
+            <Example>
+              <ul>
+                <li>Put MATH and ENGR in one schedule and CHEM in another, and a cohort planning rule saved in either one sees all three.</li>
+                <li>An instructor who teaches in two schedules is checked for back-to-back classes across both.</li>
+                <li>A colocate rule silences a conflict between a section of one schedule and a section of another.</li>
+              </ul>
+            </Example>
+          </li>
           <li><strong>Rules about sections one at a time stay with their own schedule.</strong> These are <em>Modify standard times</em>, <em>Subset of standard times</em> and a <em>Time window</em> rule with no number (“every section”). They apply only to the sections of the schedule they are saved in, so an exception to the standard times in one schedule does not excuse another schedule’s sections, and the built-in standard times check uses each schedule’s own rules.</li>
           <li><strong>Viewing separately</strong> checks every rule against its own schedule alone. (Compare always keeps schedules separate.) The Constraint rules tab and the rule editor’s live check agree with the Conflicts tab: when the schedules are merged they judge a rule against the merged schedule, and when they are separate, against its own.</li>
         </ul>
@@ -577,6 +604,16 @@ function jump(id: string) {
     e.preventDefault();
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+}
+
+/** An example in the guide, set off in a box so it stands out from the explanation around it. */
+function Example({ children }: { children: ReactNode }) {
+  return (
+    <div className="callout example" role="note">
+      <strong>Example</strong>
+      {children}
+    </div>
+  );
 }
 
 /** The user guide. */
