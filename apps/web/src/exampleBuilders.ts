@@ -25,7 +25,7 @@ const schedule = (): ImportResult =>
   });
 
 /**
- * "Merging schedules": the example schedule split by prefix into three schedules (AMUS, BHAV and DIGI are its three prefixes),
+ * "Merging schedules/cohort planning": the example schedule split by prefix into three schedules (AMUS, BHAV and DIGI are its three prefixes),
  * with a few sections added and a cohort planning rule (saved in the AMUS schedule) that needs courses from all three. Each
  * schedule keeps the sections, cross-listings and non-teaching load of its own prefix; the "intensive terms" standard-times rule
  * is saved in the two schedules that have winter and summer sections.

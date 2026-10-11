@@ -71,8 +71,9 @@ describe("the merging schedules example", () => {
     const merged = mergeSchedules(parts).schedule;
     const found = cohort(merged);
     expect(found).toHaveLength(1);
-    expect(found[0]!.message).toBe("87 of 88 students can all get seats. Try offering BHAV 112 A and DIGI 225 B at different times, AMUS 145 B and BHAV 112 A at different times, or AMUS 145 B and DIGI 225 B at different times");
+    expect(found[0]!.message).toBe("92 of 98 students can all get seats. Try offering BHAV 112 A and DIGI 225 B at different times, AMUS 145 B and BHAV 112 A at different times, or AMUS 145 B and DIGI 225 B at different times");
     expect(findRuleViolations(merged).filter((v) => v.builtin)).toEqual([]);
+    expect(found[0]!.message).not.toContain("not enough seats"); // every course has enough seats in all: the times are the problem
     // following the last piece of advice: DIGI 225 B moves to 14:45
     const moved = { ...merged, sessions: merged.sessions.map((s) => (s.prefix === "DIGI" && s.courseNumber === "225" && s.section === "B" ? { ...s, start: 14 * 60 + 45 } : s)) };
     expect(cohort(moved)).toEqual([]);
