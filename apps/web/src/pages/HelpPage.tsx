@@ -47,16 +47,16 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
             add <a href="#loads" onClick={jump("loads")}>non-teaching load</a>.
           </li>
           <li>
-            <strong>Check</strong>
-            your schedule by examining 
-            <a href="#loads" onClick={jump("loads")}> teaching (and non-teaching) loads</a>,
+            <strong>Check</strong>{" "}
+            your schedule by examining{" "}
+            <a href="#loads" onClick={jump("loads")}>teaching (and non-teaching) loads</a>,
               investigating <a href="#conflicts" onClick={jump("conflicts")}>conflicts</a>,
               or <a href="#compare" onClick={jump("compare")}>comparing schedules</a>.
           </li>
           <ul>
 
           <li>
-            You may want to set up <a href="#constraints" onClick={jump("constraints")}>custom constraints</a> 
+            You may want to set up <a href="#constraints" onClick={jump("constraints")}>custom constraints</a>{" "}
             to make sure you don't forget some important constraints on your schedule.
             Violated constraints appear just like conflicts.
           </li>
@@ -135,8 +135,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
             <strong>OneDrive and SharePoint.</strong> When this site is set up for Microsoft sign-in, paste a OneDrive or SharePoint sharing link
             (<em>Share → Copy link</em> in OneDrive) into the same box, or open a link containing one. The first time, a <em>Sign in and open</em> button appears (Microsoft’s
             sign-in window needs a click); after that, links open directly. You can open only files that have been shared with you. A schedule opened this way
-            remembers its file, so the Export tab can save it back (see below).
-            <em> Open from OneDrive…</em>, under the address box, lists the Excel files in your own OneDrive instead: sign in with Microsoft, then pick one from <em>Recent</em>,
+            remembers its file, so the Export tab can save it back (see below).{" "}
+            <em>Open from OneDrive…</em>, under the address box, lists the Excel files in your own OneDrive instead: sign in with Microsoft, then pick one from <em>Recent</em>,{" "}
             <em>Browse</em> folder by folder, or search by name. Click a file to open it (as a new schedule, or in place of one, as the <em>Open as</em> choice says); it remembers its file, as above.
             Only your own OneDrive is listed; a file in SharePoint or Teams, or one someone shared with you, is opened with its link.
           </p>
@@ -155,9 +155,9 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
     body: () => (
       <>
         <p>The menu bar under the schedules allows you to navigate: <strong>Schedule</strong>, 
-        then menus for <strong>Loads</strong>, <strong>View</strong> (the week grids), 
-        <strong>Check</strong> (conflicts, constraints, comparison), <strong>Mass edit</strong>, 
-        <strong>File</strong> (new blank schedule, meta, import, export) and  
+        then menus for <strong>Loads</strong>, <strong>View</strong> (the week grids),{" "}
+        <strong>Check</strong> (conflicts, constraints, comparison), <strong>Mass edit</strong>,{" "}
+        <strong>File</strong> (new blank schedule, meta, import, export) and{" "}
         <strong>Help</strong> (this guide, the discussion forums, the <Link to="/news">release notes</Link>, and About). They are described below in the same order.  
         Click a menu option to open it; the menu you are in is underlined. 
         In any tabular view, click a column heading to sort the table; click again to reverse the sort.
@@ -367,7 +367,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <li>With the number blank (all courses), <em>any</em> and <em>some</em> mean the same thing.</li>
         </ul>
         <p>
-          A course is <code>AMUS 228</code>; add a section letter to mean just that section. To name many courses at once, use a pattern: <code>*</code> matches any run of characters,
+          A course is <code>AMUS 228</code>; add a section letter to mean just that section. To name many courses at once, use a pattern: <code>*</code> matches any run of characters,{" "}
           <code>?</code> any one character, and <code>[23]</code> either of the characters in brackets (<code>[2-4]</code> is a range, <code>[^5]</code> anything but 5). So <code>AMUS 3*</code> stands for every
           300-level AMUS course, <code>BHAV [23]1?</code> for 211, 212, 311, 312 and so on, and <code>AMUS *</code> (or just <code>AMUS</code>) for every AMUS course. Each matching course counts as its own
           course. A rule is checked separately in each term; choose a term to limit it to one.
@@ -439,7 +439,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dd><em>First-year engineers.</em> 50 students must be able to take MATH 161, ENGR 101, CHEM 101; 25 students must be able to take MATH 162, ENGR 101, CHEM 101; seats in each section: MATH 161 32, MATH 162 30, ENGR 101 40, CHEM 101 25.</dd>
         </dl>
         <p>
-          Rules are saved in the <code>Constraints</code> sheet of the Excel file (one row per course or instructor, with the rule’s settings in columns such as <code>Type</code>, <code>Count</code>,
+          Rules are saved in the <code>Constraints</code> sheet of the Excel file (one row per course or instructor, with the rule’s settings in columns such as <code>Type</code>, <code>Count</code>,{" "}
           <code>From</code>, <code>To</code>, <code>Days</code>, <code>Bound</code>, <code>Gap</code>, <code>Action</code>, <code>Starts</code>), and rules from older files, which list courses that must not meet at the same time, still work.
         </p>
       </>
@@ -479,8 +479,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           combined in your files.
         </p>
         <ul>
-          <li>The <strong>Schedules</strong> row lists them. The <strong>tick box</strong> chooses which ones the views show. Click a name to make that schedule the <strong>current</strong> one:
-            <em> Add section</em>, <em>Add non-teaching load</em> and <em>Export</em> act on the current schedule, while clicking a section edits whichever schedule it belongs to.</li>
+          <li>The <strong>Schedules</strong> row lists them. The <strong>tick box</strong> chooses which ones the views show. Click a name to make that schedule the <strong>current</strong> one:{" "}
+            <em>Add section</em>, <em>Add non-teaching load</em> and <em>Export</em> act on the current schedule, while clicking a section edits whichever schedule it belongs to.</li>
           <li>Each schedule is labeled with a <strong>letter</strong> (A:, B:, …) in the order of the list; the letters change when you reorder the schedules. The letters stand in for long names: they head the columns of the Compare tab (with the names in a key above the table), mark which schedule each rule on the Conflicts tab is saved in, and label the schedule headings on the other tabs.</li>
           <li>Drag a schedule by the four-arrow handle at the left of its pill to change the <strong>order</strong> of the schedules (or focus the handle and press the left or right arrow key). The order is the order of the views, and of the merged names; the first schedule’s terms and parts are the ones a merged view uses. You can undo a move.</li>
           <li>The <strong>✎</strong> sets a short <strong>nickname</strong> that is shown instead of the file name (also on the Meta tab). If two or more schedules would be shown under the same name, each gets a number — <em>My Schedule (1)</em>, <em>My Schedule (2)</em> — so you can tell them apart. <strong>✕</strong> removes a schedule from the workspace; you can undo it.</li>
@@ -532,8 +532,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <>
             <h3>OneDrive</h3>
             <p>
-              When the site is set up for Microsoft sign-in, the Export tab has a <em>OneDrive</em> row. <em>Save a copy to OneDrive</em> puts the whole schedule (including non-teaching load) in a
-              <em>Schedulizer</em> folder on your OneDrive. From then on <em>Save to OneDrive</em> updates that file, and <em>Get link to share</em> makes a link for people in your organization, either to <em>edit</em> (they can save changes back to your file) or <em>only view</em>
+              When the site is set up for Microsoft sign-in, the Export tab has a <em>OneDrive</em> row. <em>Save a copy to OneDrive</em> puts the whole schedule (including non-teaching load) in a{" "}
+              <em>Schedulizer</em> folder on your OneDrive. From then on <em>Save to OneDrive</em> updates that file, and <em>Get link to share</em> makes a link for people in your organization, either to <em>edit</em> (they can save changes back to your file) or <em>only view</em>{" "}
               (they work on their own copy; good for circulating a draft). They open it and the app starts with the schedule loaded. If the file changed on OneDrive since you opened it,
               saving stops and asks before overwriting. A schedule opened from a OneDrive link is connected to that file in the same way (<em>Disconnect</em> undoes this).
             </p>
