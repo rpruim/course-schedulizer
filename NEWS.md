@@ -1,4 +1,4 @@
-# Course Schedulizer 2.0.7.9002
+# Course Schedulizer 2.0.7.9003
 
 * Faster: the app's first download is about a third of the size (the Excel reader and writer now loads only when a file is opened or exported), conflict and rule checks are no longer repeated for an unchanged schedule, conflicts are found by comparing only meetings that can overlap, and the editors' live checks wait until typing pauses. The advice on which cohort sections to move apart is worked out only on the Conflicts tab and in the rule editor, and is now the same on every computer.
 * Under the hood: React 19, React Router 8, Vite 8, Vitest 5 and TypeScript 6; the examples list is read without a YAML library. Building and running the app now needs Node 22.22 or later.
