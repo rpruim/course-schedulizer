@@ -33,9 +33,10 @@ const MAX_COMBOS = 2500;
 
 /**
  * Cohort planning: can all the students of all the elements be seated at the same time? Each student takes one section of every
- * course of their element, no two overlapping in time, and no section takes more students than it has seats. This is solved
- * exactly (a search over how many students of each element take each clash-free choice of sections, remembering what was already
- * tried), unless it is cut off after `budget` steps, when `exact` is false.
+ * course of their element, no two overlapping in time, and no section takes more students than it has seats. This is an integer
+ * program (how many students of each element take each clash-free choice of sections), solved exactly by the simplex method with
+ * branch and bound, unless the work passes a limit set by `budget` (or an element has more than `MAX_COMBOS` choices), when `exact`
+ * is false and `placed` is the most found so far.
  */
 export function planSeats(elements: SeatElement[], overlap: (a: string, b: string) => boolean, budget = 400000): SeatResult {
   const total = elements.reduce((n, e) => n + e.students, 0);

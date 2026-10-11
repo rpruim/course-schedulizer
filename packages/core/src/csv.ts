@@ -41,8 +41,3 @@ export function recordsFromCsv(text: string): Record<string, string>[] {
     .filter((r) => r.some((v) => v !== ""))
     .map((r) => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ""])));
 }
-
-export function toCsv(header: string[], rows: string[][]): string {
-  const q = (v: string) => (/[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
-  return [header, ...rows].map((r) => r.map(q).join(",")).join("\n") + "\n";
-}

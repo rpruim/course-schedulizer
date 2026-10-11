@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
-import { emptySchedule, mergeSchedules, type MergeOrigin, type Schedule } from "@schedulizer/core";
+import { mergeSchedules, type MergeOrigin, type Schedule } from "@schedulizer/core";
 import type { OneDriveSource } from "./onedrive/graph";
 import { LocalWorkspaceStore, type WorkspaceEntry, type WorkspaceSnapshot, type WorkspaceStore } from "./store";
 
@@ -326,17 +326,4 @@ export function useWorkspace(): Workspace {
   const api = useContext(Ctx);
   if (!api) throw new Error("useWorkspace must be used inside <WorkspaceProvider>");
   return api;
-}
-
-const EMPTY = emptySchedule();
-
-/** The current schedule on its own, for components that only ever work on that one (Add, Re-letter, Export). */
-export function useSchedule() {
-  const ws = useWorkspace();
-  return {
-    schedule: ws.current?.schedule ?? EMPTY,
-    name: ws.current?.name ?? "",
-    hasCurrent: !!ws.current,
-    apply: (fn: (s: Schedule) => Schedule) => ws.current && ws.applyTo(ws.current.id, fn),
-  };
 }
