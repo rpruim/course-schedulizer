@@ -389,11 +389,14 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           A <em>Cohort planning</em> rule makes sure there are enough seats for cohorts of students. It has two parts. The first is one or more <em>groups of students</em>: “<em>n</em> students must be able to take” a list of courses.
           The second is the <em>seats in each section</em> of every course that a group names (seats for a course no group uses are ignored, and a rule cannot be saved while a course in a group has no seats given).
           The rule is met when all the students of all the groups can get seats at the same time: each student takes one section of every course of their group, no two sections overlapping in time, and no section takes more students than it has seats.
+          Students outside the cohort take seats too: make a group of its own, with just that one course, for the other students in a course, so their seats are counted.
         </p>
         <Example>
           <p>
-            50 students must be able to take MATH 161, ENGR 101 and CHEM 101, and 25 must be able to take MATH 162, ENGR 101 and CHEM 101. Each MATH 161 section has 32 seats, MATH 162 30, ENGR 101 40 and CHEM 101 25.
-            The rule is met if the 75 students can all be seated at once. With two sections of CHEM 101 there are only 50 CHEM seats, so the message reads “50 of 75 students can all get seats: not enough seats in CHEM 101 (50 in all, 75 students need them)”.
+            50 students must be able to take MATH 161, ENGR 101 and CHEM 101, and 25 must be able to take MATH 162, ENGR 101 and CHEM 101. Outside the cohort, 10 other students take MATH 161 and 5 take ENGR 101, each a group of its own
+            with just that course. Each MATH 161 section has 32 seats, MATH 162 30, ENGR 101 40 and CHEM 101 25.
+            The rule is met if all 90 students can be seated at once. With two sections of MATH 161, two of ENGR 101 and three of CHEM 101 they can (ENGR 101 is exactly full: 80 seats for 75 + 5 students).
+            With only two sections of CHEM 101 there are 50 CHEM seats for the 75 cohort students, so the message reads “65 of 90 students can all get seats: not enough seats in CHEM 101 (50 in all, 75 students need them)”.
           </p>
         </Example>
         <p>
@@ -435,7 +438,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </ul>
         <h3>Examples</h3>
         <p>
-          Each of these is in the <em>Example with constraint rules</em> schedule (on the <Link to="/import">Import</Link> tab); open its Constraint rules and Conflicts pages and click a rule to see how it is set up.
+          Each of these, except cohort planning (which is in <em>Merging schedules</em>), is in the <em>Example with constraint rules</em> schedule (on the <Link to="/import">Import</Link> tab); open its Constraint rules and Conflicts pages and click a rule to see how it is set up.
         </p>
         <dl>
           <dt>Colocate (same instructor)</dt>
@@ -463,7 +466,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dt>Take together: some pair</dt>
           <dd>The same courses with <em>some</em> 2: met as long as one pair fits.</dd>
           <dt>Cohort planning</dt>
-          <dd><em>First-year engineers.</em> 50 students must be able to take MATH 161, ENGR 101, CHEM 101; 25 students must be able to take MATH 162, ENGR 101, CHEM 101; seats in each section: MATH 161 32, MATH 162 30, ENGR 101 40, CHEM 101 25.</dd>
+          <dd><em>First-year cohort</em> (in the <em>Merging schedules</em> example, saved in Music). 30 students must be able to take AMUS 112, BHAV 112 and DIGI 225, and 30 more AMUS 145, BHAV 112 and DIGI 225; outside the cohort, 6 other students take AMUS 112, 4 AMUS 145, 10 BHAV 112 and 8 DIGI 225; seats in each section: AMUS 112 25, AMUS 145 20, BHAV 112 35, DIGI 225 34. Merged, 87 of the 88 students can be seated, and the message says which sections to move apart.</dd>
         </dl>
         <p>
           Rules are saved in the <code>Constraints</code> sheet of the Excel file (one row per course or instructor, with the rule’s settings in columns such as <code>Type</code>, <code>Count</code>,{" "}
