@@ -36,7 +36,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           </ol>
           </li>
           <li> 
-            <a href="#caldendar-views" onClick={jump("calendar-views")}>
+            <a href="#calendar-views" onClick={jump("calendar-views")}>
             Look</a> over your schedule using one of the calendar views.
           </li>
           <li>
@@ -158,7 +158,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         then menus for <strong>Loads</strong>, <strong>View</strong> (the week grids), 
         <strong>Check</strong> (conflicts, constraints, comparison), <strong>Mass edit</strong>, 
         <strong>File</strong> (new blank schedule, meta, import, export) and  
-        <strong>Help</strong> (this guide, the <Link to="/news">release notes</Link>, and About).  
+        <strong>Help</strong> (this guide, the discussion forums, the <Link to="/news">release notes</Link>, and About). They are described below in the same order.  
         Click a menu option to open it; the menu you are in is underlined. 
         In any tabular view, click a column heading to sort the table; click again to reverse the sort.
         A button that adds something starts with a <strong>+</strong>, and one that deletes or removes something has a trash can.</p>
@@ -167,18 +167,18 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <dd>A tabular view of the schedule with one row per section listing 
             course, section letter, term, title, instructor, load and meeting times. 
             Filter by year, term or text. Click a row to edit it. A ⚠ marks a section in a conflict.</dd>
-          <dt><Link to="/loads">Teaching loads</Link></dt>
+          <dt>Loads: <Link to="/loads">Teaching loads</Link></dt>
           <dd>Load per person per term, with non-teaching load in smaller type. Hover over a number to see which courses or activities add up to it; click a name to see that person’s week.</dd>
-          <dt><Link to="/nonteaching">Non-teaching loads</Link></dt>
+          <dt>Loads: <Link to="/nonteaching">Non-teaching load</Link></dt>
           <dd>Load for things other than teaching: chair duties, release time, sabbaticals, etc.</dd>
-          <dt><Link to="/conflicts">Conflicts</Link></dt>
+          <dt>View: <Link to="/dept">Dept week</Link>, <Link to="/faculty">Faculty week</Link>, <Link to="/rooms">Room week</Link></dt>
+          <dd>Sections as blocks on a Monday–Friday grid. See <a href="#calendar-views" onClick={jump("calendar-views")}>The calendar views</a>.</dd>
+          <dt>Check: <Link to="/conflicts">Conflicts</Link></dt>
           <dd>Pairs of sections that clash, and rules that are not met. See <a href="#conflicts" onClick={jump("conflicts")}>Conflicts</a> below.</dd>
-          <dt><Link to="/constraints">Constraint rules</Link></dt>
-          <dd>Rules the schedule should meet, such as courses a student must be able to take together. See <a href="#rules" onClick={jump("rules")}>Custom constraints</a>.</dd>
-          <dt><Link to="/compare">Compare</Link></dt>
+          <dt>Check: <Link to="/constraints">Constraint rules</Link></dt>
+          <dd>Rules the schedule should meet, such as courses a student must be able to take together. See <a href="#constraints" onClick={jump("constraints")}>Custom constraints</a>.</dd>
+          <dt>Check: <Link to="/compare">Compare</Link></dt>
           <dd>Side-by-side comparison of schedules. See <a href="#compare" onClick={jump("compare")}>Comparing schedules</a>.</dd>
-          <dt>Calendar views: <Link to="/dept">Dept week</Link>, <Link to="/faculty">Faculty week</Link>, <Link to="/rooms">Room week</Link></dt>
-          <dd>Sections as blocks on a Monday–Friday grid. See <a href="#week" onClick={jump("week")}>The week views</a>.</dd>
           <dt><Link to="/massedit">Mass edit</Link></dt>
           <dd>
             The department week grid, but clicking a section selects or deselects it (selected sections have a green outline and a ✓) instead of opening it.
@@ -193,9 +193,17 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
               <li>Course numbers and section letters are not part of a mass edit: every selected section would get the same one. Change them in the section editor.</li>
             </ul>
           </dd>
-          <dt><Link to="/meta">Meta</Link></dt>
+          <dt>File: + New blank schedule</dt>
+          <dd>Adds an empty schedule, makes it the current one and opens its Meta page, so you can name it and then build it from scratch with <em>+ Add section</em>.</dd>
+          <dt>File: <Link to="/meta">Meta</Link></dt>
           <dd>View and edit information about the schedule as a whole.  Give your schedule a nickname, and a <em>default department</em> (used for every section that does not give its own; the section editor shows it in gray). Specify the file name 
             used when exporting. Label your schedule with a version and provide some notes about the schedule. With several schedules open, the current one is listed first; click a schedule’s name to open or close its card. When a different schedule becomes current, only that one is open; otherwise your choices are remembered.</dd>
+          <dt>File: <Link to="/import">Import</Link></dt>
+          <dd>Open Excel files (the app’s own, the registrar’s, or the old Course Schedulizer’s), an example, or a file from a web address or OneDrive. See <a href="#import" onClick={jump("import")}>Opening a schedule</a>.</dd>
+          <dt>File: <Link to="/export">Export</Link></dt>
+          <dd>Save a schedule as an Excel file, or to OneDrive, and get a link to share it. See <a href="#export" onClick={jump("export")}>Saving, exporting and sharing</a>.</dd>
+          <dt>Help: <Link to="/help">User guide</Link>, <a href={DISCUSSION_URL} target="_blank" rel="noreferrer">Discussion Forums in Teams</a>, <Link to="/news">Release notes</Link>, <Link to="/about">About</Link></dt>
+          <dd>This guide; the place to ask questions, report problems and suggest ideas; what changed in each version; and the version, license and credits.</dd>
         </dl>
       </>
     ),
