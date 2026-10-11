@@ -1,3 +1,4 @@
+import { naturalCompare as natural } from "./text.js";
 import { formatFaculty, formatNumber, formatTime } from "./format.js";
 import { sectionShares } from "./load.js";
 import { nonTeachingShown } from "./nonteaching.js";
@@ -81,7 +82,6 @@ export const JOIN = "; ";
 const MEETINGS = " + ";
 
 const kindOf = new Map(COMPARE_COLUMNS.map((c) => [c.key, c.kind]));
-const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
 const blankRow = (): CompareRow => Object.fromEntries(COMPARE_COLUMNS.map((c) => [c.key, ""]));
 const num = (n: number | undefined): Cell => (n === undefined ? "" : n);
 

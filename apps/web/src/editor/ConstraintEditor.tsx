@@ -1,3 +1,4 @@
+import { normCourse } from "@schedulizer/core";
 import { useSettled } from "../debounce";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -52,7 +53,6 @@ interface CapacityForm {
   course: string;
   seats: string;
 }
-const normCourse = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
 /** The rule's inputs as strings (times as `HH:MM`, for the time inputs). */
 interface Form {

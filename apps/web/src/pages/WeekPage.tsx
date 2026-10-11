@@ -1,3 +1,4 @@
+import { naturalCompare, normText } from "@schedulizer/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
@@ -78,9 +79,9 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
     [entries, year, term, kind, colorBy, palette, part, only, mass, filterBy, filterValues],
   );
   // Choices come from every included schedule; one that no longer exists (a different file or term) means "all".
-  const choices = [...new Set(results.flatMap((r) => r.result.choices))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+  const choices = [...new Set(results.flatMap((r) => r.result.choices))].sort(naturalCompare);
   // A name from a link may differ in case or spacing from the one the grid uses.
-  const sameName = (a: string, b: string) => a.trim().replace(/\s+/g, " ").toLowerCase() === b.trim().replace(/\s+/g, " ").toLowerCase();
+  const sameName = (a: string, b: string) => normText(a) === normText(b);
   const effectiveOnly = mass ? "" : (choices.find((c) => sameName(c, only)) ?? "");
   const shownResults = useMemo(
     () =>
@@ -89,7 +90,7 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
         : entries.map((e) => ({ id: e.id, name: e.name, result: weekGrids(e.schedule, { year, term, kind, colorBy, ...(palette ? { palette } : {}), part, only: effectiveOnly }) })),
     [results, entries, year, term, kind, colorBy, palette, part, effectiveOnly],
   );
-  const filterChoices = [...new Set(results.flatMap((r) => r.result.filterValues))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+  const filterChoices = [...new Set(results.flatMap((r) => r.result.filterValues))].sort(naturalCompare);
   const filterHasMissing = results.some((r) => r.result.filterMissing);
   const groups = useMemo(() => groupGrids(shownResults, kind, kind === "dept" ? undefined : effectiveOnly || undefined), [shownResults, kind, effectiveOnly]);
   const withoutRoom = shownResults.reduce((n, r) => n + r.result.withoutRoom, 0);

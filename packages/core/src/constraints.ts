@@ -1,8 +1,9 @@
+import { normText, sameText as sameLetter } from "./text.js";
 import { listingsOf } from "./names.js";
 import type { Constraint, Issue, Schedule, Session } from "./types.js";
 
-export const normCourse = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
-const sameLetter = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+/** A course name compared loosely (see `normText`). */
+export const normCourse = normText;
 
 /**
  * A pattern as a regular expression: `*` is any run of characters, `?` any one character, `[234]` any

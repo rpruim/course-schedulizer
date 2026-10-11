@@ -1,3 +1,4 @@
+import { normText as norm } from "@schedulizer/core";
 import { ACADEMIC_YEAR_HELP } from "@schedulizer/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -28,7 +29,6 @@ interface Props {
   onNotice: (message: string) => void;
 }
 
-const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 const num = (n: number) => String(Math.round(n * 100) / 100);
 
 /** Dialog for one non-teaching load row: who, what, which term (or the full year), and how much. */

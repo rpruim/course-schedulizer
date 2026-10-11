@@ -1,3 +1,4 @@
+import { naturalCompare, normText } from "./text.js";
 import { displayNames } from "./names.js";
 import { AY, type Instructor, type Issue, type Schedule } from "./types.js";
 
@@ -14,7 +15,7 @@ export interface LoadRow {
 }
 
 const round = (n: number) => Math.round(n * 1e6) / 1e6;
-const nameKey = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
+const nameKey = normText;
 
 /**
  * Split a section's load among its instructors: `Name (n)` shares first, the
@@ -96,7 +97,7 @@ export function summarizeItems(items: string[]): string {
   const counts = new Map<string, number>();
   for (const i of items) counts.set(i, (counts.get(i) ?? 0) + 1);
   return [...counts]
-    .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }))
+    .sort(([a], [b]) => naturalCompare(a, b))
     .map(([i, n]) => (n > 1 ? `${i} (${n})` : i))
     .join(" · ");
 }

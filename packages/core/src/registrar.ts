@@ -1,5 +1,6 @@
+import { naturalCompare as natural } from "./text.js";
 import { colocatedPairs } from "./conflicts.js";
-import { formatNumber } from "./format.js";
+import { formatNumber, pad2 } from "./format.js";
 import { SPECIAL_TOPIC, type Table } from "./export.js";
 import { termForData } from "./terms.js";
 import type { Schedule, Session } from "./types.js";
@@ -25,7 +26,6 @@ export function gradLevelOf(courseNumber: string): "GRAD" | "UGRAD" | "" {
   return Number(n[1]) >= 500 ? "GRAD" : "UGRAD";
 }
 
-const pad2 = (n: number) => String(n).padStart(2, "0");
 /** `HH:MM:00`, wrapping past midnight. */
 const clock = (minutes: number) => `${pad2(Math.floor((minutes % 1440) / 60))}:${pad2(minutes % 60)}:00`;
 
@@ -82,7 +82,6 @@ export function registrarTable(schedule: Schedule, opts: { includeNonTeaching?: 
   const bySection = new Map<string, Session[]>();
   for (const s of schedule.sessions) bySection.set(s.sectionId, [...(bySection.get(s.sectionId) ?? []), s]);
   const termRank = new Map(schedule.settings.terms.map((t, i) => [t.code, i]));
-  const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
   const ordered = [...bySection].sort(([, a], [, b]) => {
     const x = a[0]!;
     const y = b[0]!;

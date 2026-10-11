@@ -1,3 +1,4 @@
+import { normText as norm } from "./text.js";
 import { meetingsOverlap, scheduled } from "./overlap.js";
 import { allowedCollisions } from "./rules.js";
 import type { Schedule, Session } from "./types.js";
@@ -15,7 +16,6 @@ export interface Conflict {
   meetings: [Session, Session][];
 }
 
-const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
 /**
  * All conflicts in a schedule (spec §6): for every pair of different sections

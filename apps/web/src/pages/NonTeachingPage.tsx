@@ -1,3 +1,4 @@
+import { naturalCompare as natural } from "@schedulizer/core";
 import { useMemo, useState } from "react";
 import { nonTeachingShown, nonTeachingWarnings } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
@@ -6,7 +7,6 @@ import { SortTh, useSort, type SortValue } from "../sort";
 import { useWorkspace, type Entry } from "../state";
 import { Empty, NoneShown } from "./SchedulePage";
 
-const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
 
 /** Non-teaching load: chair releases, sabbaticals and the like, one row per person, activity and term. */
 export function NonTeachingPage() {

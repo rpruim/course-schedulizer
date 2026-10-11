@@ -1,3 +1,4 @@
+import { naturalCompare } from "./text.js";
 import { DAY_ORDER, type Schedule, type Session } from "./types.js";
 
 /** A course offering: all sections of one course in one term. Letters are unique within it. */
@@ -203,7 +204,7 @@ export function relabelByTime(schedule: Schedule, scope: RelabelScope = { kind: 
   const changes: LetterChange[] = [];
   for (const [key, g] of groups) {
     // Chosen sections that are only some of an offering trade the letters they hold; otherwise it is A, B, C…
-    const held = chosen && g.length < (sizes.get(key) ?? 0) ? g.map((x) => x.letter).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })) : undefined;
+    const held = chosen && g.length < (sizes.get(key) ?? 0) ? g.map((x) => x.letter).sort(naturalCompare) : undefined;
     // Unscheduled sections last, in their current letter order; scheduled by time.
     const sorted = [...g].sort((a, b) =>
       a.time !== b.time

@@ -1,3 +1,4 @@
+import { normText as norm } from "./text.js";
 import { rowSource, type CompareRow, type RowKind } from "./compare.js";
 
 /**
@@ -42,7 +43,6 @@ export interface PairCluster {
 }
 
 const text = (r: CompareRow, k: string) => String(r[k] ?? "").trim();
-const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
 const isTeaching = (r: CompareRow) => text(r, "Prefix") !== "" || text(r, "CourseNumber") !== "";
 
 /** The reference a user's pairing choice uses for a row. */

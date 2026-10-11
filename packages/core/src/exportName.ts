@@ -1,6 +1,6 @@
+import { pad2 as two } from "./format.js";
 import { DEFAULT_SAVE_AS, type Meta } from "./types.js";
 
-const two = (n: number) => String(n).padStart(2, "0");
 
 /** A typed file name made safe: no `.xlsx`, odd characters as `_`; blank gives the default. */
 export function cleanFileName(text: string | undefined): string {

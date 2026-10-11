@@ -1,3 +1,4 @@
+import { naturalCompare } from "@schedulizer/core";
 import { useCallback, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { COLOR_BY, type Block, type ColorBy } from "./week";
@@ -22,7 +23,7 @@ export function keyFor(colorBy: ColorBy, blocks: (Pick<Block, "colorValue" | "hu
   const seen = new Map<string, number | undefined>();
   const tones = new Map<string, number | undefined>();
   for (const b of blocks) if (!seen.has(b.colorValue)) { seen.set(b.colorValue, b.hue); tones.set(b.colorValue, b.tone); }
-  const named = [...seen].filter(([v]) => v !== "").sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+  const named = [...seen].filter(([v]) => v !== "").sort(([a], [b]) => naturalCompare(a, b));
   const entries: KeyEntry[] = named.map(([label, hue]) => (tones.get(label) === undefined ? { label, hue } : { label, hue, tone: tones.get(label) }));
   const cohort = colorBy.startsWith("cohort:");
   if (seen.has("")) entries.push({ label: cohort ? "(not in the rule)" : MISSING, hue: undefined });

@@ -1,3 +1,4 @@
+import { pad2 as two } from "@schedulizer/core";
 import {
   COMPARE_COLUMNS,
   COUNT_KEY,
@@ -234,7 +235,6 @@ export interface ExportInfo {
   exportedAt: Date;
 }
 
-const two = (n: number) => String(n).padStart(2, "0");
 
 /**
  * The comparison as it is on screen, for a spreadsheet: sheet 1 has the rows shown, in the

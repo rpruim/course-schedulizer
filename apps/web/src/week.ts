@@ -7,6 +7,8 @@ import {
   findRuleViolations,
   levelOf,
   listingsOf,
+  naturalCompare,
+  normText,
   partsFor,
   rulesOf,
   weeksOf,
@@ -50,7 +52,7 @@ function cohortRules(schedule: Schedule): Rule[] {
   }
   return rules;
 }
-const courseKey = (prefix: string, number: string) => `${prefix} ${number}`.replace(/\s+/g, " ").trim().toLowerCase();
+const courseKey = (prefix: string, number: string) => normText(`${prefix} ${number}`);
 /** The courses a cohort planning rule uses (those of its groups), as the rule writes them, each once. */
 export function cohortCourses(rule: Rule): string[] {
   const seen = new Map<string, string>();
@@ -182,8 +184,8 @@ export function colorValueOf(schedule: Schedule, by: ColorBy, s: Session): strin
 }
 
 const DAY_ORDER = "MTWRFSU";
-const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
-const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+const norm = normText;
+const natural = naturalCompare;
 
 /**
  * A hue (0–359) for each of the values, so that every value looks different: the hues are spread evenly round the color wheel, however

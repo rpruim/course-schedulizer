@@ -1,3 +1,4 @@
+import { normText as norm } from "./text.js";
 import { yearFromData } from "./academicYear.js";
 import type { DraftError } from "./editing.js";
 import { AY, nonTeachingSchema, type Issue, type NonTeaching, type Schedule } from "./types.js";
@@ -16,7 +17,6 @@ export interface NonTeachingDraft {
 }
 
 const blank = (s: string) => s.trim() === "";
-const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
 /**
  * Rows have no id of their own, so an existing row is addressed by its position in

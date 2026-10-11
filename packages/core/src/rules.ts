@@ -1,3 +1,4 @@
+import { sameText as sameLetter } from "./text.js";
 import { constraintNames, constraintNamesInstructor, courseMatches, listingKeys, normCourse } from "./constraints.js";
 import { displayNames, listingsOf } from "./names.js";
 import { formatTime } from "./format.js";
@@ -428,7 +429,6 @@ export interface RuleViolation {
   sessions: Session[];
 }
 
-const sameLetter = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /**
  * Every constraint rule that is not met, per academic year and term (rules apply within a term).

@@ -1,3 +1,4 @@
+import { naturalCompare as natural } from "@schedulizer/core";
 import {
   conflictedSessions,
   nonStandardSessions,
@@ -36,7 +37,6 @@ export interface SectionRow {
   nonStandard: boolean;
 }
 
-const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
 
 /** `09:15–10:20` for a scheduled session, else empty. */
 export function timeRange(s: Pick<Session, "start" | "duration">): string {

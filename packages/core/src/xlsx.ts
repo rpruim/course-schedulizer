@@ -1,3 +1,4 @@
+import { pad2 as two } from "./format.js";
 import type ExcelJS from "exceljs";
 
 /** ExcelJS is large and only needed to read or write a file, so it is loaded the first time it is (a separate download in the app). */
@@ -10,15 +11,13 @@ import { REGISTRAR_SHEET, registrarTable } from "./registrar.js";
 import { importRecords, importSettings, type ImportOptions, type ImportResult } from "./import.js";
 import { DEFAULT_SAVE_AS, emptyMeta, type Issue, type Rec } from "./types.js";
 
-const pad = (n: number) => String(n).padStart(2, "0");
-
 function cellText(v: ExcelJS.CellValue): string {
   if (v === null || v === undefined) return "";
   if (typeof v === "string") return v;
   if (typeof v === "number" || typeof v === "boolean") return String(v);
   if (v instanceof Date) {
     // Time-only cells come back as 1899/1900-dated values.
-    if (v.getUTCFullYear() < 1901) return `${pad(v.getUTCHours())}:${pad(v.getUTCMinutes())}:${pad(v.getUTCSeconds())}`;
+    if (v.getUTCFullYear() < 1901) return `${two(v.getUTCHours())}:${two(v.getUTCMinutes())}:${two(v.getUTCSeconds())}`;
     return v.toISOString().slice(0, 10);
   }
   if (typeof v === "object") {
@@ -121,7 +120,6 @@ export interface WriteOptions extends ExportOptions {
   now?: Date;
 }
 
-const two = (n: number) => String(n).padStart(2, "0");
 
 /**
  * Write a schedule as an .xlsx workbook. First tab: "Registrar Schedule", the
