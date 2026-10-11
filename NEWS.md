@@ -1,4 +1,4 @@
-# Course Schedulizer 2.0.7.9003
+# Course Schedulizer 2.0.7.9004
 
 * Faster: the app's first download is about a third of the size (the Excel reader and writer now loads only when a file is opened or exported), conflict and rule checks are no longer repeated for an unchanged schedule, conflicts are found by comparing only meetings that can overlap, and the editors' live checks wait until typing pauses. The advice on which cohort sections to move apart is worked out only on the Conflicts tab and in the rule editor, and is now the same on every computer.
 * The *Merging schedules* example is now *Merging schedules/cohort planning*. Its cohort rule, and the cohort example in the user guide, also count the students outside the cohort who take one of its courses on its own (a group of their own with that one course). The example now has enough seats in every course, yet merged its times keep 6 of the 98 students from being seated (92 of 98), and moving one section (DIGI 225 B) fixes it.
