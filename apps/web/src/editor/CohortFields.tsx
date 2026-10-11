@@ -52,7 +52,7 @@ export function CohortFields({ elements, capacities, onElements, onCapacities, p
             <div className="cohort-courses">
               {e.courses.map((c, k) => (
                 <span className="cohort-course" key={k}>
-                  <input value={c} size={10} list="rule-courses" placeholder="MATH 161" aria-label="Course" onChange={(ev) => setElement(i, { courses: e.courses.map((x, m) => (m === k ? ev.target.value : x)) })} />
+                  <input value={c} size={12} list="rule-courses" placeholder="MATH 161" aria-label="Course" onChange={(ev) => setElement(i, { courses: e.courses.map((x, m) => (m === k ? ev.target.value : x)) })} />
                   <button type="button" className="link icon-only" title="Remove this course" aria-label="Remove this course" onClick={() => setElement(i, { courses: e.courses.filter((_, m) => m !== k) })} disabled={e.courses.length <= 1}><Trash /></button>
                 </span>
               ))}

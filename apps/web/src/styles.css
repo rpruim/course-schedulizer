@@ -469,6 +469,8 @@ table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
 .callout.example > p + p { margin-top: 6px; }
 .callout.example ul { margin: 2px 0 0; padding-left: 20px; }
 .help li .callout.example { margin: 6px 0 4px; }
+/* a picture of part of the app in the user guide */
+.help-shot { display: block; max-width: 100%; height: auto; margin: 8px 0; border: 1px solid var(--line); border-radius: 6px; }
 .callout.danger > strong { color: #c0392b; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .callout.danger > strong { color: #ff8a80; } }
 

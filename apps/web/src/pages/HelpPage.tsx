@@ -393,17 +393,37 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </p>
         <Example>
           <p>
-            50 students must be able to take MATH 161, ENGR 101 and CHEM 101, and 25 must be able to take MATH 162, ENGR 101 and CHEM 101. Outside the cohort, 10 other students take MATH 161 and 5 take ENGR 101, each a group of its own
-            with just that course. Each MATH 161 section has 32 seats, MATH 162 30, ENGR 101 40 and CHEM 101 25.
-            The rule is met if all 90 students can be seated at once. With two sections of MATH 161, two of ENGR 101 and three of CHEM 101 they can (ENGR 101 is exactly full: 80 seats for 75 + 5 students).
-            With only two sections of CHEM 101 there are 50 CHEM seats for the 75 cohort students, so the message reads “65 of 90 students can all get seats: not enough seats in CHEM 101 (50 in all, 75 students need them)”.
+            Suppose 50 engineering students must be able to take MATH 161, ENGR 101 and CHEM 101, and 25 additional students 
+            must be able to take MATH 162, ENGR 101 and CHEM 101. 
+            Outside the cohort, 10 other students must take MATH 161 and 5 take ENGR 101. 
+            This constraint can be expressed as
+          </p>
+          <img
+            className="help-shot"
+            src="help/cohort-rule.png"
+            width={890}
+            alt="The rule editor's Groups of students: 50 students must be able to take MATH 161, ENGR 101 and CHEM 101; 25 students MATH 162, ENGR 101 and CHEM 101; 10 students MATH 161; 5 students ENGR 101. Seats in each section: MATH 161 32, ENGR 101 40, CHEM 101 25, MATH 162 30."
+          />
+          <p>
+            Each MATH 161 section has 32 seats, MATH 162 30, ENGR 101 40 and CHEM 101 25.
+            The rule is met if all 90 students can be seated at once. 
+            With two sections of MATH 161, two of ENGR 101 and three of CHEM 101 there are enough 
+            seats, provided they are scheduled at appropriate times. 
           </p>
         </Example>
         <p>
           The Constraint rules tab says whether the rule is met; when it is not, the message says how many students can be seated and why. If a course has too few seats in all, it says “not enough seats in MATH 161” with the numbers; a course that is not offered that term is named. If every course has enough seats, the times of the sections are what is in the way, and the message advises which sections to move apart, for example “Try offering MATH 161 A and ENGR 101 B at different times”. Several single fixes are joined with “or” (any one is enough); when one move is not enough, the moves needed together are joined with “and”.
-          The rule is checked term by term, so limit it to the term in which the cohort takes the courses.
-          Courses that are colocated (same instructor) share their seats, so mention only one of them in the rule and give the number of students across the whole set of colocated courses.
         </p>
+        <p>Some tips:</p>
+        <ul>
+          <li><strong>Color by the rule.</strong> Coloring by a cohort planning rule (<em>Color by</em> on the week views) uses a different color for each course used in the
+            rule and colors all other courses gray, to make it easy to focus on the part of the schedule that is involved in the cohort planning rule.</li>
+          <li><strong>Count the students outside the cohort.</strong> When you build the rule, include seats for students who are not in the cohort but take its courses: give each such
+            course a group of its own (10 students in MATH 161 and 5 in ENGR 101 in the example). Otherwise the sections look emptier than they will be.</li>
+          <li><strong>Choose the term.</strong> The rule is checked term by term, so limit it to the term in which the cohort takes the courses.</li>
+          <li><strong>Colocated courses share their seats.</strong> Mention only one of a set of colocated (same instructor) courses in the rule, and give the number of students and
+            the seats across the whole set. If MATH 163 is colocated with MATH 161, for example, MATH 163 does not need to be in the rule: its students are counted with MATH 161’s.</li>
+        </ul>
         <h3>Turning a rule off</h3>
         <p>
           Every rule except the built-in standard times has an <em>Active</em> check box at the right of its row on the Constraint rules tab. Uncheck it to deactivate the rule: it is kept in the schedule (and in the Excel file, in the <code>Active</code> column of the Constraints sheet, as Yes or No) but is not

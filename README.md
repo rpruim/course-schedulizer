@@ -68,6 +68,13 @@ as a link's query (`url=a.xlsx&name=A&url=b.xlsx&name=B&year=AY25`). To add an e
 folder and add an entry. The built-in examples are made from the synthetic fixtures by `pnpm examples`
 (`apps/web/src/exampleBuilders.ts`); a test fails if the files are out of date.
 
+## Pictures in the user guide
+
+`apps/web/public/help/cohort-rule.png` shows the rule editor with the guide's cohort planning example. To retake it after the rule
+editor changes, run `pnpm check:prod` (the built site on port 5174) and, in another terminal, `pnpm help-shots`
+(`tools/capture-help-shot.mjs`: a headless Chrome fills in the rule and saves the picture; `CHROME` names the Chrome program if it
+is not in the usual place on a Mac).
+
 ## Site icon
 
 The icon (a week grid of course blocks in maroon and gold) is `apps/web/public/favicon.svg`, used by
