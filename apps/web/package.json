@@ -6,9 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "node ../../tools/gen-settings.mjs && vite",
-    "build": "node ../../tools/gen-settings.mjs && tsc -p tsconfig.json && vite build",
-    "typecheck": "node ../../tools/gen-settings.mjs && tsc -p tsconfig.json",
-    "test": "node ../../tools/gen-settings.mjs && vitest run",
+    "build": "tsc -p tsconfig.json && vite build",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
     "preview": "vite preview"
   },
   "dependencies": {

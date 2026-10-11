@@ -7,7 +7,7 @@ const web = fileURLToPath(new URL("../apps/web/", import.meta.url));
 const { createServer } = await import(pathToFileURL(web + "node_modules/vite/dist/node/index.js").href);
 
 // Vite resolves the app's aliases (@schedulizer/core from source, @fixtures, ?raw imports).
-const server = await createServer({ root: web, configFile: web + "vite.config.ts", server: { middlewareMode: true }, appType: "custom", logLevel: "error" });
+const server = await createServer({ root: web, configFile: web + "vite.config.ts", server: { middlewareMode: true }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true } });
 try {
   const { writeWorkbook } = await server.ssrLoadModule("@schedulizer/core");
   const { EXAMPLE_FILES } = await server.ssrLoadModule("/src/exampleBuilders.ts");

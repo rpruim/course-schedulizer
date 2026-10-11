@@ -22,7 +22,7 @@ pnpm typecheck                       # core and web
 pnpm test                            # vitest in both packages
 pnpm lint                            # ESLint (eslint.config.mjs)
 pnpm check                           # lint, typecheck and test: what the push hook and CI run
-pnpm build                           # core, then the static site in apps/web/dist
+pnpm build                           # the static site in apps/web/dist (core is compiled into it from source)
 ```
 
 The built site is plain static files with relative paths: put `apps/web/dist` on
@@ -109,7 +109,7 @@ deploy contexts) to get a preview of `dev` at its own URL before releasing.
 
 The default terms (Fall, Winter Intensive, Spring, Summer), their parts (full term, halves,
 quarters) and a few related defaults are defined in `config/settings.yaml`. Edit that file and
-run `pnpm run settings` (the build, test and dev commands also do it); that regenerates
+run `pnpm run settings` (`pnpm build` and the dev server also do it, and a test fails if it was forgotten); that regenerates
 `packages/core/src/settings.defaults.generated.ts`. A schedule's own Settings sheet overrides
 these defaults. A Settings screen is planned for later.
 
