@@ -1,3 +1,4 @@
+import { CohortFields, type CapacityForm, type ElementForm } from "./CohortFields";
 import { normCourse } from "@schedulizer/core";
 import { useSettled } from "../debounce";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -45,14 +46,6 @@ interface ChangeForm {
 
 const at = (n: number) => formatTime(n).replace(/^0/, "");
 
-interface ElementForm {
-  students: string;
-  courses: string[];
-}
-interface CapacityForm {
-  course: string;
-  seats: string;
-}
 
 /** The rule's inputs as strings (times as `HH:MM`, for the time inputs). */
 interface Form {
@@ -248,20 +241,6 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
   const toggleDay = (d: string) => set("days", [..."MTWRF"].filter((x) => (x === d ? !form.days.includes(x) : form.days.includes(x))).join(""));
   const allDays = form.days === "" || form.days === "MTWRF";
 
-  // Cohort planning: the groups of students, and one line of seats for each course that a group names (and any others given).
-  const setElement = (i: number, patch: Partial<ElementForm>) => set("elements", form.elements.map((e, j) => (j === i ? { ...e, ...patch } : e)));
-  const usedCourses = (() => {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const e of form.elements) for (const c of e.courses) if (c.trim() && !seen.has(normCourse(c))) { seen.add(normCourse(c)); out.push(c.trim()); }
-    return out;
-  })();
-  const seatsOf = (course: string) => form.capacities.find((c) => normCourse(c.course) === normCourse(course))?.seats ?? "";
-  const setSeats = (course: string, seats: string) => {
-    const at = form.capacities.findIndex((c) => normCourse(c.course) === normCourse(course));
-    set("capacities", at >= 0 ? form.capacities.map((c, j) => (j === at ? { ...c, seats } : c)) : [...form.capacities, { course, seats }]);
-  };
-
   return (
     <dialog ref={dialog} className="editor" onCancel={(e) => { e.preventDefault(); onClose(); }} aria-label={isNew ? "Add constraint rule" : "Edit constraint rule"}>
       <form method="dialog" onSubmit={(e) => { e.preventDefault(); save(); }}>
@@ -291,51 +270,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
           </fieldset>
 
           {form.type === "cohortPlan" ? (
-            <>
-              <fieldset>
-                <legend>Groups of students</legend>
-                <p className="muted small">Each group is a number of students who must be able to take all of a list of courses, one section of each, with no two overlapping in time. The rule is met when all the students of all the groups can be seated at once.</p>
-                {form.elements.map((e, i) => (
-                  <div className="cohort-element" key={i}>
-                    <div className="cohort-head">
-                      <input value={e.students} size={4} inputMode="numeric" aria-label="Number of students" onChange={(ev) => setElement(i, { students: ev.target.value })} aria-invalid={attempted && has(`elements.${i}`).length > 0 ? true : undefined} />
-                      <span className="cohort-must">students must be able to take all of the following courses:</span>
-                      <button type="button" className="link icon-only" title="Remove this group" aria-label="Remove this group" onClick={() => set("elements", form.elements.filter((_, j) => j !== i))} disabled={form.elements.length <= 1}><Trash /></button>
-                    </div>
-                    <div className="cohort-courses">
-                      {e.courses.map((c, k) => (
-                        <span className="cohort-course" key={k}>
-                          <input value={c} size={10} list="rule-courses" placeholder="MATH 161" aria-label="Course" onChange={(ev) => setElement(i, { courses: e.courses.map((x, m) => (m === k ? ev.target.value : x)) })} />
-                          <button type="button" className="link icon-only" title="Remove this course" aria-label="Remove this course" onClick={() => setElement(i, { courses: e.courses.filter((_, m) => m !== k) })} disabled={e.courses.length <= 1}><Trash /></button>
-                        </span>
-                      ))}
-                      <button type="button" onClick={() => setElement(i, { courses: [...e.courses, ""] })}>+ Add course</button>
-                    </div>
-                    {err(`elements.${i}`)}
-                  </div>
-                ))}
-                <button type="button" onClick={() => set("elements", [...form.elements, { students: "", courses: [""] }])}>+ Add group of students</button>
-                {attempted ? has("elements").filter((p) => p.field === "elements").map((p, i) => <span key={i} className="err">{p.message}</span>) : null}
-              </fieldset>
-              <fieldset>
-                <legend>Seats in each section</legend>
-                <p className="muted small">Every section of a course is taken to have this many seats. Provide them for every course mentioned in the rule. A course you take out of every group keeps the seats you gave it, in case you put it back.</p>
-                <p className="muted small">Courses that are colocated (same instructor) share their seats: mention only one of them in the rule, and give the number of students across the whole set of colocated courses.</p>
-                {usedCourses.length === 0 ? <p className="muted small">The courses of the groups above will be listed here.</p> : (
-                  <table className="seats-table">
-                    <thead><tr><th>Course</th><th>Seats per section</th></tr></thead>
-                    <tbody>
-                      {usedCourses.map((c) => (
-                        <tr key={normCourse(c)}>
-                          <td className="seat-course">{c}</td>
-                          <td><input value={seatsOf(c)} size={5} inputMode="numeric" aria-label={`Seats in each section of ${c}`} onChange={(ev) => setSeats(c, ev.target.value)} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </fieldset>
-            </>
+            <CohortFields elements={form.elements} capacities={form.capacities} onElements={(v) => set("elements", v)} onCapacities={(v) => set("capacities", v)} problems={problems} attempted={attempted} />
           ) : (
           <fieldset>
             <legend>{form.type === "window" ? "What the rule is about" : form.type === "consecutive" ? "Instructors" : "Courses"}</legend>
