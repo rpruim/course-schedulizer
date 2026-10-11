@@ -6,7 +6,6 @@
     "noEmit": true,
     "moduleResolution": "Bundler",
     "types": ["vite/client", "node"],
-    "baseUrl": ".",
     "paths": { "@schedulizer/core": ["../../packages/core/src/index.ts"] }
   },
   "include": ["src"]
