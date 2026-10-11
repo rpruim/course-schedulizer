@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type JSX } from "react";
 import { HashRouter, Route, Routes, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Toolbar, type OpenReport } from "./components";
 import { EditorProvider } from "./editor/context";
