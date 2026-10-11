@@ -14,6 +14,16 @@ describe("parseExamples", () => {
     const got = await parseExamples("- name: A\n  url: a.xlsx\n- name: no url\n- url: no-name.xlsx\n- name: ' B '\n  url: url=a&url=b\n");
     expect(got).toEqual([{ name: "A", url: "a.xlsx" }, { name: "B", url: "url=a&url=b" }]);
   });
+  it("understands comments, quotes, and a # inside an address", async () => {
+    const text = "# the examples\n- name: \"Say \\\"hi\\\"\"  \n  url: 'it''s.xlsx'\n\n- name: Plain # a comment\n  url: a.xlsx#sheet\n";
+    expect(await parseExamples(text)).toEqual([{ name: 'Say "hi"', url: "it's.xlsx" }, { name: "Plain", url: "a.xlsx#sheet" }]);
+  });
+  it("reads the real list as a YAML library does", async () => {
+    const { parse } = await import("yaml");
+    const text = read("examples/examples.yml").toString("utf8");
+    const viaYaml = (parse(text) as { name: string; url: string }[]).map((e) => ({ name: e.name.trim(), url: e.url.trim() }));
+    expect(await parseExamples(text)).toEqual(viaYaml);
+  });
   it("gives nothing for a file that is not a list", async () => {
     expect(await parseExamples("just: a map")).toEqual([]);
     expect(await parseExamples("")).toEqual([]);
