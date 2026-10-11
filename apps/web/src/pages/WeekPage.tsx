@@ -56,7 +56,7 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
     // A cohort rule starts with its courses ticked and (other courses) not; anything else starts with everything shown.
     setFilterValues(by.startsWith("cohort:") ? cohortCourseNames(entries.map((e) => e.schedule), by) : []);
   };
-  const filter = mass ? { by: filterBy, values: filterValues } : undefined;
+  const filter = useMemo(() => (mass ? { by: filterBy, values: filterValues } : undefined), [mass, filterBy, filterValues]);
 
   // The colors are shared out among everything the schedules shown have for this way of coloring, so a value keeps its color from week to week.
   const palette = useMemo(() => (colorBy.startsWith("cohort:") ? undefined : colorValuesOf(entries.map((e) => e.schedule), colorBy)), [entries, colorBy]);
@@ -76,7 +76,7 @@ export function WeekPage({ kind, mass = false }: { kind: GridKind; mass?: boolea
         name: e.name,
         result: weekGrids(e.schedule, { year, term, kind, colorBy, ...(palette ? { palette } : {}), part, ...(filter ? { filter } : {}), ...(kind === "dept" && only && !mass ? { prefix: only } : {}) }),
       })),
-    [entries, year, term, kind, colorBy, palette, part, only, mass, filterBy, filterValues],
+    [entries, year, term, kind, colorBy, palette, part, only, mass, filter],
   );
   // Choices come from every included schedule; one that no longer exists (a different file or term) means "all".
   const choices = [...new Set(results.flatMap((r) => r.result.choices))].sort(naturalCompare);

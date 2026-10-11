@@ -70,8 +70,10 @@ export function MenuBar({ groups }: { groups: MenuGroup[] }) {
                   const keys = (e: React.KeyboardEvent<HTMLElement>) => {
                     const items = [...(e.currentTarget.parentElement?.querySelectorAll("a, button") ?? [])] as HTMLElement[];
                     const i = items.indexOf(e.currentTarget);
-                    if (e.key === "ArrowDown") (e.preventDefault(), items[(i + 1) % items.length]?.focus());
-                    if (e.key === "ArrowUp") (e.preventDefault(), items[(i - 1 + items.length) % items.length]?.focus());
+                    const step = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
+                    if (step === 0) return;
+                    e.preventDefault();
+                    items[(i + step + items.length) % items.length]?.focus();
                   };
                   return it.href !== undefined ? (
                     <a key={it.label} href={it.href} target="_blank" rel="noreferrer" role="menuitem" onKeyDown={keys}>{it.label}</a>

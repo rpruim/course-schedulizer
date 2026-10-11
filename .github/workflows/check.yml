@@ -1,0 +1,24 @@
+# Lint, type check, tests and a build for every push to main or dev and every pull request: the same checks as the pre-push hook,
+# but on exactly the commit pushed, and also for pushes that skipped the hook.
+name: Check
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build

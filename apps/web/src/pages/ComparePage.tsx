@@ -144,12 +144,12 @@ export function ComparePage() {
   const { countForced } = resolvePartition({ roles });
   const summary = describeSetup(roles, rowKind);
   // Ready-made setups, then the saved ones: in the schedules being compared, in the current schedule (which may not be among them), and in this browser.
+  const cur = ws.current;
   const holders = useMemo(() => {
     const list = entries.map((e) => ({ id: e.id, comparisons: e.schedule.comparisons ?? [] }));
-    const cur = ws.current;
     return cur && !list.some((h) => h.id === cur.id) ? [...list, { id: cur.id, comparisons: cur.schedule.comparisons ?? [] }] : list;
-  }, [entries, ws.current]);
-  const savedHere = useMemo(() => collectSaved(holders, ws.current?.id, browserSaved), [holders, ws.current?.id, browserSaved]);
+  }, [entries, cur]);
+  const savedHere = useMemo(() => collectSaved(holders, cur?.id, browserSaved), [holders, cur?.id, browserSaved]);
   const saved = useMemo(() => savedHere.map((h) => h.comparison), [savedHere]);
   const setups = useMemo(
     () => [

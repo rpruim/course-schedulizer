@@ -2,7 +2,6 @@ import { ACADEMIC_YEAR_HELP } from "@schedulizer/core";
 import { useEffect, useRef, useState } from "react";
 import {
   exportBaseName,
-  exportFileName,
   exportFileNames,
   stampChoiceOf,
   type StampChoice,

@@ -212,7 +212,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
       const blank = f.items.every((i) => !i.course.trim() && !i.section.trim() && !i.instructor.trim());
       const hasPeople = f.items.some((i) => i.instructor.trim());
       let items = f.items;
-      let subject = f.subject;
+      let subject: Form["subject"];
       if (type === "consecutive") {
         subject = "instructors";
         items = hasPeople ? f.items.map((i) => ({ ...blankLine(), instructor: i.instructor })) : [blankLine()];

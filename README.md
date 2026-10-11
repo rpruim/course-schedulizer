@@ -20,6 +20,8 @@ pnpm install
 pnpm --filter @schedulizer/web dev   # http://localhost:5174 (core is used from source)
 pnpm typecheck                       # core and web
 pnpm test                            # vitest in both packages
+pnpm lint                            # ESLint (eslint.config.mjs)
+pnpm check                           # lint, typecheck and test: what the push hook and CI run
 pnpm build                           # core, then the static site in apps/web/dist
 ```
 
@@ -77,7 +79,12 @@ modern browsers. `python3 tools/make-icons.py` redraws the PNG versions (`favico
 A git hook (`.githooks/pre-push`, using `tools/check-push.mjs`) stops a **push** to `main` or `dev` unless the `version` in the root
 `package.json` is higher than the one on that branch at the remote; on `main` the version may have at most three parts (`2.0.3`), on
 `dev` four (`2.0.3.1`). Local commits are never checked. `pnpm install` turns the hook on (it sets `core.hooksPath`); to do it by
-hand run `pnpm hooks`. `git push --no-verify` skips the check for one push. The check's own tests run with `pnpm test`.
+hand run `pnpm hooks`. The same hook then runs `pnpm check` (lint, type check and tests, about 15 seconds) and stops the push if
+anything fails, so broken code never reaches `main`, which Netlify deploys. `git push --no-verify` skips both for one push. The
+version check's own tests run with `pnpm test`.
+
+The GitHub workflow `.github/workflows/check.yml` runs the same checks, and a build, on every push to `main` or `dev` and every pull
+request, on exactly the commit pushed (the hook runs on the working copy).
 
 ## Release notes
 

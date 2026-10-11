@@ -195,7 +195,7 @@ describe("meetsText / memberOf", () => {
 });
 
 describe("pairMembers / diffMembers: marking differing fields", () => {
-  const row = (rows: Record<string, string | number>[], kind: "section" | "instructor" = "section") => rows.map((r) => ({ ...Object.fromEntries(COMPARE_COLUMNS.map((c) => [c.key, ""])), AcademicYear: "Y", Term: "FA", TermPart: "Full", Prefix: "MUSC", CourseNumber: "101", Section: "A", ...r })) as ReturnType<typeof comparisonRows>;
+  const row = (rows: Record<string, string | number>[]) => rows.map((r) => ({ ...Object.fromEntries(COMPARE_COLUMNS.map((c) => [c.key, ""])), AcademicYear: "Y", Term: "FA", TermPart: "Full", Prefix: "MUSC", CourseNumber: "101", Section: "A", ...r })) as ReturnType<typeof comparisonRows>;
   const group = (...sets: ReturnType<typeof comparisonRows>[]) => ({ group: [], values: [], present: sets.map((s) => s.length > 0), members: sets, differs: true });
   const marks = (v: ReturnType<typeof diffMembers>) => v.map((s) => s.map((m) => [[...m.differs].sort(), m.others, m.solo]));
 

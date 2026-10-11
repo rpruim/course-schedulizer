@@ -16,7 +16,7 @@ export const formatNumber = (n: number | undefined) => (n === undefined ? "" : S
 export function parseTime(text: string): number | undefined | null {
   const s = text.trim();
   if (s === "") return undefined;
-  let m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?$/.exec(s);
+  const m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?$/.exec(s);
   if (m) {
     let h = Number(m[1]);
     const min = Number(m[2]);

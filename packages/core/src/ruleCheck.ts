@@ -315,7 +315,7 @@ function violationsIn(all: Schedule, mode: "all" | "scoped" | "global", advice: 
       for (const idx of failing) {
         for (let a = 0; a < idx.length; a++) {
           for (let b = a + 1; b < idx.length; b++) {
-            for (const x of list[idx[a]!]!.sectionIds) for (const y of list[idx[b]!]!.sectionIds) if (sectionsOverlap(x, y)) (clashing.add(x), clashing.add(y));
+            for (const x of list[idx[a]!]!.sectionIds) for (const y of list[idx[b]!]!.sectionIds) if (sectionsOverlap(x, y)) clashing.add(x).add(y);
           }
         }
       }

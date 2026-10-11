@@ -1,4 +1,18 @@
 #!/bin/sh
-# Runs before every `git push` (not on local commits): a push to main or dev needs a bumped version in package.json,
-# and main's version may have at most three parts. See tools/check-push.mjs.
-exec node "$(git rev-parse --show-toplevel)/tools/check-push.mjs" "$@"
+# Runs before every `git push` (not on local commits). Two checks, both skipped for one push by `git push --no-verify`:
+#  1. a push to main or dev needs a bumped version in package.json, and main's version may have at most three parts
+#     (tools/check-push.mjs);
+#  2. the code passes lint, the type check and the tests (`pnpm check`), so a broken build never reaches main, which Netlify deploys.
+root="$(git rev-parse --show-toplevel)"
+node "$root/tools/check-push.mjs" "$@" || exit 1
+cd "$root" || exit 1
+if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+  echo "pre-push: note: there are uncommitted changes; the checks below run on the working copy, not exactly on what is pushed."
+fi
+echo "pre-push: running lint, the type check and the tests (pnpm check)…"
+if ! pnpm -s check >/tmp/schedulizer-pre-push.log 2>&1; then
+  tail -40 /tmp/schedulizer-pre-push.log
+  echo "Push stopped by .githooks/pre-push: pnpm check failed (full output in /tmp/schedulizer-pre-push.log). Fix it and push again; \`git push --no-verify\` skips the checks."
+  exit 1
+fi
+echo "pre-push: checks passed."

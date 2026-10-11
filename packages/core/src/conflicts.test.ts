@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { findConflicts, conflictedSessions } from "./conflicts.js";
 import { recordsFromCsv } from "./csv.js";
-import { importRecords, importSettings } from "./import.js";
+import { importRecords } from "./import.js";
 import { fixtureText } from "./testutil.js";
 
 const keys = (cs: { sectionIdA: string; sectionIdB: string; type: string }[]) => [...new Set(cs.map((c) => `${c.sectionIdA}|${c.sectionIdB}|${c.type}`))].sort();
