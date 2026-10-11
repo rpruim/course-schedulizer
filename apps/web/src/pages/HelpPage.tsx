@@ -376,7 +376,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           <code>?</code> any one character, and <code>[23]</code> either of the characters in brackets (<code>[2-4]</code> is a range, <code>[^5]</code> anything but 5). Each matching course counts as its own
           course. A rule is checked separately in each term; choose a term to limit it to one.
         </p>
-        <Example>
+        <Example several>
           <ul>
             <li><code>AMUS 3*</code>: every 300-level AMUS course.</li>
             <li><code>BHAV [23]1?</code>: BHAV 211, 212, 311, 312 and so on.</li>
@@ -413,7 +413,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </p>
         <ul>
           <li><strong>Rules about sections together are checked against the whole merged schedule.</strong> These are <em>Take together</em>, <em>Cohort planning</em>, <em>Back-to-back classes</em>, <em>Colocate</em> (both versions), and a <em>Time window</em> rule that has a number (“at least <em>n</em> of the sections”). Such a rule names courses or instructors, and it looks at every section of them in every ticked schedule, whichever schedule the rule is saved in.
-            <Example>
+            <Example several>
               <ul>
                 <li>Put MATH and ENGR in one schedule and CHEM in another, and a cohort planning rule saved in either one sees all three.</li>
                 <li>An instructor who teaches in two schedules is checked for back-to-back classes across both.</li>
@@ -606,11 +606,11 @@ function jump(id: string) {
   };
 }
 
-/** An example in the guide, set off in a box so it stands out from the explanation around it. */
-function Example({ children }: { children: ReactNode }) {
+/** An example in the guide (or, with `several`, a list of examples), set off in a box so it stands out from the explanation around it. */
+function Example({ children, several = false }: { children: ReactNode; several?: boolean }) {
   return (
     <div className="callout example" role="note">
-      <strong>Example</strong>
+      <strong>{several ? "Examples" : "Example"}</strong>
       {children}
     </div>
   );
