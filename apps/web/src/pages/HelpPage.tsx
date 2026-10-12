@@ -419,7 +419,8 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
             course a group of its own (10 students in MATH 161 and 5 in ENGR 101 in the example). Otherwise the sections look emptier than they will be.</li>
           <li><strong>Start from the registrar’s numbers.</strong> Run the <a href="https://reports.calvin.edu/Reports/report/Departmental%20Reports/Course%20Registration%20Combinations" target="_blank" rel="noreferrer">Course Registration Combinations</a> report
             for the courses, export it to Excel, and use <em>Import groups from Excel…</em> in the rule editor: each combination of courses becomes a group with its number of students, and a
-            single course the students who take it alone. Then give the seats in each section.</li>
+            single course the students who take it alone. Where the schedule has enrollment numbers for a course, its seats per section are filled in with the largest
+            enrollment of any of its sections (Enrollment or Day 10 enrollment, whichever is larger); check them, and give the seats of the other courses.</li>
           <li><strong>Choose the term.</strong> The rule is checked term by term, so limit it to the term in which the cohort takes the courses.</li>
           <li><strong>Colocated courses share their seats.</strong> Mention only one of a set of colocated (same instructor) courses in the rule, and give the number of students and
             the seats across the whole set. If MATH 163 is colocated with MATH 161, for example, MATH 163 does not need to be in the rule: its students are counted with MATH 161’s.</li>

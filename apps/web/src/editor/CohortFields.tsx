@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { normCourse, readCombinations } from "@schedulizer/core";
+import { enrollmentSeats, normCourse, readCombinations, type Schedule } from "@schedulizer/core";
 import { Trash } from "../icons";
 
 /** Where the Course Registration Combinations report is run. */
@@ -21,13 +21,15 @@ export interface CapacityForm {
  * the seats in each section of every course the groups use. Seats given for a course that no group uses any more are kept (and come
  * back if the course does).
  */
-export function CohortFields({ elements, capacities, onElements, onCapacities, problems, attempted }: {
+export function CohortFields({ elements, capacities, onElements, onCapacities, problems, attempted, schedules }: {
   elements: ElementForm[];
   capacities: CapacityForm[];
   onElements: (v: ElementForm[]) => void;
   onCapacities: (v: CapacityForm[]) => void;
   problems: { field: string; message: string }[];
   attempted: boolean;
+  /** Where enrollments come from to suggest the seats of imported courses. */
+  schedules: Schedule[];
 }) {
   const has = (field: string) => problems.filter((p) => p.field === field || p.field.startsWith(`${field}.`));
   const err = (field: string) => (attempted ? has(field).map((p, i) => <span key={i} className="err">{p.message}</span>) : null);
@@ -51,9 +53,23 @@ export function CohortFields({ elements, capacities, onElements, onCapacities, p
       if (r.groups.length === 0) return setImported({ kind: "warn", text: `${file.name}: ${r.problems.join("; ") || "no combinations were found"}.` });
       if (typedSomething && !window.confirm(`Replace the ${elements.length} group${elements.length === 1 ? "" : "s"} in this rule with the ${r.groups.length} in ${file.name}?`)) return;
       onElements(r.groups.map((g) => ({ students: String(g.students), courses: [...g.courses] })));
+      // Seats in each section: where the schedule has enrollments, the largest of any section of the course (Enrollment or Day 10,
+      // whichever is larger); seats already given are kept, and a course with no enrollments is left blank.
+      const courses = [...new Map(r.groups.flatMap((g) => g.courses).map((c) => [normCourse(c), c] as const)).values()];
+      const suggested = enrollmentSeats(schedules, courses);
+      const given = (course: string) => capacities.some((c) => normCourse(c.course) === normCourse(course) && c.seats.trim() !== "");
+      const fill = courses.filter((c) => suggested.has(c) && !given(c));
+      if (fill.length > 0) {
+        const filled = new Set(fill.map(normCourse));
+        onCapacities([...capacities.filter((c) => !filled.has(normCourse(c.course))), ...fill.map((c) => ({ course: c, seats: String(suggested.get(c)) }))]);
+      }
       const students = r.groups.reduce((n, g) => n + g.students, 0);
+      const blank = courses.filter((c) => !suggested.has(c) && !given(c));
+      const seatsNote = fill.length > 0
+        ? ` Seats for ${fill.length} of the ${courses.length} courses are filled in from the largest enrollment of any of their sections; check them.${blank.length ? ` Give the seats for ${blank.join(", ")}.` : ""}`
+        : blank.length ? " Give the seats in each section below." : "";
       const skipped = r.problems.length ? ` Not read: ${r.problems.join("; ")}.` : "";
-      setImported({ kind: r.problems.length ? "warn" : "ok", text: `Read ${r.groups.length} group${r.groups.length === 1 ? "" : "s"} (${students} students) from ${file.name}. Give the seats in each section below.${skipped}` });
+      setImported({ kind: r.problems.length ? "warn" : "ok", text: `Read ${r.groups.length} group${r.groups.length === 1 ? "" : "s"} (${students} students) from ${file.name}.${seatsNote}${skipped}` });
     } catch (e) {
       setImported({ kind: "warn", text: `${file.name}: ${e instanceof Error ? e.message : String(e)}` });
     }

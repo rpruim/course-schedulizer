@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
-import { combinationsFromRows } from "./combinations.js";
+import { combinationsFromRows, enrollmentSeats } from "./combinations.js";
+import { importRecords } from "./import.js";
 import { readCombinations } from "./xlsx.js";
 
 /** A workbook laid out like the Course Registration Combinations report: a merged title, the header, then the combinations. */
@@ -31,5 +32,26 @@ describe("Course Registration Combinations report", () => {
   });
   it("says so when the file is not such a report", () => {
     expect(combinationsFromRows([["Prefix", "CourseNumber"], ["MATH", "161"]]).problems[0]).toContain("no Combinations and Students columns");
+  });
+});
+
+describe("seats suggested from enrollments", () => {
+  const sec = (course: string, letter: string, o: Record<string, string> = {}) => {
+    const [Prefix, CourseNumber] = course.split(" ");
+    return { AcademicYear: "AY25", Term: "FA", Prefix: Prefix!, CourseNumber: CourseNumber!, Section: letter, ...o };
+  };
+  it("takes the largest enrollment of any section, the larger of Enrollment and Day 10, and leaves out courses without any", () => {
+    const { schedule } = importRecords({
+      sessions: [
+        sec("CHEM 101", "A", { Enrollment: "24", EnrollmentDay10: "22" }),
+        sec("CHEM 101", "B", { Enrollment: "18", EnrollmentDay10: "27" }),
+        sec("MATH 161", "A", { Enrollment: "31" }),
+        sec("ENGR 101", "A"),
+        sec("DIGI 306", "A", { EnrollmentDay10: "12" }),
+      ],
+      crossListings: [{ SectionId: "AY25-FA-DIGI306-A", Prefix: "BHAV", CourseNumber: "306" }],
+    });
+    const seats = enrollmentSeats([schedule], ["CHEM 101", "MATH 161", "ENGR 101", "BHAV 306", "MATH 271"]);
+    expect([...seats]).toEqual([["CHEM 101", 27], ["MATH 161", 31], ["BHAV 306", 12]]);
   });
 });

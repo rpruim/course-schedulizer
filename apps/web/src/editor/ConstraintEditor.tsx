@@ -189,6 +189,12 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
     return findRuleViolations(saved, { advice: true }).filter((v) => v.rule === rule.name);
   }, [settled, schedule, original, ws.viewAs, ws.includedEntries, scheduleId]);
 
+  // Enrollments to suggest a cohort rule's seats: this schedule's, and with schedules merged every shown schedule's (a cohort's courses
+  // may be in several).
+  const seatSources = useMemo(
+    () => (ws.viewAs === "merged" && ws.includedEntries.some((e) => e.id === scheduleId) ? ws.includedEntries.map((e) => e.schedule) : [schedule]),
+    [ws.viewAs, ws.includedEntries, scheduleId, schedule],
+  );
   const lists = useMemo(() => {
     const uniq = (xs: string[]) => [...new Set(xs.map((x) => x.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
     return {
@@ -270,7 +276,7 @@ export function ConstraintEditor({ scheduleId, name, onClose, onNotice }: Props)
           </fieldset>
 
           {form.type === "cohortPlan" ? (
-            <CohortFields elements={form.elements} capacities={form.capacities} onElements={(v) => set("elements", v)} onCapacities={(v) => set("capacities", v)} problems={problems} attempted={attempted} />
+            <CohortFields elements={form.elements} capacities={form.capacities} onElements={(v) => set("elements", v)} onCapacities={(v) => set("capacities", v)} problems={problems} attempted={attempted} schedules={seatSources} />
           ) : (
           <fieldset>
             <legend>{form.type === "window" ? "What the rule is about" : form.type === "consecutive" ? "Instructors" : "Courses"}</legend>

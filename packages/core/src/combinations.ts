@@ -1,3 +1,7 @@
+import { normCourse } from "./constraints.js";
+import { listingsOf } from "./names.js";
+import type { Schedule } from "./types.js";
+
 /**
  * The Course Registration Combinations report (reports.calvin.edu, Departmental Reports): a title, then a `Combinations` / `Students`
  * header, then one row per combination of courses that students registered for together, such as `CHEM 101, ENGR 101, MATH 161`
@@ -44,4 +48,28 @@ export function combinationsFromRows(rows: string[][]): CombinationsResult {
     else byKey.set(key, { students, courses });
   });
   return { groups: [...byKey.values()], problems };
+}
+
+/**
+ * Seats to suggest for each of these courses: the largest enrollment of any of its sections (the larger of Enrollment and Day-10
+ * enrollment), over the given schedules, a section counting under any of its names. A course no section of which has an enrollment
+ * is left out. Keyed by the course as given.
+ */
+export function enrollmentSeats(schedules: Schedule[], courses: string[]): Map<string, number> {
+  const wanted = new Map(courses.map((c) => [normCourse(c), c] as const));
+  const out = new Map<string, number>();
+  for (const schedule of schedules) {
+    const seen = new Set<string>();
+    for (const s of schedule.sessions) {
+      if (seen.has(s.sectionId)) continue; // a section's enrollment is on its first row
+      seen.add(s.sectionId);
+      if (s.enrollment === undefined && s.enrollmentDay10 === undefined) continue;
+      const n = Math.max(s.enrollment ?? 0, s.enrollmentDay10 ?? 0);
+      for (const l of listingsOf(s, schedule.crossListings)) {
+        const course = wanted.get(normCourse(`${l.prefix} ${l.courseNumber}`));
+        if (course !== undefined) out.set(course, Math.max(out.get(course) ?? 0, n));
+      }
+    }
+  }
+  return out;
 }
