@@ -13,12 +13,19 @@ export interface NewsEntry {
   items: NewsItem[];
 }
 
-/** Read the file: `# heading` starts an entry, `* bullet` (indented two spaces per level) is an item, and an indented line that is not a bullet continues the item above it. */
+/**
+ * Read the file: `# heading` starts an entry, `* bullet` (indented two spaces per level) is an item, and a line that is not a bullet continues
+ * the item above it, as in Markdown: indented, or not indented but straight after it (a blank line in between ends the item).
+ */
 export function parseNews(text: string): NewsEntry[] {
   const entries: NewsEntry[] = [];
   // The items open at each depth of the entry being read.
   let stack: NewsItem[] = [];
+  let afterBlank = false;
   for (const raw of text.split(/\r?\n/)) {
+    const blank = raw.trim() === "";
+    const wasBlank = afterBlank;
+    afterBlank = blank;
     const heading = /^#\s+(.*\S)\s*$/.exec(raw);
     if (heading) {
       entries.push({ heading: heading[1]!, version: /\d+(?:\.\d+)+/.exec(heading[1]!)?.[0] ?? "", items: [] });
@@ -33,7 +40,7 @@ export function parseNews(text: string): NewsEntry[] {
       const item: NewsItem = { text: bullet[2]!, items: [] };
       (depth === 0 ? entry.items : stack[depth - 1]!.items).push(item);
       stack = [...stack.slice(0, depth), item];
-    } else if (raw.trim() && /^\s/.test(raw) && stack.length) {
+    } else if (!blank && stack.length && (/^\s/.test(raw) || !wasBlank)) {
       stack.at(-1)!.text += ` ${raw.trim()}`;
     }
   }

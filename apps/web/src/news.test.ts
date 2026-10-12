@@ -11,6 +11,10 @@ describe("parseNews", () => {
     expect(got[0]!.items[0]!.items.map((i) => i.text)).toEqual(["Sub a", "Sub b"]);
     expect(got[1]!.items[0]!.text).toBe("Initial release.");
   });
+  it("joins the lines of a bullet that are not indented, as Markdown does, until a blank line", () => {
+    const [e] = parseNews("# V 1.0\n\n* First line \nsecond line.  \nthird.\n* Next\n  indented more\n\nNot part of a bullet.\n");
+    expect(e!.items.map((i) => i.text)).toEqual(["First line second line. third.", "Next indented more"]);
+  });
   it("ignores text before the first heading", () => {
     expect(parseNews("intro\n* stray\n# 1.0.0\n* a")).toHaveLength(1);
   });
