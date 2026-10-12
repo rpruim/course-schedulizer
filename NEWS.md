@@ -1,3 +1,7 @@
+# Course Schedulizer 2.0.8.9000
+
+* Changes since 2.0.8 will be listed here.
+
 # Course Schedulizer 2.0.8
 
 * Updated user guide and examples: 
