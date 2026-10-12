@@ -1,4 +1,4 @@
-# Course Schedulizer 2.0.7.9005
+# Course Schedulizer 2.0.8
 
 * Updated user guide and examples: 
 The *Merging schedules* example is now *Merging schedules/cohort planning*. 
