@@ -1,5 +1,9 @@
-import { normCourse } from "@schedulizer/core";
+import { useRef, useState } from "react";
+import { normCourse, readCombinations } from "@schedulizer/core";
 import { Trash } from "../icons";
+
+/** Where the Course Registration Combinations report is run. */
+const COMBINATIONS_REPORT = "https://reports.calvin.edu/Reports/report/Departmental%20Reports/Course%20Registration%20Combinations";
 
 /** A group of students of a cohort planning rule, as typed. */
 export interface ElementForm {
@@ -37,11 +41,35 @@ export function CohortFields({ elements, capacities, onElements, onCapacities, p
     onCapacities(at >= 0 ? capacities.map((c, j) => (j === at ? { ...c, seats } : c)) : [...capacities, { course, seats }]);
   };
 
+  // The groups can come from a Course Registration Combinations report: one group per combination of courses.
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [imported, setImported] = useState<{ kind: "ok" | "warn"; text: string } | undefined>();
+  const typedSomething = elements.some((e) => e.students.trim() || e.courses.some((c) => c.trim()));
+  async function importCombinations(file: File) {
+    try {
+      const r = await readCombinations(new Uint8Array(await file.arrayBuffer()));
+      if (r.groups.length === 0) return setImported({ kind: "warn", text: `${file.name}: ${r.problems.join("; ") || "no combinations were found"}.` });
+      if (typedSomething && !window.confirm(`Replace the ${elements.length} group${elements.length === 1 ? "" : "s"} in this rule with the ${r.groups.length} in ${file.name}?`)) return;
+      onElements(r.groups.map((g) => ({ students: String(g.students), courses: [...g.courses] })));
+      const students = r.groups.reduce((n, g) => n + g.students, 0);
+      const skipped = r.problems.length ? ` Not read: ${r.problems.join("; ")}.` : "";
+      setImported({ kind: r.problems.length ? "warn" : "ok", text: `Read ${r.groups.length} group${r.groups.length === 1 ? "" : "s"} (${students} students) from ${file.name}. Give the seats in each section below.${skipped}` });
+    } catch (e) {
+      setImported({ kind: "warn", text: `${file.name}: ${e instanceof Error ? e.message : String(e)}` });
+    }
+  }
+
   return (
     <>
       <fieldset>
         <legend>Groups of students</legend>
         <p className="muted small">Each group is a number of students who must be able to take all of a list of courses, one section of each, with no two overlapping in time. The rule is met when all the students of all the groups can be seated at once.</p>
+        <p className="muted small">
+          <button type="button" onClick={() => fileInput.current?.click()}>Import groups from Excel…</button>{" "}
+          from a <a href={COMBINATIONS_REPORT} target="_blank" rel="noreferrer">Course Registration Combinations</a> report: each combination of courses becomes a group, and a single course the students who take it alone.
+          <input ref={fileInput} type="file" accept=".xlsx" hidden onChange={(ev) => { const f = ev.target.files?.[0]; ev.target.value = ""; if (f) void importCombinations(f); }} />
+        </p>
+        {imported && <p className={`note ${imported.kind}`} role="status">{imported.text}</p>}
         {elements.map((e, i) => (
           <div className="cohort-element" key={i}>
             <div className="cohort-head">

@@ -1,5 +1,12 @@
 import { pad2 as two } from "./format.js";
 import type ExcelJS from "exceljs";
+import { yearToData } from "./academicYear.js";
+import { comparisonsTable } from "./savedComparisons.js";
+import { constraintsTable, crossListingsTable, nonTeachingTable, sessionsTable, type ExportOptions, type Table } from "./export.js";
+import { REGISTRAR_SHEET, registrarTable } from "./registrar.js";
+import { importRecords, importSettings, type ImportOptions, type ImportResult } from "./import.js";
+import { DEFAULT_SAVE_AS, emptyMeta, type Issue, type Rec } from "./types.js";
+import { combinationsFromRows, type CombinationsResult } from "./combinations.js";
 
 /**
  * ExcelJS is large and only needed to read or write a file, so it is loaded the first time it is (a separate download in the app).
@@ -15,12 +22,6 @@ const loadExcel = () =>
       throw new Error(`the part of the app that reads and writes Excel files could not be loaded; the site may have been updated since this page was opened, so reload the page and try again (${e instanceof Error ? e.message : String(e)})`);
     },
   ));
-import { yearToData } from "./academicYear.js";
-import { comparisonsTable } from "./savedComparisons.js";
-import { constraintsTable, crossListingsTable, nonTeachingTable, sessionsTable, type ExportOptions, type Table } from "./export.js";
-import { REGISTRAR_SHEET, registrarTable } from "./registrar.js";
-import { importRecords, importSettings, type ImportOptions, type ImportResult } from "./import.js";
-import { DEFAULT_SAVE_AS, emptyMeta, type Issue, type Rec } from "./types.js";
 
 function cellText(v: ExcelJS.CellValue): string {
   if (v === null || v === undefined) return "";
@@ -59,6 +60,28 @@ function sheetRecords(ws: ExcelJS.Worksheet | undefined): Rec[] {
     if (any) out.push(rec);
   });
   return out;
+}
+
+/**
+ * Read a Course Registration Combinations report (see `combinations.ts`): the groups of students and the courses each registered
+ * for, from the first sheet that has the report's header.
+ */
+export async function readCombinations(data: ArrayBuffer | Uint8Array): Promise<CombinationsResult> {
+  const wb = new (await loadExcel()).Workbook();
+  await wb.xlsx.load((data instanceof Uint8Array ? data : new Uint8Array(data)) as unknown as ArrayBuffer);
+  let first: CombinationsResult | undefined;
+  for (const ws of wb.worksheets) {
+    const rows: string[][] = [];
+    ws.eachRow({ includeEmpty: true }, (row, n) => {
+      const cells: string[] = [];
+      row.eachCell({ includeEmpty: true }, (c, col) => (cells[col - 1] = cellText(c.value)));
+      rows[n - 1] = Array.from(cells, (c) => c ?? "");
+    });
+    const r = combinationsFromRows(Array.from(rows, (r) => r ?? []));
+    if (r.groups.length > 0) return r;
+    first ??= r;
+  }
+  return first ?? { groups: [], problems: ["the file has no sheets"] };
 }
 
 const sheetByName = (wb: ExcelJS.Workbook, name: string) =>

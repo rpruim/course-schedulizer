@@ -5,6 +5,7 @@ export * from "./csv.js";
 export * from "./import.js";
 export * from "./export.js";
 export * from "./xlsx.js";
+export * from "./combinations.js";
 export * from "./sections.js";
 export * from "./terms.js";
 export * from "./academicYear.js";

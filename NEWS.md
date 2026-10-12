@@ -1,6 +1,6 @@
 # Course Schedulizer 2.0.8.9000
 
-* Changes since 2.0.8 will be listed here.
+* A cohort planning rule's groups can be imported from a *Course Registration Combinations* report (reports.calvin.edu, Departmental Reports): in the rule editor, *Import groups from Excel…* makes one group for each combination of courses, with its number of students; a single course is the students who take it alone. Then give the seats in each section.
 
 # Course Schedulizer 2.0.8
 
