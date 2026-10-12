@@ -1,9 +1,20 @@
 import { pad2 as two } from "./format.js";
 import type ExcelJS from "exceljs";
 
-/** ExcelJS is large and only needed to read or write a file, so it is loaded the first time it is (a separate download in the app). */
+/**
+ * ExcelJS is large and only needed to read or write a file, so it is loaded the first time it is (a separate download in the app).
+ * If the download fails, the next attempt tries again. The usual cause is a page left open across an update of the site: the page
+ * asks for the ExcelJS file of the version it was loaded with, which the updated site no longer has, so reloading the page fixes it.
+ */
 let excel: Promise<typeof ExcelJS> | undefined;
-const loadExcel = () => (excel ??= import("exceljs").then((m) => m.default));
+const loadExcel = () =>
+  (excel ??= import("exceljs").then(
+    (m) => m.default,
+    (e: unknown) => {
+      excel = undefined;
+      throw new Error(`the part of the app that reads and writes Excel files could not be loaded; the site may have been updated since this page was opened, so reload the page and try again (${e instanceof Error ? e.message : String(e)})`);
+    },
+  ));
 import { yearToData } from "./academicYear.js";
 import { comparisonsTable } from "./savedComparisons.js";
 import { constraintsTable, crossListingsTable, nonTeachingTable, sessionsTable, type ExportOptions, type Table } from "./export.js";
