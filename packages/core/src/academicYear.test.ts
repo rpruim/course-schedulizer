@@ -50,7 +50,7 @@ describe("the data's codes in the app", () => {
 });
 
 describe("the winter interim: Spring part 0 in the data, WI in the app", () => {
-  it("reads SP with part 0 as WI, and writes WI as SP part 0, in the file and the registrar tab", async () => {
+  it("reads SP with part 0 as WI, writes WI as SP part 0 in the Sessions sheet, and shows WI on the registrar tab", async () => {
     const { schedule, issues } = importRecords({ sessions: [rec({ Term: "SP", TermPart: "0", MeetingDays: "MTWRF", StartTime: "9:00", MeetingDuration: "150" }), rec({ Section: "B", Term: "SP", TermPart: "Full" })] });
     expect(issues).toEqual([]);
     expect(schedule.sessions.map((s) => [s.term, s.termPart])).toEqual([["WI", "Full"], ["SP", "Full"]]);
@@ -60,7 +60,7 @@ describe("the winter interim: Spring part 0 in the data, WI in the app", () => {
     const reg = registrarTable(schedule);
     const r = (row: number, name: string) => reg.rows[row]![reg.header.indexOf(name)];
     const wi = reg.rows.findIndex((x) => x[reg.header.indexOf("Section")] === "A");
-    expect([r(wi, "Term"), r(wi, "TermPart"), r(wi, "TermAndPart")]).toEqual(["SP", "0", "SP-0"]);
+    expect([r(wi, "Term"), r(wi, "TermPart"), r(wi, "TermAndPart")]).toEqual(["WI", "Full", "WI-Full"]);
     const back = await readWorkbook(await writeWorkbook(schedule));
     expect(back.issues).toEqual([]);
     expect(back.schedule.sessions.map((s) => [s.term, s.termPart])).toEqual([["WI", "Full"], ["SP", "Full"]]);
