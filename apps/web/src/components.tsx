@@ -297,11 +297,11 @@ export function ExportPanel() {
       <p className="muted small">The name starts from the Meta tab (Save As and the time stamp setting); change it here for this export only.{merged && " The merged file holds every section, non-teaching row and rule of the ticked schedules (a rule saved in several of them once); the schedules themselves are not changed."}</p>
       <h2 className="export-heading">Download</h2>
       <div className="bar">
+        <button className="primary" onClick={() => void download()} disabled={empty}>Download Excel file</button>
         <label className="field inline">
           <input type="checkbox" checked={teachingOnly} onChange={(e) => setTeachingOnly(e.target.checked)} />
           Teaching schedule only
         </label>
-        <button className="primary" onClick={() => void download()} disabled={empty}>Download Excel file</button>
       </div>
       <p className="muted small">Downloads as {names.map((n, i) => <span key={n}>{i > 0 && " and "}<code>{n}</code></span>)}.</p>
       {oneDriveConfigured && (
