@@ -266,7 +266,8 @@ export const emptySchedule = (): Schedule => ({
 });
 
 export interface Issue {
-  severity: "error" | "warning";
+  /** `info`: a note of something done (not a problem). */
+  severity: "error" | "warning" | "info";
   sheet: string;
   /** 1-based spreadsheet row (header is row 1). */
   row?: number;

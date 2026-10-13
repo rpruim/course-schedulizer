@@ -12,6 +12,7 @@ export * from "./academicYear.js";
 export * from "./names.js";
 export * from "./load.js";
 export * from "./conflicts.js";
+export * from "./inferColocations.js";
 export * from "./constraints.js";
 export * from "./delivery.js";
 export * from "./coreTag.js";

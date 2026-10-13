@@ -29,6 +29,7 @@ import {
   type Settings,
 } from "./types.js";
 import { importComparisons } from "./savedComparisons.js";
+import { inferColocations } from "./inferColocations.js";
 
 /** Canonical Sessions columns, in file order. */
 export const SESSION_COLUMNS = [
@@ -195,11 +196,46 @@ export interface SessionsImport {
   /** Rows with no Prefix, CourseNumber or Section: the old export lists non-teaching load inline. */
   nonTeaching: NonTeaching[];
   issues: Issue[];
+  /** The registrar's report has a `Colocated` column (Yes or blank) …  */
+  hasColocatedColumn: boolean;
+  /** … and these sections (ids) are marked Yes in it. */
+  colocated: string[];
 }
 
 export interface ImportOptions {
   /** Fills a blank AcademicYear (old exports leave it blank on every row). */
   academicYear?: string;
+  /** Make Colocate rules for the sections that meet together (see `inferColocations`). */
+  inferColocations?: boolean;
+}
+
+/**
+ * The registrar's report lists a section's other listings in a `Cross Listed Sections` column, as `SOWK 355-A` (several separated by
+ * commas): the prefix and number make the listing (a listing belongs to the course, so the letter is only used to spot a listed
+ * section that also has a row of its own).
+ */
+function crossListedSections(text: string): { listings: { prefix: string; courseNumber: string; section: string }[]; bad: string[] } {
+  const listings: { prefix: string; courseNumber: string; section: string }[] = [];
+  const bad: string[] = [];
+  for (const part of text.split(/[,;\n]/).map((x) => x.trim()).filter(Boolean)) {
+    const m = /^([A-Za-z]+)\s*(\d+[A-Za-z]*)\s*(?:[-\s]\s*([A-Za-z0-9?]+))?$/.exec(part);
+    if (m) listings.push({ prefix: m[1]!.toUpperCase(), courseNumber: m[2]!.toUpperCase(), section: (m[3] ?? "").toUpperCase() });
+    else bad.push(part);
+  }
+  return { listings, bad };
+}
+
+/** Takes a column the Sessions sheet does not keep (the registrar's report has it) out of a row's other columns. */
+function takeColumn(extra: Rec, ...names: string[]): string {
+  const wanted = new Set(names.map(key));
+  for (const h of Object.keys(extra)) {
+    if (wanted.has(key(h))) {
+      const v = extra[h]!;
+      delete extra[h];
+      return v;
+    }
+  }
+  return "";
 }
 
 /** Sessions sheet records (compact or multi-row form) → sessions, cross-listings, inline non-teaching rows. */
@@ -212,12 +248,18 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
   const items: { row: number; section: Record<string, unknown>; ms: Meeting[] }[] = [];
   const seenListing = new Set<string>();
   const unassigned = new Map<string, number>();
+  // The registrar's report: other listings of a section, and whether it is colocated.
+  const hasColocatedColumn = records.some((rec) => Object.keys(rec).some((h) => key(h) === "colocated"));
+  const colocated = new Set<string>();
+  const listedLetters: { sectionId: string; row: number; prefix: string; courseNumber: string; section: string }[] = [];
 
   records.forEach((rec, idx) => {
     const row = idx + 2;
     const { known: k, extra } = split(rec, SESSION_COLUMNS);
     if (opts.academicYear && !k.AcademicYear) k.AcademicYear = opts.academicYear;
     if (k.AcademicYear) k.AcademicYear = yearFromData(k.AcademicYear);
+    const crossText = takeColumn(extra, "Cross Listed Sections", "Cross Listed", "Cross Listings");
+    const colocatedText = takeColumn(extra, "Colocated");
 
     // No course at all: a non-teaching load row (activity in InstructionalMethod).
     if (!k.Prefix && !k.CourseNumber && !k.Section) {
@@ -323,13 +365,18 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
     };
 
     items.push({ row, section, ms: meetings(r, row, k) });
-    for (const l of ls.slice(1)) {
+    const cross = crossListedSections(crossText);
+    for (const bad of cross.bad) r.add("warning", row, `Cross Listed Sections: “${bad}” is not a course such as SOWK 355-A, so it was left out`);
+    for (const l of cross.listings) listedLetters.push({ sectionId, row, ...l });
+    for (const l of [...ls.slice(1), ...cross.listings.map(({ prefix, courseNumber }) => ({ prefix, courseNumber }))]) {
+      if (l.prefix === primary.prefix && l.courseNumber === primary.courseNumber) continue;
       const id = `${sectionId}|${l.prefix}|${l.courseNumber}`;
       if (!seenListing.has(id)) {
         seenListing.add(id);
         crossListings.push({ sectionId, ...l });
       }
     }
+    if (/^(yes|y|true|x|1)$/i.test(colocatedText.trim())) colocated.add(sectionId);
   });
   // Section-level fields repeat on every row of a section. A blank cell on a later
   // row inherits the section's other rows; two different non-blank values are an error.
@@ -361,7 +408,13 @@ export function importSessions(records: Rec[], settings: Settings = defaultSetti
       else r.zod(it.row, parsed.error);
     }
   }
-  return { sessions, crossListings, nonTeaching, issues: r.issues };
+  // A section listed as another's cross-listing should not also have a row of its own: they are one section with two names.
+  for (const l of listedLetters) {
+    const host = sessions.find((x) => x.sectionId === l.sectionId);
+    const own = host && l.section && sessions.find((x) => x.prefix === l.prefix && x.courseNumber === l.courseNumber && x.section.toUpperCase() === l.section && x.academicYear === host.academicYear && x.term === host.term);
+    if (own) r.add("warning", l.row, `${l.prefix} ${l.courseNumber} ${l.section} is listed as a cross-listing of ${host!.prefix} ${host!.courseNumber} ${host!.section} and also has a row of its own; they are one section with two names, so remove one of them`);
+  }
+  return { sessions, crossListings, nonTeaching, issues: r.issues, hasColocatedColumn, colocated: [...colocated] };
 }
 
 /** CrossListings sheet records, merged into `existing` (duplicates ignored). */
@@ -612,6 +665,8 @@ export interface ImportInput {
   meta?: Meta;
   /** Fills a blank AcademicYear (see `ImportOptions`). */
   academicYear?: string;
+  /** See `ImportOptions`. */
+  inferColocations?: boolean;
 }
 
 export interface ImportResult {
@@ -631,16 +686,23 @@ export function importRecords(input: ImportInput): ImportResult {
   const co = importConstraints(input.constraints ?? []);
   const cmp = importComparisons(input.comparisons ?? []);
   const issues = [...s.issues, ...cl.issues, ...nt.issues, ...co.issues, ...cmp.issues];
+  let schedule: Schedule = {
+    meta: input.meta ?? emptyMeta(),
+    settings,
+    sessions: s.sessions,
+    crossListings: unifyCrossListings({ ...emptySchedule(), sessions: s.sessions, crossListings: cl.crossListings }).crossListings,
+    nonTeaching: [...s.nonTeaching, ...nt.nonTeaching],
+    constraints: co.constraints,
+    comparisons: cmp.comparisons,
+  };
+  if (input.inferColocations) {
+    const inferred = inferColocations(schedule, s.hasColocatedColumn ? new Set(s.colocated) : undefined);
+    // A new object: the conflicts of the schedule without the rules are kept for it (`findConflicts`).
+    schedule = { ...schedule, constraints: [...schedule.constraints, ...inferred.constraints] };
+    issues.push(...inferred.issues);
+  }
   return {
-    schedule: {
-      meta: input.meta ?? emptyMeta(),
-      settings,
-      sessions: s.sessions,
-      crossListings: unifyCrossListings({ ...emptySchedule(), sessions: s.sessions, crossListings: cl.crossListings }).crossListings,
-      nonTeaching: [...s.nonTeaching, ...nt.nonTeaching],
-      constraints: co.constraints,
-      comparisons: cmp.comparisons,
-    },
+    schedule,
     issues,
     ok: !issues.some((i) => i.severity === "error"),
   };

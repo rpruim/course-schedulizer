@@ -34,13 +34,14 @@ const baseName = (file: string) => file.replace(/\.xlsx$/i, "");
 export function ImportReport({ reports, onDismiss }: { reports: OpenReport[]; onDismiss: () => void }) {
   const all = reports.flatMap((r) => r.issues);
   const errors = errorsOf(all);
-  const warnings = all.length - errors.length;
+  const warnings = all.filter((i) => i.severity === "warning").length;
+  const problems = errors.length + warnings;
   const many = reports.length > 1;
   return (
-    <div className={`report ${errors.length ? "report-error" : all.length ? "report-warn" : "report-ok"}`} role="status">
+    <div className={`report ${errors.length ? "report-error" : problems ? "report-warn" : "report-ok"}`} role="status">
       <div className="report-head">
         <strong>
-          {all.length === 0
+          {problems === 0
             ? many ? `Opened ${reports.length} schedules with no problems.` : "Opened with no problems."
             : `${errors.length} error${errors.length === 1 ? "" : "s"}, ${warnings} warning${warnings === 1 ? "" : "s"}.`}
         </strong>
@@ -69,6 +70,7 @@ export function ImportReport({ reports, onDismiss }: { reports: OpenReport[]; on
 export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => void }) {
   const ws = useWorkspace();
   const [year, setYear] = useState("");
+  const [infer, setInfer] = useState(false);
   const [target, setTarget] = useState("new");
   const [busy, setBusy] = useState(false);
   const [address, setAddress] = useState("");
@@ -92,7 +94,7 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
     try {
       for (const [i, file] of files.entries()) {
         try {
-          const result = await readWorkbook(new Uint8Array(await file.arrayBuffer()), year.trim() ? { academicYear: year.trim() } : {});
+          const result = await readWorkbook(new Uint8Array(await file.arrayBuffer()), { ...(year.trim() ? { academicYear: year.trim() } : {}), ...(infer ? { inferColocations: true } : {}) });
           place(baseName(file.name), result.schedule, i === 0);
           reports.push({ name: file.name, issues: allIssues(result.schedule, result.issues) });
         } catch (e) {
@@ -114,7 +116,7 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
       let got: Fetched;
       try {
         const file = await graphClient(true).openEntry(entry);
-        got = await readOneDrive(file.source, file.bytes, year.trim() || undefined);
+        got = await readOneDrive(file.source, file.bytes, year.trim() || undefined, undefined, infer);
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
         got = { name: entry.name, report: { name: entry.name, issues: [{ severity: "error", sheet: entry.name, message }] } };
@@ -135,7 +137,7 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
     try {
       const shared = sharedOpener(true);
       for (const [i, file] of files.entries()) {
-        const got = await fetchSchedule(file, academicYear ?? (year.trim() || undefined), undefined, undefined, shared);
+        const got = await fetchSchedule(file, academicYear ?? (year.trim() || undefined), undefined, undefined, shared, infer);
         if (got.schedule) place(got.name, got.schedule, i === 0, got.source);
         reports.push(got.report);
       }
@@ -164,6 +166,9 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
       <label className="field" title={ACADEMIC_YEAR_HELP}>
         Academic year <small>(only if the file has none)</small>
         <input value={year} onChange={(e) => setYear(e.target.value)} placeholder="25-26" size={6} />
+      </label>
+      <label className="bar-check" title="Make a Colocate rule for each set of sections that meet at the same time in the same room. If the file has a Colocated column (as reports from reports.calvin.edu do), only the sections marked Yes are used, and a marked section that meets with no other is reported.">
+        <input type="checkbox" checked={infer} onChange={(e) => setInfer(e.target.checked)} /> Infer colocations
       </label>
     </div>
     <div className="bar">

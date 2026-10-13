@@ -116,6 +116,7 @@ export async function readWorkbook(data: ArrayBuffer | Uint8Array, options: Impo
     settings,
     meta,
     ...(options.academicYear ? { academicYear: options.academicYear } : {}),
+    ...(options.inferColocations ? { inferColocations: true } : {}),
   });
   result.issues.unshift(...issues);
   return result;

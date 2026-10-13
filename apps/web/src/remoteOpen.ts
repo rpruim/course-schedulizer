@@ -1,4 +1,4 @@
-import { readWorkbook, type Schedule } from "@schedulizer/core";
+import { readWorkbook, type ImportOptions, type Schedule } from "@schedulizer/core";
 import { allIssues } from "./issues";
 import { GraphError, isOneDriveUrl, type OneDriveSource } from "./onedrive/graph";
 import { directUrl, fetchProblem, nameFromUrl, type LinkRequest } from "./remote";
@@ -18,6 +18,11 @@ export interface Fetched {
 /** Opens a OneDrive/SharePoint sharing link as the signed-in person. */
 export type SharedOpener = (link: string) => Promise<{ source: OneDriveSource; bytes: Uint8Array }>;
 
+const importOptions = (academicYear: string | undefined, inferColocations: boolean): ImportOptions => ({
+  ...(academicYear ? { academicYear } : {}),
+  ...(inferColocations ? { inferColocations } : {}),
+});
+
 const failed = (name: string, message: string): Fetched => ({ name, report: { name, issues: [{ severity: "error", sheet: name, message }] } });
 
 /** Download one workbook and read it. Never throws: problems come back in the report. */
@@ -27,8 +32,9 @@ export async function fetchSchedule(
   fetcher: typeof fetch = (...a) => fetch(...a),
   base = typeof document === "undefined" ? "http://localhost/" : document.baseURI,
   shared?: SharedOpener,
+  inferColocations = false,
 ): Promise<Fetched> {
-  if (isOneDriveUrl(file.url)) return fetchShared(file, academicYear, shared);
+  if (isOneDriveUrl(file.url)) return fetchShared(file, academicYear, shared, inferColocations);
   const url = directUrl(file.url, base);
   if (!url) return failed(file.url, "this is not a web address (it should start with https://)");
   const name = file.name ?? nameFromUrl(url);
@@ -42,14 +48,14 @@ export async function fetchSchedule(
   }
   try {
     const year = file.academicYear ?? academicYear;
-    const result = await readWorkbook(bytes, year ? { academicYear: year } : {});
+    const result = await readWorkbook(bytes, importOptions(year, inferColocations));
     return { name, schedule: result.schedule, report: { name, issues: allIssues(result.schedule, result.issues) } };
   } catch (e) {
     return failed(name, `could not read this as an Excel workbook (${e instanceof Error ? e.message : String(e)}). If this is a web page rather than the file, the address is a sharing page, not a download`);
   }
 }
 
-async function fetchShared(file: LinkRequest, academicYear: string | undefined, shared: SharedOpener | undefined): Promise<Fetched> {
+async function fetchShared(file: LinkRequest, academicYear: string | undefined, shared: SharedOpener | undefined, inferColocations: boolean): Promise<Fetched> {
   const link = file.url.trim();
   const name = file.name ?? nameFromUrl(link);
   if (!shared) return failed(name, "this is a OneDrive address, and this site is not set up for signing in to OneDrive. Download the file and open it with Open Excel file…");
@@ -60,14 +66,14 @@ async function fetchShared(file: LinkRequest, academicYear: string | undefined, 
     if (e instanceof GraphError && e.kind === "signin") return { ...failed(name, e.message), needsSignIn: true };
     return failed(name, e instanceof Error ? e.message : String(e));
   }
-  return readOneDrive(got.source, got.bytes, file.academicYear ?? academicYear, file.name);
+  return readOneDrive(got.source, got.bytes, file.academicYear ?? academicYear, file.name, inferColocations);
 }
 
 /** Read the bytes of a workbook that came from OneDrive. Never throws: problems come back in the report. */
-export async function readOneDrive(source: OneDriveSource, bytes: Uint8Array, academicYear?: string, name?: string): Promise<Fetched> {
+export async function readOneDrive(source: OneDriveSource, bytes: Uint8Array, academicYear?: string, name?: string, inferColocations = false): Promise<Fetched> {
   const shown = name ?? source.name.replace(/\.xlsx$/i, "");
   try {
-    const result = await readWorkbook(bytes, academicYear ? { academicYear } : {});
+    const result = await readWorkbook(bytes, importOptions(academicYear, inferColocations));
     return { name: shown, schedule: result.schedule, source, report: { name: shown, issues: allIssues(result.schedule, result.issues) } };
   } catch (e) {
     return failed(shown, `could not read this as an Excel workbook (${e instanceof Error ? e.message : String(e)})`);

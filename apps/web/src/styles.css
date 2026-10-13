@@ -71,6 +71,7 @@ tr.conflict td { background: var(--conflict); }
 .report-error { background: var(--err-bg); }
 .report ul { margin: 6px 0 0; padding-left: 20px; max-height: 220px; overflow: auto; font-size: .85rem; }
 .report li.error::marker { color: #c0392b; }
+.report li.info { list-style: "✓ "; color: var(--muted); }
 @media (max-width: 640px) {
   .app { padding: 0 12px 32px; }
   th, td { padding: 6px; }
@@ -407,6 +408,7 @@ button.link, button.danger-link, button.danger { white-space: nowrap; }
 /* drop-downs, check-box drop-downs (.multi-button) and text boxes in a bar of filters are one height, whatever the browser makes of a native select */
 .bar select, .bar input:not([type=checkbox]):not([type=radio]), .bar .multi-button { height: 28px; box-sizing: border-box; }
 .bar .multi-button { padding-top: 0; padding-bottom: 0; }
+.bar-check { display: inline-flex; align-items: center; gap: 4px; height: 28px; }
 
 /* a day that every selected section has, suggested in gray in the mass editor until a day is clicked */
 .day.suggested { background: var(--panel); color: var(--muted); border-style: dashed; }
