@@ -1,4 +1,4 @@
-# Course Schedulizer 2.0.8.9002
+# Course Schedulizer 2.0.9
 
 * The Export tab is in two parts, *Download* and *Save to OneDrive*, and starts with a choice of what to save: *Save current schedule* (as before, the default) or *Save merged schedules to one file*, which saves all the ticked schedules in one file (a rule saved in several of them once); the schedules themselves are not changed.
 * The registrar tab shows the winter interim as `WI` (part Full), as the app does, instead of Spring part 0. The Sessions sheet still writes it as Spring part 0, as reports.calvin.edu does, so files read back the same.
