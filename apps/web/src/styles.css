@@ -502,3 +502,7 @@ table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
 /* the Export tab: what to save, then the two ways to save it */
 .export-what { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 10px; }
 .export-heading { font-size: 1.05rem; margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+
+/* the Standard meeting times page */
+.standard-times-table { margin-bottom: 12px; }
+.standard-times-table td { vertical-align: top; }

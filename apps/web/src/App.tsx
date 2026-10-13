@@ -3,6 +3,7 @@ import { HashRouter, Route, Routes, useLocation, useNavigate, useSearchParams } 
 import { Toolbar, type OpenReport } from "./components";
 import { EditorProvider } from "./editor/context";
 import { AboutPage } from "./pages/AboutPage";
+import { StandardTimesPage } from "./pages/StandardTimesPage";
 import { ComparePage } from "./pages/ComparePage";
 import { ConstraintsPage } from "./pages/ConstraintsPage";
 import { ConflictsPage } from "./pages/ConflictsPage";
@@ -45,6 +46,7 @@ const tabs = (reports: OpenReport[] | undefined, setReports: (r: OpenReport[] | 
   { to: "/help", label: "User guide", element: <HelpPage /> },
   { to: "/news", label: "Release notes", element: <ReleaseNotesPage /> },
   { to: "/about", label: "About", element: <AboutPage /> },
+  { to: "/standard-times", label: "Standard meeting times", element: <StandardTimesPage /> },
 ];
 
 /** How the pages are grouped in the menu bar. */
@@ -59,7 +61,7 @@ const groups = (newBlank: () => void): MenuGroup[] => [
 ];
 
 /** Pages that make sense with no schedule open. */
-const NO_SCHEDULE_NEEDED = ["/import", "/help", "/news", "/about"];
+const NO_SCHEDULE_NEEDED = ["/import", "/help", "/news", "/about", "/standard-times"];
 
 function Shell() {
   const { saveError, restored, entries, addSchedule, currentId } = useWorkspace();

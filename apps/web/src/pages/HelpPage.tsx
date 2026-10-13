@@ -321,7 +321,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         <h3>Standard times</h3>
         <p>
           Every meeting is checked against the university’s <strong>standard times</strong>: its days, start time and length (in minutes) must all be one of the standard patterns, for example MWF at 9:15 for 65 minutes
-          or TR at 10:20 for 100 minutes. Meetings that are not standard are shown in <strong>orange</strong>, not the red of a conflict:
+          or TR at 10:20 for 100 minutes (the whole list is on the <Link to="/standard-times">Standard meeting times</Link> page). Meetings that are not standard are shown in <strong>orange</strong>, not the red of a conflict:
           a dashed orange border and a clock on the week grids, an orange ⚠ on the Schedule tab, and a <em>Non-standard meeting times</em> list on the Conflicts tab that says what would be standard. Sections with no meeting time are not checked.
         </p>
         <p>
