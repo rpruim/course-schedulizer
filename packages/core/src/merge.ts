@@ -73,3 +73,23 @@ export function mergeSchedules(inputs: MergeInput[]): Merged {
   }
   return { schedule: out, origin };
 }
+
+/**
+ * Several schedules as one schedule to save in a single file: merged as for the views, with the rules made ordinary rules of the one
+ * schedule again (no `scope`), and a rule saved in several of the schedules (a copy: the same rows apart from the name and comment)
+ * kept once. Sessions keep the merge's unique section ids, so sections of different schedules never run together.
+ */
+export function mergeForExport(inputs: MergeInput[]): Schedule {
+  const { schedule } = mergeSchedules(inputs);
+  const byRule = new Map<string, Schedule["constraints"]>();
+  for (const { scope: _scope, ...c } of schedule.constraints) byRule.set(c.constraint, [...(byRule.get(c.constraint) ?? []), c]);
+  const seen = new Set<string>();
+  const constraints: Schedule["constraints"] = [];
+  for (const rows of byRule.values()) {
+    const signature = JSON.stringify(rows.map(({ constraint: _n, comment: _c, ...rest }) => rest));
+    if (seen.has(signature)) continue;
+    seen.add(signature);
+    constraints.push(...rows);
+  }
+  return { ...schedule, sessions: schedule.sessions.map(({ scope: _scope, ...s }) => s), constraints };
+}

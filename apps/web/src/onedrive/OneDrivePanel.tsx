@@ -2,12 +2,16 @@ import { useEffect, useState } from "react";
 import { shareLink } from "../remote";
 import { useWorkspace, type Entry } from "../state";
 import { graphClient, oneDriveConfigured, signedInAccount, signIn, signOut } from "./auth";
-import { GraphError } from "./graph";
+import { GraphError, type OneDriveSource } from "./graph";
 
 type Message = { kind: "ok" | "error"; text: string };
 
-/** Save the current schedule to OneDrive and get a link that opens it in the app. Hidden when the site has no app registration. */
-export function OneDrivePanel({ entry, build, fileNames, disabled }: { entry: Entry; build: () => Promise<Uint8Array>; fileNames: { current: string; archive?: string }; disabled: boolean }) {
+/**
+ * Save a schedule to OneDrive and get a link that opens it in the app. Hidden when the site has no app registration. With `entry`, the
+ * schedule stays connected to its file, so later saves write back to it; without (several schedules merged into one file), each save
+ * makes a file of its own, and the last one saved can be shared.
+ */
+export function OneDrivePanel({ entry, build, fileNames, disabled }: { entry: Entry | undefined; build: () => Promise<Uint8Array>; fileNames: { current: string; archive?: string }; disabled: boolean }) {
   const ws = useWorkspace();
   const [account, setAccount] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
@@ -17,6 +21,9 @@ export function OneDrivePanel({ entry, build, fileNames, disabled }: { entry: En
   const [access, setAccess] = useState<"edit" | "view">("edit");
   const [linkAccess, setLinkAccess] = useState<"edit" | "view">("edit");
   const [copied, setCopied] = useState(false);
+  // Merged schedules are not a schedule of the workspace, so the file they were last saved to is only remembered here.
+  const [mergedSource, setMergedSource] = useState<OneDriveSource | undefined>();
+  const source = entry ? entry.source : mergedSource;
 
   useEffect(() => {
     if (oneDriveConfigured) void signedInAccount().then((a) => setAccount(a?.username)).catch(() => undefined);
@@ -26,7 +33,7 @@ export function OneDrivePanel({ entry, build, fileNames, disabled }: { entry: En
     setMessage(undefined);
     setConflict(false);
     setLink("");
-  }, [entry.id]);
+  }, [entry?.id]);
   if (!oneDriveConfigured) return null;
 
   async function run(work: () => Promise<void>) {
@@ -46,6 +53,16 @@ export function OneDrivePanel({ entry, build, fileNames, disabled }: { entry: En
     run(async () => {
       const client = graphClient(true);
       const bytes = await build();
+      if (!entry) {
+        // several schedules in one file: a file of its own (with Both, the fixed name is replaced and a dated copy added)
+        const saved = fileNames.archive ? await client.saveNamed(fileNames.current, bytes) : await client.saveNew(fileNames.current, bytes);
+        const copy = fileNames.archive ? await client.saveNew(fileNames.archive, bytes) : undefined;
+        setMergedSource(saved);
+        setLink("");
+        setAccount((await signedInAccount())?.username);
+        setMessage({ kind: "ok", text: `Saved the merged schedules as “${saved.name}”${copy ? ` and a dated copy as “${copy.name}”` : ""} in the Schedulizer folder of your OneDrive.` });
+        return;
+      }
       if (fileNames.archive) {
         // Both names: the file with the fixed name is the current version (overwritten each time, so a link to it always shows the latest);
         // the dated copy is a new file each time. The current version goes first, so a conflict stops the save before any dated copy is made.
@@ -69,8 +86,8 @@ export function OneDrivePanel({ entry, build, fileNames, disabled }: { entry: En
 
   const makeLink = () =>
     run(async () => {
-      if (!entry.source) return;
-      const url = await graphClient(true).shareLink(entry.source, access);
+      if (!source) return;
+      const url = await graphClient(true).shareLink(source, access);
       setLink(shareLink(window.location.href, [{ url }]));
       setLinkAccess(access);
       setCopied(false);
@@ -88,11 +105,10 @@ export function OneDrivePanel({ entry, build, fileNames, disabled }: { entry: En
   return (
     <div className="onedrive">
       <div className="bar">
-        <strong>OneDrive</strong>
         <button className="primary" onClick={() => void save(false)} disabled={busy || disabled}>
-          {fileNames.archive ? "Save to OneDrive: current version and dated copy" : entry.source ? "Save to OneDrive" : "Save a copy to OneDrive"}
+          {fileNames.archive ? "Save to OneDrive: current version and dated copy" : entry?.source ? "Save to OneDrive" : "Save a copy to OneDrive"}
         </button>
-        {entry.source && (
+        {source && (
           <>
             <button onClick={() => void makeLink()} disabled={busy}>Get link to share</button>
             <label className="field">Link lets people
@@ -118,7 +134,9 @@ export function OneDrivePanel({ entry, build, fileNames, disabled }: { entry: En
           With <em>Both</em> chosen, each save writes the current version as <code>{fileNames.current}</code> (replaced each time, so a link to it always shows the latest save) and adds a dated copy, <code>{fileNames.archive}</code>, to keep earlier versions.
         </p>
       )}
-      {entry.source ? (
+      {!entry ? (
+        <p className="muted small">Saves the ticked schedules, merged, as one Excel file in a <em>Schedulizer</em> folder on your OneDrive. It is a copy: your schedules stay as they are and are not connected to it.{mergedSource && <> Last saved as <a href={mergedSource.webUrl} target="_blank" rel="noreferrer">{mergedSource.name}</a>.</>}</p>
+      ) : entry.source ? (
         <p className="muted small">
           Opened from or saved to <a href={entry.source.webUrl} target="_blank" rel="noreferrer">{entry.source.name}</a> on OneDrive; <em>Save to OneDrive</em> writes back to it.{" "}
           <button className="link" onClick={() => ws.setSource(entry.id, undefined)}>Disconnect</button>

@@ -1,7 +1,8 @@
 import { ACADEMIC_YEAR_HELP } from "@schedulizer/core";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   exportBaseName,
+  mergeForExport,
   exportFileNames,
   stampChoiceOf,
   type StampChoice,
@@ -12,7 +13,7 @@ import {
 } from "@schedulizer/core";
 import { loadExamples, type Example } from "./examples";
 import { downloadBytes, XLSX_TYPE } from "./download";
-import { graphClient, sharedOpener } from "./onedrive/auth";
+import { graphClient, oneDriveConfigured, sharedOpener } from "./onedrive/auth";
 import { OneDrivePicker } from "./onedrive/OneDrivePicker";
 import type { DriveEntry, OneDriveSource } from "./onedrive/graph";
 import { OneDrivePanel } from "./onedrive/OneDrivePanel";
@@ -224,28 +225,42 @@ export function Toolbar() {
   );
 }
 
-/** Download a schedule as an Excel file: pick which one, and whether to leave out non-teaching load. */
+/**
+ * Save a schedule as an Excel file, by download or to OneDrive: the chosen schedule (the current one to begin with), or the ticked
+ * schedules merged into one file.
+ */
 export function ExportPanel() {
   const ws = useWorkspace();
   const [picked, setPicked] = useState("");
+  const [what, setWhat] = useState<"one" | "merged">("one");
   const [teachingOnly, setTeachingOnly] = useState(false);
-  // A name typed here instead of the one the Meta tab suggests, and a time stamp choice other than the Meta tab's: per schedule, for this visit.
+  // A name typed here instead of the one the Meta tab suggests, and a time stamp choice other than the Meta tab's: per schedule
+  // (or for the merged file), for this visit.
   const [typed, setTyped] = useState<Record<string, string>>({});
   const [stamps, setStamps] = useState<Record<string, StampChoice>>({});
-  const entry = ws.entries.find((e) => e.id === picked) ?? ws.current;
-  if (!entry) return null;
-  const s = entry.schedule;
-  const suggested = exportBaseName(s.meta);
-  const base = typed[entry.id] ?? suggested;
-  const stamp = stamps[entry.id] ?? stampChoiceOf(s.meta);
-  const names = exportFileNames(s.meta, stamp, new Date(), base);
+  const chosen = ws.entries.find((e) => e.id === picked) ?? ws.current;
+  const ticked = ws.includedEntries;
+  const canMerge = ticked.length > 1;
+  const merged = what === "merged" && canMerge;
+  // The merged file is suggested a name from the current schedule's, and its time stamp setting.
+  const mergedSchedule = useMemo(() => (merged ? mergeForExport(ticked) : undefined), [merged, ticked]);
+  if (!chosen) return null;
+  const key = merged ? "merged" : chosen.id;
+  const s = mergedSchedule ?? chosen.schedule;
+  const suggested = merged ? `${exportBaseName(chosen.schedule.meta)}_merged` : exportBaseName(chosen.schedule.meta);
+  const base = typed[key] ?? suggested;
+  const stamp = stamps[key] ?? stampChoiceOf(chosen.schedule.meta);
+  const names = exportFileNames(chosen.schedule.meta, stamp, new Date(), base);
   const empty = s.sessions.length === 0 && s.nonTeaching.length === 0;
+  const lettered = (id: string) => `${ws.letterOf(id)}: ${ws.entries.find((e) => e.id === id)?.name ?? ""}`;
 
   const build = (includeNonTeaching: boolean) => {
-    const named = { ...entry.schedule, meta: { ...entry.schedule.meta, name: ws.fileNameOf(entry.id) } };
+    const named = mergedSchedule
+      ? { ...mergedSchedule, meta: { ...mergedSchedule.meta, name: ticked.map((e) => ws.fileNameOf(e.id)).join(" + "), saveAs: base } }
+      : { ...chosen.schedule, meta: { ...chosen.schedule.meta, name: ws.fileNameOf(chosen.id) } };
     return writeWorkbook(named, { includeNonTeaching });
   };
-  async function exportXlsx() {
+  async function download() {
     const bytes = await build(!teachingOnly);
     // each file in turn: a browser may ask before allowing a second download
     for (const [i, name] of names.entries()) {
@@ -256,33 +271,49 @@ export function ExportPanel() {
 
   return (
     <>
-    <div className="bar">
-      {ws.entries.length > 1 && (
-        <label className="field">Schedule
-          <select value={entry.id} onChange={(e) => setPicked(e.target.value)}>
-            {ws.entries.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
+      <div className="export-what" role="radiogroup" aria-label="What to save">
+        <label className="choice">
+          <input type="radio" name="export-what" checked={!merged} onChange={() => setWhat("one")} /> Save current schedule
+          {ws.entries.length > 1 && !merged && (
+            <select value={chosen.id} onChange={(e) => setPicked(e.target.value)} aria-label="Schedule to save">
+              {ws.entries.map((e) => <option key={e.id} value={e.id}>{lettered(e.id)}</option>)}
+            </select>
+          )}
+        </label>
+        <label className={`choice${canMerge ? "" : " muted"}`} title={canMerge ? undefined : "Tick two or more schedules in the list at the top to merge them"}>
+          <input type="radio" name="export-what" checked={merged} disabled={!canMerge} onChange={() => setWhat("merged")} /> Save merged schedules to one file
+          {canMerge ? <span className="muted small"> ({ticked.map((e) => lettered(e.id)).join("; ")})</span> : <span className="muted small"> (tick two or more schedules at the top)</span>}
+        </label>
+      </div>
+      <div className="bar">
+        <label className="field">File name
+          <input value={base} size={26} onChange={(e) => setTyped({ ...typed, [key]: e.target.value })} title={`Suggested from the Save As text on the Meta tab: ${suggested}`} aria-label="File name, without .xlsx or the time stamp" />
+        </label>
+        {typed[key] !== undefined && <button className="link" onClick={() => setTyped(({ [key]: _gone, ...rest }) => rest)} title={`Back to the suggested name, ${suggested}`}>Use {suggested}</button>}
+        <label className="field">Time stamp
+          <select value={stamp} onChange={(e) => setStamps({ ...stamps, [key]: e.target.value as StampChoice })} title="The Meta tab’s time stamp setting is the starting choice">
+            <option value="with">Add the date and time</option>
+            <option value="without">No time stamp</option>
+            <option value="both">Both: save two files</option>
           </select>
         </label>
+      </div>
+      <p className="muted small">The name starts from the Meta tab (Save As and the time stamp setting); change it here for this export only.{merged && " The merged file holds every section, non-teaching row and rule of the ticked schedules (a rule saved in several of them once); the schedules themselves are not changed."}</p>
+      <h2 className="export-heading">Download</h2>
+      <div className="bar">
+        <label className="field inline">
+          <input type="checkbox" checked={teachingOnly} onChange={(e) => setTeachingOnly(e.target.checked)} />
+          Teaching schedule only
+        </label>
+        <button className="primary" onClick={() => void download()} disabled={empty}>Download Excel file</button>
+      </div>
+      <p className="muted small">Downloads as {names.map((n, i) => <span key={n}>{i > 0 && " and "}<code>{n}</code></span>)}.</p>
+      {oneDriveConfigured && (
+        <>
+          <h2 className="export-heading">Save to OneDrive</h2>
+          <OneDrivePanel entry={merged ? undefined : chosen} build={() => build(true)} fileNames={stamp === "both" ? { current: names[1]!, archive: names[0]! } : { current: names[0]! }} disabled={empty} />
+        </>
       )}
-      <label className="field inline">
-        <input type="checkbox" checked={teachingOnly} onChange={(e) => setTeachingOnly(e.target.checked)} />
-        Teaching schedule only
-      </label>
-      <label className="field">File name
-        <input value={base} size={26} onChange={(e) => setTyped({ ...typed, [entry.id]: e.target.value })} title={`Suggested from the Save As text on the Meta tab: ${suggested}`} aria-label="File name, without .xlsx or the time stamp" />
-      </label>
-      {typed[entry.id] !== undefined && <button className="link" onClick={() => setTyped(({ [entry.id]: _gone, ...rest }) => rest)} title={`Back to the suggested name, ${suggested}`}>Use {suggested}</button>}
-      <label className="field">Time stamp
-        <select value={stamp} onChange={(e) => setStamps({ ...stamps, [entry.id]: e.target.value as StampChoice })} title="The Meta tab’s time stamp setting is the starting choice">
-          <option value="with">Add the date and time</option>
-          <option value="without">No time stamp</option>
-          <option value="both">Both: save two files</option>
-        </select>
-      </label>
-      <button className="primary" onClick={() => void exportXlsx()} disabled={empty}>Export Excel</button>
-    </div>
-    <p className="muted small">Downloads as {names.map((n, i) => <span key={n}>{i > 0 && " and "}<code>{n}</code></span>)}. The name starts from the Meta tab (Save As and the time stamp setting); change it here for this export only.</p>
-    <OneDrivePanel entry={entry} build={() => build(true)} fileNames={stamp === "both" ? { current: names[1]!, archive: names[0]! } : { current: names[0]! }} disabled={empty} />
     </>
   );
 }

@@ -50,3 +50,21 @@ describe("mergeSchedules rules", () => {
     expect(m.origin.rules.get("Cohort (2)")).toEqual({ scheduleId: "2", name: "Cohort" });
   });
 });
+
+describe("mergeForExport", () => {
+  it("puts the schedules in one, keeps each rule once however many schedules have a copy, and drops the scopes", async () => {
+    const { importRecords } = await import("./import.js");
+    const { mergeForExport } = await import("./merge.js");
+    const rule = [{ Constraint: "Both", Course: "MUSC 1" }, { Constraint: "Both", Course: "MUSC 2" }];
+    const a = importRecords({ sessions: [{ AcademicYear: "AY25", Term: "FA", Prefix: "MUSC", CourseNumber: "1", Section: "A" }], constraints: rule }).schedule;
+    const b = importRecords({ sessions: [{ AcademicYear: "AY25", Term: "FA", Prefix: "MUSC", CourseNumber: "1", Section: "A" }], constraints: [...rule, { Constraint: "Other", Course: "MUSC 3" }] }).schedule;
+    const m = mergeForExport([{ id: "a", name: "A", schedule: a }, { id: "b", name: "B", schedule: b }]);
+    expect(m.sessions.map((s) => s.sectionId)).toEqual(["AY25-FA-MUSC1-A", "AY25-FA-MUSC1-A~2"]);
+    expect([...new Set(m.constraints.map((c) => c.constraint))]).toEqual(["Both", "Other"]);
+    expect(m.sessions.every((s) => s.scope === undefined) && m.constraints.every((c) => c.scope === undefined)).toBe(true);
+    const { readWorkbook, writeWorkbook } = await import("./xlsx.js");
+    const back = await readWorkbook(await writeWorkbook(m));
+    expect(back.issues.filter((i) => i.severity === "error")).toEqual([]);
+    expect(back.schedule.sessions.map((s) => s.sectionId)).toEqual(m.sessions.map((s) => s.sectionId));
+  });
+});
