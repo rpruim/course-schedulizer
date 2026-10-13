@@ -45,7 +45,7 @@ describe("infer colocations", () => {
   it("makes rules for the marked sections that meet together, and warns about marked sections that meet with none", () => {
     const r = importRecords({ sessions, inferColocations: true });
     const rules = [...new Set(r.schedule.constraints.map((c) => `${c.type}: ${c.constraint}`))];
-    expect(rules).toEqual(["colocate: Colocated: AMUS 182 A, B (FA)", "colocateDifferent: Colocated: AMUS 117 A; AMUS 217 A (FA)"]);
+    expect(rules).toEqual(["colocate: Colocated: AMUS 182 (FA)", "colocateDifferent: Colocated: AMUS 117; AMUS 217 (FA)"]);
     expect(r.issues.filter((i) => i.severity === "warning").map((i) => i.message)).toEqual([expect.stringMatching(/^AMUS 300 A \(FA\) is marked Colocated, but no other section/)]);
     expect(r.issues.some((i) => i.severity === "info" && /made 2 colocate rules/.test(i.message))).toBe(true);
     // Only the DIGI room conflict is left.
@@ -56,8 +56,27 @@ describe("infer colocations", () => {
     const plain = sessions.map(({ Colocated: _c, "Cross Listed Sections": _x, ...rest }) => rest);
     const r = importRecords({ sessions: plain, inferColocations: true });
     expect([...new Set(r.schedule.constraints.map((c) => c.constraint))]).toEqual([
-      "Colocated: AMUS 182 A, B (FA)", "Colocated: AMUS 117 A; AMUS 217 A (FA)", "Colocated: DIGI 100 A; DIGI 101 A (FA)",
+      "Colocated: AMUS 182 (FA)", "Colocated: AMUS 117; AMUS 217 (FA)", "Colocated: DIGI 100; DIGI 101 (FA)",
     ]);
     expect(r.issues.filter((i) => i.severity === "warning")).toEqual([]);
+  });
+
+  it("names a course without letters only when all its sections in the term are colocated", () => {
+    const r = importRecords({
+      sessions: [
+        row("AMUS 131", "A", { Colocated: "Yes" }),
+        row("AMUS 131", "B", { Colocated: "Yes" }),
+        row("AMUS 131", "C", { Colocated: "Yes", Classroom: "SB 300", StartTime: "1:00 PM" }),
+        row("AMUS 131", "D", { Colocated: "Yes", Classroom: "SB 300", StartTime: "1:00 PM" }),
+        row("AMUS 231", "A", { Colocated: "Yes", Classroom: "SB 300", StartTime: "1:00 PM" }),
+        row("AMUS 131", "A", { Term: "SP", Colocated: "Yes" }), // another term: its own course count
+        row("AMUS 131", "B", { Term: "SP", Colocated: "Yes" }),
+      ],
+      inferColocations: true,
+    });
+    const rules = [...new Set(r.schedule.constraints.map((c) => c.constraint))];
+    expect(rules).toEqual(["Colocated: AMUS 131 A, B (FA)", "Colocated: AMUS 131 C, D; AMUS 231 (FA)", "Colocated: AMUS 131 (SP)"]);
+    expect(r.schedule.constraints.filter((c) => c.constraint === "Colocated: AMUS 131 (SP)").map((c) => [c.course, c.section])).toEqual([["AMUS 131", ""]]);
+    expect(findConflicts(r.schedule)).toEqual([]);
   });
 });

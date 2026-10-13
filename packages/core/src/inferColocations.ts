@@ -9,7 +9,8 @@ import type { Constraint, Issue, Schedule, Session } from "./types.js";
  * reported, since it is likely colocated with a course another department schedules.
  *
  * Sections joined (directly or through others) make one rule per term: “same instructor” for pairs that share an instructor and
- * “different instructors” for those that do not, as `allowedCollisions` expects.
+ * “different instructors” for those that do not, as `allowedCollisions` expects. A course all of whose sections in the term are in
+ * the group is listed without section letters (“MUSC 182”), so the rule still holds when its sections are renamed or added.
  */
 export function inferColocations(schedule: Schedule, colocated?: Set<string>): { constraints: Constraint[]; issues: Issue[] } {
   const first = new Map<string, Session>();
@@ -28,6 +29,10 @@ export function inferColocations(schedule: Schedule, colocated?: Set<string>): {
   const taken = new Set(schedule.constraints.map((c) => c.constraint));
   const constraints: Constraint[] = [];
   const issues: Issue[] = [];
+  // How many sections each course has in each year and term.
+  const courseKey = (s: Session) => `${s.academicYear}\u0000${s.term}\u0000${s.prefix} ${s.courseNumber}`;
+  const sectionCount = new Map<string, number>();
+  for (const s of first.values()) sectionCount.set(courseKey(s), (sectionCount.get(courseKey(s)) ?? 0) + 1);
   const label = (id: string) => { const s = first.get(id)!; return `${s.prefix} ${s.courseNumber} ${s.section}`; };
   for (const same of [true, false]) {
     // Groups of sections joined by pairs of this kind.
@@ -39,17 +44,23 @@ export function inferColocations(schedule: Schedule, colocated?: Set<string>): {
     for (const id of new Set(kind.flatMap((p) => [p.a, p.b]))) groups.set(root(id), [...(groups.get(root(id)) ?? []), id]);
     for (const ids of [...groups.values()].map((g) => g.sort((a, b) => naturalCompare(label(a), label(b))))) {
       const term = first.get(ids[0]!)!.term;
-      // “MUSC 182 A, B, C” for sections of one course, “MUSC 117 A, MUSC 118 A” otherwise.
-      const byCourse = new Map<string, string[]>();
-      for (const id of ids) { const s = first.get(id)!; const c = `${s.prefix} ${s.courseNumber}`; byCourse.set(c, [...(byCourse.get(c) ?? []), s.section]); }
-      const list = [...byCourse].map(([c, letters]) => `${c} ${letters.join(", ")}`).join("; ");
+      // The sections of each course; a course whose sections are all here is named without letters.
+      const byCourse = new Map<string, { sections: Session[]; whole: boolean }>();
+      for (const id of ids) {
+        const s = first.get(id)!;
+        const c = `${s.prefix} ${s.courseNumber}`;
+        byCourse.set(c, { sections: [...(byCourse.get(c)?.sections ?? []), s], whole: false });
+      }
+      for (const v of byCourse.values()) v.whole = v.sections.length === sectionCount.get(courseKey(v.sections[0]!));
+      // “MUSC 182” for all its sections, “ARTS 258 A; ARTS 308 A” for some.
+      const list = [...byCourse].map(([c, v]) => (v.whole ? c : `${c} ${v.sections.map((x) => x.section).join(", ")}`)).join("; ");
       let name = `Colocated: ${list} (${term})`;
       for (let n = 2; taken.has(name); n++) name = `Colocated: ${list} (${term}) (${n})`;
       taken.add(name);
-      ids.forEach((id, i) => {
-        const s = first.get(id)!;
+      const items = [...byCourse].flatMap(([course, v]) => (v.whole ? [{ course, section: "" }] : v.sections.map((x) => ({ course, section: x.section }))));
+      items.forEach(({ course, section }, i) => {
         constraints.push({
-          constraint: name, type: same ? "colocate" : "colocateDifferent", course: `${s.prefix} ${s.courseNumber}`, section: s.section, instructor: "",
+          constraint: name, type: same ? "colocate" : "colocateDifferent", course, section, instructor: "",
           term, choose: "some", bound: "atMost", gap: 20, dayRule: "any", should: "should not", meets: "", active: true, action: "", starts: [], days: "",
           comment: i === 0 ? (colocated ? "Inferred at import from the Colocated column and the times and rooms" : "Inferred at import: same times and room") : "",
         });

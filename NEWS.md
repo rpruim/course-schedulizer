@@ -1,7 +1,7 @@
 # Course Schedulizer 2.0.9.9000
 
 * Schedules from the Schedulizer Course Sections report (reports.calvin.edu) bring their cross-listings: each entry in the new *Cross Listed Sections* column (such as `SOWK 355-A`) is added as another listing of the section's course. An entry that cannot be read, or a listed section that also has a row of its own, is reported.
-* New *Infer colocations* option on the Import page: it adds a Colocate rule for each set of sections that meet at the same time in the same room (*same instructor* or *different instructors*, as they are), named like *Colocated: MUSC 182 A, B, C (FA)*. With the report's new *Colocated* column, only sections marked Yes are joined, and a marked section that meets with no other is reported (it may be colocated with another department's course).
+* New *Infer colocations* option on the Import page: it adds a Colocate rule for each set of sections that meet at the same time in the same room (*same instructor* or *different instructors*, as they are), named like *Colocated: ARTS 258 A; ARTS 308 A (FA)*. A course all of whose sections in the term are colocated is listed without section letters (*Colocated: MUSC 182 (FA)*), so the rule still holds after its sections are renamed or added. With the report's new *Colocated* column, only sections marked Yes are joined, and a marked section that meets with no other is reported (it may be colocated with another department's course).
 
 # Course Schedulizer 2.0.9
 
