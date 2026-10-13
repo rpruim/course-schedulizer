@@ -44,7 +44,17 @@ export function inferColocations(schedule: Schedule, colocated?: Set<string>): {
     const root = (x: T): T => { const p = parent.get(x) ?? x; if (p === x) return x; const r = root(p); parent.set(x, r); return r; };
     return { root, join: (a: T, b: T) => { const ra = root(a), rb = root(b); if (ra !== rb) parent.set(ra, rb); } };
   };
+  // Rules are gathered first, so that the same rule found in several terms becomes one rule for all of them.
+  const drafts = new Map<string, { list: string; terms: string[]; same: boolean; items: { course: string; section: string }[] }>();
   const addRule = (list: string, term: string, same: boolean, items: { course: string; section: string }[]) => {
+    const k = `${same}\u0000${list}`;
+    const d = drafts.get(k) ?? { list, terms: [], same, items };
+    if (!d.terms.includes(term)) d.terms.push(term);
+    drafts.set(k, d);
+  };
+  const termRank = (t: string) => { const i = schedule.settings.terms.findIndex((d) => d.code === t); return i < 0 ? Infinity : i; };
+  const writeRule = ({ list, terms, same, items }: { list: string; terms: string[]; same: boolean; items: { course: string; section: string }[] }) => {
+    const term = [...terms].sort((a, b) => termRank(a) - termRank(b) || naturalCompare(a, b)).join(", ");
     let name = `Colocated: ${list} (${term})`;
     for (let n = 2; taken.has(name); n++) name = `Colocated: ${list} (${term}) (${n})`;
     taken.add(name);
@@ -108,6 +118,7 @@ export function inferColocations(schedule: Schedule, colocated?: Set<string>): {
       );
     }
   }
+  for (const d of drafts.values()) writeRule(d);
 
   const n = new Set(constraints.map((c) => c.constraint)).size;
   issues.push({

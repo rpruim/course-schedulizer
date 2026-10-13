@@ -76,8 +76,9 @@ describe("infer colocations", () => {
     });
     const rules = [...new Set(r.schedule.constraints.map((c) => c.constraint))];
     // Every section of AMUS 131 meets with another of its sections, so they make one rule; AMUS 231 meets with only some of them.
-    expect(rules).toEqual(["Colocated: AMUS 131 (FA)", "Colocated: AMUS 131 (SP)", "Colocated: AMUS 131 C, D; AMUS 231 (FA)"]);
-    expect(r.schedule.constraints.filter((c) => c.constraint === "Colocated: AMUS 131 (SP)").map((c) => [c.course, c.section])).toEqual([["AMUS 131", ""]]);
+    // The same rule in both terms is one rule for both.
+    expect(rules).toEqual(["Colocated: AMUS 131 (FA, SP)", "Colocated: AMUS 131 C, D; AMUS 231 (FA)"]);
+    expect(r.schedule.constraints.filter((c) => c.constraint === "Colocated: AMUS 131 (FA, SP)").map((c) => [c.course, c.section, c.term])).toEqual([["AMUS 131", "", "FA, SP"]]);
     expect(findConflicts(r.schedule)).toEqual([]);
   });
 
