@@ -38,8 +38,9 @@ defaultParts:
 # Terms over which year-long (AY) non-teaching load is split evenly in the load tables.
 spreadTerms: [FA, SP]
 
-# Values of the Room column that are not rooms. They never conflict with each other.
-nonRooms: [Off Campus, Online, TBD]
+# Values of the Room column that are not rooms. They never conflict with each other (the built-in
+# "Standard location conflicts" rule). reports.calvin.edu uses Handlon Campus and Online Campus.
+nonRooms: [Off Campus, Online, TBD, Handlon Campus, Online Campus]
 
 # The university's standard meeting patterns (from the old Course Schedulizer). A meeting is "standard" when its
 # days, start time and length (in minutes) are all listed here; "Standard times" rules flag the others.

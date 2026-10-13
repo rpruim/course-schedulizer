@@ -313,6 +313,11 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
           List the courses (one per line, with <code>*</code> and the other patterns, and a section letter if only one section is meant); a course listed once is enough for its own sections to be colocated.
           It silences only the conflicts reported in the Conflicts tab: a <em>Take together</em> rule still treats the courses as clashing.
         </p>
+        <h3>Standard location conflicts</h3>
+        <p>
+          Some values of the room are places rather than rooms: <em>Online Campus</em> and <em>Handlon Campus</em> (as reports.calvin.edu gives them), <em>Online</em>, <em>Off Campus</em> and <em>TBD</em>.
+          Sections at these locations at the same time are not reported as room conflicts (they can still conflict for sharing an instructor). This built-in rule is listed on the Constraint rules tab, after <em>Standard times</em>, with the locations it covers.
+        </p>
         <h3>Standard times</h3>
         <p>
           Every meeting is checked against the university’s <strong>standard times</strong>: its days, start time and length (in minutes) must all be one of the standard patterns, for example MWF at 9:15 for 65 minutes
@@ -430,7 +435,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </ul>
         <h3>Turning a rule off</h3>
         <p>
-          Every rule except the built-in standard times has an <em>Active</em> check box at the right of its row on the Constraint rules tab. Uncheck it to deactivate the rule: it is kept in the schedule but is not
+          Every rule except the built-in ones (<em>Standard times</em> and <em>Standard location conflicts</em>) has an <em>Active</em> check box at the right of its row on the Constraint rules tab. Uncheck it to deactivate the rule: it is kept in the schedule but is not
           checked, so it is never reported as not met, a deactivated <em>Colocate</em> rule no longer silences conflicts, and a deactivated <em>Modify standard times</em> or <em>Subset</em> rule no longer changes what counts as a standard time. Its status reads “deactivated”. Check the box again to turn it back on.
         </p>
         <h3>Rules when schedules are merged</h3>

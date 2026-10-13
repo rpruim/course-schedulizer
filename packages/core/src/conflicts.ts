@@ -1,7 +1,7 @@
 import { normText as norm } from "./text.js";
 import { meetingsOverlap, scheduled } from "./overlap.js";
 import { allowedCollisions } from "./rules.js";
-import type { Schedule, Session } from "./types.js";
+import { nonRoomsOf, type Schedule, type Session } from "./types.js";
 
 export type ConflictType = "Instructor" | "Room" | "Wildcard";
 
@@ -49,7 +49,7 @@ export function colocatedPairs(schedule: Schedule): [string, string][] {
 }
 
 function scan(schedule: Schedule): { conflicts: Conflict[]; colocated: Set<string> } {
-  const nonRooms = new Set(schedule.settings.nonRooms.map(norm));
+  const nonRooms = new Set(nonRoomsOf(schedule.settings).map(norm));
   const first = new Map<string, Session>();
   for (const s of schedule.sessions) if (!first.has(s.sectionId)) first.set(s.sectionId, s);
 

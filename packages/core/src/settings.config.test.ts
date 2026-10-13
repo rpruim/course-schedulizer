@@ -22,7 +22,7 @@ describe("config/settings.yaml", () => {
     expect(partsFor(s, "FA").map((p) => p.code)).toEqual(["Full", "First", "A", "B", "Second", "C", "D"]);
     expect(partsFor(s, "WI").map((p) => p.code)).toEqual(["Full"]);
     expect(s.spreadTerms).toEqual(["FA", "SP"]);
-    expect(s.nonRooms).toEqual(["Off Campus", "Online", "TBD"]);
+    expect(s.nonRooms).toEqual(["Off Campus", "Online", "TBD", "Handlon Campus", "Online Campus"]);
   });
 
   it("holds the standard times the old app used (fixtures/standard-times.csv)", () => {

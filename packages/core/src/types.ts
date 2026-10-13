@@ -254,6 +254,14 @@ export const defaultSettings = (): Settings => ({
   spreadTerms: [...DEFAULT_SPREAD_TERMS],
   nonRooms: [...DEFAULT_NON_ROOMS],
 });
+/**
+ * The locations that are not rooms (the built-in “Standard location conflicts” rule): the built-in ones, which apply to every
+ * schedule (including those saved before one was added), and the schedule's own.
+ */
+export const nonRoomsOf = (settings: Settings): string[] => [
+  ...DEFAULT_NON_ROOMS,
+  ...settings.nonRooms.filter((r) => !DEFAULT_NON_ROOMS.some((b) => b.toLowerCase() === r.toLowerCase())),
+];
 export const emptyMeta = (): Meta => ({ name: "", nickname: "", saveAs: DEFAULT_SAVE_AS, timestamp: true, notes: "", version: "", defaultDepartment: "" });
 export const emptySchedule = (): Schedule => ({
   meta: emptyMeta(),

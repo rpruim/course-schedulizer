@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { recordsFromCsv } from "./csv.js";
-import { importCrossListings, importNonTeaching, importRecords, importSessions } from "./import.js";
+import { importCrossListings, importNonTeaching, importRecords, importSessions, importSettings } from "./import.js";
+import { findConflicts } from "./conflicts.js";
+import { nonRoomsOf } from "./types.js";
 import { fixtureText } from "./testutil.js";
 import { defaultSettings, type Settings } from "./types.js";
 import { partForExport, partNamed } from "./terms.js";
@@ -284,5 +286,19 @@ describe("the halves of a term as 1 and 2", () => {
     expect(partForExport(settings, "FA", "First")).toBe("1");
     expect(partForExport(settings, "FA", "Second")).toBe("2");
     expect(partForExport(settings, "FA", "A")).toBe("A");
+  });
+});
+
+describe("importSettings: locations that are not rooms", () => {
+  it("keeps the built-in ones as well as the file's own", () => {
+    const { settings } = importSettings([{ Kind: "NonRoom", Code: "Online" }, { Kind: "NonRoom", Code: "Studio X" }]);
+    expect(nonRoomsOf(settings)).toEqual(["Off Campus", "Online", "TBD", "Handlon Campus", "Online Campus", "Studio X"]);
+  });
+  it("does not report sections at Online Campus or Handlon Campus as room conflicts", () => {
+    const at = (section: string, room: string) => rec({ Section: section, Faculty: section === "A" ? "Ada Lovelace" : "Ben Franklin", MeetingDays: "MWF", StartTime: "9:00 AM", MeetingDuration: "50", Classroom: room });
+    for (const room of ["Online Campus", "Handlon Campus"]) {
+      expect(findConflicts(importRecords({ sessions: [at("A", room), at("B", room)] }).schedule)).toEqual([]);
+    }
+    expect(findConflicts(importRecords({ sessions: [at("A", "SB 101"), at("B", "SB 101")] }).schedule)).toHaveLength(1);
   });
 });

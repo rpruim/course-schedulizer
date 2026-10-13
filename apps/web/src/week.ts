@@ -1,4 +1,5 @@
 import {
+  nonRoomsOf,
   conflictedSessions,
   nonStandardSessions,
   courseDisplayName,
@@ -263,7 +264,7 @@ export function weekGrids(schedule: Schedule, o: WeekOptions): WeekResult {
   const violations = findRuleViolations(schedule);
   const flagged = conflictedSessions(findConflicts(schedule), violations);
   const odd = nonStandardSessions(violations);
-  const nonRooms = new Set(schedule.settings.nonRooms.map(norm));
+  const nonRooms = new Set(nonRoomsOf(schedule.settings).map(norm));
   const termAll = schedule.sessions.filter((s) => s.academicYear === o.year && s.term === o.term);
   const parts = partsFor(schedule.settings, o.term);
 

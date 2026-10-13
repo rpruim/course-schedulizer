@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { copyRule, describeRule, findRuleViolations, rulesOf, setRuleActive, type Schedule } from "@schedulizer/core";
+import { copyRule, describeRule, findRuleViolations, nonRoomsOf, rulesOf, setRuleActive, type Schedule } from "@schedulizer/core";
 import { useEditor } from "../editor/context";
 import { MERGED_ID, useWorkspace, type Entry } from "../state";
 import { Empty, NoneShown } from "./SchedulePage";
@@ -90,6 +90,13 @@ function RuleList({ entry, copying }: { entry: Entry; copying: boolean }) {
             <td><strong>Standard times</strong> <span className="muted small">(built in)</span></td>
             <td>Normally every meeting should be at one of the university’s standard days, start times and durations. Add a “Modify standard times” rule below to change the list for some or all courses, or a “Subset of standard times” rule to accept a course that meets on only some of the days of a standard time.</td>
             <td className="nowrap">{nonStandard === 0 ? <span className="ok-text">✓ met</span> : <span className="warn-orange">⚠ {nonStandard} non-standard</span>}</td>
+            <td />
+            {showCopy && <td />}
+          </tr>
+          <tr title="Built in: always applied.">
+            <td><strong>Standard location conflicts</strong> <span className="muted small">(built in)</span></td>
+            <td>These locations are not particular rooms, so sections there never conflict for sharing them: {nonRoomsOf(schedule.settings).join(", ")}.</td>
+            <td className="nowrap"><span className="muted">not room conflicts</span></td>
             <td />
             {showCopy && <td />}
           </tr>
