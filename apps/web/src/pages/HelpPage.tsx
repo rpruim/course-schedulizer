@@ -315,7 +315,7 @@ const SECTIONS: { id: string; title: string; body: () => ReactNode }[] = [
         </p>
         <h3>Standard location conflicts</h3>
         <p>
-          Some values of the room are places rather than rooms: <em>Online Campus</em> and <em>Handlon Campus</em> (as reports.calvin.edu gives them), <em>Online</em>, <em>Off Campus</em> and <em>TBD</em>.
+          Some values of the room are places rather than rooms: <em>Online Campus</em>, <em>Handlon Campus</em>, <em>OFF CAMP</em>, <em>OFF CAMP2</em> and <em>Unknown</em> (as reports.calvin.edu gives them), <em>Online</em>, <em>Off Campus</em> and <em>TBD</em>.
           Sections at these locations at the same time are not reported as room conflicts (they can still conflict for sharing an instructor). This built-in rule is listed on the Constraint rules tab, after <em>Standard times</em>, with the locations it covers.
         </p>
         <h3>Standard times</h3>

@@ -67,4 +67,4 @@ export const DEFAULT_STANDARD_TIMES: StandardTime[] = [
 ];
 
 /** Room-column values that are not rooms and never conflict. */
-export const DEFAULT_NON_ROOMS: string[] = ["Off Campus","Online","TBD","Handlon Campus","Online Campus"];
+export const DEFAULT_NON_ROOMS: string[] = ["Off Campus","Online","TBD","Handlon Campus","Online Campus","OFF CAMP","OFF CAMP2","Unknown"];

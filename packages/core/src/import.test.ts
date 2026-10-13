@@ -292,7 +292,7 @@ describe("the halves of a term as 1 and 2", () => {
 describe("importSettings: locations that are not rooms", () => {
   it("keeps the built-in ones as well as the file's own", () => {
     const { settings } = importSettings([{ Kind: "NonRoom", Code: "Online" }, { Kind: "NonRoom", Code: "Studio X" }]);
-    expect(nonRoomsOf(settings)).toEqual(["Off Campus", "Online", "TBD", "Handlon Campus", "Online Campus", "Studio X"]);
+    expect(nonRoomsOf(settings)).toEqual(["Off Campus", "Online", "TBD", "Handlon Campus", "Online Campus", "OFF CAMP", "OFF CAMP2", "Unknown", "Studio X"]);
   });
   it("does not report sections at Online Campus or Handlon Campus as room conflicts", () => {
     const at = (section: string, room: string) => rec({ Section: section, Faculty: section === "A" ? "Ada Lovelace" : "Ben Franklin", MeetingDays: "MWF", StartTime: "9:00 AM", MeetingDuration: "50", Classroom: room });
