@@ -34,7 +34,7 @@ h2 { font-size: 1.1rem; }
 .spacer { flex: 1; }
 button, .button { font: inherit; padding: 5px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--fg); cursor: pointer; }
 button:disabled { opacity: .5; cursor: default; }
-button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary, .button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 button.link { border: 0; background: none; color: var(--accent); padding: 0 4px; text-decoration: underline; }
 .field { display: flex; flex-direction: column; font-size: .8rem; color: var(--muted); gap: 2px; }
 .field.inline { flex-direction: row; align-items: center; gap: 6px; font-size: .9rem; color: var(--fg); }

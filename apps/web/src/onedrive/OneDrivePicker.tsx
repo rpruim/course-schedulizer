@@ -89,12 +89,12 @@ export function OneDrivePicker({ onOpen, busy }: { onOpen: (entry: DriveEntry) =
 
   return (
     <div className="od-picker">
-      <button type="button" aria-expanded={shown} onClick={() => setShown(!shown)} disabled={busy}>{shown ? "Hide OneDrive files" : "Open from OneDrive…"}</button>
+      <button type="button" className={shown ? "" : "primary"} aria-expanded={shown} onClick={() => setShown(!shown)} disabled={busy}>{shown ? "Hide OneDrive files" : "Open from OneDrive…"}</button>
       {shown && (
         <div className="od-panel">
           {!account ? (
             <p>
-              <button type="button" className="primary" onClick={() => void logIn()}>Sign in with Microsoft</button>{" "}
+              <button type="button" onClick={() => void logIn()}>Sign in with Microsoft</button>{" "}
               <span className="muted small">to see the Excel files in your OneDrive. Files open in this browser; nothing is sent anywhere else.</span>
             </p>
           ) : (

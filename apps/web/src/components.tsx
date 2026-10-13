@@ -150,7 +150,7 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
   return (
     <>
     <div className="bar">
-      <label className="button">
+      <label className="button primary">
         {busy ? "Opening…" : "Open Excel file…"}
         <input ref={input} type="file" accept=".xlsx" multiple={mode === "new"} hidden disabled={busy} onChange={(e) => e.target.files?.length && void open([...e.target.files])} />
       </label>
@@ -185,7 +185,7 @@ export function OpenBar({ onReports }: { onReports: (reports: OpenReport[]) => v
         Open from a web address
         <input value={address} onChange={(e) => setAddress(e.target.value)} onKeyDown={(e) => e.key === "Enter" && void openAddress()} placeholder="https://…/AY25.xlsx" />
       </label>
-      <button onClick={() => void openAddress()} disabled={busy || !address.trim()}>Open address</button>
+      <button className="primary" onClick={() => void openAddress()} disabled={busy || !address.trim()}>Open address</button>
     </div>
     <OneDrivePicker onOpen={openEntry} busy={busy} />
     <ShareLink address={address} year={year} />
