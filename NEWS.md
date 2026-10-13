@@ -1,3 +1,7 @@
+# Course Schedulizer 2.0.9.9000
+
+* Placeholder.
+
 # Course Schedulizer 2.0.9
 
 * The Export tab is in two parts, *Download* and *Save to OneDrive*, and starts with a choice of what to save: *Save current schedule* (as before, the default) or *Save merged schedules to one file*, which saves all the ticked schedules in one file (a rule saved in several of them once); the schedules themselves are not changed.
