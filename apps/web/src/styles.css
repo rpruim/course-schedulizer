@@ -346,7 +346,7 @@ td button.link + button.link { margin-left: 6px; }
 .pairpick { font-size: .75rem; padding: 1px 4px; max-width: 11rem; }
 .pairing-note { margin: 4px 0; }
 .breakable { word-break: break-all; }
-.onedrive { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+.onedrive { margin-top: 4px; }
 /* sentence-style rows ("must be able to take [any] [2] of the listed courses"): boxes one height, words centered on them */
 .row.take-row input, .row.take-row select { height: 32px; }
 
@@ -499,5 +499,4 @@ table.cmp.freezing .frozen-first { box-shadow: -1px 0 0 var(--line); }
 
 /* the Export tab: what to save, then the two ways to save it */
 .export-what { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 10px; }
-.export-what select { margin-left: 8px; }
 .export-heading { font-size: 1.05rem; margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }

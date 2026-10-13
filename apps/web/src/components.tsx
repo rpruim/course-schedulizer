@@ -226,19 +226,19 @@ export function Toolbar() {
 }
 
 /**
- * Save a schedule as an Excel file, by download or to OneDrive: the chosen schedule (the current one to begin with), or the ticked
+ * Save a schedule as an Excel file, by download or to OneDrive: the current schedule, or the ticked
  * schedules merged into one file.
  */
 export function ExportPanel() {
   const ws = useWorkspace();
-  const [picked, setPicked] = useState("");
   const [what, setWhat] = useState<"one" | "merged">("one");
   const [teachingOnly, setTeachingOnly] = useState(false);
   // A name typed here instead of the one the Meta tab suggests, and a time stamp choice other than the Meta tab's: per schedule
   // (or for the merged file), for this visit.
   const [typed, setTyped] = useState<Record<string, string>>({});
   const [stamps, setStamps] = useState<Record<string, StampChoice>>({});
-  const chosen = ws.entries.find((e) => e.id === picked) ?? ws.current;
+  // The current schedule (made current in the list at the top, as anywhere else).
+  const chosen = ws.current;
   const ticked = ws.includedEntries;
   const canMerge = ticked.length > 1;
   const merged = what === "merged" && canMerge;
@@ -274,11 +274,7 @@ export function ExportPanel() {
       <div className="export-what" role="radiogroup" aria-label="What to save">
         <label className="choice">
           <input type="radio" name="export-what" checked={!merged} onChange={() => setWhat("one")} /> Save current schedule
-          {ws.entries.length > 1 && !merged && (
-            <select value={chosen.id} onChange={(e) => setPicked(e.target.value)} aria-label="Schedule to save">
-              {ws.entries.map((e) => <option key={e.id} value={e.id}>{lettered(e.id)}</option>)}
-            </select>
-          )}
+          <span className="muted small"> ({lettered(chosen.id)})</span>
         </label>
         <label className={`choice${canMerge ? "" : " muted"}`} title={canMerge ? undefined : "Tick two or more schedules in the list at the top to merge them"}>
           <input type="radio" name="export-what" checked={merged} disabled={!canMerge} onChange={() => setWhat("merged")} /> Save merged schedules to one file
