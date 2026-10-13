@@ -61,7 +61,7 @@ describe("infer colocations", () => {
     expect(r.issues.filter((i) => i.severity === "warning")).toEqual([]);
   });
 
-  it("names a course without letters only when all its sections in the term are colocated", () => {
+  it("names a course without letters when each of its sections is colocated with another of its sections", () => {
     const r = importRecords({
       sessions: [
         row("AMUS 131", "A", { Colocated: "Yes" }),
@@ -75,8 +75,26 @@ describe("infer colocations", () => {
       inferColocations: true,
     });
     const rules = [...new Set(r.schedule.constraints.map((c) => c.constraint))];
-    expect(rules).toEqual(["Colocated: AMUS 131 A, B (FA)", "Colocated: AMUS 131 C, D; AMUS 231 (FA)", "Colocated: AMUS 131 (SP)"]);
+    // Every section of AMUS 131 meets with another of its sections, so they make one rule; AMUS 231 meets with only some of them.
+    expect(rules).toEqual(["Colocated: AMUS 131 (FA)", "Colocated: AMUS 131 (SP)", "Colocated: AMUS 131 C, D; AMUS 231 (FA)"]);
     expect(r.schedule.constraints.filter((c) => c.constraint === "Colocated: AMUS 131 (SP)").map((c) => [c.course, c.section])).toEqual([["AMUS 131", ""]]);
+    expect(findConflicts(r.schedule)).toEqual([]);
+  });
+
+  it("puts two courses in one rule without letters when every section of each meets with a section of the other", () => {
+    const r = importRecords({
+      sessions: [
+        row("AMUS 258", "A", { Colocated: "Yes" }),
+        row("AMUS 308", "B", { Colocated: "Yes" }),
+        row("AMUS 258", "B", { Colocated: "Yes", Classroom: "SB 300", StartTime: "1:00 PM" }),
+        row("AMUS 308", "A", { Colocated: "Yes", Classroom: "SB 300", StartTime: "1:00 PM" }),
+        row("AMUS 358", "A", { Colocated: "Yes", Classroom: "SB 300", StartTime: "1:00 PM" }), // with only one of the pairs
+        row("AMUS 358", "B", { Classroom: "SB 500", StartTime: "3:00 PM" }),
+      ],
+      inferColocations: true,
+    });
+    expect([...new Set(r.schedule.constraints.map((c) => c.constraint))]).toEqual(["Colocated: AMUS 258; AMUS 308 (FA)", "Colocated: AMUS 258 B; AMUS 308 A; AMUS 358 A (FA)"]);
+    expect(r.schedule.constraints.filter((c) => c.constraint === "Colocated: AMUS 258; AMUS 308 (FA)").map((c) => [c.course, c.section])).toEqual([["AMUS 258", ""], ["AMUS 308", ""]]);
     expect(findConflicts(r.schedule)).toEqual([]);
   });
 });
